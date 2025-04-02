@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "652667961615",
+    "project_id": "ventacuba-a9c56",
+    "storage_bucket": "ventacuba-a9c56.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:652667961615:android:f6c3bd4e8d2bdd901a7e7a",
+        "android_client_info": {
+          "package_name": "com.ventacuba.highapp.venta_cuba"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBvSLSlmeLf5t9W4z2ZmVCvOOCUppU8Hlo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,844 @@
+import 'dart:io';
+
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:venta_cuba/Controllers/auth_controller.dart';
+import 'package:venta_cuba/Controllers/home_controller.dart';
+import 'package:venta_cuba/Controllers/location_controller.dart';
+import 'package:venta_cuba/util/profile_list.dart';
+import 'package:venta_cuba/view/auth/vendor_screen.dart';
+import 'package:venta_cuba/view/constants/Colors.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:venta_cuba/view/notification/notification.dart';
+
+import 'package:venta_cuba/view/profile/manage_account.dart';
+import 'package:venta_cuba/view/profile/notification_preferences.dart';
+import 'package:venta_cuba/view/profile/personal_details.dart';
+import 'package:venta_cuba/view/profile/social_media_links.dart';
+import '../../util/my_button.dart';
+import '../change_language/change_language_screen.dart';
+import '../privacy_policy/privacy_policy_screen.dart';
+import '../profile/DefaultLocation.dart';
+import '../terms_of_use/terms_of_use_screen.dart';
+
+class Profile extends StatefulWidget {
+  const Profile({super.key});
+
+  @override
+  State<Profile> createState() => _ProfileState();
+}
+
+class _ProfileState extends State<Profile> {
+  int _selectedStars = 4;
+  final homeCont = Get.put(HomeController());
+  final locationCont = Get.put(LocationController());
+
+  void _setRating(int rating) {
+    setState(() {
+      _selectedStars = rating;
+    });
+  }
+
+  List<Widget> _buildStarRating(double rating) {
+    List<Widget> stars = [];
+    for (int i = 0; i < 5; i++) {
+      stars.add(
+        Icon(Icons.star,
+            color: i < rating ? AppColors.k0xFFF9E005 : AppColors.k1xFFF9E005),
+      );
+    }
+    return stars;
+  }
+
+  final authCont = Get.put(AuthController());
+
+  void imagePickerOption() {
+    Get.bottomSheet(
+      SingleChildScrollView(
+        child: ClipRRect(
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(20.0),
+            topRight: Radius.circular(20.0),
+          ),
+          child: Container(
+            color: Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Pick Image From'.tr,
+                    style: TextStyle(
+                        fontSize: 22..h,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.black),
+                  ),
+                  SizedBox(
+                    height: 40..h,
+                  ),
+                  GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          pickImage(ImageSource.camera);
+                          Get.back();
+                        });
+                      },
+                      child: MyButton(text: 'Camera'.tr)),
+                  SizedBox(
+                    height: 20..h,
+                  ),
+                  GestureDetector(
+                      onTap: () {
+                        pickImage(ImageSource.gallery);
+                        Get.back();
+                      },
+                      child: MyButton(text: 'Gallery'.tr)),
+                  SizedBox(
+                    height: 20..h,
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Get.back();
+                    },
+                    child: Container(
+                      height: 60..h,
+                      width: MediaQuery.of(context).size.width,
+                      decoration: BoxDecoration(
+                          color: AppColors.k0xFFA9ABAC,
+                          borderRadius: BorderRadius.circular(10)),
+                      child: Center(
+                        child: Text(
+                          'Cancel'.tr,
+                          style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showAlertDialog(BuildContext context) {
+    // Create an AlertDialog
+    AlertDialog alert = AlertDialog(
+        content: Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        GestureDetector(
+          onTap: () {
+            Navigator.of(context).pop();
+          },
+          child: Icon(
+            Icons.close_rounded,
+            size: 15,
+            color: AppColors.k0xFF9F9F9F,
+          ),
+        ),
+        SizedBox(
+          height: 10..h,
+        ),
+        Text(
+          authCont.user?.businessName == ""
+              ? 'Want to Switch to Business Account'.tr
+              : authCont.isBusinessAccount
+                  ? 'Want to Switch to Personal Account'.tr
+                  : 'Want to Switch to Business Account'.tr,
+          style: TextStyle(
+              fontSize: 18..sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.black),
+          textAlign: TextAlign.center,
+        ),
+        SizedBox(
+          height: 15..h,
+        ),
+        Text(
+          'Your account is switch to other one'.tr,
+          style: TextStyle(
+              fontSize: 14..sp,
+              fontWeight: FontWeight.w400,
+              color: AppColors.k0xFF9F9F9F),
+          textAlign: TextAlign.center,
+        ),
+        SizedBox(
+          height: 30..h,
+        ),
+        Container(
+          height: 40..h,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              GestureDetector(
+                onTap: () {
+                  Navigator.of(context).pop();
+                },
+                child: Container(
+                  height: 40..h,
+                  width: MediaQuery.of(context).size.width * .3,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    color: AppColors.k0xFF0254B8,
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Cancel'.tr,
+                      style: TextStyle(
+                          fontSize: 14..sp,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.white),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ),
+              InkWell(
+                onTap: () {
+                  if (authCont.user?.businessName == "") {
+                    Navigator.of(context).pop();
+                    Get.to(VendorScreen());
+                  } else {
+                    authCont.isBusinessAccount = !authCont.isBusinessAccount;
+                    Navigator.of(context).pop();
+                    authCont.update();
+
+                    authCont.changeAccountType();
+                    homeCont.fetchAccountType();
+                  }
+                },
+                child: Container(
+                  height: 40..h,
+                  width: MediaQuery.of(context).size.width * .3,
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColors.k0xFF0254B8)),
+                  child: Center(
+                    child: Text(
+                      'Yes Switch'.tr,
+                      style: TextStyle(
+                          fontSize: 14..sp,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.k0xFF0254B8),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        )
+      ],
+    ));
+
+    // Show the AlertDialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
+            child: alert);
+      },
+    );
+  }
+
+  pickImage(ImageSource source) async {
+    final image = await ImagePicker().pickImage(source: source);
+    if (image == null) return;
+    final imageTemp = File(image.path);
+    authCont.profileImage = imageTemp.path;
+    authCont.firstNameCont.text = authCont.user?.firstName ?? "";
+    authCont.lastNameCont.text = authCont.user?.lastName ?? "";
+    authCont.isBusinessAccount
+        ? authCont.updateBusinessImage()
+        : authCont.editProfile(false);
+    authCont.update();
+  }
+
+  @override
+  void initState() {
+    authCont.fetchAccountType();
+    // TODO: implement initState
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.white,
+      body: GetBuilder(
+        init: AuthController(),
+        builder: (cont) {
+          return SingleChildScrollView(
+            child: SafeArea(
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      height: 10..h,
+                    ),
+                    Stack(
+                      children: [
+                        Container(
+                          height: 90..h,
+                          width: MediaQuery.of(context).size.width,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  CachedNetworkImage(
+                                    height: 85..h,
+                                    width: 85..w,
+                                    imageUrl: cont.isBusinessAccount
+                                        ? '${cont.user?.businessLogo}'
+                                        : '${cont.user?.profileImage}',
+                                    imageBuilder: (context, imageProvider) =>
+                                        Container(
+                                      height: 85..h,
+                                      width: 85..w,
+                                      decoration: BoxDecoration(
+                                          image: DecorationImage(
+                                            image: imageProvider,
+                                            fit: BoxFit.cover,
+                                          ),
+                                          shape: BoxShape.circle),
+                                    ),
+                                    placeholder: (context, url) => SizedBox(
+                                        height: 85..h,
+                                        width: 85..w,
+                                        child: Center(
+                                            child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ))),
+                                    errorWidget: (context, url, error) =>
+                                        Container(
+                                      height: 85..h,
+                                      width: 85..w,
+                                      decoration: BoxDecoration(
+                                          image: DecorationImage(
+                                              image: AssetImage(
+                                                  "assets/images/notImage.jpg")),
+                                          shape: BoxShape.circle),
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: 20..w,
+                                  ),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      SizedBox(
+                                        height: 10..h,
+                                      ),
+                                      GetBuilder<AuthController>(
+                                          builder: (cont) {
+                                        return SelectionArea(
+                                          child: Text(
+                                            cont.user?.businessName == ""
+                                                ? '${cont.user?.firstName} ${cont.user?.lastName}'
+                                                    .tr
+                                                : cont.isBusinessAccount
+                                                    ? '${cont.user?.businessName}'
+                                                    : '${cont.user?.firstName} ${cont.user?.lastName}',
+                                            style: TextStyle(
+                                                fontSize: 16..sp,
+                                                fontWeight: FontWeight.w500,
+                                                color: AppColors.k0xFF0254B8),
+                                          ),
+                                        );
+                                      }),
+                                      SizedBox(
+                                        height: 3..h,
+                                      ),
+                                      GetBuilder<AuthController>(
+                                        builder: (cont) {
+                                          return SelectionArea(
+                                            child: Text(
+                                              cont.user?.businessName == ""
+                                                  ? 'Personal Account'.tr
+                                                  : cont.isBusinessAccount
+                                                      ? 'Business Account'.tr
+                                                      : 'Personal Account'.tr,
+                                              style: TextStyle(
+                                                  fontSize: 16..sp,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: AppColors.k1xFF403C3C),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                      SizedBox(
+                                        height: 7..h,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Row(
+                                            children: _buildStarRating(
+                                                double.parse(cont
+                                                        .user?.averageRating
+                                                        .toString() ??
+                                                    "0")),
+                                          ),
+                                          SizedBox(
+                                            width: 8..w,
+                                          ),
+                                          SelectionArea(
+                                            child: Text(cont.user?.averageRating
+                                                    .toString() ??
+                                                "0"),
+                                          ),
+                                          SizedBox(width: 3),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              GestureDetector(
+                                onTap: () {
+                                  _showAlertDialog(context);
+                                },
+                                child: Container(
+                                    height: 30..h,
+                                    width: 30..w,
+                                    child: SvgPicture.asset(
+                                        'assets/icons/reload.svg')),
+                              )
+                            ],
+                          ),
+                        ),
+                        Positioned(
+                          top: 55..h,
+                          left: 55..w,
+                          child: InkWell(
+                            onTap: () {
+                              imagePickerOption();
+                            },
+                            child: Container(
+                              padding: EdgeInsets.all(10),
+                              height: 35..h,
+                              width: 35..w,
+                              decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: AppColors.white,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.black.withOpacity(.05),
+                                      blurRadius: 10,
+                                    )
+                                  ]),
+                              child: SvgPicture.asset('assets/icons/edit.svg'),
+                            ),
+                          ),
+                        )
+                      ],
+                    ),
+                    SizedBox(
+                      height: 45..h,
+                    ),
+                    SelectionArea(
+                      child: Text(
+                        'Quick Link'.tr,
+                        style: TextStyle(
+                            fontSize: 15..sp,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.black),
+                      ),
+                    ),
+                    SizedBox(
+                      height: 25..h,
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        // if (authCont.user?.businessName == "") {
+                        //   Get.snackbar(
+                        //       "Warning", "User must be a business owner");
+                        // } else {
+                        homeCont.sellerId = authCont.user?.userId.toString();
+                        homeCont.getSellerDetails(
+                            authCont.isBusinessAccount ? "1" : "0", 0, true);
+                        // }
+                      },
+                      child: Container(
+                        height: 60..h,
+                        width: MediaQuery.of(context).size.width,
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.black.withOpacity(.4),
+                                blurRadius: 5,
+                              )
+                            ],
+                            color: AppColors.white),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              height: 20..h,
+                              width: 20..w,
+                              child:
+                                  SvgPicture.asset('assets/icons/person.svg'),
+                            ),
+                            SizedBox(
+                              width: 5..w,
+                            ),
+                            Text(
+                              'My Public Page'.tr,
+                              style: TextStyle(
+                                  fontSize: 15..sp,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.black),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      height: 15..h,
+                    ),
+                    GestureDetector(
+                        onTap: () {
+                          homeCont.getFavouriteSeller();
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 20),
+                          height: 60..h,
+                          width: MediaQuery.of(context).size.width,
+                          decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(5),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.black.withOpacity(.4),
+                                  blurRadius: 5,
+                                )
+                              ],
+                              color: AppColors.white),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                height: 25..h,
+                                width: 25..w,
+                                child:
+                                    Image.asset('assets/icons/thumbs-up.png'),
+                              ),
+                              SizedBox(width: 7..w),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 3.0),
+                                child: Text(
+                                  'Favorite Sellers'.tr,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                      fontSize: 15..sp,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.black),
+                                ),
+                              ),
+                              Spacer(),
+                              Icon(
+                                Icons.arrow_forward_ios_outlined,
+                                size: 15,
+                                color: AppColors.k1xFF403C3C,
+                              )
+                            ],
+                          ),
+                        )),
+                    // ProfileList(text: 'Favorite Seller')),
+                    SizedBox(
+                      height: 15..h,
+                    ),
+                    Container(
+                      height: 60..h,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              homeCont.getFavouriteItems();
+                            },
+                            child: Container(
+                              height: 60..h,
+                              width: MediaQuery.of(context).size.width * .43,
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(5),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.black.withOpacity(.4),
+                                      blurRadius: 5,
+                                    )
+                                  ],
+                                  color: AppColors.white),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(width: 5..w),
+                                  Container(
+                                    height: 20..h,
+                                    width: 20..w,
+                                    child: SvgPicture.asset(
+                                        'assets/icons/heartSimple.svg'),
+                                  ),
+                                  SizedBox(
+                                    width: 5..w,
+                                  ),
+                                  SizedBox(
+                                    width: 120,
+                                    child: Text(
+                                      'Favorite Listings'.tr,
+                                      style: TextStyle(
+                                          fontSize: 15..sp,
+                                          fontWeight: FontWeight.w500,
+                                          color: AppColors.black),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const NotificationScreen(),
+                                  ));
+                            },
+                            child: Container(
+                              height: 60..h,
+                              width: MediaQuery.of(context).size.width * .43,
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(5),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.black.withOpacity(.4),
+                                      blurRadius: 5,
+                                    )
+                                  ],
+                                  color: AppColors.white),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    height: 20..h,
+                                    width: 20..w,
+                                    child: SvgPicture.asset(
+                                        'assets/icons/notificationSimple.svg'),
+                                  ),
+                                  SizedBox(
+                                    width: 5..w,
+                                  ),
+                                  SelectionArea(
+                                    child: Text(
+                                      'Notifications'.tr,
+                                      style: TextStyle(
+                                          fontSize: 15..sp,
+                                          fontWeight: FontWeight.w500,
+                                          color: AppColors.black),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 15..h),
+                    Text(
+                      'Profile Details'.tr,
+                      style: TextStyle(
+                          fontSize: 15..sp,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.black),
+                    ),
+                    SizedBox(
+                      height: 25..h,
+                    ),
+                    GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const PersonalDetails(),
+                              ));
+                        },
+                        child: ProfileList(text: 'Personal Details'.tr)),
+
+                    SizedBox(
+                      height: 15..h,
+                    ),
+                    GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const DefaultLocation(),
+                              ));
+                        },
+                        child: ProfileList(text: 'Default Location'.tr)),
+                    SizedBox(
+                      height: 15..h,
+                    ),
+                    GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SocialMediaLinks(),
+                              ));
+                        },
+                        child: ProfileList(text: 'Social Media Links'.tr)),
+                    SizedBox(
+                      height: 15..h,
+                    ),
+                    GestureDetector(
+                        onTap: () {
+                          homeCont.promoCodesAndPackage();
+                        },
+                        child: ProfileList(text: 'Promotional Codes'.tr)),
+                    SizedBox(
+                      height: 35..h,
+                    ),
+                    Text(
+                      'Account Settings'.tr,
+                      style: TextStyle(
+                          fontSize: 15..sp,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.black),
+                    ),
+                    SizedBox(
+                      height: 25..h,
+                    ),
+                    GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ManageAccount(),
+                              ));
+                        },
+                        child: ProfileList(text: 'Manage Account'.tr)),
+                    SizedBox(
+                      height: 15..h,
+                    ),
+                    GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const NotificationPreferences(),
+                              ));
+                        },
+                        child:
+                            ProfileList(text: 'Notifications Preferences'.tr)),
+                    SizedBox(
+                      height: 35..h,
+                    ),
+                    SelectionArea(
+                      child: Text(
+                        'General Information'.tr,
+                        style: TextStyle(
+                            fontSize: 15..sp,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.black),
+                      ),
+                    ),
+                    SizedBox(
+                      height: 25..h,
+                    ),
+                    InkWell(
+                      onTap: () => Get.to(ChangeLanguageScreen()),
+                      child: ProfileList2(text: 'Change Language'.tr),
+                    ),
+                    SizedBox(
+                      height: 15..h,
+                    ),
+                    GestureDetector(
+                        onTap: () => Get.to(TermsOfUse()),
+                        child: ProfileList2(text: 'Terms Of Use'.tr)),
+                    SizedBox(
+                      height: 15..h,
+                    ),
+                    GestureDetector(
+                        onTap: () => Get.to(PrivacyPolicy()),
+                        child: ProfileList2(text: 'Privacy Policy'.tr)),
+                    SizedBox(
+                      height: 15..h,
+                    ),
+                    // ProfileList(text: 'Help'.tr),
+                    // SizedBox(
+                    //   height: 15..h,
+                    // ),
+                    // GestureDetector(
+                    //     onTap: () {
+                    //       homeCont.getAllPackages();
+                    //     },
+                    //     child: ProfileList(text: 'Subscription'.tr)),
+                    // SizedBox(
+                    //   height: 15..h,
+                    // ),
+                    // GestureDetector(
+                    //     onTap: () {
+                    //       Navigator.push(
+                    //           context,
+                    //           MaterialPageRoute(
+                    //             builder: (context) => const VendorScreen(),
+                    //           ));
+                    //     },
+                    //     child: ProfileList(text:authCont.user?.businessName == ""?'Convert to Personal Account'.tr: 'Become a Vendor'.tr)),
+                    SizedBox(
+                      height: 35..h,
+                    ),
+                    InkWell(
+                      onTap: () {
+                        cont.logout();
+                      },
+                      child: Container(
+                        height: 60..h,
+                        width: MediaQuery.of(context).size.width,
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(5),
+                            border: Border.all(
+                                color: AppColors.k0xFF0254B8, width: 2)),
+                        child: Center(
+                          child: Text(
+                            'Log Out'.tr,
+                            style: TextStyle(
+                                fontSize: 17..sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.k0xFF0254B8),
+                          ),
+                        ),
+                      ),
+                    )
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
