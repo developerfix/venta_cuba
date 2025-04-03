@@ -41,5 +41,5 @@ app.*.symbols
 app.*.map.json
 
 # Android Studio will place build artifacts here
-lib/Services/Notfication/notficationservice.dart
-lib/Controllers/auth_controller.dart
+# lib/Services/Notfication/notficationservice.dart
+# lib/Controllers/auth_controller.dart
