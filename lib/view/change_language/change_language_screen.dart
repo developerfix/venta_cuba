@@ -59,7 +59,8 @@ class _ChangeLanguageScreenState extends State<ChangeLanguageScreen> {
             ),
             SizedBox(height: 20..h),
             CustomText(
-              text: "Select your preferred language to use\n VentaCuba easily".tr,
+              text:
+                  "Select your preferred language to use\n VentaCuba easily".tr,
               fontSize: 16..sp,
               textAlign: TextAlign.center,
               fontWeight: FontWeight.w400,
@@ -71,7 +72,8 @@ class _ChangeLanguageScreenState extends State<ChangeLanguageScreen> {
                   _selection = 1;
                 });
                 var prefs = await SharedPreferences.getInstance();
-                prefs.setString('languageCode', Locale("en", "US").languageCode);
+                prefs.setString(
+                    'languageCode', Locale("en", "US").languageCode);
                 prefs.setString('countryCode', "US");
                 Get.updateLocale(Locale("en", "US"));
               },
@@ -80,8 +82,11 @@ class _ChangeLanguageScreenState extends State<ChangeLanguageScreen> {
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
                 margin: EdgeInsets.symmetric(horizontal: 20),
                 decoration: BoxDecoration(
-                  color: _selection == 1 ? Colors.green.shade300 : Colors.grey.shade300,
-                  border: Border.all(color: _selection == 1 ? Colors.green : Colors.grey),
+                  color: _selection == 1
+                      ? Colors.green.shade300
+                      : Colors.grey.shade300,
+                  border: Border.all(
+                      color: _selection == 1 ? Colors.green : Colors.grey),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
@@ -91,20 +96,21 @@ class _ChangeLanguageScreenState extends State<ChangeLanguageScreen> {
                     ),
                     SizedBox(width: 15),
                     Text(
-                      "English",
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18..sp),
+                      "English".tr,
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 18..sp),
                     ),
                     Spacer(),
                     Radio(
                       focusColor: Colors.white,
                       groupValue: _selection,
                       onChanged: (va) async {
-
                         setState(() {
                           _selection = 1;
                         });
                         var prefs = await SharedPreferences.getInstance();
-                        prefs.setString('languageCode', Locale("en", "US").languageCode);
+                        prefs.setString(
+                            'languageCode', Locale("en", "US").languageCode);
                         prefs.setString('countryCode', "US");
                         Get.updateLocale(Locale("en", "US"));
                       },
@@ -121,7 +127,8 @@ class _ChangeLanguageScreenState extends State<ChangeLanguageScreen> {
                   _selection = 2;
                 });
                 var prefs = await SharedPreferences.getInstance();
-                prefs.setString('languageCode', Locale("es", "ES").languageCode);
+                prefs.setString(
+                    'languageCode', Locale("es", "ES").languageCode);
                 prefs.setString('countryCode', "ES");
                 Get.updateLocale(Locale("es", "ES"));
               },
@@ -131,17 +138,22 @@ class _ChangeLanguageScreenState extends State<ChangeLanguageScreen> {
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
                 margin: EdgeInsets.symmetric(horizontal: 20),
                 decoration: BoxDecoration(
-                  color: _selection == 2 ? Colors.green.shade300 : Colors.grey.shade300,
-                  border: Border.all(color: _selection == 2 ? Colors.green : Colors.grey),
+                  color: _selection == 2
+                      ? Colors.green.shade300
+                      : Colors.grey.shade300,
+                  border: Border.all(
+                      color: _selection == 2 ? Colors.green : Colors.grey),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   children: <Widget>[
-                    CircleAvatar(backgroundImage: AssetImage("assets/icons/f1.jpg")),
+                    CircleAvatar(
+                        backgroundImage: AssetImage("assets/icons/f1.jpg")),
                     SizedBox(width: 15),
                     Text(
-                      "Spanish",
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18..sp),
+                      "Spanish".tr,
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 18..sp),
                     ),
                     Spacer(),
                     Radio(
@@ -152,7 +164,8 @@ class _ChangeLanguageScreenState extends State<ChangeLanguageScreen> {
                           _selection = 2;
                         });
                         var prefs = await SharedPreferences.getInstance();
-                        prefs.setString('languageCode', Locale("es", "ES").languageCode);
+                        prefs.setString(
+                            'languageCode', Locale("es", "ES").languageCode);
                         prefs.setString('countryCode', "ES");
                         Get.updateLocale(Locale("es", "ES"));
                       },
@@ -178,7 +191,9 @@ class _ChangeLanguageScreenState extends State<ChangeLanguageScreen> {
                   child: Text(
                     'Continue'.tr,
                     style: TextStyle(
-                        fontSize: 17..sp, fontWeight: FontWeight.w400, color: AppColors.k0xFF0254B8),
+                        fontSize: 17..sp,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.k0xFF0254B8),
                   ),
                 ),
               ),

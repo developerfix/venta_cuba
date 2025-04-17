@@ -27,7 +27,7 @@ class AuthController extends GetxController {
   late SharedPreferences prefs;
   TextEditingController firstNameCont = TextEditingController(text: "");
   TextEditingController lastNameCont = TextEditingController(text: "");
-  TextEditingController phoneCont = TextEditingController(text: "");
+  // TextEditingController phoneCont = TextEditingController(text: "");
   TextEditingController emailCont = TextEditingController(text: "");
   TextEditingController emailCreateCont = TextEditingController(text: "");
   TextEditingController passCreateCont = TextEditingController(text: '');
@@ -77,7 +77,8 @@ class AuthController extends GetxController {
   Future<void> onInit() async {
     super.onInit();
     emailCreateCont.clear();
-    passCreateCont.clear();firstNameCont.clear();
+    passCreateCont.clear();
+    firstNameCont.clear();
     lastNameCont.clear();
     emailCont.clear();
     prefs = await SharedPreferences.getInstance();
@@ -134,63 +135,93 @@ class AuthController extends GetxController {
   }
 
   String otpCodeSaved = "";
-  Future<void> verifyPhoneNumber(String province, String city) async {
-    print("${countryCode?.dialCode ?? "+53"}${phoneCont.text.trim()}");
+  Future<void> validateEmailAndProceed(String province, String city) async {
+    try {
+      showLoading();
 
-    showLoading();
-
-    var headers = {'Accept': 'application/json'};
-    var request = http.MultipartRequest(
-        'POST', Uri.parse('https://ventacuba.ca/api/verify'));
-    request.fields.addAll({
-      'email': emailCreateCont.text.trim(),
-    });
-    request.headers.addAll(headers);
-    http.StreamedResponse response = await request.send();
-    // Get.log(response.stream.)
-    if (response.statusCode == 200) {
-      Get.back();
-      errorAlertToast(
-          "Email address already exists!. Please enter another one.".tr);
-    } else {
       var headers = {'Accept': 'application/json'};
       var request = http.MultipartRequest(
           'POST', Uri.parse('https://ventacuba.ca/api/verify'));
       request.fields.addAll({
-        'phone': "${countryCode?.dialCode ?? "+53"}${phoneCont.text.trim()}",
+        'email': emailCreateCont.text.trim(),
       });
       request.headers.addAll(headers);
-    final response = await request.send();
+
+      http.StreamedResponse response = await request.send();
+
+      Get.back(); // Hide loading in both cases
+
       if (response.statusCode == 200) {
-        Get.back();
-        errorAlertToast("phone exists".tr);
+        errorAlertToast(
+            "Email address already exists! Please enter another one.".tr);
       } else {
-        try {
-          final signature = await SmartAuth().getAppSignature();
-          debugPrint('App Signature: $signature');
-          otpCodeSaved = generateOtpCode();
-          final statusCode = await twilioFlutter.sendSMS(
-              toNumber:
-                  "${countryCode?.dialCode ?? "+53"}${phoneCont.text.trim()}",
-              messageBody:
-                  '${"Your VentaCuba Otp code is".tr} ${otpCodeSaved}');
-          if (statusCode.responseCode == 201) {
-            Get.back();
-            Get.to(OTPScreen(
-              province: province,
-              city: city,
-            ));
-          } else {
-            errorAlertToast('Something went wrong\nPlease try again!'.tr);
-            Get.back();
-          }
-        } catch (e) {
-          Get.back();
-          showSnackBar(title: 'enter valid phone'.tr);
-        }
+        print('response.statusCode: ${response.statusCode}');
+        await signUp(province, city);
       }
+    } catch (e) {
+      Get.back();
+      print("validateEmailAndProceed error: $e");
+      errorAlertToast("Something went wrong while verifying email.");
     }
   }
+
+  // Future<void> verifyPhoneNumber(String province, String city) async {
+  //   print("${countryCode?.dialCode ?? "+53"}${phoneCont.text.trim()}");
+
+  //   showLoading();
+
+  //   var headers = {'Accept': 'application/json'};
+  //   var request = http.MultipartRequest(
+  //       'POST', Uri.parse('https://ventacuba.ca/api/verify'));
+  //   request.fields.addAll({
+  //     'email': emailCreateCont.text.trim(),
+  //   });
+  //   request.headers.addAll(headers);
+  //   http.StreamedResponse response = await request.send();
+  //   // Get.log(response.stream.)
+  //   if (response.statusCode == 200) {
+  //     Get.back();
+  //     errorAlertToast(
+  //         "Email address already exists!. Please enter another one.".tr);
+  //   } else {
+  //     var headers = {'Accept': 'application/json'};
+  //     var request = http.MultipartRequest(
+  //         'POST', Uri.parse('https://ventacuba.ca/api/verify'));
+  //     request.fields.addAll({
+  //       'phone': "${countryCode?.dialCode ?? "+53"}${phoneCont.text.trim()}",
+  //     });
+  //     request.headers.addAll(headers);
+  //   final response = await request.send();
+  //     if (response.statusCode == 200) {
+  //       Get.back();
+  //       errorAlertToast("phone exists".tr);
+  //     } else {
+  //       try {
+  //         final signature = await SmartAuth().getAppSignature();
+  //         debugPrint('App Signature: $signature');
+  //         otpCodeSaved = generateOtpCode();
+  //         final statusCode = await twilioFlutter.sendSMS(
+  //             toNumber:
+  //                 "${countryCode?.dialCode ?? "+53"}${phoneCont.text.trim()}",
+  //             messageBody:
+  //                 '${"Your VentaCuba Otp code is".tr} ${otpCodeSaved}');
+  //         if (statusCode.responseCode == 201) {
+  //           Get.back();
+  //           Get.to(OTPScreen(
+  //             province: province,
+  //             city: city,
+  //           ));
+  //         } else {
+  //           errorAlertToast('Something went wrong\nPlease try again!'.tr);
+  //           Get.back();
+  //         }
+  //       } catch (e) {
+  //         Get.back();
+  //         showSnackBar(title: 'enter valid phone'.tr);
+  //       }
+  //     }
+  //   }
+  // }
 
   Future<void> verifyOTP(String province, String city) async {
     try {
@@ -360,33 +391,39 @@ class AuthController extends GetxController {
     }
   }
 
-  Future signUp(String province, String city) async {
-    Response response = await api.postData(
-      "api/signUp",
-      {
-        'first_name': firstNameCont.text.trim(),
-        'last_name': lastNameCont.text.trim(),
-        'email': emailCreateCont.text.trim(),
-        'city': city,
-        'province': province,
-        'password': passCreateCont.text.trim(),
-        'password_confirmation': confirmPassCont.text.trim(),
-        'phone_no': "${countryCode?.dialCode ?? "+53"}${phoneCont.text.trim()}",
-        'device_token': deviceToken,
-      },
-    );
-    print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${response.statusCode}");
-    if (response.statusCode == 200) {
-      firstNameCont.clear();
-      lastNameCont.clear();
-      emailCreateCont.clear();
-      passCreateCont.clear();
-      confirmPassCont.clear();
-      phoneCont.clear();
-      phoneCont.clear();
-      Get.offAll(const Login());
-    } else {
-      errorAlertToast('Something went wrong\nPlease try again!');
+  Future<void> signUp(String province, String city) async {
+    try {
+      Response response = await api.postData(
+        "api/signUp",
+        {
+          'first_name': firstNameCont.text.trim(),
+          'last_name': lastNameCont.text.trim(),
+          'email': emailCreateCont.text.trim(),
+          'city': city,
+          'province': province,
+          'password': passCreateCont.text.trim(),
+          'password_confirmation': confirmPassCont.text.trim(),
+          'device_token': deviceToken,
+        },
+      );
+
+      print("signUp statusCode: ${response.statusCode}");
+
+      if (response.statusCode == 200) {
+        firstNameCont.clear();
+        lastNameCont.clear();
+        emailCreateCont.clear();
+        passCreateCont.clear();
+        confirmPassCont.clear();
+
+        Get.offAll(const Login());
+      } else {
+        print("signUp error body: ${response.body}");
+        errorAlertToast('Signup failed. Please check your info and try again!');
+      }
+    } catch (e) {
+      print("signUp exception: $e");
+      errorAlertToast("Something went wrong while signing up.");
     }
   }
 
@@ -416,11 +453,13 @@ class AuthController extends GetxController {
   }
 
   Future forgetPassword() async {
-     var prefs = await SharedPreferences.getInstance();
-   String languageCode = prefs.getString('languageCode') ?? 'es';
+    var prefs = await SharedPreferences.getInstance();
+    String languageCode = prefs.getString('languageCode') ?? 'es';
     var headers = {'Accept': 'application/json'};
     var request = Http.MultipartRequest(
-        'POST', Uri.parse('https://ventacuba.ca/api/forget-password?lang=$languageCode'));
+        'POST',
+        Uri.parse(
+            'https://ventacuba.ca/api/forget-password?lang=$languageCode'));
     request.fields.addAll({'email': forgetPasswordCont.text.trim()});
     request.headers.addAll(headers);
     Http.StreamedResponse response = await request.send();
@@ -643,9 +682,8 @@ class AuthController extends GetxController {
     update();
     Get.offAll(Navigation_Bar());
   }
-   void userMainProfileData(Map<String, dynamic> value){
 
-   }
+  void userMainProfileData(Map<String, dynamic> value) {}
   void onUpdateUserData(Map<String, dynamic> value) async {
     print("???????????????????????????");
     value.addAll({"access_token": user?.accessToken});

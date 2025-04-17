@@ -92,15 +92,16 @@ class _SignUpState extends State<SignUp> {
   void initState() {
     super.initState();
     authControl.firstNameCont.clear();
-    authControl.lastNameCont.clear();  
+    authControl.lastNameCont.clear();
     authControl.emailCreateCont.clear();
     city = null;
-     province = null;
+    province = null;
     textEditingController.clear();
-     authControl.phoneCont.clear();
-      authControl.passCreateCont.clear();
-      authControl.confirmPassCont.clear();
+    // authControl.phoneCont.clear();
+    authControl.passCreateCont.clear();
+    authControl.confirmPassCont.clear();
   }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -599,86 +600,86 @@ class _SignUpState extends State<SignUp> {
                         //     ),
                         //   ),
                         // ),
-                        SizedBox(height: 15..h),
-                        Container(
-                            height: 55..h,
-                            width: MediaQuery.of(context).size.width,
-                            decoration: BoxDecoration(
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(10)),
-                                border: Border.all()),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Container(
-                                  height: 55.h,
-                                  width: 90.w,
-                                  child: CountryListPick(
-                                    pickerBuilder:
-                                        (context, CountryCode? countryCode) {
-                                      return Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceEvenly,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: [
-                                          Image.asset(
-                                            countryCode!.flagUri!,
-                                            package: 'country_list_pick',
-                                            height: 20.h,
-                                            width: 25.w,
-                                          ),
-                                          Text(
-                                            countryCode.dialCode!,
-                                            style: const TextStyle(
-                                                color: Colors.black,
-                                                fontSize: 10),
-                                          ),
-                                          const Icon(
-                                            Icons.keyboard_arrow_down,
-                                            color: Color(0xff7F8492),
-                                            size: 18,
-                                          )
-                                        ],
-                                      );
-                                    },
-                                    theme: CountryTheme(
-                                        isDownIcon: true, isShowTitle: false),
-                                    initialSelection: '+53',
-                                    onChanged: (CountryCode? code) async {
-                                      cont.countryCode = code;
-                                      SharedPreferences share =
-                                          await SharedPreferences.getInstance();
-                                      share.setString(
-                                          "country_code", code!.dialCode!);
-                                      cont.update();
-                                    },
-                                  ),
-                                  //
-                                ),
-                                Flexible(
-                                  child: TextFormField(
-                                    controller: cont.phoneCont,
-                                    cursorColor: const Color(0xff5AD6FE),
-                                    keyboardType: TextInputType.number,
-                                    decoration: InputDecoration(
-                                      border: InputBorder.none,
-                                      contentPadding: EdgeInsets.only(
-                                          top: 4.h,
-                                          bottom: 4.h,
-                                          left: 15.w,
-                                          right: 10.w),
-                                      hintText: "(525)333-1254",
-                                      hintStyle: TextStyle(
-                                          fontFamily: "DM Sans",
-                                          color: const Color(0xffC0C0C0),
-                                          fontWeight: FontWeight.w400,
-                                          fontSize: 16.sp),
-                                    ),
-                                  ),
-                                )
-                              ],
-                            )),
+                        // SizedBox(height: 15..h),
+                        // Container(
+                        //     height: 55..h,
+                        //     width: MediaQuery.of(context).size.width,
+                        //     decoration: BoxDecoration(
+                        //         borderRadius:
+                        //             BorderRadius.all(Radius.circular(10)),
+                        //         border: Border.all()),
+                        //     child: Row(
+                        //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        //       children: [
+                        //         Container(
+                        //           height: 55.h,
+                        //           width: 90.w,
+                        //           child: CountryListPick(
+                        //             pickerBuilder:
+                        //                 (context, CountryCode? countryCode) {
+                        //               return Row(
+                        //                 mainAxisAlignment:
+                        //                     MainAxisAlignment.spaceEvenly,
+                        //                 crossAxisAlignment:
+                        //                     CrossAxisAlignment.center,
+                        //                 children: [
+                        //                   Image.asset(
+                        //                     countryCode!.flagUri!,
+                        //                     package: 'country_list_pick',
+                        //                     height: 20.h,
+                        //                     width: 25.w,
+                        //                   ),
+                        //                   Text(
+                        //                     countryCode.dialCode!,
+                        //                     style: const TextStyle(
+                        //                         color: Colors.black,
+                        //                         fontSize: 10),
+                        //                   ),
+                        //                   const Icon(
+                        //                     Icons.keyboard_arrow_down,
+                        //                     color: Color(0xff7F8492),
+                        //                     size: 18,
+                        //                   )
+                        //                 ],
+                        //               );
+                        //             },
+                        //             theme: CountryTheme(
+                        //                 isDownIcon: true, isShowTitle: false),
+                        //             initialSelection: '+53',
+                        //             onChanged: (CountryCode? code) async {
+                        //               cont.countryCode = code;
+                        //               SharedPreferences share =
+                        //                   await SharedPreferences.getInstance();
+                        //               share.setString(
+                        //                   "country_code", code!.dialCode!);
+                        //               cont.update();
+                        //             },
+                        //           ),
+                        //           //
+                        //         ),
+                        //         Flexible(
+                        //           child: TextFormField(
+                        //             controller: cont.phoneCont,
+                        //             cursorColor: const Color(0xff5AD6FE),
+                        //             keyboardType: TextInputType.number,
+                        //             decoration: InputDecoration(
+                        //               border: InputBorder.none,
+                        //               contentPadding: EdgeInsets.only(
+                        //                   top: 4.h,
+                        //                   bottom: 4.h,
+                        //                   left: 15.w,
+                        //                   right: 10.w),
+                        //               hintText: "(525)333-1254",
+                        //               hintStyle: TextStyle(
+                        //                   fontFamily: "DM Sans",
+                        //                   color: const Color(0xffC0C0C0),
+                        //                   fontWeight: FontWeight.w400,
+                        //                   fontSize: 16.sp),
+                        //             ),
+                        //           ),
+                        //         )
+                        //       ],
+                        //     )),
                         SizedBox(height: 15..h),
                         Container(
                           height: 60..h,
@@ -962,7 +963,8 @@ class _SignUpState extends State<SignUp> {
                               } else if (city == null) {
                                 errorAlertToast("Please Enter City".tr);
                               } else if (cont.emailCreateCont.text.isEmpty ||
-                                  !GetUtils.isEmail(cont.emailCreateCont.text)) {
+                                  !GetUtils.isEmail(
+                                      cont.emailCreateCont.text)) {
                                 errorAlertToast(
                                     "Please Enter Correct Email".tr);
                               } else if (cont.passCreateCont.text.isEmpty ||
@@ -985,10 +987,12 @@ class _SignUpState extends State<SignUp> {
                               } else if (cont.passCreateCont.text !=
                                   cont.confirmPassCont.text) {
                                 errorAlertToast("Password dose not match".tr);
-                              } else if (cont.phoneCont.text.isEmpty) {
-                                errorAlertToast(
-                                    "Please Enter Correct number".tr);
-                              } else if (cont.isChecked.value == false) {
+                              }
+                              // else if (cont.phoneCont.text.isEmpty) {
+                              //   errorAlertToast(
+                              //       "Please Enter Correct number".tr);
+                              // }
+                              else if (cont.isChecked.value == false) {
                                 errorAlertToast(
                                     "Please read and accept the terms of use to proceed your signup"
                                         .tr);
@@ -997,7 +1001,7 @@ class _SignUpState extends State<SignUp> {
                                     "Please read and accept the VentaCuba's Privacy Policy"
                                         .tr);
                               } else {
-                                cont.verifyPhoneNumber(
+                                cont.validateEmailAndProceed(
                                     province!.provinceName, city!.cityName);
                               }
                             },

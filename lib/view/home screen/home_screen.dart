@@ -1,3 +1,5 @@
+// ignore_for_file: unused_import
+
 import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -32,7 +34,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final homeCont = Get.put(HomeController());
   final authCont = Get.put(AuthController());
- 
+
   Future<void> getAdd() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
 
@@ -59,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
       homeCont.selectedSubCategory = null;
       homeCont.selectedSubSubCategory = null;
       homeCont.homeData();
-    }else{
+    } else {
       Get.log('noooooo');
     }
 
@@ -188,12 +190,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                           homeCont.selectedSubCategory = null;
                                           homeCont.selectedSubSubCategory =
                                               null;
-                      
+
                                           Get.to(const Search())?.then((value) {
                                             getAdd();
                                             cont.currentPage.value = 1;
-                                      cont.hasMore.value = true;
-                                      cont.listingModelList.clear();
+                                            cont.hasMore.value = true;
+                                            cont.listingModelList.clear();
                                             cont.getListing();
                                           });
                                         },
@@ -234,8 +236,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                     setState(() {
                                       if (Get.previousRoute == "login") {
                                         cont.currentPage.value = 1;
-                                      cont.hasMore.value = true;
-                                      cont.listingModelList.clear();
+                                        cont.hasMore.value = true;
+                                        cont.listingModelList.clear();
                                         cont.getListing();
                                       }
                                       //
@@ -258,7 +260,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         homeCont.address != ''
                                             ? "${homeCont.address} ${"within the".tr} ${cont.radius.toInt()} km"
                                             : '${cont.address}',
-                      
+
                                         // overflow: TextOverflow.clip,
                                         style: TextStyle(
                                             fontSize: 17..sp,
@@ -290,9 +292,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                       homeCont.selectedSubSubCategory = null;
                                       Get.to(const SelectCategories())
                                           ?.then((value) {
-                                            cont.currentPage.value = 1;
-                                      cont.hasMore.value = true;
-                                      cont.listingModelList.clear();
+                                        cont.currentPage.value = 1;
+                                        cont.hasMore.value = true;
+                                        cont.listingModelList.clear();
                                         cont.getListing();
                                       });
                                     },
@@ -341,7 +343,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               SizedBox(
                                 height: 35..h,
                               ),
-                              // cont.isPostLoading.value ? 
+                              // cont.isPostLoading.value ?
                               // CircularProgressIndicator() :
                               ListingView()
                               // GridView.builder(

@@ -4,17 +4,20 @@ class Languages extends Translations {
   @override
   Map<String, Map<String, String>> get keys => {
         "en_US": {
-          'upload_video':'Record your screen while making the money transfer as we show you in the video. This will be your proof of payment if we do not receive your transaction number by SMS.',
-          'please select category' : 'please select category',
+          'English': 'English',
+          'Spanish': 'Spanish',
+          'upload_video':
+              'Record your screen while making the money transfer as we show you in the video. This will be your proof of payment if we do not receive your transaction number by SMS.',
+          'please select category': 'please select category',
           'ago': '{0} {1} ago',
           'month': 'month',
           'months': 'months',
           'day': 'day',
           'days': 'days',
-          "Pending" : "Pending",
+          "Pending": "Pending",
           "Your package has expired": "Your package has expired",
           "No subscription found": "No subscription found",
-          "Invalid promo code":"Invalid promo code",
+          "Invalid promo code": "Invalid promo code",
           "general": "General",
           "As a proof, I recorded a video of my money transfer if VentaCuba doesn't receive my transaction number through SMS.":
               "As a proof, I recorded a video of my money transfer if VentaCuba doesn't receive my transaction number through SMS.",
@@ -874,18 +877,19 @@ It is not allowed to use our member-to-member communication resources to send sp
           "Your VentaCuba Otp code is": "Your VentaCuba Otp code is"
         },
         "es_ES": {
-          'upload_video':'Graba tu pantalla mientras realizas la transferencia de dinero tal como te mostramos en el video. Ese será tu comprobante de pago si no recibimos tu número de transacción por SMS.',
+          'upload_video':
+              'Graba tu pantalla mientras realizas la transferencia de dinero tal como te mostramos en el video. Ese será tu comprobante de pago si no recibimos tu número de transacción por SMS.',
           'please select category': 'por favor seleccione categoría',
           'ago': 'hace {0} {1}',
           'month': 'mes',
           'months': 'meses',
           'day': 'día',
           'days': 'días',
-          "Pending" : "Pendiente",
-          "Your package has expired":"Tu paquete ha caducado",
+          "Pending": "Pendiente",
+          "Your package has expired": "Tu paquete ha caducado",
           "No subscription found": "No se encontró ninguna suscripción",
-          "Invalid promo code" : "Código de promoción no válido",
-          "Your VentaCuba Otp code is":"Tu código OTP de VentaCuba es",
+          "Invalid promo code": "Código de promoción no válido",
+          "Your VentaCuba Otp code is": "Tu código OTP de VentaCuba es",
           "please select": "Por favor seleccione algo de la lista",
           "Listing ID": "ID de listado: ",
           "enter valid phone": "Por favor ingresa un número de teléfono válido",
@@ -1433,6 +1437,8 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
           "Something went wrong\nPlease try again!":
               "Algo salió mal.\nInténtalo de nuevo!.",
           "Choose your language": "Elige tu idioma",
+          "English": "Ingles",
+          "Spanish": "Español",
           "Select your preferred language to use\n VentaCuba easily":
               "Selecciona tu idioma preferido para usar\n VentaCuba fácilmente",
           "Enter Province": "Ingresar Provincia",
