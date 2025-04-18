@@ -45,7 +45,6 @@ class _ChatsState extends State<Chats> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
           elevation: 0,
           automaticallyImplyLeading: false,
           title: CustomText(

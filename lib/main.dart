@@ -1,6 +1,7 @@
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show SystemChrome, SystemUiOverlayStyle;
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -43,7 +44,15 @@ class _MyAppState extends State<MyApp> {
 
   @override
   void initState() {
-    // TODO: implement initState
+    super.initState();
+
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.white,
+        statusBarIconBrightness: Brightness.dark,
+      ),
+    );
+
     notificationService.obtainCredentials();
     locationCheck();
     firebaseMessaging.setNotifications(context);
@@ -57,7 +66,6 @@ class _MyAppState extends State<MyApp> {
       });
       Get.updateLocale(locale);
     });
-    super.initState();
   }
 
   locationCheck() async {
@@ -93,9 +101,9 @@ class _MyAppState extends State<MyApp> {
               appBarTheme: AppBarTheme(
                 backgroundColor: Colors.white,
               ),
-        scaffoldBackgroundColor: Colors.white, 
-         cardColor: Colors.white,// Set scaffold background color to white
-      ),
+              scaffoldBackgroundColor: Colors.white,
+              cardColor: Colors.white, // Set scaffold background color to white
+            ),
             translations: Languages(),
             locale: Locale(languageCode, countryCode),
             //Locale(languageCode, countryCode),

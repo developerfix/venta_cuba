@@ -35,9 +35,9 @@ class _ChangeLanguageScreenState extends State<ChangeLanguageScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.white,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.transparent,
         leading: GestureDetector(
           onTap: () {
             Navigator.of(context).pop();

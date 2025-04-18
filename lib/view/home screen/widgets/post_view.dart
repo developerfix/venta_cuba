@@ -67,16 +67,13 @@ class ListingView extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Container(
-                          width: MediaQuery.of(context).size.width,
+                        Expanded(
                           child: ClipRRect(
                             borderRadius: BorderRadius.only(
                               topLeft: Radius.circular(10.r),
                               topRight: Radius.circular(10.r),
                             ),
                             child: CachedNetworkImage(
-                              height: 180.h,
-                              width: MediaQuery.of(context).size.width,
                               imageUrl: item.gallery != null &&
                                       item.gallery!.isNotEmpty
                                   ? "${item.gallery?.first}"

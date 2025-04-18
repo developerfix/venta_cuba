@@ -556,6 +556,7 @@ class Languages extends Translations {
               "/20 Select your cover photo first, include picture with different angles and details",
           "Submit": "Submit",
           "Forgot Password": "Forgot Password",
+          "Remember Me": "Remember Me",
           "VentaCuba Terms of Use": "VentaCuba Terms of Use",
           "terms_of_use_privacy_policy":
               """These Terms of Use, the Privacy Policy, the Mobile Devices Terms and all policies posted on our site set out the terms on which we offer you access to and use of our site, services, applications and tools (collectively "Services"). You can find an overview of our policies here. All policies, the Mobile Devices Terms, and the Privacy Policy are incorporated into these Terms of Use. You agree to comply with all the above when accessing or using our Services.
@@ -1334,6 +1335,7 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
               """Estos Términos de uso, la Política de privacidad, los Términos de dispositivos móviles y todas las políticas publicadas en nuestro sitio establecen los términos bajo los cuales le ofrecemos acceso y uso de nuestro sitio, servicios, aplicaciones y herramientas (colectivamente "Servicios"). Puede encontrar una descripción general de nuestras políticas aquí. Todas las políticas, los Términos de dispositivos móviles y la Política de privacidad están incorporados en estos Términos de uso. Usted acepta cumplir con todo lo anterior al acceder o utilizar nuestros Servicios. Su cuenta. Para acceder y utilizar algunos o una parte de los Servicios, es posible que deba registrarse con nosotros y configurar una cuenta con su dirección de correo electrónico y una contraseña (su "Cuenta"). La dirección de correo electrónico que proporcione será su dirección de correo electrónico y usted es el único responsable de mantener la confidencialidad de su contraseña. Usted es el único responsable de todas las actividades que ocurran en su Cuenta. Por lo tanto, debe proteger su contraseña y hacer que sea difícil para otros adivinarla. No transferirá su Cuenta a otra parte sin nuestro consentimiento. Puede conectarse a los Servicios con un servicio de terceros y nos da permiso para acceder, almacenar y utilizar su información de ese servicio según lo permita ese servicio y como se describe en nuestra Política de Privacidad. Si cree que su Cuenta puede haber sido comprometida o utilizada indebidamente, contáctenos inmediatamente al servicio de atención al cliente de VentaCuba. Uso de los Servicios. Publicarás en la categoría o área apropiada y no harás ninguna de las siguientes cosas malas:""",
           "VentaCuba Terms of Use": "VentaCuba Términos de uso",
           "Forgot Password": "Has olvidado tu contraseña",
+          "Remember Me": "Recuérdame",
           "Owner": "Dueño",
           "Category of": "Categoría de",
           "Continue deleting...": "Continuar eliminando...",
