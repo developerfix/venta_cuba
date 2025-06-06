@@ -94,7 +94,7 @@ class _ListingsState extends State<Listings> {
                       fontWeight: FontWeight.w600,
                       color: AppColors.black),
                 ),
-                              SizedBox(
+                SizedBox(
                   height: 50..h,
                 ),
                 TabBar(
@@ -147,278 +147,387 @@ class _ListingsState extends State<Listings> {
                           dragStartBehavior: DragStartBehavior.down,
                           physics: NeverScrollableScrollPhysics(),
                           children: [
-                           authCont.isBusinessAccount  && cont.bussinessPostCount.value == 0
-                           ||  !authCont.isBusinessAccount  && cont.personalAcountPost.value == 0
-                           ?
-                              Container(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Image.asset(
-                                      'assets/icons/list_icon.webp',
-                                      height: 150,
-                                      width: 150,
+                            authCont.isBusinessAccount &&
+                                        cont.bussinessPostCount.value == 0 ||
+                                    !authCont.isBusinessAccount &&
+                                        cont.personalAcountPost.value == 0
+                                ? Container(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        Image.asset(
+                                          'assets/icons/list_icon.webp',
+                                          height: 150,
+                                          width: 150,
+                                        ),
+                                        SizedBox(
+                                          height: 30..h,
+                                        ),
+                                        Text(
+                                          'Your listings will live here'.tr,
+                                          style: TextStyle(
+                                              fontSize: 21,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColors.black),
+                                        ),
+                                        SizedBox(
+                                          height: 20..h,
+                                        ),
+                                        InkWell(
+                                          onTap: () {
+                                            authCont.currentIndexBottomAppBar =
+                                                2;
+                                            authCont.update();
+                                          },
+                                          child: MyButton(text: 'List Now'.tr),
+                                        ),
+                                      ],
                                     ),
-                                    SizedBox(
-                                      height: 30..h,
-                                    ),
-                                    Text(
-                                      'Your listings will live here'.tr,
-                                      style: TextStyle(
-                                          fontSize: 21,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.black),
-                                    ),
-                                    SizedBox(
-                                      height: 20..h,
-                                    ),
-                                    InkWell(
-                                      onTap: () {
-                                        authCont.currentIndexBottomAppBar = 2;
-                                        authCont.update();
-                                      },
-                                      child: MyButton(text: 'List Now'.tr),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            :
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  authCont.isBusinessAccount ?
-                                   CustomText(
-                                    text: cont.bussinessPostCount.value == 0
-                                        ? "0 Listing".tr
-                                        : "${cont.bussinessPostCount.value} ${"Listings".tr}",
-                                    fontSize: 16.sp,
-                                  ) :
-                                  CustomText(
-                                    text: cont.personalAcountPost.value == 0
-                                        ? "0 Listing".tr
-                                        : "${cont.personalAcountPost.value} ${"Listings".tr}",
-                                    fontSize: 16.sp,
-                                  ),
-                                  SizedBox(height: 4),
-                                  Expanded(
-                                    child: ListView.separated(
-                                      separatorBuilder:
-                                          (BuildContext context, int index) {
-                                        int isBusiness =
-                                            cont.isBusinessAccount ? 1 : 0;
-                                        if (cont.userListingModelList[index]
-                                                .businessStatus ==
-                                            "${isBusiness}") {
-                                          return Column(
-                                            children: [
-                                              SizedBox(
-                                                height: 10.h,
-                                              ),
-                                              Divider(),
-                                              SizedBox(
-                                                height: 10,
-                                              ),
-                                            ],
-                                          );
-                                        } else if (cont
-                                                .userListingModelList[index]
-                                                .businessStatus ==
-                                            "${isBusiness}") {
-                                          return Column(
-                                            children: [
-                                              SizedBox(
-                                                height: 10.h,
-                                              ),
-                                              Divider(),
-                                              SizedBox(
-                                                height: 10,
-                                              ),
-                                            ],
-                                          );
-                                        } else {
-                                          return SizedBox();
-                                        }
-                                      },
-                                      itemBuilder: (context, index) {
-                                        int isBusiness =
-                                            cont.isBusinessAccount ? 1 : 0;
-                                        if (cont.userListingModelList[index]
-                                                .businessStatus ==
-                                            "${isBusiness}") {
-                                          return Container(
-                                            child: Column(
-                                              children: [
-                                                Container(
-                                                  height: 190..h,
-                                                  width: MediaQuery.of(context)
-                                                      .size
-                                                      .width,
-                                                  decoration: BoxDecoration(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              10..r)),
-                                                  child: Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    children: [
-                                                      CachedNetworkImage(
-                                                        height: 170..h,
-                                                        width: 170..w,
-                                                        imageUrl: cont
-                                                                        .userListingModelList[
-                                                                            index]
-                                                                        .gallery !=
-                                                                    null &&
-                                                                cont
-                                                                    .userListingModelList[
-                                                                        index]
-                                                                    .gallery!
-                                                                    .isNotEmpty
-                                                            ? "${cont.userListingModelList[index].gallery?.first}"
-                                                            : "",
-                                                        imageBuilder: (context,
-                                                                imageProvider) =>
-                                                            ClipRRect(
+                                  )
+                                : Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      authCont.isBusinessAccount
+                                          ? CustomText(
+                                              text: cont.bussinessPostCount
+                                                          .value ==
+                                                      0
+                                                  ? "0 Listing".tr
+                                                  : "${cont.bussinessPostCount.value} ${"Listings".tr}",
+                                              fontSize: 16.sp,
+                                            )
+                                          : CustomText(
+                                              text: cont.personalAcountPost
+                                                          .value ==
+                                                      0
+                                                  ? "0 Listing".tr
+                                                  : "${cont.personalAcountPost.value} ${"Listings".tr}",
+                                              fontSize: 16.sp,
+                                            ),
+                                      SizedBox(height: 4),
+                                      Expanded(
+                                        child: ListView.separated(
+                                          separatorBuilder:
+                                              (BuildContext context,
+                                                  int index) {
+                                            int isBusiness =
+                                                cont.isBusinessAccount ? 1 : 0;
+                                            if (cont.userListingModelList[index]
+                                                    .businessStatus ==
+                                                "${isBusiness}") {
+                                              return Column(
+                                                children: [
+                                                  SizedBox(
+                                                    height: 10.h,
+                                                  ),
+                                                  Divider(),
+                                                  SizedBox(
+                                                    height: 10,
+                                                  ),
+                                                ],
+                                              );
+                                            } else if (cont
+                                                    .userListingModelList[index]
+                                                    .businessStatus ==
+                                                "${isBusiness}") {
+                                              return Column(
+                                                children: [
+                                                  SizedBox(
+                                                    height: 10.h,
+                                                  ),
+                                                  Divider(),
+                                                  SizedBox(
+                                                    height: 10,
+                                                  ),
+                                                ],
+                                              );
+                                            } else {
+                                              return SizedBox();
+                                            }
+                                          },
+                                          itemBuilder: (context, index) {
+                                            int isBusiness =
+                                                cont.isBusinessAccount ? 1 : 0;
+                                            if (cont.userListingModelList[index]
+                                                    .businessStatus ==
+                                                "${isBusiness}") {
+                                              return Container(
+                                                child: Column(
+                                                  children: [
+                                                    Container(
+                                                      height: 190..h,
+                                                      width:
+                                                          MediaQuery.of(context)
+                                                              .size
+                                                              .width,
+                                                      decoration: BoxDecoration(
                                                           borderRadius:
                                                               BorderRadius
-                                                                  .circular(10),
-                                                          child: Container(
-                                                            height: 170..h,
-                                                            width: 170..w,
-                                                            decoration:
-                                                                BoxDecoration(
-                                                              image:
-                                                                  DecorationImage(
-                                                                image:
-                                                                    imageProvider,
-                                                                fit: BoxFit
-                                                                    .cover,
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        placeholder: (context,
-                                                                url) =>
-                                                            SizedBox(
-                                                                height: 170..h,
-                                                                width: 170..w,
-                                                                child: Center(
-                                                                    child:
-                                                                        CircularProgressIndicator(
-                                                                  strokeWidth:
-                                                                      2,
-                                                                ))),
-                                                        errorWidget: (context,
-                                                                url, error) =>
-                                                            Center(
-                                                                child: Text(
-                                                                    "No Image"
-                                                                        .tr)),
-                                                      ),
-                                                      Column(
+                                                                  .circular(
+                                                                      10..r)),
+                                                      child: Row(
                                                         mainAxisAlignment:
                                                             MainAxisAlignment
                                                                 .spaceBetween,
                                                         children: [
-                                                          Container(
-                                                            // height: 85..h,
-                                                            width: MediaQuery.of(
-                                                                        context)
-                                                                    .size
-                                                                    .width *
-                                                                .37,
-                                                            child: Column(
-                                                              crossAxisAlignment:
-                                                                  CrossAxisAlignment
-                                                                      .start,
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .spaceBetween,
-                                                              children: [
-                                                                SelectionArea(
-                                                                  child: Text(
-                                                                    '${cont.userListingModelList[index].title}',
-                                                                    maxLines: 2,
-                                                                    style: TextStyle(
-                                                                        fontSize: 17
-                                                                          ..sp,
-                                                                        fontWeight:
-                                                                            FontWeight
-                                                                                .w600,
-                                                                        color: Colors
-                                                                            .black),
+                                                          CachedNetworkImage(
+                                                            height: 170..h,
+                                                            width: 170..w,
+                                                            imageUrl: cont
+                                                                            .userListingModelList[
+                                                                                index]
+                                                                            .gallery !=
+                                                                        null &&
+                                                                    cont
+                                                                        .userListingModelList[
+                                                                            index]
+                                                                        .gallery!
+                                                                        .isNotEmpty
+                                                                ? "${cont.userListingModelList[index].gallery?.first}"
+                                                                : "",
+                                                            imageBuilder: (context,
+                                                                    imageProvider) =>
+                                                                ClipRRect(
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          10),
+                                                              child: Container(
+                                                                height: 170..h,
+                                                                width: 170..w,
+                                                                decoration:
+                                                                    BoxDecoration(
+                                                                  image:
+                                                                      DecorationImage(
+                                                                    image:
+                                                                        imageProvider,
+                                                                    fit: BoxFit
+                                                                        .cover,
                                                                   ),
                                                                 ),
-                                                                SelectionArea(
-                                                                  child: Text(
-                                                                    "${cont.userListingModelList[index].address}",
-                                                                    maxLines: 2,
-                                                                    style: TextStyle(
-                                                                        fontSize: 12
-                                                                          ..sp,
-                                                                        fontWeight:
-                                                                            FontWeight
-                                                                                .w400,
-                                                                        color: AppColors
-                                                                            .k0xFF403C3C),
-                                                                  ),
-                                                                ),
-                                                                SelectionArea(
-                                                                  child: Text(
-                                                                    cont.userListingModelList[index].subSubCategory !=
-                                                                            null
-                                                                        ? "${cont.userListingModelList[index].subSubCategory?.name}"
-                                                                        : cont.userListingModelList[index].subCategory !=
-                                                                                null
-                                                                            ? "${cont.userListingModelList[index].subCategory?.name}"
-                                                                            : "${cont.userListingModelList[index].category?.name}",
-                                                                    maxLines: 2,
-                                                                    style: TextStyle(
-                                                                        fontSize: 12
-                                                                          ..sp,
-                                                                        fontWeight:
-                                                                            FontWeight
-                                                                                .w400,
-                                                                        color: AppColors
-                                                                            .k0xFF403C3C),
-                                                                  ),
-                                                                ),
-                                                                SelectionArea(
-                                                                  child: Text(
-                                                                    cont.userListingModelList[index].price ==
-                                                                            "0"
-                                                                        ? ""
-                                                                        : "\$${cont.userListingModelList[index].price}",
-                                                                    maxLines: 1,
-                                                                    style: TextStyle(
-                                                                        fontSize: 16
-                                                                          ..sp,
-                                                                        fontWeight:
-                                                                            FontWeight
-                                                                                .w600,
-                                                                        color: AppColors
-                                                                            .k0xFF0254B8),
-                                                                  ),
-                                                                ),
-                                                              ],
+                                                              ),
                                                             ),
+                                                            placeholder: (context,
+                                                                    url) =>
+                                                                SizedBox(
+                                                                    height: 170
+                                                                      ..h,
+                                                                    width: 170
+                                                                      ..w,
+                                                                    child: Center(
+                                                                        child: CircularProgressIndicator(
+                                                                      strokeWidth:
+                                                                          2,
+                                                                    ))),
+                                                            errorWidget: (context,
+                                                                    url,
+                                                                    error) =>
+                                                                Center(
+                                                                    child: Text(
+                                                                        "No Image"
+                                                                            .tr)),
                                                           ),
-                                                          SizedBox(
-                                                            width: MediaQuery.of(
-                                                                        context)
-                                                                    .size
-                                                                    .width *
-                                                                .37,
-                                                            child: Row(
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .spaceBetween,
-                                                              children: [
-                                                                Container(
+                                                          Column(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceBetween,
+                                                            children: [
+                                                              Container(
+                                                                // height: 85..h,
+                                                                width: MediaQuery.of(
+                                                                            context)
+                                                                        .size
+                                                                        .width *
+                                                                    .37,
+                                                                child: Column(
+                                                                  crossAxisAlignment:
+                                                                      CrossAxisAlignment
+                                                                          .start,
+                                                                  mainAxisAlignment:
+                                                                      MainAxisAlignment
+                                                                          .spaceBetween,
+                                                                  children: [
+                                                                    SelectionArea(
+                                                                      child:
+                                                                          Text(
+                                                                        '${cont.userListingModelList[index].title}',
+                                                                        maxLines:
+                                                                            2,
+                                                                        style: TextStyle(
+                                                                            fontSize: 17
+                                                                              ..sp,
+                                                                            fontWeight:
+                                                                                FontWeight.w600,
+                                                                            color: Colors.black),
+                                                                      ),
+                                                                    ),
+                                                                    SelectionArea(
+                                                                      child:
+                                                                          Text(
+                                                                        "${cont.userListingModelList[index].address}",
+                                                                        maxLines:
+                                                                            2,
+                                                                        style: TextStyle(
+                                                                            fontSize: 12
+                                                                              ..sp,
+                                                                            fontWeight:
+                                                                                FontWeight.w400,
+                                                                            color: AppColors.k0xFF403C3C),
+                                                                      ),
+                                                                    ),
+                                                                    SelectionArea(
+                                                                      child:
+                                                                          Text(
+                                                                        cont.userListingModelList[index].subSubCategory !=
+                                                                                null
+                                                                            ? "${cont.userListingModelList[index].subSubCategory?.name}"
+                                                                            : cont.userListingModelList[index].subCategory != null
+                                                                                ? "${cont.userListingModelList[index].subCategory?.name}"
+                                                                                : "${cont.userListingModelList[index].category?.name}",
+                                                                        maxLines:
+                                                                            2,
+                                                                        style: TextStyle(
+                                                                            fontSize: 12
+                                                                              ..sp,
+                                                                            fontWeight:
+                                                                                FontWeight.w400,
+                                                                            color: AppColors.k0xFF403C3C),
+                                                                      ),
+                                                                    ),
+                                                                    SelectionArea(
+                                                                      child:
+                                                                          Text(
+                                                                        cont.userListingModelList[index].price == "0" ||
+                                                                                cont.userListingModelList[index].price == null
+                                                                            ? ""
+                                                                            : "${PriceFormatter().formatNumber(int.parse(cont.userListingModelList[index].price.toString()))} ${cont.userListingModelList[index].currency == "null" ? 'USD' : cont.userListingModelList[index].currency}",
+                                                                        maxLines:
+                                                                            1,
+                                                                        style: TextStyle(
+                                                                            fontSize: 16
+                                                                              ..sp,
+                                                                            fontWeight:
+                                                                                FontWeight.w600,
+                                                                            color: AppColors.k0xFF0254B8),
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                              SizedBox(
+                                                                width: MediaQuery.of(
+                                                                            context)
+                                                                        .size
+                                                                        .width *
+                                                                    .37,
+                                                                child: Row(
+                                                                  mainAxisAlignment:
+                                                                      MainAxisAlignment
+                                                                          .spaceBetween,
+                                                                  children: [
+                                                                    Container(
+                                                                      height: 35
+                                                                        ..h,
+                                                                      width:
+                                                                          60.w,
+                                                                      decoration:
+                                                                          BoxDecoration(
+                                                                        border: Border.all(
+                                                                            color:
+                                                                                AppColors.k0xFF0254B8),
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(10),
+                                                                      ),
+                                                                      child:
+                                                                          InkWell(
+                                                                        onTap:
+                                                                            () {
+                                                                          cont.listingModel =
+                                                                              cont.userListingModelList[index];
+                                                                          Navigator.push(
+                                                                              context,
+                                                                              MaterialPageRoute(
+                                                                                builder: (context) => Post(
+                                                                                  isUpdate: true,
+                                                                                ),
+                                                                              ));
+                                                                        },
+                                                                        child:
+                                                                            Center(
+                                                                          child:
+                                                                              Text(
+                                                                            'Edit'.tr,
+                                                                            style: TextStyle(
+                                                                                fontSize: 16..sp,
+                                                                                fontWeight: FontWeight.w600,
+                                                                                color: AppColors.k0xFF0254B8),
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                    Container(
+                                                                      height: 35
+                                                                        ..h,
+                                                                      width:
+                                                                          60.w,
+                                                                      decoration:
+                                                                          BoxDecoration(
+                                                                        border: Border.all(
+                                                                            color:
+                                                                                Colors.red),
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(10),
+                                                                      ),
+                                                                      child:
+                                                                          InkWell(
+                                                                        onTap:
+                                                                            () {
+                                                                          cont.listingModel =
+                                                                              cont.userListingModelList[index];
+                                                                          showDialog(
+                                                                              context: context,
+                                                                              builder: (context) {
+                                                                                return deleteListing(index);
+                                                                              });
+                                                                        },
+                                                                        child:
+                                                                            Center(
+                                                                          child:
+                                                                              Text(
+                                                                            'Delete'.tr,
+                                                                            style: TextStyle(
+                                                                                fontSize: 16..sp,
+                                                                                fontWeight: FontWeight.w600,
+                                                                                color: Colors.red),
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                    )
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                              GestureDetector(
+                                                                onTap: () {
+                                                                  Navigator.push(
+                                                                      context,
+                                                                      MaterialPageRoute(
+                                                                        builder:
+                                                                            (context) =>
+                                                                                const BecomeVendor(),
+                                                                      ));
+                                                                },
+                                                                child:
+                                                                    Container(
                                                                   height: 35..h,
-                                                                  width: 60.w,
+                                                                  width: MediaQuery.of(
+                                                                              context)
+                                                                          .size
+                                                                          .width *
+                                                                      .37,
                                                                   decoration:
                                                                       BoxDecoration(
                                                                     border: Border.all(
@@ -431,6 +540,8 @@ class _ListingsState extends State<Listings> {
                                                                   child:
                                                                       InkWell(
                                                                     onTap: () {
+                                                                      cont.isListing =
+                                                                          1;
                                                                       cont.listingModel =
                                                                           cont.userListingModelList[
                                                                               index];
@@ -438,16 +549,14 @@ class _ListingsState extends State<Listings> {
                                                                           context,
                                                                           MaterialPageRoute(
                                                                             builder: (context) =>
-                                                                                Post(
-                                                                              isUpdate: true,
-                                                                            ),
+                                                                                const FrameScreen(),
                                                                           ));
                                                                     },
                                                                     child:
                                                                         Center(
                                                                       child:
                                                                           Text(
-                                                                        'Edit'
+                                                                        'View Details'
                                                                             .tr,
                                                                         style: TextStyle(
                                                                             fontSize: 16
@@ -459,128 +568,25 @@ class _ListingsState extends State<Listings> {
                                                                     ),
                                                                   ),
                                                                 ),
-                                                                Container(
-                                                                  height: 35..h,
-                                                                  width: 60.w,
-                                                                  decoration:
-                                                                      BoxDecoration(
-                                                                    border: Border.all(
-                                                                        color: Colors
-                                                                            .red),
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                            10),
-                                                                  ),
-                                                                  child:
-                                                                      InkWell(
-                                                                    onTap: () {
-                                                                      cont.listingModel =
-                                                                          cont.userListingModelList[
-                                                                              index];
-                                                                      showDialog(
-                                                                          context:
-                                                                              context,
-                                                                          builder:
-                                                                              (context) {
-                                                                            return deleteListing(index);
-                                                                          });
-                                                                    },
-                                                                    child:
-                                                                        Center(
-                                                                      child:
-                                                                          Text(
-                                                                        'Delete'
-                                                                            .tr,
-                                                                        style: TextStyle(
-                                                                            fontSize: 16
-                                                                              ..sp,
-                                                                            fontWeight:
-                                                                                FontWeight.w600,
-                                                                            color: Colors.red),
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                )
-                                                              ],
-                                                            ),
-                                                          ),
-                                                          GestureDetector(
-                                                            onTap: () {
-                                                              Navigator.push(
-                                                                  context,
-                                                                  MaterialPageRoute(
-                                                                    builder:
-                                                                        (context) =>
-                                                                            const BecomeVendor(),
-                                                                  ));
-                                                            },
-                                                            child: Container(
-                                                              height: 35..h,
-                                                              width: MediaQuery.of(
-                                                                          context)
-                                                                      .size
-                                                                      .width *
-                                                                  .37,
-                                                              decoration:
-                                                                  BoxDecoration(
-                                                                border: Border.all(
-                                                                    color: AppColors
-                                                                        .k0xFF0254B8),
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            10),
-                                                              ),
-                                                              child: InkWell(
-                                                                onTap: () {
-                                                                  cont.isListing =
-                                                                      1;
-                                                                  cont.listingModel =
-                                                                      cont.userListingModelList[
-                                                                          index];
-                                                                  Navigator.push(
-                                                                      context,
-                                                                      MaterialPageRoute(
-                                                                        builder:
-                                                                            (context) =>
-                                                                                const FrameScreen(),
-                                                                      ));
-                                                                },
-                                                                child: Center(
-                                                                  child: Text(
-                                                                    'View Details'
-                                                                        .tr,
-                                                                    style: TextStyle(
-                                                                        fontSize: 16
-                                                                          ..sp,
-                                                                        fontWeight:
-                                                                            FontWeight
-                                                                                .w600,
-                                                                        color: AppColors
-                                                                            .k0xFF0254B8),
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ),
+                                                              )
+                                                            ],
                                                           )
                                                         ],
-                                                      )
-                                                    ],
-                                                  ),
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
-                                              ],
-                                            ),
-                                          );
-                                        } else {
-                                          return SizedBox();
-                                        }
-                                      },
-                                      itemCount:
-                                          cont.userListingModelList.length,
-                                    ),
+                                              );
+                                            } else {
+                                              return SizedBox();
+                                            }
+                                          },
+                                          itemCount:
+                                              cont.userListingModelList.length,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
                             cont.userListingModelList.isEmpty
                                 ? Container(
                                     child: Column(
@@ -783,10 +789,10 @@ class _ListingsState extends State<Listings> {
                                                                     SelectionArea(
                                                                       child:
                                                                           Text(
-                                                                        cont.userListingModelList[index].price ==
-                                                                                "0"
+                                                                        cont.userListingModelList[index].price == "0" ||
+                                                                                cont.userListingModelList[index].price == null
                                                                             ? ""
-                                                                            : "\$${cont.userListingModelList[index].price}",
+                                                                            : "${PriceFormatter().formatNumber(int.parse(cont.userListingModelList[index].price.toString()))} ${cont.userListingModelList[index].currency ?? 'USD'}",
                                                                         maxLines:
                                                                             1,
                                                                         style: TextStyle(

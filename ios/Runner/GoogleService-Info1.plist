@@ -2,18 +2,24 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CLIENT_ID</key>
+	<string>878985420015-g1r7v89fmola2pi4ep9th8fj2i5hh0be.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.878985420015-g1r7v89fmola2pi4ep9th8fj2i5hh0be</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>878985420015-02qvolrtkpdllrlrmppc8e7e54m6t59s.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
-	<string>AIzaSyC5AA6ZrDtrG0Gy_ZMmT8zrq_gFiHevQ1g</string>
+	<string>AIzaSyDQKv3zUavcypoNiWbvQQk4uJRV2ZV-5dI</string>
 	<key>GCM_SENDER_ID</key>
-	<string>162325053043</string>
+	<string>878985420015</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
 	<string>com.highapp.ventacuba.com</string>
 	<key>PROJECT_ID</key>
-	<string>cubatest-d884e</string>
+	<string>ventacuba-acf38</string>
 	<key>STORAGE_BUCKET</key>
-	<string>cubatest-d884e.firebasestorage.app</string>
+	<string>ventacuba-acf38.appspot.com</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -25,6 +31,8 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:162325053043:ios:d7abe215d3b02799097406</string>
+	<string>1:878985420015:ios:9b51bd776b8880c5794f1a</string>
+	<key>DATABASE_URL</key>
+	<string>https://ventacuba-acf38-default-rtdb.firebaseio.com</string>
 </dict>
 </plist>

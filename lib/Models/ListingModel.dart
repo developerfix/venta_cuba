@@ -8,6 +8,7 @@ class ListingModel {
   String? title;
   List<String>? gallery;
   String? price;
+  String? currency;
   String? description;
   String? address;
   String? longitude;
@@ -29,6 +30,7 @@ class ListingModel {
   ListingModel(
       {this.id,
       this.userId,
+      this.currency,
       this.categoryId,
       this.subCategoryId,
       this.subSubCategoryId,
@@ -57,12 +59,15 @@ class ListingModel {
   ListingModel.fromJson(Map<String, dynamic> json) {
     id = json['id'];
     userId = json['user_id'].toString();
+    currency = json['currency'].toString();
     categoryId = json['category_id'].toString();
     subCategoryId = json['sub_category_id'].toString();
     subSubCategoryId = json['sub_sub_category_id'].toString();
-    title = json['title'].toString();;
+    title = json['title'].toString();
+    ;
     businessStatus = json['business_status'].toString();
-    itemId = json['item_id'].toString();;
+    itemId = json['item_id'].toString();
+    ;
     longitude = json['longitude'].toString();
     latitude = json['latitude'].toString();
     if (json['gallery'] != null) {
@@ -76,16 +81,22 @@ class ListingModel {
     additionalFeatures = json['additional_features'] != null
         ? new AdditionalFeatures.fromJson(json['additional_features'])
         : null;
-    averageRating = json['average_rating'].toString();;
+    averageRating = json['average_rating'].toString();
+    ;
     status = json['status'].toString();
     soldStatus = json['sold_status'].toString();
     isFavorite = json['isFavorite'].toString();
     isSellerFavorite = json['isFavoriteSeller'].toString() ?? "0";
     user = json['user'] != null ? new User.fromJson(json['user']) : null;
-    category = json['category'] != null ? new Category.fromJson(json['category']) : null;
-    subCategory = json['sub_category'] != null ? new SubCategory.fromJson(json['sub_category']) : null;
-    subSubCategory =
-        json['sub_sub_category'] != null ? new SubSubCategory.fromJson(json['sub_sub_category']) : null;
+    category = json['category'] != null
+        ? new Category.fromJson(json['category'])
+        : null;
+    subCategory = json['sub_category'] != null
+        ? new SubCategory.fromJson(json['sub_category'])
+        : null;
+    subSubCategory = json['sub_sub_category'] != null
+        ? new SubSubCategory.fromJson(json['sub_sub_category'])
+        : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -93,6 +104,7 @@ class ListingModel {
     data['id'] = this.id;
     data['user_id'] = this.userId;
     data['item_id'] = this.itemId;
+    data['currency'] = this.currency;
     data['category_id'] = this.categoryId;
     data['sub_category_id'] = this.subCategoryId;
     data['sub_sub_category_id'] = this.subSubCategoryId;
@@ -136,14 +148,17 @@ class AdditionalFeatures {
   OptionalDetails? optionalDetails;
   String? videoLink;
 
-  AdditionalFeatures({this.type, this.listingDetails, this.optionalDetails, this.videoLink});
+  AdditionalFeatures(
+      {this.type, this.listingDetails, this.optionalDetails, this.videoLink});
 
   AdditionalFeatures.fromJson(Map<String, dynamic> json) {
     type = json['type'];
-    listingDetails =
-        json['listing_details'] != null ? new ListingDetails.fromJson(json['listing_details']) : null;
-    optionalDetails =
-        json['optional_details'] != null ? new OptionalDetails.fromJson(json['optional_details']) : null;
+    listingDetails = json['listing_details'] != null
+        ? new ListingDetails.fromJson(json['listing_details'])
+        : null;
+    optionalDetails = json['optional_details'] != null
+        ? new OptionalDetails.fromJson(json['optional_details'])
+        : null;
     videoLink = json['video_link'];
   }
 
@@ -188,14 +203,21 @@ class ListingDetails {
 
 class OptionalDetails {
   String? phoneNumber;
+  String? website;
   String? condition;
   String? fulfillment;
   String? payment;
 
-  OptionalDetails({this.phoneNumber, this.condition, this.fulfillment, this.payment});
+  OptionalDetails(
+      {this.phoneNumber,
+      this.website,
+      this.condition,
+      this.fulfillment,
+      this.payment});
 
   OptionalDetails.fromJson(Map<String, dynamic> json) {
     phoneNumber = json['phone_number'].toString();
+    website = json['website'].toString();
     condition = json['condition'].toString();
     fulfillment = json['fulfillment'].toString();
     payment = json['payment'].toString();
@@ -204,6 +226,7 @@ class OptionalDetails {
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     data['phone_number'] = this.phoneNumber;
+    data['website'] = this.website;
     data['condition'] = this.condition;
     data['fulfillment'] = this.fulfillment;
     data['payment'] = this.payment;
@@ -266,15 +289,15 @@ class User {
       this.pinterestLink,
       this.twitterLink,
       this.linkedinLink,
-        this.tiktokLink,
-        this.youtubeLink,
-        this.businessYoutubeLink,
-        this.businessTiktokLink,
-        this.businessPinterestLink,
-        this.businessTwitterLink,
-        this.businessLinkedinLink,
-        this.businessFacebookLink,
-        this.businessInstagramLink,
+      this.tiktokLink,
+      this.youtubeLink,
+      this.businessYoutubeLink,
+      this.businessTiktokLink,
+      this.businessPinterestLink,
+      this.businessTwitterLink,
+      this.businessLinkedinLink,
+      this.businessFacebookLink,
+      this.businessInstagramLink,
       this.averageRating,
       this.allNotifications,
       this.bumpUpNotification,
@@ -393,8 +416,10 @@ class SubCategory {
 
   SubCategory.fromJson(Map<String, dynamic> json) {
     id = json['id'];
-    categoryId = json['category_id'].toString();;
-    name = json['name'].toString();;
+    categoryId = json['category_id'].toString();
+    ;
+    name = json['name'].toString();
+    ;
   }
 
   Map<String, dynamic> toJson() {
@@ -416,9 +441,12 @@ class SubSubCategory {
 
   SubSubCategory.fromJson(Map<String, dynamic> json) {
     id = json['id'];
-    categoryId = json['category_id'].toString();;
-    subCategoryId = json['sub_category_id'].toString();;
-    name = json['name'].toString();;
+    categoryId = json['category_id'].toString();
+    ;
+    subCategoryId = json['sub_category_id'].toString();
+    ;
+    name = json['name'].toString();
+    ;
   }
 
   Map<String, dynamic> toJson() {

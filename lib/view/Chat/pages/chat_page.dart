@@ -436,10 +436,10 @@ class _ChatPageState extends State<ChatPage> {
                                   ),
                                   onPressed: () {
                                     sendMessage('text');
-                                    // cont.scrollController.jumpTo(cont
-                                    //     .scrollController
-                                    //     .position
-                                    //     .maxScrollExtent);
+                                    cont.scrollController.jumpTo(cont
+                                        .scrollController
+                                        .position
+                                        .maxScrollExtent);
                                     cont.update();
                                   },
                                 ),
@@ -642,53 +642,37 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future sendMessage(String messageType) async {
-    print(widget.senderId);
-    if (chatCont.messageController.text.isNotEmpty) {
-      Map<String, dynamic> chatMessageMap = {
-        "message": chatCont.messageController.text,
-        "isMessaged": true,
-        "messageType": messageType,
-        "sender": "${authCont.user?.firstName} ${authCont.user?.lastName}",
-        "time": FieldValue.serverTimestamp(),
-        "messageTime": DateFormat('h:mm a').format(DateTime.now()).toString(),
-        "sendBy": "${authCont.user?.userId}",
-      };
-      String? id = widget.chatId ?? widget.createChatid;
-      print("?????????????$id");
-      print("here2");
-      await chatCont.sendMessage(id ?? "", chatMessageMap);
-      print("here2");
-      // chatCont.scrollController
-      //     .jumpTo(chatCont.scrollController.position.maxScrollExtent);
+    try {
+      if (chatCont.messageController.text.isNotEmpty) {
+        Map<String, dynamic> chatMessageMap = {
+          "message": chatCont.messageController.text,
+          "isMessaged": true,
+          "messageType": messageType,
+          "sender": "${authCont.user?.firstName} ${authCont.user?.lastName}",
+          "time": FieldValue.serverTimestamp(),
+          "messageTime": DateFormat('h:mm a').format(DateTime.now()).toString(),
+          "sendBy": "${authCont.user?.userId}",
+        };
+        String? id = widget.chatId ?? widget.createChatid;
+        await chatCont.sendMessage(id ?? "", chatMessageMap);
+        chatCont.messageController.clear();
 
-      // firebaseMessaging.sendNotificationFCM(
-      //     title: "${authCont.user?.firstName} ${authCont.user?.lastName}",
-      //     name: "${authCont.user?.firstName} ${authCont.user?.lastName}",
-      //     body: messageType == "voice"
-      //         ? "Voice Message"
-      //         : messageType == "image"
-      //             ? "Image"
-      //             : chatCont.messageController.text,
-      //     deviceToken: widget.deviceToken,
-      //     userId: authCont.user?.userId.toString(),
-      //     remoteId: widget.remoteUid,
-      //     profileImage: "",
-      //     type: "message");
-
-      // firebaseMessaging.sendNotificationFCM(
-      //     widget.deviceToken ?? "",
-      //     "${authCont.user?.firstName} ${authCont.user?.lastName}",
-      //     messageType == "voice"
-      //         ? "Voice Message"
-      //         : messageType == "image"
-      //         ? "Image"
-      //         : chatCont.messageController.text,
-      //     1,
-      //     "uid",
-      //     "myuid",
-      //     "clientuid",
-      //     "name");
-      chatCont.messageController.clear();
+        firebaseMessaging.sendNotificationFCM(
+            title: "${authCont.user?.firstName} ${authCont.user?.lastName}",
+            name: "${authCont.user?.firstName} ${authCont.user?.lastName}",
+            body: messageType == "voice"
+                ? "Voice Message"
+                : messageType == "image"
+                    ? "Image"
+                    : chatCont.messageController.text,
+            deviceToken: widget.deviceToken,
+            userId: authCont.user?.userId.toString(),
+            remoteId: widget.remoteUid,
+            profileImage: "",
+            type: "message");
+      }
+    } catch (e) {
+      print("Error sending message: $e");
     }
   }
 

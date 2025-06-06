@@ -9,12 +9,15 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:venta_cuba/Services/Notfication/notficationservice.dart';
 import 'package:venta_cuba/Utils/global_variabel.dart';
 
 import '../Controllers/auth_controller.dart';
 import 'fcm_model.dart';
-bool isOpenFile=false;
-String filePathD="";
+
+bool isOpenFile = false;
+String filePathD = "";
+
 class FCM {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
   final streamCtrl = StreamController<String>.broadcast();
@@ -47,7 +50,8 @@ class FCM {
     iosInitializationSettings = const DarwinInitializationSettings();
     initializationSettings = InitializationSettings(
         iOS: iosInitializationSettings, android: androidInitializationSettings);
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings,
+    await flutterLocalNotificationsPlugin.initialize(
+      initializationSettings,
       onDidReceiveNotificationResponse: onDidReceiveLocalNotification,
     );
   }
@@ -66,7 +70,6 @@ class FCM {
         wakeUpScreen, autoCancel, category);
     // }
   }
-
 
   static Future<void> notification(
       String body,
@@ -90,23 +93,23 @@ class FCM {
     vibrationPattern[6] = 0;
 
     AndroidNotificationDetails androidNotificationDetails =
-    AndroidNotificationDetails(
-        meth.Random().nextInt(1000).toString(), title,
-        priority: Priority.high,
-        largeIcon: const DrawableResourceAndroidBitmap('@drawable/profits'),
-        vibrationPattern: vibrationPattern,
-        channelDescription: channelDescription,
-        fullScreenIntent: wakeUpScreen,
-        category: category,
-        autoCancel: autoCancel,
-        importance: Importance.high,
-        channelShowBadge: true,
-        styleInformation:
-        BigTextStyleInformation(body, htmlFormatSummaryText: true),
-        ticker: ticker);
+        AndroidNotificationDetails(
+            meth.Random().nextInt(1000).toString(), title,
+            priority: Priority.high,
+            largeIcon: const DrawableResourceAndroidBitmap('@drawable/profits'),
+            vibrationPattern: vibrationPattern,
+            channelDescription: channelDescription,
+            fullScreenIntent: wakeUpScreen,
+            category: category,
+            autoCancel: autoCancel,
+            importance: Importance.high,
+            channelShowBadge: true,
+            styleInformation:
+                BigTextStyleInformation(body, htmlFormatSummaryText: true),
+            ticker: ticker);
 
     DarwinNotificationDetails iosNotificationDetails =
-    const DarwinNotificationDetails();
+        const DarwinNotificationDetails();
 
     NotificationDetails notificationDetails = NotificationDetails(
         android: androidNotificationDetails, iOS: iosNotificationDetails);
@@ -115,7 +118,6 @@ class FCM {
         meth.Random().nextInt(1000), title, body, notificationDetails,
         payload: payLoad);
   }
-
 
   Future<void> ios_permission() async {
     if (Platform.isIOS) {
@@ -131,73 +133,81 @@ class FCM {
       final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
           flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>();
-
     }
     _firebaseMessaging.requestPermission(sound: true, badge: true, alert: true);
   }
 
-
-
-
   void firebaseCloudMessagingListeners(BuildContext context) {
     if (Platform.isIOS) ios_permission();
     print('listening firebase');
+
     Future.delayed(const Duration(milliseconds: 500), () {
       FirebaseMessaging.onMessage.listen((RemoteMessage messages) {
         print('A new onMessage event was published! ${messages.data["body"]}');
-        print('A new onMessage event was published! ${messages.data["body"]}');
+        print('A new onMessage event was published! ${messages.data}');
 
         Map<String, dynamic> message = messages.data;
+
+        String body = message["body"]?.toString() ?? "No Body";
+        String title = message["title"]?.toString() ?? "No Title";
+        String image = message["image"]?.toString() ?? "";
+        String name = message["name"]?.toString() ?? "";
+
         if (Platform.isAndroid) {
           _showNotifications(
-              message["body"],
-              message["title"],
-              'message_channel',
-              'message',
-              jsonEncode({
-                'image': message["image"].toString(),
-                'name': message["name"],
-              }),
-              false,
-              false,
-              AndroidNotificationCategory.message);
+            body,
+            title,
+            'message_channel',
+            'message',
+            jsonEncode({'image': image, 'name': name}),
+            false,
+            false,
+            AndroidNotificationCategory.message,
+          );
         } else {
           _showNotifications(
-              messages.notification!.body!,
-              messages.notification!.title!,
-              'message_channel',
-              'message',
-              jsonEncode({
-                'image': message["image"].toString(),
-                'name': message["name"],
-              }),
-              false,
-              false,
-              AndroidNotificationCategory.message);
+            messages.notification?.body ?? "No Body",
+            messages.notification?.title ?? "No Title",
+            'message_channel',
+            'message',
+            jsonEncode({'image': image, 'name': name}),
+            false,
+            false,
+            AndroidNotificationCategory.message,
+          );
         }
       });
-    });}
+    });
+  }
 
   setNotifications(BuildContext context) {
     initializing();
     firebaseCloudMessagingListeners(context);
     _firebaseMessaging.getToken().then((token) {
-  deviceToken = token??"";
+      deviceToken = token ?? "";
       debugPrint('device token_id:_______________$token _______________');
     });
   }
-  Future<void> sendNotificationFCM(
-      {
-        String? userId,
-        String? remoteId,
-        String? name,
-        String? profileImage,
-        String? deviceToken,
-        String? title,
-        String? body,
-        String? type,
 
-      }) async {
+  Future<void> sendNotificationFCM({
+    String? userId,
+    String? remoteId,
+    String? name,
+    String? profileImage,
+    String? deviceToken,
+    String? title,
+    String? body,
+    String? type,
+  }) async {
+    // Ensure a fresh token
+    NotificationService notificationService = NotificationService();
+    await notificationService.obtainCredentials();
+
+    if (notificationAccessToken == null) {
+      print('Error: No valid access token available');
+      return;
+    }
+
     Data data = Data(
       userId: userId,
       remoteId: remoteId,
@@ -207,31 +217,41 @@ class FCM {
       body: body,
       type: type,
     );
-    NotificationData notification =
-    NotificationData(title: title, body: body);
+    NotificationData notification = NotificationData(title: title, body: body);
     FCMModel fcmModel = FCMModel(
       data: data,
       token: deviceToken,
       notification: notification,
     );
 
-    var headers = {'Content-Type': 'application/json'};
+    var headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $notificationAccessToken',
+    };
     var request = http.Request(
-        'POST',
-        Uri.parse(
-            'https://fcm.googleapis.com/v1/projects/ventacuba-acf38/messages:send?access_token=$notificationAccessToken'));
-    request.body = jsonEncode({"message": fcmModel});
-    print(jsonEncode({"message": fcmModel}));
-
+      'POST',
+      Uri.parse(
+          'https://fcm.googleapis.com/v1/projects/ventacuba-acf38/messages:send'),
+    );
+    request.body = jsonEncode({"message": fcmModel.toJson()});
+    print('Request body: ${request.body}');
+    print('notificationAccessToken: ${notificationAccessToken}');
     request.headers.addAll(headers);
-    http.StreamedResponse response = await request.send();
-    print("StatusCode>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${response.statusCode}");
-    if (response.statusCode == 200) {
-      print(await response.stream.bytesToString());
-    } else {
-      print(response.reasonPhrase);
+
+    try {
+      http.StreamedResponse response = await request.send();
+      print('StatusCode: ${response.statusCode}');
+      if (response.statusCode == 200) {
+        print(await response.stream.bytesToString());
+      } else {
+        print('Error response: ${await response.stream.bytesToString()}');
+        print('Reason: ${response.reasonPhrase}');
+      }
+    } catch (e) {
+      print('Error sending request: $e');
     }
   }
-      void onDidReceiveLocalNotification(
-          NotificationResponse notificationResponse) async {}
+
+  void onDidReceiveLocalNotification(
+      NotificationResponse notificationResponse) async {}
 }

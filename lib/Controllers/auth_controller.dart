@@ -141,7 +141,7 @@ class AuthController extends GetxController {
 
       var headers = {'Accept': 'application/json'};
       var request = http.MultipartRequest(
-          'POST', Uri.parse('https://ventacuba.ca/api/verify'));
+          'POST', Uri.parse('https://ventacuba.co/api/verify'));
       request.fields.addAll({
         'email': emailCreateCont.text.trim(),
       });
@@ -153,7 +153,7 @@ class AuthController extends GetxController {
 
       if (response.statusCode == 200) {
         errorAlertToast(
-            "Email address already exists! Please enter another one.".tr);
+            "Email address already exists!. Please enter another one.".tr);
       } else {
         print('response.statusCode: ${response.statusCode}');
         await signUp(province, city);
@@ -172,7 +172,7 @@ class AuthController extends GetxController {
 
   //   var headers = {'Accept': 'application/json'};
   //   var request = http.MultipartRequest(
-  //       'POST', Uri.parse('https://ventacuba.ca/api/verify'));
+  //       'POST', Uri.parse('https://ventacuba.co/api/verify'));
   //   request.fields.addAll({
   //     'email': emailCreateCont.text.trim(),
   //   });
@@ -186,7 +186,7 @@ class AuthController extends GetxController {
   //   } else {
   //     var headers = {'Accept': 'application/json'};
   //     var request = http.MultipartRequest(
-  //         'POST', Uri.parse('https://ventacuba.ca/api/verify'));
+  //         'POST', Uri.parse('https://ventacuba.co/api/verify'));
   //     request.fields.addAll({
   //       'phone': "${countryCode?.dialCode ?? "+53"}${phoneCont.text.trim()}",
   //     });
@@ -253,7 +253,7 @@ class AuthController extends GetxController {
   //   var headers = {
   //     'Accept': 'application/json'
   //   };
-  //   var request = http.MultipartRequest('POST', Uri.parse('https://ventacuba.ca/api/verify'));
+  //   var request = http.MultipartRequest('POST', Uri.parse('https://ventacuba.co/api/verify'));
   //   request.fields.addAll({
   //     'email': emailCont.text.trim(),
   //   });
@@ -268,7 +268,7 @@ class AuthController extends GetxController {
   //     var headers = {
   //       'Accept': 'application/json'
   //     };
-  //     var request = http.MultipartRequest('POST', Uri.parse('https://ventacuba.ca/api/verify'));
+  //     var request = http.MultipartRequest('POST', Uri.parse('https://ventacuba.co/api/verify'));
   //     request.fields.addAll({
   //       'phone':"${countryCode?.dialCode ?? "+53"}${phoneCont.text.trim()}",
   //     });
@@ -459,7 +459,7 @@ class AuthController extends GetxController {
     var request = Http.MultipartRequest(
         'POST',
         Uri.parse(
-            'https://ventacuba.ca/api/forget-password?lang=$languageCode'));
+            'https://ventacuba.co /api/forget-password?lang=$languageCode'));
     request.fields.addAll({'email': forgetPasswordCont.text.trim()});
     request.headers.addAll(headers);
     Http.StreamedResponse response = await request.send();
@@ -742,7 +742,7 @@ class AuthController extends GetxController {
 
 
 
-// flutter: https://ventacuba.ca/api/login
+// flutter: https://ventacuba.co/api/login
 // flutter: body : {"email":"test1@test.com","password":"Abc@1234","device_token":""}
 // flutter: headers : {"Content-Type":"application/json; charset=UTF-8","Accept":"application/json","Access-Control-Allow-Origin":"*","Authorization":"Bearer null"}
 // flutter: {status: true, access_token: 689|gKxwGGprSCALNnd0mjiLtJ6KQ4rSxfj2wBISkWoqcd456217, token_type: Bearer, user_id: 123, first_name: Test, last_name: One, phone_no: +923094354985, province: Camagüey, city: Jimaguayú, email: test1@test.com, profile_image: , role: Normal User, device_token: , business_logo: , business_name: , business_address: , business_province: , business_city: , instagram_link: , facebook_link: , pinterest_link: , twitter_link: , linkedin_link: , youtube_link: , tiktok_link: , business_instagram_link: , business_facebook_link: , business_pinterest_link: , business_twitter_link: , business_linkedin_link: , business_youtube_link: , business_tiktok_link: , average_rating: 0, all_notifications: 0, bump_up_notification: 1, save_search_notification: 1, message_notification: 1, marketing_notification: 1, reviews_notification: 1, created_at: 2024-12-23T11:03:12.000000Z}

@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:venta_cuba/Controllers/home_controller.dart';
 import 'package:venta_cuba/view/Chat/custom_text.dart';
+import 'package:venta_cuba/view/Navigation%20bar/post.dart' show PriceFormatter;
 import 'package:venta_cuba/view/constants/Colors.dart';
 import '../../Models/ListingModel.dart';
 import '../frame/frame.dart';
@@ -180,7 +181,6 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                         color: Colors.black45,
                                       ),
                                       SizedBox(width: 7),
-                                      
                                       CustomTextMonthDays(
                                           text: cont.sellerDetailsModel?.data
                                               ?.sellerAbout?.accountDuration),
@@ -480,7 +480,12 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                                               ),
                                                               SelectionArea(
                                                                 child: Text(
-                                                                  "\$${cont.sellerDetailsModel?.data?.sellerListings?.data?[index].price}",
+                                                                  cont.sellerDetailsModel?.data?.sellerListings?.data?[index].price ==
+                                                                              "0" ||
+                                                                          cont.sellerDetailsModel?.data?.sellerListings?.data?[index].price ==
+                                                                              null
+                                                                      ? ""
+                                                                      : "${PriceFormatter().formatNumber(int.parse(cont.sellerDetailsModel?.data?.sellerListings?.data?[index].price?.toString() ?? "0"))} ${cont.sellerDetailsModel?.data?.sellerListings?.data?[index].currency ?? 'USD'}",
                                                                   style: TextStyle(
                                                                       fontSize:
                                                                           16

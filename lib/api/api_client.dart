@@ -5,11 +5,12 @@ import '../Utils/funcations.dart';
 import 'api_checker.dart';
 
 String? tokenMain;
-String baseUrl = "https://ventacuba.ca/";
+String baseUrl = "https://ventacuba.co/";
 
 class ApiClient extends GetxService {
   final String appBaseUrl;
-  static const String noInternetMessage = 'Connection to API server failed due to internet connection';
+  static const String noInternetMessage =
+      'Connection to API server failed due to internet connection';
   final int timeoutInSeconds = 60;
   String? token;
   Map<String, String> _mainHeaders = {
@@ -41,7 +42,8 @@ class ApiClient extends GetxService {
   }
 
   ApiChecker apichecker = ApiChecker();
-  Future<Response> getData(String uri, {Map<String, dynamic>? query, Map<String, String>? headers}) async {
+  Future<Response> getData(String uri,
+      {Map<String, dynamic>? query, Map<String, String>? headers}) async {
     try {
       final url = Uri.parse(appBaseUrl + uri);
       final newURI = url.replace(queryParameters: query);
@@ -108,14 +110,15 @@ class ApiClient extends GetxService {
       print(header);
       Get.log('url testing ${appBaseUrl + uri}');
       var request = Http.MultipartRequest('POST', Uri.parse(appBaseUrl + uri));
-      request.fields.addAll(body.map((key, value) => MapEntry(key, value.toString())));
+      print("Sending body: $body");
+      request.fields
+          .addAll(body.map((key, value) => MapEntry(key, value.toString())));
 
       request.headers.addAll(header);
-        image?.forEach((element) async {
+      image?.forEach((element) async {
         request.files.add(await Http.MultipartFile.fromPath(imageKey, element));
       });
-    
-      
+
       Http.StreamedResponse streamedResponse = await request.send();
       if (showdialog) {
         Get.back();
@@ -133,7 +136,8 @@ class ApiClient extends GetxService {
     }
   }
 
-  Future<Response> putData(String uri, dynamic body, {Map<String, String>? headers}) async {
+  Future<Response> putData(String uri, dynamic body,
+      {Map<String, String>? headers}) async {
     try {
       Http.Response _response = await Http.put(
         Uri.parse(appBaseUrl + uri),
@@ -147,7 +151,9 @@ class ApiClient extends GetxService {
   }
 
   Future<Response> deleteData(String uri,
-      {Map<String, dynamic>? query, Map<String, String>? headers, Map<String, dynamic>? body}) async {
+      {Map<String, dynamic>? query,
+      Map<String, String>? headers,
+      Map<String, dynamic>? body}) async {
     try {
       final url = Uri.parse(appBaseUrl + uri);
       final newURI = url.replace(queryParameters: query);

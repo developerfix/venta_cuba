@@ -365,6 +365,25 @@ class _FrameScreenState extends State<FrameScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
+                                  'Website'.tr,
+                                  style: TextStyle(
+                                      fontSize: 15..sp,
+                                      fontWeight: FontWeight.w400,
+                                      color: Colors.black),
+                                ),
+                                Text(
+                                  '${cont.listingModel?.additionalFeatures?.optionalDetails?.website}',
+                                  style: TextStyle(
+                                      fontSize: 15..sp,
+                                      fontWeight: FontWeight.w400,
+                                      color: AppColors.black),
+                                ),
+                              ],
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
                                   'Phone Number'.tr,
                                   style: TextStyle(
                                       fontSize: 15..sp,
@@ -1323,8 +1342,10 @@ class _FrameScreenState extends State<FrameScreen> {
                                       : "",
                                   deviceToken:
                                       "${cont.listingModel?.user?.deviceToken}",
-                                  listingImage: cont.listingModel!.gallery!.isNotEmpty ?
-                                      cont.listingModel?.gallery?.first : null,
+                                  listingImage:
+                                      cont.listingModel!.gallery!.isNotEmpty
+                                          ? cont.listingModel?.gallery?.first
+                                          : null,
                                   listingName: cont.listingModel?.title,
                                   listingPrice: cont.listingModel?.price,
                                   listingLocation: cont.listingModel?.address,

@@ -8,9 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:venta_cuba/Controllers/location_controller.dart';
 import 'package:venta_cuba/Services/Notfication/notficationservice.dart';
 import 'package:venta_cuba/languages/languages.dart';
-import 'package:venta_cuba/view/payment/payment_next.dart';
 import 'package:venta_cuba/view/splash%20Screens/white_screen.dart';
-import 'package:venta_cuba/view/subscription/Subscription.dart';
 import 'Notification/firebase_messaging.dart';
 
 Future<void> main() async {

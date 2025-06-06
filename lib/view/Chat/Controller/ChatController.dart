@@ -46,14 +46,23 @@ class ChatController extends GetxController {
     });
   }
 
-  sendMessage(
+  Future sendMessage(
       String userAndPostId, Map<String, dynamic> chatMessageData) async {
-    print(userAndPostId);
-    chatCollection
+    // Add a new message to the subcollection
+    await chatCollection
         .doc(userAndPostId)
         .collection("messages")
         .add(chatMessageData);
-    chatCollection.doc(userAndPostId).update(chatMessageData);
+
+    // Check if the parent document exists
+    final docSnapshot = await chatCollection.doc(userAndPostId).get();
+    if (docSnapshot.exists) {
+      // Update if it exists
+      await chatCollection.doc(userAndPostId).update(chatMessageData);
+    } else {
+      // Create if it doesn't exist
+      await chatCollection.doc(userAndPostId).set(chatMessageData);
+    }
   }
 
   updateImage(String userAndPostId, Map<String, dynamic> imageData) async {

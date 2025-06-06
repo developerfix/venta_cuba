@@ -61,6 +61,7 @@ class HomeController extends GetxController {
   TextEditingController makeController = TextEditingController();
   TextEditingController modelController = TextEditingController();
   TextEditingController phoneController = TextEditingController();
+  TextEditingController websiteController = TextEditingController();
   TextEditingController conditionController = TextEditingController();
   TextEditingController fulfillmentController = TextEditingController();
   TextEditingController paymentController = TextEditingController();
@@ -90,6 +91,7 @@ class HomeController extends GetxController {
   SubSubCategoriesModel? subSubCategoriesModel;
   double radius = 50.0;
   RxBool loadingHome = true.obs;
+  String? selectedCurrency = 'USD'; // Default currency
   RxBool isPostLoading = false.obs;
   RxBool loadingCategory = false.obs;
   RxBool loadingSubCategory = false.obs;
@@ -680,17 +682,20 @@ class HomeController extends GetxController {
       },
       'optional_details': {
         'phone_number': phoneController.text.trim(),
+        'website': websiteController.text.trim(),
         'condition': conditionController.text.trim(),
         'fulfillment': fulfillmentController.text.trim(),
         'payment': paymentController.text.trim(),
       },
       'video_link': youTubeController.text.trim(),
     });
+    String rawPrice = priceCont?.text.replaceAll(' ', '') ?? "0";
     Map<String, dynamic> data = {
       'category': jsonDecode(jsonEncode(selectedCategory)),
       'sub_category': jsonDecode(jsonEncode(selectedSubCategory)) ?? "",
       'sub_sub_category': jsonDecode(jsonEncode(selectedSubSubCategory)) ?? "",
-      'price': priceCont?.text.trim() ?? "0",
+      'price': rawPrice,
+      'currency': selectedCurrency ?? 'USD',
       'title': titleCont.text.trim(),
       'latitude': lat,
       'longitude': lng,
@@ -725,8 +730,13 @@ class HomeController extends GetxController {
         listingModel?.additionalFeatures?.listingDetails?.make ?? "";
     titleCont.text =
         listingModel?.title == "null" ? "" : "$listingModel?.title}";
-    priceCont?.text =
-        listingModel?.price == "null" ? "" : "${listingModel?.price}";
+    // Format price with spaces
+    String rawPrice = listingModel?.price.toString() ?? "0";
+    if (rawPrice != "0") {
+      priceCont?.text = PriceFormatter().formatNumber(int.parse(rawPrice));
+    } else {
+      priceCont?.text = "";
+    }
     descriptionCont.text = listingModel?.description ?? "";
     addressCont.text = listingModel?.address ?? "";
     listingModel?.tag?.forEach((element) {
@@ -740,6 +750,8 @@ class HomeController extends GetxController {
     youTubeController.text = listingModel?.additionalFeatures?.videoLink ?? "";
     phoneController.text =
         listingModel?.additionalFeatures?.optionalDetails?.phoneNumber ?? "";
+    websiteController.text =
+        listingModel?.additionalFeatures?.optionalDetails?.website ?? "";
     conditionController.text =
         listingModel?.additionalFeatures?.optionalDetails?.condition ?? "";
     fulfillmentController.text =
@@ -753,10 +765,12 @@ class HomeController extends GetxController {
   Future addListing(BuildContext context) async {
     String tagsData = "";
     String price = "0";
-    priceCont?.text == null || priceCont?.text == ""
+    String rawPrice = priceCont?.text.replaceAll(' ', '') ?? "0";
+    (priceCont != null && priceCont!.text.isEmpty)
         ? price = "0"
-        : price = priceCont!.text;
-    print("object...$price");
+        : price = rawPrice;
+    print("price...$price");
+    print("currency...$selectedCurrency");
     for (int i = 0; i < tags.length; i++) {
       if (i == 0) {
         tagsData = "${tags[i]}";
@@ -781,6 +795,7 @@ class HomeController extends GetxController {
       },
       'optional_details': {
         'phone_number': phoneController.text.trim(),
+        'website': websiteController.text.trim(),
         'condition': conditionController.text.trim(),
         'fulfillment': fulfillmentController.text.trim(),
         'payment': paymentController.text.trim(),
@@ -788,8 +803,6 @@ class HomeController extends GetxController {
       'video_link': youTubeController.text.trim(),
     });
 
-    print(selectedSubCategory?.id);
-    print(selectedSubSubCategory?.id);
     bool isBusinessAccount = false;
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     isBusinessAccount = sharedPreferences.getBool("accountType") ?? false;
@@ -800,6 +813,7 @@ class HomeController extends GetxController {
           'sub_category_id': selectedSubCategory?.id ?? "",
           'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
           'price': price,
+          'currency': selectedCurrency ?? 'USD',
           'business_status': isBusinessAccount ? 1 : 0,
           'title': titleCont.text.trim(),
           'latitude': lat ?? lat1,
@@ -818,6 +832,7 @@ class HomeController extends GetxController {
         imageKey: "gallery[]",
         image: postImages,
         showdialog: true);
+
     if (response.statusCode == 200) {
       if (response.body["message"] ==
           "Your free limit is completed. For more listing, you can purchase package.") {
@@ -836,6 +851,7 @@ class HomeController extends GetxController {
         selectedCategory = null;
         selectedSubCategory = null;
         selectedSubSubCategory = null;
+        selectedCurrency = 'USD';
         authCont.currentIndexBottomAppBar = 3;
         Get.offAll(Navigation_Bar());
         errorAlertToast('Post Add Successfully'.tr);
@@ -870,6 +886,7 @@ class HomeController extends GetxController {
       },
       'optional_details': {
         'phone_number': phoneController.text.trim(),
+        'website': websiteController.text.trim(),
         'condition': conditionController.text.trim(),
         'fulfillment': fulfillmentController.text.trim(),
         'payment': paymentController.text.trim(),
@@ -881,6 +898,8 @@ class HomeController extends GetxController {
     isBusinessAccount = sharedPreferences.getBool("accountType") ?? false;
     print(selectedSubCategory?.id);
     print(selectedSubSubCategory?.id);
+    // Remove spaces from price
+    String rawPrice = priceCont?.text.replaceAll(' ', '') ?? "0";
     Response response = await api.postWithForm(
         "api/editListing",
         {
@@ -888,7 +907,8 @@ class HomeController extends GetxController {
           'category_id': selectedCategory?.id,
           'sub_category_id': selectedSubCategory?.id ?? "",
           'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
-          'price': priceCont?.text.trim(),
+          'price': rawPrice,
+          'currency': selectedCurrency ?? 'USD',
           'title': titleCont.text.trim(),
           'business_status': isBusinessAccount ? 1 : 0,
           'address': addressCont.text.trim(),
@@ -915,6 +935,7 @@ class HomeController extends GetxController {
       tagsController.clear();
       selectedCategory = null;
       selectedSubCategory = null;
+      selectedCurrency = 'USD';
       selectedSubSubCategory = null;
       Get.offAll(Navigation_Bar());
       errorAlertToast('Post Add Successfully'.tr);
@@ -1137,7 +1158,7 @@ class HomeController extends GetxController {
   Future getSellerDetails1(String reviewsType) async {
     var headers = {'Accept': 'application/json'};
     var request = http.MultipartRequest(
-        'POST', Uri.parse('https://ventacuba.ca/api/getSellerDetails'));
+        'POST', Uri.parse('https://ventacuba.co/api/getSellerDetails'));
     request.fields
         .addAll({'seller_id': sellerId!, 'reviews_type': reviewsType});
 

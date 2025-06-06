@@ -7,7 +7,15 @@ class NotificationService {
   Future obtainCredentials() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     String? getToken = sharedPreferences.getString("access_token");
-    if (getToken == null) {
+    int? tokenExpiry = sharedPreferences.getInt("token_expiry");
+
+    // Check if token is valid (not null and not expired)
+    bool isTokenValid = getToken != null &&
+        tokenExpiry != null &&
+        DateTime.now().millisecondsSinceEpoch <
+            tokenExpiry - 60000; // 1-minute buffer
+
+    if (!isTokenValid) {
       final accountCredentials = {
         "type": "service_account",
         "project_id": "ventacuba-acf38",
@@ -27,23 +35,34 @@ class NotificationService {
       };
 
       final scopes = [
-        'https://www.googleapis.com/auth/userinfo.email',
-        'https://www.googleapis.com/auth/firebase.database',
-        'https://www.googleapis.com/auth/firebase.messaging'
+        'https://www.googleapis.com/auth/firebase.messaging',
       ];
-      http.Client client = await auth.clientViaServiceAccount(
-          auth.ServiceAccountCredentials.fromJson(accountCredentials), scopes);
-      auth.AccessCredentials credentials =
-          await auth.obtainAccessCredentialsViaServiceAccount(
-              auth.ServiceAccountCredentials.fromJson(accountCredentials),
-              scopes,
-              client);
-      client.close();
-      notificationAccessToken = credentials.accessToken.data;
-      sharedPreferences.setString("access_token", notificationAccessToken);
+
+      try {
+        final client = await auth.clientViaServiceAccount(
+            auth.ServiceAccountCredentials.fromJson(accountCredentials),
+            scopes);
+        final credentials = await auth.obtainAccessCredentialsViaServiceAccount(
+            auth.ServiceAccountCredentials.fromJson(accountCredentials),
+            scopes,
+            client);
+        client.close();
+
+        notificationAccessToken = credentials.accessToken.data;
+        await sharedPreferences.setString(
+            "access_token", notificationAccessToken);
+        await sharedPreferences.setInt("token_expiry",
+            credentials.accessToken.expiry.millisecondsSinceEpoch);
+        print('New access token generated: $notificationAccessToken');
+        print(
+            'Token expiry: ${DateTime.fromMillisecondsSinceEpoch(tokenExpiry ?? 0)}');
+      } catch (e) {
+        print('Error generating access token: $e');
+        rethrow; // Propagate error for debugging
+      }
     } else {
       notificationAccessToken = getToken;
+      print('Using cached access token');
     }
-    print(notificationAccessToken);
   }
 }

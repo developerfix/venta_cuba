@@ -3,17 +3,17 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyBQgeTHQrmQ8cG1vYQms7IVvwYUoOKu3Fs</string>
+	<string>AIzaSyC5AA6ZrDtrG0Gy_ZMmT8zrq_gFiHevQ1g</string>
 	<key>GCM_SENDER_ID</key>
-	<string>652667961615</string>
+	<string>162325053043</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
 	<string>com.highapp.ventacuba.com</string>
 	<key>PROJECT_ID</key>
-	<string>ventacuba-a9c56</string>
+	<string>cubatest-d884e</string>
 	<key>STORAGE_BUCKET</key>
-	<string>ventacuba-a9c56.firebasestorage.app</string>
+	<string>cubatest-d884e.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:652667961615:ios:c0667a9304dbb6fe1a7e7a</string>
+	<string>1:162325053043:ios:d7abe215d3b02799097406</string>
 </dict>
 </plist>

@@ -1,26 +1,52 @@
 {
   "project_info": {
-    "project_number": "652667961615",
-    "project_id": "ventacuba-a9c56",
-    "storage_bucket": "ventacuba-a9c56.firebasestorage.app"
+    "project_number": "878985420015",
+    "firebase_url": "https://ventacuba-acf38-default-rtdb.firebaseio.com",
+    "project_id": "ventacuba-acf38",
+    "storage_bucket": "ventacuba-acf38.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:652667961615:android:f6c3bd4e8d2bdd901a7e7a",
+        "mobilesdk_app_id": "1:878985420015:android:5d5de2108ab19874794f1a",
         "android_client_info": {
           "package_name": "com.ventacuba.highapp.venta_cuba"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "878985420015-mihan0fu2rvcn0kulp2mqhsobtle9svg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ventacuba.highapp.venta_cuba",
+            "certificate_hash": "fbe8c9bfb497a6df212d5a4c8087c6e962a7f0b7"
+          }
+        },
+        {
+          "client_id": "878985420015-038mr0cg9ooslj2vm0scmsl3ge4b52kb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyBvSLSlmeLf5t9W4z2ZmVCvOOCUppU8Hlo"
+          "current_key": "AIzaSyBwAmVlASyZDGr24VI_996qTcBMLlSD8cU"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "878985420015-038mr0cg9ooslj2vm0scmsl3ge4b52kb.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "878985420015-g1r7v89fmola2pi4ep9th8fj2i5hh0be.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.highapp.ventacuba.com"
+              }
+            }
+          ]
         }
       }
     }

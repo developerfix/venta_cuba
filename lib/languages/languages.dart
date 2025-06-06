@@ -180,6 +180,7 @@ class Languages extends Translations {
           "Fulfillment": "Fulfillment",
           "Condition": "Condition",
           "Phone Number": "Phone Number",
+          "Website": "Website",
           "Optional Details": "Optional Details",
           "Tags": "Tags",
           "Job Type": "Job Type",
@@ -678,7 +679,7 @@ VentaCuba may change this Privacy Policy from time to time. We advise you to rea
           "visit_website":
               '''\nWhen you visit our Website, use our Services and or reply to ads or other content, we automatically collect the information sent to us by your computer, mobile device or other equipment that provides access. This information includes, but is not limited to:
                             
-   ⦁  information from your interaction with our Website and Services, including, but not limited to, device ID, device type, geo-location information, computer and connection information, statistics on page views, traffic to and from www.VentaCuba.ca, referring URL, ad data, IP address and standard web log information; and
+   ⦁  information from your interaction with our Website and Services, including, but not limited to, device ID, device type, geo-location information, computer and connection information, statistics on page views, traffic to and from www.ventacuba.co, referring URL, ad data, IP address and standard web log information; and
    
    ⦁  information we collect through cookies, web beacons and similar technologies. 
 ''',
@@ -1215,7 +1216,7 @@ Si nos proporciona acceso a información personal almacenada en sitios web de te
           "visit_website":
               '''\nCuando visita nuestro sitio web, utiliza nuestros Servicios o responde a anuncios u otro contenido, recopilamos automáticamente la información que nos envía su computadora, dispositivo móvil u otro equipo que proporciona acceso. Esta información incluye, pero no se limita a:
 
-    ⦁ información de su interacción con nuestro sitio web y servicios, que incluye, entre otros, ID de dispositivo, tipo de dispositivo, información de ubicación geográfica, información de computadora y conexión, estadísticas sobre visitas a páginas, tráfico hacia y desde www.VentaCuba.ca, referencia URL, datos de anuncios, dirección IP e información de registro web estándar; y
+    ⦁ información de su interacción con nuestro sitio web y servicios, que incluye, entre otros, ID de dispositivo, tipo de dispositivo, información de ubicación geográfica, información de computadora y conexión, estadísticas sobre visitas a páginas, tráfico hacia y desde www.ventacuba.co, referencia URL, datos de anuncios, dirección IP e información de registro web estándar; y
 
     ⦁ información que recopilamos a través de cookies, balizas web y tecnologías similares.
 ''',
@@ -1714,6 +1715,7 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
           "Fulfillment": "Cumplimiento",
           "Condition": "Condición",
           "Phone Number": "Número de teléfono",
+          "Website": "Sitio web",
           "Optional Details": "Detalles opcionales",
           "Tags": "Etiquetas",
           "Job Type": "El tipo de trabajo",

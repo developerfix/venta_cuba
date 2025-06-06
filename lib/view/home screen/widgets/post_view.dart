@@ -6,6 +6,7 @@ import 'package:lottie/lottie.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
 import 'package:venta_cuba/Controllers/home_controller.dart';
 import 'package:venta_cuba/Utils/funcations.dart';
+import 'package:venta_cuba/view/Navigation%20bar/post.dart';
 import 'package:venta_cuba/view/auth/login.dart';
 import 'package:venta_cuba/view/constants/Colors.dart';
 import 'package:venta_cuba/view/frame/frame.dart';
@@ -21,7 +22,8 @@ class ListingView extends StatelessWidget {
     return GetBuilder<HomeController>(
       builder: (cont) {
         // Make a copy and shuffle it
-        final shuffledList = List.from(cont.listingModelList)..shuffle();
+        // final shuffledList = List.from(cont.listingModelList)..shuffle();
+        final shuffledList = cont.listingModelList; // Use original list
 
         return GridView.builder(
           itemCount: shuffledList.length + 1,
@@ -129,7 +131,8 @@ class ListingView extends StatelessWidget {
                               ),
                               SizedBox(height: 2.h),
                               Text(
-                                item.price == "0" ? " " : '\$${item.price}',
+                                "${PriceFormatter().formatNumber(int.parse(item.price ?? '0'))} ${item.currency == 'null' ? 'USD' : item.currency}",
+                                // "${item.id}",
                                 style: TextStyle(
                                     fontSize: 14.sp,
                                     fontWeight: FontWeight.w600,
