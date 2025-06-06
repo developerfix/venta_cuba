@@ -5,7 +5,7 @@ import '../Utils/funcations.dart';
 import 'api_checker.dart';
 
 String? tokenMain;
-String baseUrl = "https://ventacuba.co/";
+String baseUrl = "https://ventacuba.ca/";
 
 class ApiClient extends GetxService {
   final String appBaseUrl;
