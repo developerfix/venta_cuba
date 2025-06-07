@@ -88,6 +88,11 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      chatCont.scrollController
+          .jumpTo(chatCont.scrollController.position.maxScrollExtent);
+    });
     focusNode = FocusNode();
     getChat();
     saveFile();
@@ -101,10 +106,9 @@ class _ChatPageState extends State<ChatPage> {
         chatCont.update();
       }
     });
+
     chatCont.isLast = widget.isLast ?? false;
     updateImage();
-
-    super.initState();
   }
 
   void _requestFocus() {

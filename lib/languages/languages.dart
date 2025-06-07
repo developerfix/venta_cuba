@@ -28,7 +28,7 @@ class Languages extends Translations {
               "Email address already exists!. Please enter another one.",
           "Successfully": "Successfully",
           "Server Error!\nPlease try again...":
-              "Server Error!\nPlease try again...",
+              "This listing no longer exists. It has been deleted.",
           "Please enter CVC.": "Please enter CVC.",
           "Please enter expiration year.": "Please enter expiration year.",
           "Please enter expiration month.": "Please enter expiration month.",
@@ -227,7 +227,7 @@ class Languages extends Translations {
           "Please Enter Correct number": "Please Enter Correct number",
           "Password dose not match": "Password dose not match",
           "Please Enter 8 Character Confirm Password":
-              "Please Enter 8 Character Confirm Password",
+              "Please Enter 8 Character. Confirm Password",
           "Please Enter 8 Character Password":
               "Please Enter 8 Character Password",
           "Please Enter Last Name": "Please Enter Last Name",
@@ -320,6 +320,7 @@ class Languages extends Translations {
           "Fulfillment (Optional)": "Fulfillment (Optional)",
           "Condition (Optional)": "Condition (Optional)",
           "Phone number (Optional)": "Phone number (Optional)",
+          "Website (Optional)": "Website (Optional)",
           "Optional details": "Optional details",
           "Select location": "Select location",
           "Tag (Optional)": "Tag (Optional)",
@@ -925,7 +926,7 @@ It is not allowed to use our member-to-member communication resources to send sp
           "Favorite listings": "Listados favoritos",
           "Promotional Codes": "Códigos Promocionales",
           "Server Error!\nPlease try again...":
-              "¡Error del servidor!\nInténtelo de nuevo...",
+              "Este anuncio ya no existe. Ha sido eliminado.",
 
           "Please enter CVC.": "Por favor ingrese CVC.",
           "Please enter expiration year.":
@@ -1506,7 +1507,7 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
           "6 Months Plan": "Plan de 6 meses",
           "Monthly": "Mensual",
           "Email address already exists!. Please enter another one.":
-              "¡La dirección de correo ya existe!. Por favor ingrese otro.",
+              "La dirección de correo ya existe! Por favor ingrese otro.",
           "Transaction number should be unique!":
               "¡El número de transacción debe ser único!",
           "Do you want to purchase a subscription for yourself?.":
@@ -1673,6 +1674,7 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
           "Fulfillment (Optional)": "Cumplimiento (opcional)",
           "Condition (Optional)": "Condición (opcional)",
           "Phone number (Optional)": "Numero de teléfono (opcional)",
+          "Website (Optional)": "Sitio web (opcional)",
           "Optional details": "Detalles opcionales",
           "Select location": "Seleccionar ubicación",
           "Set pick up location": "Establecer lugar de recogida",
@@ -1772,7 +1774,7 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
           "Please Enter Correct number": "Por favor ingrese el número correcto",
           "Password dose not match": "Las contraseñas no coinciden",
           "Please Enter 8 Character Confirm Password":
-              "Por favor ingrese 8 caracteres Confirme la contraseña",
+              "Por favor ingrese 8 caracteres. Confirme la contraseña",
           "Please Enter 8 Character Password":
               "Por favor ingrese una contraseña de 8 caracteres",
           "Please Enter Last Name": "Por favor ingrese el apellido",

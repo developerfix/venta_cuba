@@ -1191,13 +1191,15 @@ class HomeController extends GetxController {
     if (response.statusCode == 200) {
       List<dynamic> dataListing = [];
       dataListing.addAll(response.body['data']['data']);
+      print('dataListing:${dataListing.length}');
       String isBusinessType = isBusinessAccount ? "1" : "0";
       userFavouriteListingModelList.clear();
       dataListing.forEach((element) {
-        if (element["business_status"].toString() == isBusinessType) {
-          userFavouriteListingModelList.add(ListingModel.fromJson(element));
-        }
+        // if (element["business_status"].toString() == isBusinessType) {
+        userFavouriteListingModelList.add(ListingModel.fromJson(element));
+        // }
       });
+      print("Favourite Listing Count: ${userFavouriteListingModelList.length}");
       Get.to(FavouriteListings());
     } else {
       errorAlertToast('Something went wrong\nPlease try again!'.tr);

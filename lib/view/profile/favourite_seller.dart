@@ -47,7 +47,10 @@ class _FavouriteSellerState extends State<FavouriteSeller> {
                       ),
                       Text(
                         'Favorite Sellers'.tr,
-                        style: TextStyle(fontSize: 20..sp, fontWeight: FontWeight.w500, color: Colors.black),
+                        style: TextStyle(
+                            fontSize: 20..sp,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black),
                       ),
                       Container(
                         width: 10..w,
@@ -62,9 +65,10 @@ class _FavouriteSellerState extends State<FavouriteSeller> {
                         ? Center(child: CustomText(text: "No Data Found".tr))
                         : GridView.builder(
                             itemCount: cont.favouriteSellerModel.data?.length,
-                            physics: NeverScrollableScrollPhysics(),
+                            // physics: NeverScrollableScrollPhysics(),
                             shrinkWrap: true,
-                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 2,
                               childAspectRatio: 1.71 / 3,
                               mainAxisSpacing: 26,
@@ -73,43 +77,64 @@ class _FavouriteSellerState extends State<FavouriteSeller> {
                             itemBuilder: (BuildContext context, int index) {
                               return GestureDetector(
                                   onTap: () {
-                                    cont.sellerId =
-                                        cont.favouriteSellerModel.data?[index].sellerId.toString();
-                                    cont.getSellerDetails(cont.isBusinessAccount?"1":"0",0,true);
+                                    cont.sellerId = cont.favouriteSellerModel
+                                        .data?[index].sellerId
+                                        .toString();
+                                    cont.getSellerDetails(
+                                        cont.isBusinessAccount ? "1" : "0",
+                                        0,
+                                        true);
                                   },
                                   child: Stack(
                                     children: [
                                       Container(
                                         height: 280..h,
                                         decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(10..r),
+                                          borderRadius:
+                                              BorderRadius.circular(10..r),
                                           color: Colors.white,
                                           boxShadow: [
                                             BoxShadow(
-                                              color: Colors.grey.withOpacity(0.5),
+                                              color:
+                                                  Colors.grey.withOpacity(0.5),
                                               // Shadow color
                                               offset: Offset(0, 3),
                                               // Shadow offset
                                               blurRadius: 6,
                                               // Shadow blur radius
-                                              spreadRadius: 0, // Shadow spread radius
+                                              spreadRadius:
+                                                  0, // Shadow spread radius
                                             ),
                                           ],
                                         ),
                                         child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
                                           children: [
                                             Container(
                                               height: 180..h,
-                                              width: MediaQuery.of(context).size.width,
+                                              width: MediaQuery.of(context)
+                                                  .size
+                                                  .width,
                                               child: CachedNetworkImage(
                                                 height: 180..h,
-                                                width: MediaQuery.of(context).size.width,
-                                                imageUrl:
-                                                cont.favouriteSellerModel.data![index].type =="Personal"?"${cont.favouriteSellerModel.data![index].profileImage}": "${cont.favouriteSellerModel.data![index].businessLogo}",
-                                                imageBuilder: (context, imageProvider) => Container(
+                                                width: MediaQuery.of(context)
+                                                    .size
+                                                    .width,
+                                                imageUrl: cont
+                                                            .favouriteSellerModel
+                                                            .data![index]
+                                                            .type ==
+                                                        "Personal"
+                                                    ? "${cont.favouriteSellerModel.data![index].profileImage}"
+                                                    : "${cont.favouriteSellerModel.data![index].businessLogo}",
+                                                imageBuilder:
+                                                    (context, imageProvider) =>
+                                                        Container(
                                                   height: 180..h,
-                                                  width: MediaQuery.of(context).size.width,
+                                                  width: MediaQuery.of(context)
+                                                      .size
+                                                      .width,
                                                   decoration: BoxDecoration(
                                                     image: DecorationImage(
                                                       image: imageProvider,
@@ -117,14 +142,21 @@ class _FavouriteSellerState extends State<FavouriteSeller> {
                                                     ),
                                                   ),
                                                 ),
-                                                placeholder: (context, url) => SizedBox(
-                                                    height: 180..h,
-                                                    width: MediaQuery.of(context).size.width,
-                                                    child: Center(
-                                                        child: CircularProgressIndicator(
-                                                      strokeWidth: 2,
-                                                    ))),
-                                                errorWidget: (context, url, error) => Icon(Icons.error),
+                                                placeholder: (context, url) =>
+                                                    SizedBox(
+                                                        height: 180..h,
+                                                        width: MediaQuery.of(
+                                                                context)
+                                                            .size
+                                                            .width,
+                                                        child: Center(
+                                                            child:
+                                                                CircularProgressIndicator(
+                                                          strokeWidth: 2,
+                                                        ))),
+                                                errorWidget:
+                                                    (context, url, error) =>
+                                                        Icon(Icons.error),
                                               ),
                                             ),
                                             Container(
@@ -133,14 +165,24 @@ class _FavouriteSellerState extends State<FavouriteSeller> {
                                               child: Column(
                                                 children: [
                                                   Visibility(
-                                                    visible:cont.favouriteSellerModel.data![index].type !="Personal",
+                                                    visible: cont
+                                                            .favouriteSellerModel
+                                                            .data![index]
+                                                            .type !=
+                                                        "Personal",
                                                     child: SelectionArea(
                                                       child: Text(
-                                                        cont.favouriteSellerModel.data![index].businessName ?? "",
+                                                        cont
+                                                                .favouriteSellerModel
+                                                                .data![index]
+                                                                .businessName ??
+                                                            "",
                                                         style: TextStyle(
                                                             fontSize: 17..sp,
-                                                            fontWeight: FontWeight.w600,
-                                                            color: Colors.black),
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            color:
+                                                                Colors.black),
                                                       ),
                                                     ),
                                                   ),
@@ -149,8 +191,10 @@ class _FavouriteSellerState extends State<FavouriteSeller> {
                                                       '${cont.favouriteSellerModel.data![index].firstName} ${cont.favouriteSellerModel.data![index].lastName}',
                                                       style: TextStyle(
                                                           fontSize: 13..sp,
-                                                          fontWeight: FontWeight.w400,
-                                                          color: AppColors.k0xFF403C3C),
+                                                          fontWeight:
+                                                              FontWeight.w400,
+                                                          color: AppColors
+                                                              .k0xFF403C3C),
                                                     ),
                                                   ),
                                                   SizedBox(
@@ -170,13 +214,16 @@ class _FavouriteSellerState extends State<FavouriteSeller> {
                                             if (authCont.user?.email == "") {
                                               Get.to(Login());
                                             } else {
-
-                                              cont.sellerId =
-                                                  cont.favouriteSellerModel.data?[index].sellerId.toString();
+                                              cont.sellerId = cont
+                                                  .favouriteSellerModel
+                                                  .data?[index]
+                                                  .sellerId
+                                                  .toString();
                                               bool isAddedF =
-                                              await cont.favouriteSeller();
+                                                  await cont.favouriteSeller();
                                               if (isAddedF) {
-                                                cont.favouriteSellerModel.data?.removeAt(index);
+                                                cont.favouriteSellerModel.data
+                                                    ?.removeAt(index);
                                                 cont.update();
                                                 errorAlertToast(
                                                     "Successfully".tr);
@@ -190,11 +237,11 @@ class _FavouriteSellerState extends State<FavouriteSeller> {
                                             decoration: BoxDecoration(
                                                 color: Colors.white,
                                                 borderRadius:
-                                                BorderRadius.circular(
-                                                    21.5..r)),
+                                                    BorderRadius.circular(
+                                                        21.5..r)),
                                             child: SvgPicture.asset(
                                               'assets/icons/heart1.svg',
-                                              color:  Colors.red,
+                                              color: Colors.red,
                                             ),
                                           ),
                                         ),

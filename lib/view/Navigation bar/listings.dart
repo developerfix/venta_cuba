@@ -1281,9 +1281,23 @@ class _ListingsState extends State<Listings> {
         TextButton(
           onPressed: () async {
             bool isDeleted = await homeCont.deleteListing();
+            if (isDeleted) {
+              homeCont.userListingModelList.removeAt(index);
+              // Update the counters based on account type
+              if (homeCont.isBusinessAccount) {
+                homeCont.bussinessPostCount.value = homeCont
+                    .userListingModelList
+                    .where((listing) => listing.businessStatus == "1")
+                    .length;
+              } else {
+                homeCont.personalAcountPost.value = homeCont
+                    .userListingModelList
+                    .where((listing) => listing.businessStatus == "0")
+                    .length;
+              }
+              homeCont.update(); // Trigger UI rebuild
+            }
             Navigator.of(context).pop();
-            isDeleted ? homeCont.userListingModelList.removeAt(index) : null;
-            homeCont.update();
           },
           child: Text('Delete'.tr),
         ),

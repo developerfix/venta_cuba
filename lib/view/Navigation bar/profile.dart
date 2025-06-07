@@ -614,7 +614,7 @@ class _ProfileState extends State<Profile> {
                               ),
                             ),
                           ),
-                          GestureDetector(
+                          InkWell(
                             onTap: () {
                               Navigator.push(
                                   context,
@@ -647,14 +647,12 @@ class _ProfileState extends State<Profile> {
                                   SizedBox(
                                     width: 5..w,
                                   ),
-                                  SelectionArea(
-                                    child: Text(
-                                      'Notifications'.tr,
-                                      style: TextStyle(
-                                          fontSize: 15..sp,
-                                          fontWeight: FontWeight.w500,
-                                          color: AppColors.black),
-                                    ),
+                                  Text(
+                                    'Notifications'.tr,
+                                    style: TextStyle(
+                                        fontSize: 15..sp,
+                                        fontWeight: FontWeight.w500,
+                                        color: AppColors.black),
                                   ),
                                 ],
                               ),

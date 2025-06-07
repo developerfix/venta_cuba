@@ -62,7 +62,10 @@ class _ShowAllListingSubState extends State<ShowAllListingSub> {
                     ),
                     Text(
                       '${"Category of".tr} ${cont.selectedSubSubCategory?.name}',
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.black),
+                      style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.black),
                     ),
                     SizedBox(
                       height: 45..h,
@@ -92,7 +95,7 @@ class _ShowAllListingSubState extends State<ShowAllListingSub> {
                             child: Stack(
                               children: [
                                 Container(
-                                 // height: 280..h,
+                                  // height: 280..h,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(10..r),
                                     color: Colors.white,
@@ -109,21 +112,38 @@ class _ShowAllListingSubState extends State<ShowAllListingSub> {
                                     ],
                                   ),
                                   child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Container(
                                         height: 180..h,
-                                        width: MediaQuery.of(context).size.width,
+                                        width:
+                                            MediaQuery.of(context).size.width,
                                         child: ClipRRect(
                                           borderRadius: BorderRadius.only(
-                                              topLeft: Radius.circular(10.r), topRight: Radius.circular(10.r)),
+                                              topLeft: Radius.circular(10.r),
+                                              topRight: Radius.circular(10.r)),
                                           child: CachedNetworkImage(
                                             height: 180..h,
-                                            width: MediaQuery.of(context).size.width,
-                                            imageUrl:cont.listingModelList[index].gallery !=null&&cont.listingModelList[index].gallery!.isNotEmpty? "${cont.listingModelList[index].gallery?.first}" : "",
-                                            imageBuilder: (context, imageProvider) => Container(
+                                            width: MediaQuery.of(context)
+                                                .size
+                                                .width,
+                                            imageUrl: cont
+                                                            .listingModelList[
+                                                                index]
+                                                            .gallery !=
+                                                        null &&
+                                                    cont.listingModelList[index]
+                                                        .gallery!.isNotEmpty
+                                                ? "${cont.listingModelList[index].gallery?.first}"
+                                                : "",
+                                            imageBuilder:
+                                                (context, imageProvider) =>
+                                                    Container(
                                               height: 180..h,
-                                              width: MediaQuery.of(context).size.width,
+                                              width: MediaQuery.of(context)
+                                                  .size
+                                                  .width,
                                               decoration: BoxDecoration(
                                                 image: DecorationImage(
                                                   image: imageProvider,
@@ -131,23 +151,32 @@ class _ShowAllListingSubState extends State<ShowAllListingSub> {
                                                 ),
                                               ),
                                             ),
-                                            placeholder: (context, url) => SizedBox(
-                                                height: 180..h,
-                                                width: MediaQuery.of(context).size.width,
-                                                child: Center(
-                                                    child: CircularProgressIndicator(
-                                                  strokeWidth: 2,
-                                                ))),
-                                            errorWidget: (context, url, error) => Icon(Icons.error),
+                                            placeholder: (context, url) =>
+                                                SizedBox(
+                                                    height: 180..h,
+                                                    width:
+                                                        MediaQuery.of(context)
+                                                            .size
+                                                            .width,
+                                                    child: Center(
+                                                        child:
+                                                            CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                    ))),
+                                            errorWidget:
+                                                (context, url, error) =>
+                                                    Icon(Icons.error),
                                           ),
                                         ),
                                       ),
                                       Column(
                                         children: [
                                           SizedBox(
-                                            width:140.w,
+                                            width: 140.w,
                                             child: Text(
-                                              cont.listingModelList[index].title ?? "",
+                                              cont.listingModelList[index]
+                                                      .title ??
+                                                  "",
                                               maxLines: 2,
                                               textAlign: TextAlign.center,
                                               overflow: TextOverflow.ellipsis,
@@ -169,7 +198,9 @@ class _ShowAllListingSubState extends State<ShowAllListingSub> {
                                           ),
                                           SelectionArea(
                                             child: Text(
-                                              cont.listingModelList[index].price == "0"
+                                              cont.listingModelList[index]
+                                                          .price ==
+                                                      "0"
                                                   ? " "
                                                   : '\$${cont.listingModelList[index].price}',
                                               style: TextStyle(
@@ -194,18 +225,28 @@ class _ShowAllListingSubState extends State<ShowAllListingSub> {
                                       if (authCont.user?.email == "") {
                                         Get.to(Login());
                                       } else {
-                                        cont.listingModel = cont.listingModelList[index];
-                                        cont.listingModelList[index].isFavorite == "0"
-                                            ? cont.listingModelList[index].isFavorite = "1"
-                                            : cont.listingModelList[index].isFavorite = "0";
+                                        cont.listingModel =
+                                            cont.listingModelList[index];
+                                        cont.listingModelList[index]
+                                                    .isFavorite ==
+                                                "0"
+                                            ? cont.listingModelList[index]
+                                                .isFavorite = "1"
+                                            : cont.listingModelList[index]
+                                                .isFavorite = "0";
                                         cont.update();
-                                        bool isAddedF = await cont.favouriteItem();
+                                        bool isAddedF =
+                                            await cont.favouriteItem();
                                         if (isAddedF) {
                                           errorAlertToast("Successfully".tr);
                                         } else {
-                                          cont.listingModelList[index].isFavorite == "0"
-                                              ? cont.listingModelList[index].isFavorite = "1"
-                                              : cont.listingModelList[index].isFavorite = "0";
+                                          cont.listingModelList[index]
+                                                      .isFavorite ==
+                                                  "0"
+                                              ? cont.listingModelList[index]
+                                                  .isFavorite = "1"
+                                              : cont.listingModelList[index]
+                                                  .isFavorite = "0";
                                         }
                                       }
                                     },
@@ -214,10 +255,14 @@ class _ShowAllListingSubState extends State<ShowAllListingSub> {
                                       height: 43..h,
                                       width: 43..w,
                                       decoration: BoxDecoration(
-                                          color: Colors.white, borderRadius: BorderRadius.circular(21.5..r)),
+                                          color: Colors.white,
+                                          borderRadius:
+                                              BorderRadius.circular(21.5..r)),
                                       child: SvgPicture.asset(
                                         'assets/icons/heart1.svg',
-                                        color: cont.listingModelList[index].isFavorite == '0'
+                                        color: cont.listingModelList[index]
+                                                    .isFavorite ==
+                                                '0'
                                             ? Colors.grey
                                             : Colors.red,
                                       ),
