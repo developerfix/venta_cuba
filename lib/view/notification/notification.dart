@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:venta_cuba/Controllers/home_controller.dart';
-import 'package:venta_cuba/util/notification_list.dart';
 
 import '../constants/Colors.dart';
 
@@ -14,7 +13,7 @@ class NotificationScreen extends StatefulWidget {
 }
 
 class _NotificationScreenState extends State<NotificationScreen> {
-  final homeCont = Get.put(HomeController());
+  final homeCont = Get.find<HomeController>();
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +44,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                       ),
                       Text(
                         'Notifications'.tr,
-                        style: TextStyle(fontSize: 20..sp, fontWeight: FontWeight.w500, color: Colors.black),
+                        style: TextStyle(
+                            fontSize: 20..sp,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black),
                       ),
                       Container(
                         width: 10..w,
@@ -61,7 +63,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           return Column(
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   SizedBox(
                                     width: 280.w,
@@ -78,7 +81,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                   ),
                                   InkWell(
                                     onTap: () {
-                                      cont.notificationId = cont.allNotificationModel?.data?[index].id;
+                                      cont.notificationId = cont
+                                          .allNotificationModel
+                                          ?.data?[index]
+                                          .id;
                                       showDialog(
                                         context: context,
                                         builder: (BuildContext context) {
@@ -102,7 +108,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
                             height: 10.h,
                           );
                         },
-                        itemCount: cont.allNotificationModel?.data?.length ?? 0),
+                        itemCount:
+                            cont.allNotificationModel?.data?.length ?? 0),
                   )
                 ],
               ),
@@ -128,7 +135,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
           onPressed: () async {
             bool isDeleted = await homeCont.deleteNotification();
             Navigator.of(context).pop();
-            isDeleted ? homeCont.allNotificationModel?.data?.removeAt(index) : null;
+            isDeleted
+                ? homeCont.allNotificationModel?.data?.removeAt(index)
+                : null;
             homeCont.update();
           },
           child: Text('Delete'.tr),

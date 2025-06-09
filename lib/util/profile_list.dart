@@ -53,15 +53,12 @@ class ProfileList2 extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 20),
       height: 60..h,
       width: MediaQuery.of(context).size.width,
-      decoration: BoxDecoration(
-        boxShadow: [
-            BoxShadow(
-              color: AppColors.black.withOpacity(.4),
-              blurRadius: 5,
-            )
-          ],
-          borderRadius: BorderRadius.circular(5),
-          color: AppColors.white),
+      decoration: BoxDecoration(boxShadow: [
+        BoxShadow(
+          color: AppColors.black.withOpacity(.4),
+          blurRadius: 5,
+        )
+      ], borderRadius: BorderRadius.circular(5), color: AppColors.white),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

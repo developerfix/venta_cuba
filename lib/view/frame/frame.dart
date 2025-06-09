@@ -13,6 +13,7 @@ import 'package:lottie/lottie.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:venta_cuba/view/Chat/Controller/ChatController.dart';
 import 'package:venta_cuba/view/Chat/custom_text.dart';
+import 'package:venta_cuba/view/Navigation%20bar/post.dart';
 
 import 'package:venta_cuba/view/constants/Colors.dart';
 import '../../Controllers/auth_controller.dart';
@@ -196,8 +197,7 @@ class _FrameScreenState extends State<FrameScreen> {
                             Text(
                               cont.listingModel!.price == "0"
                                   ? ""
-                                  : "\$${cont.listingModel!.price!}",
-                              // '${cont.listingModel?.user?.firstName} ${cont.listingModel?.user?.lastName}',
+                                  : "${PriceFormatter().formatNumber(int.parse(cont.listingModel!.price ?? '0'))}\$ ${PriceFormatter().getCurrency(cont.listingModel!.currency)}",
                               style: TextStyle(
                                   fontSize: 20..sp,
                                   fontWeight: FontWeight.w600,
@@ -327,30 +327,32 @@ class _FrameScreenState extends State<FrameScreen> {
                             ),
                             SizedBox(height: 10..h),
                             SizedBox(
-                                height: 40.h,
-                                child: ListView.builder(
-                                    scrollDirection: Axis.horizontal,
-                                    itemCount: cont.listingModel?.tag?.length,
-                                    itemBuilder: (context, index) {
-                                      return Padding(
-                                        padding: EdgeInsets.only(right: 10.0.w),
-                                        child: Container(
-                                          height: 40.h,
-                                          decoration: BoxDecoration(
-                                              borderRadius:
-                                                  BorderRadius.circular(15),
-                                              border: Border.all(
-                                                  color: Colors.black26)),
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Center(
-                                                child: Text(cont.listingModel
-                                                        ?.tag?[index] ??
-                                                    "")),
-                                          ),
-                                        ),
-                                      );
-                                    })),
+                              height: 40.h,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: cont.listingModel?.tag?.length,
+                                itemBuilder: (context, index) {
+                                  return Padding(
+                                    padding: EdgeInsets.only(right: 10.0.w),
+                                    child: Container(
+                                      height: 40.h,
+                                      decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(15),
+                                          border: Border.all(
+                                              color: Colors.black26)),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Center(
+                                            child: Text(cont.listingModel
+                                                    ?.tag?[index] ??
+                                                "")),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
                             SizedBox(height: 10..h),
                             Divider(),
                             Text(
@@ -1192,7 +1194,7 @@ class _FrameScreenState extends State<FrameScreen> {
                                   Text(
                                     cont.listingModel!.price == "0"
                                         ? ""
-                                        : '\$${cont.listingModel?.price}',
+                                        : "${PriceFormatter().formatNumber(int.parse(cont.listingModel!.price ?? '0'))}\$ ${PriceFormatter().getCurrency(cont.listingModel!.currency)}",
                                     style: TextStyle(
                                         fontSize: 25..sp,
                                         fontWeight: FontWeight.w700,

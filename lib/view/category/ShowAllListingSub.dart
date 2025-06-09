@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:venta_cuba/Controllers/home_controller.dart';
 import 'package:venta_cuba/util/profile_list.dart';
+import 'package:venta_cuba/view/Navigation%20bar/post.dart';
 
 import '../../Controllers/auth_controller.dart';
 import '../../Utils/funcations.dart';
@@ -73,11 +74,11 @@ class _ShowAllListingSubState extends State<ShowAllListingSub> {
                     Expanded(
                         child: GridView.builder(
                       itemCount: cont.listingModelList.length,
-                      physics: NeverScrollableScrollPhysics(),
+                      // physics: NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
-                        childAspectRatio: 0.55.r,
+                        childAspectRatio: 0.50.r,
                         mainAxisSpacing: 25,
                         crossAxisSpacing: 25,
                       ),
@@ -116,7 +117,7 @@ class _ShowAllListingSubState extends State<ShowAllListingSub> {
                                         MainAxisAlignment.spaceBetween,
                                     children: [
                                       Container(
-                                        height: 180..h,
+                                        height: 180.h,
                                         width:
                                             MediaQuery.of(context).size.width,
                                         child: ClipRRect(
@@ -172,12 +173,11 @@ class _ShowAllListingSubState extends State<ShowAllListingSub> {
                                       Column(
                                         children: [
                                           SizedBox(
-                                            width: 140.w,
+                                            height: 20.h,
                                             child: Text(
                                               cont.listingModelList[index]
                                                       .title ??
                                                   "",
-                                              maxLines: 2,
                                               textAlign: TextAlign.center,
                                               overflow: TextOverflow.ellipsis,
                                               style: TextStyle(
@@ -186,27 +186,41 @@ class _ShowAllListingSubState extends State<ShowAllListingSub> {
                                                   color: Colors.black),
                                             ),
                                           ),
-                                          Text(
-                                            '${cont.listingModelList[index].address ?? ""}',
-                                            style: TextStyle(
-                                                fontSize: 13..sp,
-                                                fontWeight: FontWeight.w400,
-                                                color: AppColors.k0xFF403C3C),
+                                          SizedBox(
+                                            height: 2..h,
+                                          ),
+                                          SizedBox(
+                                            height: 16.h,
+                                            child: Text(
+                                              '${cont.listingModelList[index].address ?? ""}',
+                                              textAlign: TextAlign.center,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                  fontSize: 13..sp,
+                                                  fontWeight: FontWeight.w400,
+                                                  color: AppColors.k0xFF403C3C),
+                                            ),
                                           ),
                                           SizedBox(
                                             height: 2..h,
                                           ),
-                                          SelectionArea(
-                                            child: Text(
-                                              cont.listingModelList[index]
-                                                          .price ==
-                                                      "0"
-                                                  ? " "
-                                                  : '\$${cont.listingModelList[index].price}',
-                                              style: TextStyle(
-                                                  fontSize: 16..sp,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: AppColors.k0xFF0254B8),
+                                          SizedBox(
+                                            height: 16.h,
+                                            child: SelectionArea(
+                                              child: Text(
+                                                cont.listingModelList[index]
+                                                            .price ==
+                                                        "0"
+                                                    ? " "
+                                                    : "${PriceFormatter().formatNumber(int.parse(cont.listingModelList[index].price ?? '0'))}\$ ${PriceFormatter().getCurrency(cont.listingModelList[index].currency)}",
+                                                textAlign: TextAlign.center,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                    fontSize: 16..sp,
+                                                    fontWeight: FontWeight.w600,
+                                                    color:
+                                                        AppColors.k0xFF0254B8),
+                                              ),
                                             ),
                                           ),
                                           SizedBox(

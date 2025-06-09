@@ -69,19 +69,51 @@ class _ListingsState extends State<Listings> {
                       ),
                     ),
                     SizedBox(
-                      width: 20..w,
+                      width: 10.w,
                     ),
-                    GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const NotificationScreen(),
-                              ));
-                        },
-                        child: SvgPicture.asset(
-                            'assets/icons/notificationSimple.svg')),
+                    GetBuilder(
+                        init: HomeController(),
+                        builder: (cont) {
+                          return GestureDetector(
+                            onTap: () {
+                              homeCont.getAllNotifications();
+                            },
+                            child: Container(
+                              width: 25,
+                              height: 25,
+                              child: Stack(
+                                children: [
+                                  Align(
+                                    alignment: Alignment.center,
+                                    child: Container(
+                                      width: 20,
+                                      height: 20,
+                                      decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(20)),
+                                      child: Center(
+                                          child: SvgPicture.asset(
+                                              'assets/icons/notificationSimple.svg',
+                                              color: Colors.black)),
+                                    ),
+                                  ),
+                                  if (cont.hasUnreadNotifications.value)
+                                    Positioned(
+                                      right: 5,
+                                      top: 5,
+                                      child: Container(
+                                        width: 8,
+                                        height: 8,
+                                        decoration: BoxDecoration(
+                                            color: Colors.red,
+                                            shape: BoxShape.circle),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          );
+                        })
                   ],
                 ),
                 SizedBox(
@@ -404,11 +436,11 @@ class _ListingsState extends State<Listings> {
                                                                         cont.userListingModelList[index].price == "0" ||
                                                                                 cont.userListingModelList[index].price == null
                                                                             ? ""
-                                                                            : "${PriceFormatter().formatNumber(int.parse(cont.userListingModelList[index].price.toString()))} ${cont.userListingModelList[index].currency == "null" ? 'USD' : cont.userListingModelList[index].currency}",
+                                                                            : "${PriceFormatter().formatNumber(int.parse(cont.userListingModelList[index].price.toString()))}\$ ${PriceFormatter().getCurrency(cont.userListingModelList[index].currency)}",
                                                                         maxLines:
                                                                             1,
                                                                         style: TextStyle(
-                                                                            fontSize: 16
+                                                                            fontSize: 14
                                                                               ..sp,
                                                                             fontWeight:
                                                                                 FontWeight.w600,
@@ -792,7 +824,7 @@ class _ListingsState extends State<Listings> {
                                                                         cont.userListingModelList[index].price == "0" ||
                                                                                 cont.userListingModelList[index].price == null
                                                                             ? ""
-                                                                            : "${PriceFormatter().formatNumber(int.parse(cont.userListingModelList[index].price.toString()))} ${cont.userListingModelList[index].currency ?? 'USD'}",
+                                                                            : "${PriceFormatter().formatNumber(int.parse(cont.userListingModelList[index].price.toString()))}\$ ${PriceFormatter().getCurrency(cont.userListingModelList[index].currency)}",
                                                                         maxLines:
                                                                             1,
                                                                         style: TextStyle(
@@ -1127,7 +1159,7 @@ class _ListingsState extends State<Listings> {
                                                                         cont.userListingModelList[index].price ==
                                                                                 "0"
                                                                             ? ""
-                                                                            : "\$${cont.userListingModelList[index].price}",
+                                                                            : "${PriceFormatter().formatNumber(int.parse(cont.userListingModelList[index].price ?? '0'))}\$ ${PriceFormatter().getCurrency(cont.userListingModelList[index].currency)}",
                                                                         maxLines:
                                                                             1,
                                                                         style: TextStyle(

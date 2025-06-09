@@ -21,6 +21,7 @@ String filePathD = "";
 class FCM {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
   final streamCtrl = StreamController<String>.broadcast();
+  final authCont = Get.put(AuthController());
 
   // static SharedPreference sharedPreference = SharedPreference();
   // final NavigationService _navigationService = locator<NavigationService>();
@@ -54,6 +55,51 @@ class FCM {
       initializationSettings,
       onDidReceiveNotificationResponse: onDidReceiveLocalNotification,
     );
+  }
+
+  void firebaseCloudMessagingListeners(BuildContext context) {
+    if (Platform.isIOS) ios_permission();
+    print('listening firebase');
+    Future.delayed(const Duration(milliseconds: 500), () {
+      FirebaseMessaging.onMessage.listen((RemoteMessage messages) {
+        print('A new onMessage event was published! ${messages.data["body"]}');
+        Map<String, dynamic> message = messages.data;
+
+        // Set the unread messages flag to true when a new message arrives
+        if (authCont.currentIndexBottomAppBar != 1) {
+          authCont.hasUnreadMessages.value = true;
+          authCont.update();
+
+          if (Platform.isAndroid) {
+            _showNotifications(
+                message["body"],
+                message["title"],
+                'message_channel',
+                'message',
+                jsonEncode({
+                  'image': message["image"].toString(),
+                  'name': message["name"],
+                }),
+                false,
+                false,
+                AndroidNotificationCategory.message);
+          } else {
+            _showNotifications(
+                messages.notification!.body!,
+                messages.notification!.title!,
+                'message_channel',
+                'message',
+                jsonEncode({
+                  'image': message["image"].toString(),
+                  'name': message["name"],
+                }),
+                false,
+                false,
+                AndroidNotificationCategory.message);
+          }
+        }
+      });
+    });
   }
 
   static void _showNotifications(
@@ -135,49 +181,6 @@ class FCM {
               AndroidFlutterLocalNotificationsPlugin>();
     }
     _firebaseMessaging.requestPermission(sound: true, badge: true, alert: true);
-  }
-
-  void firebaseCloudMessagingListeners(BuildContext context) {
-    if (Platform.isIOS) ios_permission();
-    print('listening firebase');
-
-    Future.delayed(const Duration(milliseconds: 500), () {
-      FirebaseMessaging.onMessage.listen((RemoteMessage messages) {
-        print('A new onMessage event was published! ${messages.data["body"]}');
-        print('A new onMessage event was published! ${messages.data}');
-
-        Map<String, dynamic> message = messages.data;
-
-        String body = message["body"]?.toString() ?? "No Body";
-        String title = message["title"]?.toString() ?? "No Title";
-        String image = message["image"]?.toString() ?? "";
-        String name = message["name"]?.toString() ?? "";
-
-        if (Platform.isAndroid) {
-          _showNotifications(
-            body,
-            title,
-            'message_channel',
-            'message',
-            jsonEncode({'image': image, 'name': name}),
-            false,
-            false,
-            AndroidNotificationCategory.message,
-          );
-        } else {
-          _showNotifications(
-            messages.notification?.body ?? "No Body",
-            messages.notification?.title ?? "No Title",
-            'message_channel',
-            'message',
-            jsonEncode({'image': image, 'name': name}),
-            false,
-            false,
-            AndroidNotificationCategory.message,
-          );
-        }
-      });
-    });
   }
 
   setNotifications(BuildContext context) {

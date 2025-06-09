@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:venta_cuba/Controllers/home_controller.dart';
 import 'package:venta_cuba/Models/SelectedCategoryModel.dart';
@@ -824,7 +825,6 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                 ),
                                 inputFormatters: [
                                   FilteringTextInputFormatter.digitsOnly,
-                                  PriceFormatter(), // Custom formatter for spaces
                                 ],
                                 cursorColor: AppColors.black,
                               ),
@@ -2359,43 +2359,18 @@ class CapitalizeFirstLetterFormatter extends TextInputFormatter {
   }
 }
 
-class PriceFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-      TextEditingValue oldValue, TextEditingValue newValue) {
-    if (newValue.text.isEmpty) {
-      return newValue;
-    }
-
-    // Remove non-digits
-    String digitsOnly = newValue.text.replaceAll(RegExp(r'[^\d]'), '');
-    if (digitsOnly.isEmpty) {
-      return TextEditingValue(text: '');
-    }
-
-    // Parse to int and format with spaces
-    int value = int.parse(digitsOnly);
-    String formatted = formatNumber(value);
-
-    return TextEditingValue(
-      text: formatted,
-      selection: TextSelection.collapsed(offset: formatted.length),
-    );
+class PriceFormatter {
+  String formatNumber(num number) {
+    final formatter = NumberFormat('#,##0', 'fr_FR');
+    return formatter.format(number);
   }
 
-  String formatNumber(int number) {
-    String numStr = number.toString();
-    String result = '';
-    int count = 0;
-
-    for (int i = numStr.length - 1; i >= 0; i--) {
-      count++;
-      result = numStr[i] + result;
-      if (count % 3 == 0 && i > 0) {
-        result = ' ' + result;
-      }
+  String getCurrency(String? currency) {
+    if (currency == null) {
+      return 'USD';
     }
+    String cur = '${currency == 'null' || currency.isEmpty ? 'USD' : currency}';
 
-    return result;
+    return cur;
   }
 }

@@ -7,10 +7,9 @@ import 'package:venta_cuba/view/Navigation%20bar/selecct_category_post.dart';
 import 'package:venta_cuba/view/auth/login.dart';
 import 'package:venta_cuba/view/constants/Colors.dart';
 import '../../Controllers/auth_controller.dart';
-import '../Chat/pages/home_page.dart';
+import '../Chat/pages/chats.dart';
 import '../home screen/home_screen.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-
 
 bool? isChatScreen = false;
 
@@ -23,81 +22,106 @@ class Navigation_Bar extends StatefulWidget {
 
 class _Navigation_BarState extends State<Navigation_Bar> {
   final authCont = Get.put(AuthController());
-  final home= Get.find<HomeController>();
+  final home = Get.find<HomeController>();
 
   @override
   Widget build(BuildContext context) {
-    return GetBuilder<AuthController>(builder: (cont) {
-      return      Scaffold(
-        backgroundColor: Colors.white,
-        body: _buildScreen(cont.currentIndexBottomAppBar),
-        bottomNavigationBar: BottomNavigationBar(
+    return GetBuilder<AuthController>(
+      builder: (cont) {
+        return Scaffold(
           backgroundColor: Colors.white,
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: AppColors.k0xFF0254B8,
-          unselectedItemColor: Colors.grey,
-          currentIndex: cont.currentIndexBottomAppBar,
-          onTap: (index) {
-            if(index == 2){
+          body: _buildScreen(cont.currentIndexBottomAppBar),
+          bottomNavigationBar: BottomNavigationBar(
+            backgroundColor: Colors.white,
+            type: BottomNavigationBarType.fixed,
+            selectedItemColor: AppColors.k0xFF0254B8,
+            unselectedItemColor: Colors.grey,
+            currentIndex: cont.currentIndexBottomAppBar,
+            onTap: (index) {
+              if (index == 2) {
                 home.isType = 0;
-            }
-            if (index == 0) {
-              cont.currentIndexBottomAppBar = index;
-             cont.update();
-            } else {
-              if (authCont.user?.email == "") {
-                Get.to(Login());
               }
-
-              else {
+              if (index == 0) {
                 cont.currentIndexBottomAppBar = index;
+                cont.update();
+              } else {
+                if (authCont.user?.email == "") {
+                  Get.to(Login());
+                } else {
+                  cont.currentIndexBottomAppBar = index;
                   cont.update();
-
+                }
+                ;
               }
-              ;
-            }
-          },
-          items: [
-            BottomNavigationBarItem(
-              icon: SvgPicture.asset(
-                'assets/icons/home.svg',
-                color:cont.currentIndexBottomAppBar == 0 ? AppColors.k0xFF0254B8 : Colors.grey,
+            },
+            items: [
+              BottomNavigationBarItem(
+                icon: SvgPicture.asset(
+                  'assets/icons/home.svg',
+                  color: cont.currentIndexBottomAppBar == 0
+                      ? AppColors.k0xFF0254B8
+                      : Colors.grey,
+                ),
+                label: 'Home'.tr,
               ),
-              label: 'Home'.tr,
-            ),
-            BottomNavigationBarItem(
-              icon: SvgPicture.asset(
-                'assets/icons/messenger.svg',
-                color: cont.currentIndexBottomAppBar == 1 ? AppColors.k0xFF0254B8 : Colors.grey,
+              BottomNavigationBarItem(
+                icon: Stack(
+                  children: [
+                    SvgPicture.asset(
+                      'assets/icons/messenger.svg',
+                      color: cont.currentIndexBottomAppBar == 1
+                          ? AppColors.k0xFF0254B8
+                          : Colors.grey,
+                    ),
+                    if (cont.hasUnreadMessages
+                        .value) // Show badge if there are unread messages
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        child: Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                label: 'Chat'.tr,
               ),
-              label: 'Chat'.tr,
-            ),
-            BottomNavigationBarItem(
-              icon: SvgPicture.asset(
-                'assets/icons/camera.svg',
-                color: cont.currentIndexBottomAppBar == 2 ? AppColors.k0xFF0254B8 : Colors.grey,
+              BottomNavigationBarItem(
+                icon: SvgPicture.asset(
+                  'assets/icons/camera.svg',
+                  color: cont.currentIndexBottomAppBar == 2
+                      ? AppColors.k0xFF0254B8
+                      : Colors.grey,
+                ),
+                label: 'Post'.tr,
               ),
-              label: 'Post'.tr,
-            ),
-            BottomNavigationBarItem(
-              icon: SvgPicture.asset(
-                'assets/icons/tag.svg',
-                color: cont.currentIndexBottomAppBar == 3 ? AppColors.k0xFF0254B8 : Colors.grey,
+              BottomNavigationBarItem(
+                icon: SvgPicture.asset(
+                  'assets/icons/tag.svg',
+                  color: cont.currentIndexBottomAppBar == 3
+                      ? AppColors.k0xFF0254B8
+                      : Colors.grey,
+                ),
+                label: 'Listings'.tr,
               ),
-              label: 'Listings'.tr,
-            ),
-            BottomNavigationBarItem(
-              icon: SvgPicture.asset(
-                'assets/icons/profile.svg',
-                color: cont.currentIndexBottomAppBar == 4 ? AppColors.k0xFF0254B8 : Colors.grey,
+              BottomNavigationBarItem(
+                icon: SvgPicture.asset(
+                  'assets/icons/profile.svg',
+                  color: cont.currentIndexBottomAppBar == 4
+                      ? AppColors.k0xFF0254B8
+                      : Colors.grey,
+                ),
+                label: 'Profile'.tr,
               ),
-              label: 'Profile'.tr,
-            ),
-          ],
-        ),
-      );
-    },
-
+            ],
+          ),
+        );
+      },
     );
   }
 

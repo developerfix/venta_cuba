@@ -72,7 +72,6 @@ class _ChatPageState extends State<ChatPage> {
     chatCont.isShow = false;
     isONImageScreen = false;
     isKeyBoardOpen = true;
-    // TODO: implement dispose
     super.dispose();
   }
 
@@ -89,13 +88,11 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      chatCont.scrollController
-          .jumpTo(chatCont.scrollController.position.maxScrollExtent);
-    });
+
     focusNode = FocusNode();
     getChat();
     saveFile();
+
     chatCont.scrollController.addListener(() {
       if (chatCont.scrollController.position.pixels ==
           chatCont.scrollController.position.maxScrollExtent) {
@@ -106,9 +103,17 @@ class _ChatPageState extends State<ChatPage> {
         chatCont.update();
       }
     });
-
     chatCont.isLast = widget.isLast ?? false;
     updateImage();
+  }
+
+  void _scrollToBottom() {
+    if (chatCont.scrollController.hasClients) {
+      chatCont.scrollController
+          .jumpTo(chatCont.scrollController.position.maxScrollExtent);
+    } else {
+      Timer(Duration(milliseconds: 400), () => _scrollToBottom());
+    }
   }
 
   void _requestFocus() {
@@ -182,6 +187,7 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -438,12 +444,9 @@ class _ChatPageState extends State<ChatPage> {
                                         ? Colors.blue
                                         : Colors.grey,
                                   ),
-                                  onPressed: () {
-                                    sendMessage('text');
-                                    cont.scrollController.jumpTo(cont
-                                        .scrollController
-                                        .position
-                                        .maxScrollExtent);
+                                  onPressed: () async {
+                                    await sendMessage('text');
+
                                     cont.update();
                                   },
                                 ),
@@ -551,19 +554,18 @@ class _ChatPageState extends State<ChatPage> {
                   GetBuilder<ChatController>(builder: (cont) {
                     return Expanded(
                       child: ListView.builder(
-                        padding: EdgeInsets.only(bottom: 120.h, top: 70.h),
+                        padding: EdgeInsets.only(bottom: 20.h, top: 20.h),
                         controller: cont.scrollController,
                         itemCount: snapshot.data.docs.length,
                         itemBuilder: (context, index) {
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            if (cont.isLast) {
-                              cont.scrollController.jumpTo(cont
-                                  .scrollController.position.maxScrollExtent);
-                            }
-                            cont.isLast = false;
-                          });
                           var sendBy = snapshot.data.docs[index].get('sendBy');
                           print(sendBy);
+                          Timestamp? timestamp =
+                              snapshot.data.docs[index].get('time');
+                          String formattedTime = timestamp != null
+                              ? DateFormat('h:mm a')
+                                  .format(timestamp.toDate().toLocal())
+                              : "";
                           return "${authCont.user?.userId}" == sendBy
                               ? Slidable(
                                   endActionPane: ActionPane(
@@ -592,9 +594,7 @@ class _ChatPageState extends State<ChatPage> {
                                           ['sender'],
                                       messageType: snapshot.data.docs[index]
                                           ['messageType'],
-                                      messageTime: snapshot
-                                          .data.docs[index]['messageTime']
-                                          .toString(),
+                                      messageTime: formattedTime,
                                       sentByMe:
                                           "${authCont.user?.userId}" == sendBy),
                                 )
@@ -625,9 +625,7 @@ class _ChatPageState extends State<ChatPage> {
                                           ['sender'],
                                       messageType: snapshot.data.docs[index]
                                           ['messageType'],
-                                      messageTime: snapshot
-                                          .data.docs[index]['messageTime']
-                                          .toString(),
+                                      messageTime: formattedTime,
                                       sentByMe:
                                           "${authCont.user?.userId}" == sendBy),
                                 );
@@ -654,12 +652,21 @@ class _ChatPageState extends State<ChatPage> {
           "messageType": messageType,
           "sender": "${authCont.user?.firstName} ${authCont.user?.lastName}",
           "time": FieldValue.serverTimestamp(),
-          "messageTime": DateFormat('h:mm a').format(DateTime.now()).toString(),
+          // "messageTime": DateFormat('h:mm a').format(DateTime.now()).toString(),
           "sendBy": "${authCont.user?.userId}",
         };
         String? id = widget.chatId ?? widget.createChatid;
         await chatCont.sendMessage(id ?? "", chatMessageMap);
+        chatCont.scrollController
+            .jumpTo(chatCont.scrollController.position.maxScrollExtent);
         chatCont.messageController.clear();
+        Future.delayed(Duration(milliseconds: 500), () {
+          if (chatCont.scrollController.hasClients) {
+            chatCont.scrollController.jumpTo(
+              chatCont.scrollController.position.maxScrollExtent,
+            );
+          }
+        });
 
         firebaseMessaging.sendNotificationFCM(
             title: "${authCont.user?.firstName} ${authCont.user?.lastName}",

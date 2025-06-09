@@ -3,17 +3,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:get/get.dart';
+import 'package:googleapis/androidpublisher/v3.dart';
+import 'package:intl/intl.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
 import 'package:venta_cuba/view/Chat/widgets/widgets.dart';
 import '../Controller/ChatController.dart';
 import '../custom_text.dart';
 import '../pages/chat_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' as firestoree;
 
 class GroupTile extends StatefulWidget {
   final String userName;
   final String? lastMessage;
   final String? messageType;
-  final String? messageTime;
+  final firestoree.Timestamp? messageTime;
   final String senderId;
   final String? remoteUid;
   final String? userChatId;
@@ -50,6 +53,24 @@ class GroupTile extends StatefulWidget {
 class _GroupTileState extends State<GroupTile> {
   final authCont = Get.find<AuthController>();
   final chatCont = Get.find<ChatController>();
+  String _formatMessageTime(firestoree.Timestamp? messageTime) {
+    // Debug: Log the type of messageTime
+    print('messageTime type: ${messageTime.runtimeType}');
+
+    if (messageTime != null) {
+      try {
+        // Convert Firestore Timestamp to local DateTime and format
+        return DateFormat('h:mm a').format(messageTime.toDate().toLocal());
+      } catch (e) {
+        print('Error formatting Timestamp: $e');
+        return '';
+      }
+    } else {
+      // Fallback for null Timestamp
+      print('Invalid messageTime: $messageTime');
+      return '';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,6 +95,7 @@ class _GroupTileState extends State<GroupTile> {
                 authCont.currentIndexBottomAppBar = 1;
                 authCont.update();
                 setState(() {});
+
                 nextScreen(
                     context,
                     ChatPage(
@@ -154,8 +176,9 @@ class _GroupTileState extends State<GroupTile> {
                                       fontColor: Color(0xFFA8AAAC),
                                     ),
                                     CustomText(
-                                      text: "${widget.messageTime}",
-                                      fontSize: 13..sp,
+                                      text: _formatMessageTime(
+                                          widget.messageTime),
+                                      fontSize: 13.sp,
                                       fontWeight: FontWeight.w400,
                                       fontColor: Color(0xFF3F3B3B),
                                     ),

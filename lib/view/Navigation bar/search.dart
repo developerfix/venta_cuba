@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:venta_cuba/Controllers/home_controller.dart';
 import 'package:venta_cuba/Utils/funcations.dart';
+import 'package:venta_cuba/view/Navigation%20bar/post.dart';
 import 'package:venta_cuba/view/constants/Colors.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../Controllers/auth_controller.dart';
@@ -107,23 +108,22 @@ class _SearchState extends State<Search> {
                           child: TextField(
                             controller: cont.searchController,
                             onSubmitted: (value) {
-                              cont.currentSearchPage.value=1;
-                                            cont.listingModelSearchList.clear();
-                                            cont.update();
+                              cont.currentSearchPage.value = 1;
+                              cont.listingModelSearchList.clear();
+                              cont.update();
                               cont.getListingSearch();
                             },
                             textAlignVertical: TextAlignVertical.center,
                             cursorColor: Colors.black,
                             decoration: InputDecoration(
                                 border: InputBorder.none,
-                                contentPadding:
-                                    EdgeInsets.fromLTRB(0, 0, 0, 0),
+                                contentPadding: EdgeInsets.fromLTRB(0, 0, 0, 0),
                                 focusedBorder: InputBorder.none,
                                 prefixIcon: InkWell(
                                   onTap: () {
-                                    cont.currentSearchPage.value=1;
-                                            cont.listingModelSearchList.clear();
-                                            cont.update();
+                                    cont.currentSearchPage.value = 1;
+                                    cont.listingModelSearchList.clear();
+                                    cont.update();
                                     cont.getListingSearch();
                                   },
                                   child: Container(
@@ -161,8 +161,7 @@ class _SearchState extends State<Search> {
                               height: 40..h,
                               width: 98..w,
                               decoration: BoxDecoration(
-                                  color:
-                                      AppColors.k0xFF0254B8.withOpacity(.2),
+                                  color: AppColors.k0xFF0254B8.withOpacity(.2),
                                   borderRadius: BorderRadius.circular(60)),
                               child: Row(
                                 mainAxisAlignment:
@@ -211,8 +210,7 @@ class _SearchState extends State<Search> {
                               height: 40..h,
                               // width: 98..w,
                               decoration: BoxDecoration(
-                                  color:
-                                      AppColors.k0xFFD9D9D9.withOpacity(.5),
+                                  color: AppColors.k0xFFD9D9D9.withOpacity(.5),
                                   borderRadius: BorderRadius.circular(60)),
                               child: Row(
                                 mainAxisAlignment:
@@ -399,8 +397,7 @@ class _SearchState extends State<Search> {
                             Container(
                               height: 24..h,
                               width: 24..w,
-                              child:
-                                  SvgPicture.asset('assets/icons/sort.svg'),
+                              child: SvgPicture.asset('assets/icons/sort.svg'),
                             ),
                             Text(
                               'Sort'.tr,
@@ -433,12 +430,12 @@ class _SearchState extends State<Search> {
     return Expanded(
       child: GridView.builder(
         itemCount: listingList.length,
-      controller: homeCont.searchScrollController,
+        controller: homeCont.searchScrollController,
         // physics: NeverScrollableScrollPhysics(),
         shrinkWrap: true,
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
-          childAspectRatio: 1.41 / 3,
+          childAspectRatio: 0.50.r,
           mainAxisSpacing: 26,
           crossAxisSpacing: 34,
         ),
@@ -473,7 +470,7 @@ class _SearchState extends State<Search> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Container(
-                          // height: 180..h,
+                          height: 180.h,
                           width: MediaQuery.of(context).size.width,
                           child: ClipRRect(
                             borderRadius: BorderRadius.only(
@@ -486,7 +483,8 @@ class _SearchState extends State<Search> {
                                       listingList[index].gallery!.isNotEmpty
                                   ? "${listingList[index].gallery?.first}"
                                   : "",
-                              imageBuilder: (context, imageProvider) => Container(
+                              imageBuilder: (context, imageProvider) =>
+                                  Container(
                                 height: 180..h,
                                 width: MediaQuery.of(context).size.width,
                                 decoration: BoxDecoration(
@@ -513,39 +511,49 @@ class _SearchState extends State<Search> {
                           color: Colors.white,
                           child: Column(
                             children: [
-                              Center(
-                                child: Text(
-                                  listingList[index].title ?? "",
-                                  maxLines: 2,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                      fontSize: 17..sp,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black),
-                                      
+                              SizedBox(
+                                height: 20.h,
+                                child: Center(
+                                  child: Text(
+                                    listingList[index].title ?? "",
+                                    maxLines: 2,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                        fontSize: 17..sp,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.black),
+                                  ),
                                 ),
                               ),
-                              Text(
-                                '${listingList[index].address ?? ""}',
-                                textAlign: TextAlign.center,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                    fontSize: 13..sp,
-                                    fontWeight: FontWeight.w400,
-                                    color: AppColors.k0xFF403C3C),
+                              SizedBox(
+                                height: 16.h,
+                                child: Text(
+                                  '${listingList[index].address ?? ""}',
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                      fontSize: 13..sp,
+                                      fontWeight: FontWeight.w400,
+                                      color: AppColors.k0xFF403C3C),
+                                ),
                               ),
                               SizedBox(
                                 height: 2..h,
                               ),
-                              Text(
-                                listingList[index].price == "0"
-                                    ? ""
-                                    : '\$${listingList[index].price ?? ""}',
-                                style: TextStyle(
-                                    fontSize: 16..sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.k0xFF0254B8),
+                              SizedBox(
+                                height: 16.h,
+                                child: Text(
+                                  listingList[index].price == "0"
+                                      ? ""
+                                      : "${PriceFormatter().formatNumber(int.parse(listingList[index].price ?? '0'))}\$ ${PriceFormatter().getCurrency(listingList[index].currency)}",
+                                  textAlign: TextAlign.center,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                      fontSize: 16..sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.k0xFF0254B8),
+                                ),
                               ),
                               SizedBox(
                                 height: 5.h,
@@ -575,10 +583,8 @@ class _SearchState extends State<Search> {
                             errorAlertToast("Successfully".tr);
                           } else {
                             homeCont.listingModel?.isFavorite == "0"
-                                ? homeCont.listingModel?.isFavorite =
-                                    "1"
-                                : homeCont.listingModel?.isFavorite =
-                                    "0";
+                                ? homeCont.listingModel?.isFavorite = "1"
+                                : homeCont.listingModel?.isFavorite = "0";
                           }
                         }
                       },
@@ -592,9 +598,11 @@ class _SearchState extends State<Search> {
                         child: SvgPicture.asset(
                           'assets/icons/heart1.svg',
                           color: homeCont.listingModelSearchList.isNotEmpty &&
-                              homeCont.listingModelSearchList[index].isFavorite == '0'
-                                  ? Colors.grey
-                                  : Colors.red,
+                                  homeCont.listingModelSearchList[index]
+                                          .isFavorite ==
+                                      '0'
+                              ? Colors.grey
+                              : Colors.red,
                         ),
                       ),
                     ),
@@ -696,7 +704,7 @@ class _SearchState extends State<Search> {
                             Text(
                               listingList[index].price == "0"
                                   ? ""
-                                  : "\$${listingList[index].price}",
+                                  : "${PriceFormatter().formatNumber(int.parse(listingList[index].price ?? '0'))}\$ ${PriceFormatter().getCurrency(listingList[index].currency)}",
                               style: TextStyle(
                                   fontSize: 16..sp,
                                   fontWeight: FontWeight.w600,
@@ -727,10 +735,8 @@ class _SearchState extends State<Search> {
                           errorAlertToast("Successfully".tr);
                         } else {
                           homeCont.listingModel?.isFavorite == "0"
-                              ? homeCont.listingModel?.isFavorite =
-                                  "1"
-                              : homeCont.listingModel?.isFavorite =
-                                  "0";
+                              ? homeCont.listingModel?.isFavorite = "1"
+                              : homeCont.listingModel?.isFavorite = "0";
                         }
                       }
                     },
@@ -743,10 +749,12 @@ class _SearchState extends State<Search> {
                           borderRadius: BorderRadius.circular(21.5..r)),
                       child: SvgPicture.asset(
                         'assets/icons/heart1.svg',
-                        color:  homeCont.listingModelSearchList.isNotEmpty &&
-                            homeCont.listingModelSearchList[index].isFavorite == '0'
-                                ? Colors.grey
-                                : Colors.red,
+                        color: homeCont.listingModelSearchList.isNotEmpty &&
+                                homeCont.listingModelSearchList[index]
+                                        .isFavorite ==
+                                    '0'
+                            ? Colors.grey
+                            : Colors.red,
                       ),
                     ),
                   ),
@@ -1190,9 +1198,9 @@ class _PokeToDialBottomSheetContentState
                     if (cont.minPriceController.text.isEmpty ||
                         cont.minPriceController.text.isEmpty) {
                       Get.back();
-                      cont.currentSearchPage.value=1;
-                                            cont.listingModelSearchList.clear();
-                                            cont.update();
+                      cont.currentSearchPage.value = 1;
+                      cont.listingModelSearchList.clear();
+                      cont.update();
                       cont.getListingSearch();
                     } else if (double.parse(
                             cont.minPriceController.text.toString()) >
@@ -1202,9 +1210,9 @@ class _PokeToDialBottomSheetContentState
                               .tr);
                     } else {
                       Get.back();
-                      cont.currentSearchPage.value=1;
-                                            cont.listingModelSearchList.clear();
-                                            cont.update();
+                      cont.currentSearchPage.value = 1;
+                      cont.listingModelSearchList.clear();
+                      cont.update();
                       cont.getListingSearch();
                     }
                   },
@@ -1834,7 +1842,7 @@ showDialogDropDown(BuildContext context) {
                                             cont.selectedSubCategory = null;
                                             cont.selectedSubSubCategory = null;
                                             cont.isSearchScreen = true;
-                                            cont.currentSearchPage.value=1;
+                                            cont.currentSearchPage.value = 1;
                                             cont.listingModelSearchList.clear();
                                             cont.update();
                                             cont.getSubCategories();
@@ -1856,7 +1864,7 @@ showDialogDropDown(BuildContext context) {
                                             cont.isNavigate = false;
                                             cont.isSearchScreen = true;
                                             cont.getSubSubCategories();
-                                            
+
                                             // cont.update();
                                             // cont.getListingSearch();
                                           } else {
@@ -1875,9 +1883,9 @@ showDialogDropDown(BuildContext context) {
                                                         .name,
                                                     icon: "",
                                                     type: 2);
-                                                    cont.currentSearchPage.value=1;
+                                            cont.currentSearchPage.value = 1;
                                             cont.listingModelSearchList.clear();
-                                           
+
                                             cont.update();
                                             Get.back();
                                             cont.getListingSearch();

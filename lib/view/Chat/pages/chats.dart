@@ -24,7 +24,12 @@ class _ChatsState extends State<Chats> {
   @override
   void initState() {
     super.initState();
-    gettingUserData();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      gettingUserData();
+      authCont.hasUnreadMessages.value = false;
+      authCont.update();
+    });
   }
 
   String getName(String res) {
@@ -89,7 +94,7 @@ class _ChatsState extends State<Chats> {
                             ['listingLocation'],
                         lastMessage: snapshot.data.docs[index]['message'],
                         messageType: snapshot.data.docs[index]['messageType'],
-                        messageTime: snapshot.data.docs[index]['messageTime'],
+                        messageTime: snapshot.data.docs[index]['time'],
                         userName: snapshot.data.docs[index]['senderId'] ==
                                 "${authCont.user?.userId}"
                             ? snapshot.data.docs[index]['sendToName']

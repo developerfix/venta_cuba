@@ -11,7 +11,6 @@ class ChatController extends GetxController {
   Stream<QuerySnapshot>? chats;
   TextEditingController messageController = TextEditingController();
   ScrollController scrollController = ScrollController();
-
   bool isShow = false;
 
   final CollectionReference chatCollection =

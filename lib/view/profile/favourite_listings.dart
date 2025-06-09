@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
 import 'package:venta_cuba/Controllers/home_controller.dart';
 import 'package:venta_cuba/view/Chat/custom_text.dart';
+import 'package:venta_cuba/view/Navigation%20bar/post.dart';
 import 'package:venta_cuba/view/constants/Colors.dart';
 import 'package:flutter_svg/svg.dart';
 import '../../Utils/funcations.dart';
@@ -71,7 +72,7 @@ class _FavouriteListingsState extends State<FavouriteListings> {
                               gridDelegate:
                                   SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 2,
-                                childAspectRatio: 0.55.r,
+                                childAspectRatio: 0.50.r,
                                 mainAxisSpacing: 25,
                                 crossAxisSpacing: 25,
                               ),
@@ -113,6 +114,7 @@ class _FavouriteListingsState extends State<FavouriteListings> {
                                               MainAxisAlignment.spaceBetween,
                                           children: [
                                             Container(
+                                              height: 180.h,
                                               width: MediaQuery.of(context)
                                                   .size
                                                   .width,
@@ -167,7 +169,6 @@ class _FavouriteListingsState extends State<FavouriteListings> {
                                                 child: Column(
                                                   children: [
                                                     SizedBox(
-                                                      width: 140.w,
                                                       height: 20.h,
                                                       child: Text(
                                                         data.title ??
@@ -184,34 +185,45 @@ class _FavouriteListingsState extends State<FavouriteListings> {
                                                         ),
                                                       ),
                                                     ),
-                                                    SelectionArea(
-                                                      child: Text(
-                                                        '${data.address ?? ""}',
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                        style: TextStyle(
-                                                          fontSize: 13..sp,
-                                                          fontWeight:
-                                                              FontWeight.w400,
-                                                          color: AppColors
-                                                              .k0xFF403C3C,
+                                                    SizedBox(
+                                                      height: 16.h,
+                                                      child: SelectionArea(
+                                                        child: Text(
+                                                          '${data.address ?? ""}',
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                          style: TextStyle(
+                                                            fontSize: 13..sp,
+                                                            fontWeight:
+                                                                FontWeight.w400,
+                                                            color: AppColors
+                                                                .k0xFF403C3C,
+                                                          ),
                                                         ),
                                                       ),
                                                     ),
                                                     SizedBox(
                                                       height: 2..h,
                                                     ),
-                                                    SelectionArea(
-                                                      child: Text(
-                                                        data.price == "0"
-                                                            ? " "
-                                                            : '\$${data.price}', // Use data instead of cont.listingModelList
-                                                        style: TextStyle(
-                                                          fontSize: 16..sp,
-                                                          fontWeight:
-                                                              FontWeight.w600,
-                                                          color: AppColors
-                                                              .k0xFF0254B8,
+                                                    SizedBox(
+                                                      height: 16.h,
+                                                      child: SelectionArea(
+                                                        child: Text(
+                                                          data.price == "0"
+                                                              ? " "
+                                                              : "${PriceFormatter().formatNumber(int.parse(data.price ?? '0'))}\$ ${PriceFormatter().getCurrency(data.currency)}",
+                                                          textAlign:
+                                                              TextAlign.center,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                          // Use data instead of cont.listingModelList
+                                                          style: TextStyle(
+                                                            fontSize: 16..sp,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            color: AppColors
+                                                                .k0xFF0254B8,
+                                                          ),
                                                         ),
                                                       ),
                                                     ),

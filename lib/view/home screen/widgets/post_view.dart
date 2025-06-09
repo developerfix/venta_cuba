@@ -131,7 +131,9 @@ class ListingView extends StatelessWidget {
                               ),
                               SizedBox(height: 2.h),
                               Text(
-                                "${PriceFormatter().formatNumber(int.parse(item.price ?? '0'))} ${item.currency == 'null' ? 'USD' : item.currency}",
+                                item.price == "0"
+                                    ? " "
+                                    : "${PriceFormatter().formatNumber(int.parse(item.price ?? '0'))}\$ ${PriceFormatter().getCurrency(item.currency)}",
                                 // "${item.id}",
                                 style: TextStyle(
                                     fontSize: 14.sp,

@@ -24,6 +24,7 @@ String deviceToken = '';
 
 class AuthController extends GetxController {
   int currentIndexBottomAppBar = 0;
+  RxBool hasUnreadMessages = false.obs;
   late SharedPreferences prefs;
   TextEditingController firstNameCont = TextEditingController(text: "");
   TextEditingController lastNameCont = TextEditingController(text: "");
@@ -701,6 +702,12 @@ class AuthController extends GetxController {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       prefs.remove('token');
       prefs.remove('user_data');
+
+      await prefs.remove('lastLat');
+      await prefs.remove('lastLng');
+      await prefs.remove('lastRadius');
+      await prefs.remove('saveAddress');
+      await prefs.remove('saveRadius');
       Get.offAll(() => const Login());
     } else {
       errorAlertToast('Something went wrong\nPlease try again!'.tr);

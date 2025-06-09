@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
@@ -84,7 +85,8 @@ class HomeController extends GetxController {
   double? userRatting = 3.0;
   final authCont = Get.put(AuthController());
   List<bool> isCheckedList = [false, false, false, false, false];
-
+  // Added for unread notifications
+  RxBool hasUnreadNotifications = false.obs;
   ApiClient api = ApiClient(appBaseUrl: baseUrl);
   CategoriesModel? categoriesModel;
   SubCategoriesModel? subCategoriesModel;
@@ -107,6 +109,8 @@ class HomeController extends GetxController {
   ListingModel? listingModel;
   String furnished = '';
   String jobType = '';
+  String? searchLatitude;
+  String? searchLongitude;
   String? status = 'active';
   String? soldStatus;
   String? listingId;
@@ -139,44 +143,177 @@ class HomeController extends GetxController {
   // int isSelect = -1;
   // int isSelect1 = -1;
   // int isSelect2 = -1;
-  UserData? userData;
-  String? searchLatitude;
-  String? searchLongitude;
   ScrollController scrollsController = ScrollController();
   ScrollController searchScrollController = ScrollController();
-
+  RxBool isFetching = false.obs; // Prevent concurrent fetches
   RxInt currentPage = 1.obs;
   RxBool hasMore = true.obs;
+  RxBool isScrollListenerActive = true.obs;
 
-  homeData() async {
-    loadingHome = true.obs;
-    // Ensure the listener is added only once
-    scrollsController.addListener(onScroll);
-    searchScrollController.addListener(onScrollSearch);
-
-    currentPage.value = 1; // Reset pagination state BEFORE fetching data
-    hasMore.value = true;
-    await getCategories();
-    await getListing();
-
-    loadingHome = false.obs;
-    update();
-  }
+  // Add variables to track last used location and radius
+  String? lastLat;
+  String? lastLng;
+  double? lastRadius;
+  RxBool shouldFetchData =
+      false.obs; // Flag to determine if data should be fetched
 
   @override
   void onInit() {
-    // TODO: implement onInit
-    //  currentPage.value = 1;
-    // scrollsController.addListener(onScroll);
-    fetchAccountType();
     super.onInit();
+    fetchAccountType();
   }
 
   @override
   void onClose() {
     scrollsController.removeListener(onScroll);
+    searchScrollController.removeListener(onScrollSearch);
     scrollsController.dispose();
+    searchScrollController.dispose();
     super.onClose();
+  }
+
+  void resetScrollController() {
+    scrollsController.removeListener(onScroll);
+    scrollsController.dispose();
+    scrollsController = ScrollController();
+    scrollsController.addListener(onScroll);
+    Get.log("Scroll controller reset");
+  }
+
+  Future<void> saveLastNotificationViewTime() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString(
+        'lastNotificationViewTime', DateTime.now().toString());
+    hasUnreadNotifications.value = false;
+    update();
+  }
+
+  Future<String?> getLastNotificationViewTime() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('lastNotificationViewTime');
+  }
+
+  Future<void> homeData() async {
+    try {
+      await loadLastLocationAndRadius();
+      if (hasLocationOrRadiusChanged() || listingModelList.isEmpty) {
+        loadingHome = true.obs;
+        scrollsController.addListener(onScroll);
+        searchScrollController.addListener(onScrollSearch);
+        currentPage.value = 1;
+        hasMore.value = true;
+        await getCategories();
+        await getListing();
+        await getAllNotifications(silent: true);
+        saveLocationAndRadius();
+      }
+    } catch (e, stackTrace) {
+      Get.log("Error in homeData: $e\n$stackTrace", isError: true);
+      errorAlertToast('Failed to load data. Please try again.'.tr);
+    } finally {
+      loadingHome = false.obs;
+      update();
+    }
+  }
+
+  void onScroll() {
+    if (isFetching.value || !scrollsController.hasClients) return;
+    if (scrollsController.position.pixels >=
+        scrollsController.position.maxScrollExtent - 100) {
+      if (!isPostLoading.value && hasMore.value) {
+        Get.log("onScroll: Triggering getListing, page=${currentPage.value}");
+        getListing(isLoadMore: true);
+      }
+    }
+  }
+
+  Future<void> getListing({bool isLoadMore = false}) async {
+    if (isPostLoading.value) return;
+    isPostLoading.value = true;
+    update();
+
+    try {
+      await getCoordinatesFromAddress();
+      if (!isLoadMore) {
+        currentPage.value = 1;
+        listingModelList.clear();
+        hasMore.value = true;
+      }
+
+      if (!hasMore.value) {
+        isPostLoading.value = false;
+        update();
+        return;
+      }
+
+      Get.log("Fetching Page: ${currentPage.value}");
+      Response response = await api.postWithForm(
+        "api/getListing?page=${currentPage.value}",
+        {
+          'user_id': authCont.user?.userId ?? "",
+          'category_id': selectedCategory?.id ?? "",
+          'sub_category_id': selectedSubCategory?.id ?? "",
+          'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
+          'latitude': lat ?? "23.124792615936276",
+          'longitude': lng ?? "-82.38597269330762",
+          'radius': radius.toString(),
+          'min_price': '',
+          'max_price': '',
+          'search_by_title': ''
+        },
+        showdialog: false,
+      );
+
+      if (response.statusCode == 200) {
+        List<dynamic> dataListing = response.body['data']['data'] ?? [];
+        Get.log("HOME POST COUNT ${dataListing.length}");
+
+        if (dataListing.isNotEmpty) {
+          listingModelList
+              .addAll(dataListing.map((e) => ListingModel.fromJson(e)));
+          currentPage.value++;
+          hasMore.value = dataListing.length == 15;
+        } else {
+          hasMore.value = false;
+        }
+        saveLocationAndRadius();
+      } else {
+        Get.log("API error: ${response.statusCode}, ${response.body}",
+            isError: true);
+        errorAlertToast('Failed to fetch listings. Please try again.'.tr);
+      }
+    } catch (e, stackTrace) {
+      Get.log("Error in getListing: $e\n$stackTrace", isError: true);
+      errorAlertToast('Something went wrong. Please try again.'.tr);
+    } finally {
+      isPostLoading.value = false;
+      update();
+    }
+  }
+
+// Check if location or radius has changed
+  bool hasLocationOrRadiusChanged() {
+    return lat != lastLat || lng != lastLng || radius != lastRadius;
+  }
+
+  // Save current location and radius to cache
+  void saveLocationAndRadius() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('lastLat', lat ?? '');
+    await prefs.setString('lastLng', lng ?? '');
+    await prefs.setDouble('lastRadius', radius);
+    lastLat = lat;
+    lastLng = lng;
+    lastRadius = radius;
+  }
+
+  // Load last location and radius from cache
+  Future<void> loadLastLocationAndRadius() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    lastLat = prefs.getString('lastLat') ?? lat;
+    lastLng = prefs.getString('lastLng') ?? lng;
+    lastRadius = prefs.getDouble('lastRadius') ?? radius;
   }
 
 // Date Setting on post
@@ -562,7 +699,7 @@ class HomeController extends GetxController {
 
   AllNotificationModel? allNotificationModel;
 
-  Future getAllNotifications() async {
+  Future getAllNotifications({bool silent = false}) async {
     Response response = await api.postWithForm("api/getAllNotifications", {},
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
@@ -570,12 +707,54 @@ class HomeController extends GetxController {
           'Access-Control-Allow-Origin': "*",
           'Authorization': 'Bearer ${authCont.user?.accessToken}'
         },
-        showdialog: true);
+        showdialog: !silent);
     if (response.statusCode == 200) {
+      print('notyyyyyy response.body:${response.body}');
       allNotificationModel = AllNotificationModel.fromJson(response.body);
-      Get.to(NotificationScreen());
+      if (!silent) {
+        print('notyyyyyy not silent');
+        Get.to(NotificationScreen());
+        await saveLastNotificationViewTime(); // Save last viewed time
+      } else {
+        print('notyyyyyy silent');
+
+        String? lastViewTimeStr = await getLastNotificationViewTime();
+
+        if (lastViewTimeStr != null) {
+          // Parse last view time as local time
+          DateTime lastViewLocal = DateTime.parse(lastViewTimeStr);
+          print('notyyyyyy getLastNotificationViewTime:${lastViewLocal}');
+
+          bool hasUnread = allNotificationModel?.data?.any((notif) {
+                if (notif.timestamp == null) return false;
+                try {
+                  // Parse API timestamp as UTC (assuming server sends UTC)
+                  DateTime notifTimeUtc =
+                      DateTime.parse(notif.timestamp! + 'Z');
+                  // Convert UTC to local time
+                  DateTime notifTimeLocal = notifTimeUtc.toLocal();
+                  // Compare with last view time (both now in local time)
+                  print('notyyyyyy notifTimeLocal:${notifTimeLocal}');
+                  return notifTimeLocal.isAfter(lastViewLocal);
+                } catch (e) {
+                  print('Error parsing timestamp: $e');
+                  return false;
+                }
+              }) ??
+              false;
+
+          hasUnreadNotifications.value = hasUnread;
+          print('notyyyyyy hasUnreadNotifications:${hasUnreadNotifications}');
+        } else {
+          hasUnreadNotifications.value =
+              allNotificationModel?.data?.isNotEmpty ?? false;
+        }
+        update();
+      }
     } else {
-      errorAlertToast('Something went wrong\nPlease try again!'.tr);
+      if (!silent) {
+        errorAlertToast('Something went wrong\nPlease try again!'.tr);
+      }
     }
   }
 
@@ -601,6 +780,24 @@ class HomeController extends GetxController {
     }
   }
 
+  Future readNotification() async {
+    Response response = await api.postWithForm(
+        "api/readNotification", {'notification_id': notificationId},
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Accept': 'application/json',
+          'Access-Control-Allow-Origin': "*",
+          'Authorization': 'Bearer ${authCont.user?.accessToken}'
+        },
+        showdialog: true);
+    if (response.statusCode == 200) {
+      Get.back();
+      errorAlertToast('Notification Delete Successfully'.tr);
+    } else {
+      errorAlertToast('Something went wrong\nPlease try again!'.tr);
+    }
+  }
+
   Future<bool> deleteListing() async {
     Response response = await api.postWithForm(
         "api/deleteListing",
@@ -620,27 +817,6 @@ class HomeController extends GetxController {
     } else {
       errorAlertToast('Something went wrong\nPlease try again!'.tr);
       return false;
-    }
-  }
-
-  Future readNotification() async {
-    Response response = await api.postWithForm(
-        "api/readNotification",
-        {
-          'notification_id': notificationId,
-        },
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Accept': 'application/json',
-          'Access-Control-Allow-Origin': "*",
-          'Authorization': 'Bearer ${authCont.user?.accessToken}'
-        },
-        showdialog: true);
-    if (response.statusCode == 200) {
-      Get.back();
-      errorAlertToast('Notification Delete Successfully'.tr);
-    } else {
-      errorAlertToast('Something went wrong\nPlease try again!'.tr);
     }
   }
 
@@ -859,6 +1035,7 @@ class HomeController extends GetxController {
     } else {
       errorAlertToast('Something went wrong\nPlease try again!'.tr);
     }
+    getAllNotifications(silent: true);
   }
 
   Future editListing(BuildContext context) async {
@@ -944,34 +1121,43 @@ class HomeController extends GetxController {
     }
   }
 
-  getCoordinatesFromAddress() async {
-    final locationCont = Get.put(LocationController());
-    if (locationCont.lat != null && locationCont.lng != null) {
-      lat = locationCont.lat.toString();
-      lng = locationCont.lng.toString();
-      Get.log(lat.toString());
-      Get.log(lng.toString());
-      Get.log(radius.toString());
-      return;
-    }
-    String latestAddress = 'Habana, Cuba';
-    if (address != null && address!.isNotEmpty) {
-      latestAddress = address!;
-    } else if (authCont.user?.city != null) {
-      Get.log("user city: ${authCont.user?.city}");
-      Get.log("user state: ${authCont.user?.province}");
-      latestAddress = '${authCont.user?.city}, Cuba';
-    }
-    List<geo.Location> locations =
-        await geocoding!.locationFromAddress(latestAddress);
-
-    if (locations.isNotEmpty) {
-      geo.Location location = locations[0];
-      lat = location.latitude.toString();
-      lng = location.longitude.toString();
-      Get.log(lat.toString());
-      Get.log(lng.toString());
-      Get.log(radius.toString());
+  Future<void> getCoordinatesFromAddress() async {
+    try {
+      final locationCont = Get.put(LocationController());
+      if (locationCont.lat != null && locationCont.lng != null) {
+        lat = locationCont.lat.toString();
+        lng = locationCont.lng.toString();
+        Get.log("Coordinates from LocationController: $lat, $lng");
+        return;
+      }
+      String latestAddress = 'Habana, Cuba';
+      if (address != null && address!.isNotEmpty) {
+        latestAddress = address!;
+      } else if (authCont.user?.city != null) {
+        latestAddress = '${authCont.user?.city}, Cuba';
+      }
+      List<geo.Location> locations =
+          await geocoding!.locationFromAddress(latestAddress);
+      if (locations.isNotEmpty) {
+        geo.Location location = locations[0];
+        lat = location.latitude.toString();
+        lng = location.longitude.toString();
+        Get.log("Geocoded coordinates: $lat, $lng, radius: $radius");
+      } else {
+        Get.log("No coordinates found for address: $latestAddress",
+            isError: true);
+        errorAlertToast(
+            'Unable to fetch location. Using default coordinates.'.tr);
+        lat = "23.124792615936276"; // Fallback default
+        lng = "-82.38597269330762";
+      }
+    } catch (e, stackTrace) {
+      Get.log("Error in getCoordinatesFromAddress: $e\n$stackTrace",
+          isError: true);
+      errorAlertToast(
+          'Failed to get coordinates. Using default coordinates.'.tr);
+      lat = "23.124792615936276"; // Fallback default
+      lng = "-82.38597269330762";
     }
   }
 
@@ -987,19 +1173,6 @@ class HomeController extends GetxController {
     );
   }
 
-  void onScroll() async {
-    if (scrollsController.position.pixels >=
-        scrollsController.position.maxScrollExtent - 100) {
-      if (!isPostLoading.value && hasMore.value) {
-        isPostLoading.value = true; // Lock API call
-        update();
-
-        Get.log("Fetching feeds...");
-        await getListing(isLoadMore: true);
-      }
-    }
-  }
-
   void onScrollSearch() async {
     if (searchScrollController.position.pixels >=
         searchScrollController.position.maxScrollExtent - 100) {
@@ -1011,66 +1184,6 @@ class HomeController extends GetxController {
         await getListingSearch(isLoadMore: true);
       }
     }
-  }
-
-  Future<void> getListing({bool isLoadMore = false}) async {
-    // if (isPostLoading.value) return;
-    await getCoordinatesFromAddress();
-    isPostLoading.value = true;
-    // selectedCategory = null;
-    //     selectedSubCategory = null;
-    //     selectedSubSubCategory = null;
-    update();
-
-    if (!isLoadMore) {
-      currentPage.value = 1;
-      listingModelList.clear();
-      hasMore.value = true; // Reset hasMore when fetching fresh data
-    }
-
-    if (!hasMore.value) {
-      isPostLoading.value = false;
-      update();
-      return;
-    }
-
-    Get.log("Fetching Page: ${currentPage.value}");
-
-    Response response = await api.postWithForm(
-      "api/getListing?page=${currentPage.value}",
-      {
-        'user_id': authCont.user?.userId ?? "",
-        'category_id': selectedCategory?.id ?? "",
-        'sub_category_id': selectedSubCategory?.id ?? "",
-        'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
-        'latitude': lat,
-        'longitude': lng,
-        'radius': radius ?? "500",
-        'min_price': '',
-        'max_price': '',
-        'search_by_title': ''
-      },
-      showdialog: false,
-    );
-
-    if (response.statusCode == 200) {
-      List<dynamic> dataListing = response.body['data']['data'];
-      Get.log("HOME POST COUNT ${dataListing.length}");
-
-      if (dataListing.isNotEmpty) {
-        listingModelList
-            .addAll(dataListing.map((e) => ListingModel.fromJson(e)));
-        currentPage.value++; // Increment page correctly
-        hasMore.value = dataListing.length == 15; // More pages available?
-      } else {
-        hasMore.value = false;
-      }
-    } else {
-      errorAlertToast('Something went wrong\nPlease try again!'.tr);
-    }
-
-    isPostLoading.value = false;
-    update();
   }
 
   // Future getListing() async {
@@ -1180,30 +1293,43 @@ class HomeController extends GetxController {
 
   Future getFavouriteItems() async {
     fetchAccountType();
-    Response response = await api.postWithForm("api/getFavouriteItems", {},
+    int currentPage = 1;
+    bool hasMore = true;
+    userFavouriteListingModelList.clear();
+
+    while (hasMore) {
+      Response response = await api.postWithForm(
+        "api/getFavouriteItems",
+        {'page': currentPage.toString()},
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
           'Accept': 'application/json',
           'Access-Control-Allow-Origin': "*",
           'Authorization': 'Bearer ${authCont.user?.accessToken}'
         },
-        showdialog: true);
-    if (response.statusCode == 200) {
-      List<dynamic> dataListing = [];
-      dataListing.addAll(response.body['data']['data']);
-      print('dataListing:${dataListing.length}');
-      String isBusinessType = isBusinessAccount ? "1" : "0";
-      userFavouriteListingModelList.clear();
-      dataListing.forEach((element) {
-        // if (element["business_status"].toString() == isBusinessType) {
-        userFavouriteListingModelList.add(ListingModel.fromJson(element));
-        // }
-      });
-      print("Favourite Listing Count: ${userFavouriteListingModelList.length}");
-      Get.to(FavouriteListings());
-    } else {
-      errorAlertToast('Something went wrong\nPlease try again!'.tr);
+        showdialog: currentPage == 1, // only show dialog on first page
+      );
+
+      if (response.statusCode == 200) {
+        var body = response.body['data'];
+        List<dynamic> dataListing = body['data'];
+        print('Page $currentPage: ${dataListing.length} items');
+
+        for (var element in dataListing) {
+          userFavouriteListingModelList.add(ListingModel.fromJson(element));
+        }
+
+        currentPage++;
+        hasMore = currentPage <= (body['last_page'] ?? 1);
+      } else {
+        errorAlertToast('Something went wrong\nPlease try again!');
+        hasMore = false;
+      }
     }
+
+    print(
+        "Total Favourite Listing Count: ${userFavouriteListingModelList.length}");
+    Get.to(FavouriteListings());
   }
 
   Future getFavouriteSeller() async {
@@ -1368,7 +1494,6 @@ class HomeController extends GetxController {
   // }
 
   Future getListingDetails(String listingId) async {
-    print(searchLongitude);
     Response response = await api.postWithForm(
         "api/getListingDetails",
         {

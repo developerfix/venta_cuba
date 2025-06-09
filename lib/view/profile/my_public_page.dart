@@ -466,7 +466,12 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                                               SelectionArea(
                                                                 child: Text(
                                                                   "${cont.sellerDetailsModel?.data?.sellerListings?.data?[index].address}",
-                                                                  // overflow: TextOverflow.ellipsis,
+                                                                  textAlign:
+                                                                      TextAlign
+                                                                          .center,
+                                                                  overflow:
+                                                                      TextOverflow
+                                                                          .ellipsis,
                                                                   style: TextStyle(
                                                                       fontSize:
                                                                           13
@@ -485,7 +490,13 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                                                           cont.sellerDetailsModel?.data?.sellerListings?.data?[index].price ==
                                                                               null
                                                                       ? ""
-                                                                      : "${PriceFormatter().formatNumber(int.parse(cont.sellerDetailsModel?.data?.sellerListings?.data?[index].price?.toString() ?? "0"))} ${cont.sellerDetailsModel?.data?.sellerListings?.data?[index].currency ?? 'USD'}",
+                                                                      : "${PriceFormatter().formatNumber(int.parse(cont.sellerDetailsModel?.data?.sellerListings?.data?[index].price?.toString() ?? "0"))}\$ ${PriceFormatter().getCurrency(cont.sellerDetailsModel?.data?.sellerListings?.data?[index].currency)}",
+                                                                  textAlign:
+                                                                      TextAlign
+                                                                          .center,
+                                                                  overflow:
+                                                                      TextOverflow
+                                                                          .ellipsis,
                                                                   style: TextStyle(
                                                                       fontSize:
                                                                           16
