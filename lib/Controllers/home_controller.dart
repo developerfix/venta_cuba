@@ -1271,7 +1271,7 @@ class HomeController extends GetxController {
   Future getSellerDetails1(String reviewsType) async {
     var headers = {'Accept': 'application/json'};
     var request = http.MultipartRequest(
-        'POST', Uri.parse('https://ventacuba.ca/api/getSellerDetails'));
+        'POST', Uri.parse('https://ventacuba.co/api/getSellerDetails'));
     request.fields
         .addAll({'seller_id': sellerId!, 'reviews_type': reviewsType});
 
