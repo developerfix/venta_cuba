@@ -113,51 +113,57 @@ class _FavouriteListingsState extends State<FavouriteListings> {
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceBetween,
                                           children: [
-                                            Container(
-                                              height: 180.h,
-                                              width: MediaQuery.of(context)
-                                                  .size
-                                                  .width,
-                                              child: CachedNetworkImage(
-                                                height: 180..h,
-                                                width: MediaQuery.of(context)
-                                                    .size
-                                                    .width,
-                                                imageUrl: data.gallery !=
-                                                            null &&
-                                                        data.gallery!.isNotEmpty
-                                                    ? "${data.gallery?.first}"
-                                                    : "",
-                                                imageBuilder:
-                                                    (context, imageProvider) =>
-                                                        Container(
+                                            Expanded(
+                                              child: ClipRRect(
+                                                borderRadius: BorderRadius.only(
+                                                    topLeft:
+                                                        Radius.circular(10.r),
+                                                    topRight:
+                                                        Radius.circular(10.r)),
+                                                child: CachedNetworkImage(
                                                   height: 180..h,
                                                   width: MediaQuery.of(context)
                                                       .size
                                                       .width,
-                                                  decoration: BoxDecoration(
-                                                    image: DecorationImage(
-                                                      image: imageProvider,
-                                                      fit: BoxFit.cover,
+                                                  imageUrl: data.gallery !=
+                                                              null &&
+                                                          data.gallery!
+                                                              .isNotEmpty
+                                                      ? "${data.gallery?.first}"
+                                                      : "",
+                                                  imageBuilder: (context,
+                                                          imageProvider) =>
+                                                      Container(
+                                                    height: 180..h,
+                                                    width:
+                                                        MediaQuery.of(context)
+                                                            .size
+                                                            .width,
+                                                    decoration: BoxDecoration(
+                                                      image: DecorationImage(
+                                                        image: imageProvider,
+                                                        fit: BoxFit.cover,
+                                                      ),
                                                     ),
                                                   ),
-                                                ),
-                                                placeholder: (context, url) =>
-                                                    SizedBox(
-                                                  height: 180..h,
-                                                  width: MediaQuery.of(context)
-                                                      .size
-                                                      .width,
-                                                  child: Center(
-                                                    child:
-                                                        CircularProgressIndicator(
-                                                      strokeWidth: 2,
+                                                  placeholder: (context, url) =>
+                                                      SizedBox(
+                                                    height: 180..h,
+                                                    width:
+                                                        MediaQuery.of(context)
+                                                            .size
+                                                            .width,
+                                                    child: Center(
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                      ),
                                                     ),
                                                   ),
+                                                  errorWidget:
+                                                      (context, url, error) =>
+                                                          Icon(Icons.error),
                                                 ),
-                                                errorWidget:
-                                                    (context, url, error) =>
-                                                        Icon(Icons.error),
                                               ),
                                             ),
                                             Container(
@@ -218,7 +224,7 @@ class _FavouriteListingsState extends State<FavouriteListings> {
                                                               .ellipsis,
                                                           // Use data instead of cont.listingModelList
                                                           style: TextStyle(
-                                                            fontSize: 16..sp,
+                                                            fontSize: 14..sp,
                                                             fontWeight:
                                                                 FontWeight.w600,
                                                             color: AppColors

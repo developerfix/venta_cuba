@@ -820,8 +820,9 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                 keyboardType: TextInputType.number,
                                 decoration: InputDecoration(
                                   hintText: "Price (Optional)".tr,
+                                  hintStyle: TextStyle(fontSize: 14),
                                   border: InputBorder.none,
-                                  contentPadding: EdgeInsets.only(top: 0),
+                                  contentPadding: EdgeInsets.only(top: 10),
                                 ),
                                 inputFormatters: [
                                   FilteringTextInputFormatter.digitsOnly,

@@ -116,10 +116,7 @@ class _ShowAllListingSubState extends State<ShowAllListingSub> {
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Container(
-                                        height: 180.h,
-                                        width:
-                                            MediaQuery.of(context).size.width,
+                                      Expanded(
                                         child: ClipRRect(
                                           borderRadius: BorderRadius.only(
                                               topLeft: Radius.circular(10.r),
@@ -216,7 +213,7 @@ class _ShowAllListingSubState extends State<ShowAllListingSub> {
                                                 textAlign: TextAlign.center,
                                                 overflow: TextOverflow.ellipsis,
                                                 style: TextStyle(
-                                                    fontSize: 16..sp,
+                                                    fontSize: 14..sp,
                                                     fontWeight: FontWeight.w600,
                                                     color:
                                                         AppColors.k0xFF0254B8),

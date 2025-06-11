@@ -138,11 +138,7 @@ class _SubSubCategoriesState extends State<SubSubCategories> {
                                             mainAxisAlignment:
                                                 MainAxisAlignment.spaceBetween,
                                             children: [
-                                              Container(
-                                                height: 180.h,
-                                                width: MediaQuery.of(context)
-                                                    .size
-                                                    .width,
+                                              Expanded(
                                                 child: ClipRRect(
                                                   borderRadius:
                                                       BorderRadius.only(
@@ -260,7 +256,7 @@ class _SubSubCategoriesState extends State<SubSubCategories> {
                                                           overflow: TextOverflow
                                                               .ellipsis,
                                                           style: TextStyle(
-                                                              fontSize: 16..sp,
+                                                              fontSize: 14..sp,
                                                               fontWeight:
                                                                   FontWeight
                                                                       .w600,

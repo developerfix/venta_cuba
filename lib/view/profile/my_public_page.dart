@@ -499,7 +499,7 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                                                           .ellipsis,
                                                                   style: TextStyle(
                                                                       fontSize:
-                                                                          16
+                                                                          14
                                                                             ..sp,
                                                                       fontWeight:
                                                                           FontWeight

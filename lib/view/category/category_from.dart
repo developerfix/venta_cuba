@@ -134,11 +134,7 @@ class _CategoryFromState extends State<CategoryFrom> {
                                             mainAxisAlignment:
                                                 MainAxisAlignment.spaceBetween,
                                             children: [
-                                              Container(
-                                                height: 180..h,
-                                                width: MediaQuery.of(context)
-                                                    .size
-                                                    .width,
+                                              Expanded(
                                                 child: ClipRRect(
                                                   borderRadius:
                                                       BorderRadius.only(
@@ -256,7 +252,7 @@ class _CategoryFromState extends State<CategoryFrom> {
                                                           overflow: TextOverflow
                                                               .ellipsis,
                                                           style: TextStyle(
-                                                              fontSize: 16..sp,
+                                                              fontSize: 14..sp,
                                                               fontWeight:
                                                                   FontWeight
                                                                       .w600,

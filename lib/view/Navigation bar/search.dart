@@ -469,9 +469,7 @@ class _SearchState extends State<Search> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Container(
-                          height: 180.h,
-                          width: MediaQuery.of(context).size.width,
+                        Expanded(
                           child: ClipRRect(
                             borderRadius: BorderRadius.only(
                                 topLeft: Radius.circular(10.r),
@@ -550,7 +548,7 @@ class _SearchState extends State<Search> {
                                   textAlign: TextAlign.center,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                      fontSize: 16..sp,
+                                      fontSize: 14..sp,
                                       fontWeight: FontWeight.w600,
                                       color: AppColors.k0xFF0254B8),
                                 ),
@@ -706,7 +704,7 @@ class _SearchState extends State<Search> {
                                   ? ""
                                   : "${PriceFormatter().formatNumber(int.parse(listingList[index].price ?? '0'))}\$ ${PriceFormatter().getCurrency(listingList[index].currency)}",
                               style: TextStyle(
-                                  fontSize: 16..sp,
+                                  fontSize: 14..sp,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.k0xFF0254B8),
                             ),
@@ -792,7 +790,6 @@ class _PokeToDialBottomSheetContentState
   final homeCont = Get.put(HomeController());
   @override
   void initState() {
-    // TODO: implement initState
     citiesList.forEach((element) {
       if (element.cityName == authCont.user?.city) {
         homeCont.searchLatitude = element.latitude;

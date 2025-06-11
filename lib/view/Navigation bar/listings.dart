@@ -828,7 +828,7 @@ class _ListingsState extends State<Listings> {
                                                                         maxLines:
                                                                             1,
                                                                         style: TextStyle(
-                                                                            fontSize: 16
+                                                                            fontSize: 14
                                                                               ..sp,
                                                                             fontWeight:
                                                                                 FontWeight.w600,
@@ -1163,7 +1163,7 @@ class _ListingsState extends State<Listings> {
                                                                         maxLines:
                                                                             1,
                                                                         style: TextStyle(
-                                                                            fontSize: 16
+                                                                            fontSize: 14
                                                                               ..sp,
                                                                             fontWeight:
                                                                                 FontWeight.w600,

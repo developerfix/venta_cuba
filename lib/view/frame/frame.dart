@@ -1168,7 +1168,7 @@ class _FrameScreenState extends State<FrameScreen> {
                   left: 20,
                   right: 20,
                   child: Container(
-                    height: 150.h,
+                    // height: 150.h,
                     color: Colors.white,
                     child: Column(
                       children: [
@@ -1179,111 +1179,132 @@ class _FrameScreenState extends State<FrameScreen> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Column(
-                                children: [
-                                  SizedBox(
-                                    height: 5..h,
-                                  ),
-                                  Text(
-                                    'Total Price'.tr,
-                                    style: TextStyle(
-                                        fontSize: 15..sp,
-                                        fontWeight: FontWeight.w500,
-                                        color: AppColors.k0xFF9F9F9F),
-                                  ),
-                                  Text(
-                                    cont.listingModel!.price == "0"
-                                        ? ""
-                                        : "${PriceFormatter().formatNumber(int.parse(cont.listingModel!.price ?? '0'))}\$ ${PriceFormatter().getCurrency(cont.listingModel!.currency)}",
-                                    style: TextStyle(
-                                        fontSize: 25..sp,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.black),
-                                  )
-                                ],
-                              ),
-                              cont.isListing == 1
-                                  ? InkWell(
-                                      onTap: () async {
-                                        if (authCont.user?.email == "") {
-                                          Get.to(Login());
-                                        } else {
-                                          cont.listingId =
-                                              cont.listingModel?.id.toString();
-                                          cont.markASoldListing();
-                                        }
-                                      },
-                                      child: Container(
-                                        width: 182..w,
-                                        height: 40.h,
-                                        decoration: BoxDecoration(
-                                            color: AppColors.k0xFF0254B8,
-                                            borderRadius:
-                                                BorderRadius.circular(60)),
-                                        child: Center(
-                                          child: Text(
-                                            'Mark a sold'.tr,
-                                            style: TextStyle(
-                                                fontSize: 17..sp,
-                                                fontWeight: FontWeight.w500,
-                                                color: AppColors.white),
-                                          ),
-                                        ),
-                                      ),
+                              Flexible(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    SizedBox(
+                                      height: 5..h,
+                                    ),
+                                    Text(
+                                      'Total Price'.tr,
+                                      style: TextStyle(
+                                          fontSize: 12..sp,
+                                          overflow: TextOverflow.ellipsis,
+                                          fontWeight: FontWeight.w500,
+                                          color: AppColors.k0xFF9F9F9F),
+                                    ),
+                                    Text(
+                                      cont.listingModel!.price == "0"
+                                          ? ""
+                                          : "${PriceFormatter().formatNumber(int.parse(cont.listingModel!.price ?? '0'))}\$ ${PriceFormatter().getCurrency(cont.listingModel!.currency)}",
+                                      style: TextStyle(
+                                          fontSize: 16..sp,
+                                          overflow: TextOverflow.ellipsis,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.black),
                                     )
-                                  : cont.isListing == 11
-                                      ? SizedBox(
-                                          width: 1,
-                                        )
-                                      : InkWell(
+                                  ],
+                                ),
+                              ),
+                              Flexible(
+                                  flex: 2,
+                                  child: cont.isListing == 1
+                                      ? InkWell(
                                           onTap: () async {
                                             if (authCont.user?.email == "") {
                                               Get.to(Login());
                                             } else {
-                                              cont.listingModel?.isFavorite ==
-                                                      "0"
-                                                  ? cont.listingModel
-                                                      ?.isFavorite = "1"
-                                                  : cont.listingModel
-                                                      ?.isFavorite = "0";
-                                              cont.update();
-                                              bool isAddedF =
-                                                  await cont.favouriteItem();
-                                              if (isAddedF) {
-                                                errorAlertToast(
-                                                    "Successfully".tr);
-                                              } else {
-                                                cont.listingModel?.isFavorite ==
-                                                        "0"
-                                                    ? cont.listingModel
-                                                        ?.isFavorite = "1"
-                                                    : cont.listingModel
-                                                        ?.isFavorite = "0";
-                                              }
+                                              cont.listingId = cont
+                                                  .listingModel?.id
+                                                  .toString();
+                                              cont.markASoldListing();
                                             }
                                           },
                                           child: Container(
-                                            padding: EdgeInsets.symmetric(
-                                                vertical: 10, horizontal: 10),
-                                            // height: MediaQuery.of(context).size.height,
+                                            width: 182..w,
+                                            height: 40.h,
                                             decoration: BoxDecoration(
                                                 color: AppColors.k0xFF0254B8,
                                                 borderRadius:
                                                     BorderRadius.circular(60)),
                                             child: Center(
                                               child: Text(
-                                                cont.listingModel?.isFavorite ==
-                                                        '0'
-                                                    ? 'Add to Favorites'.tr
-                                                    : 'Remove to Favorites'.tr,
+                                                'Mark a sold'.tr,
                                                 style: TextStyle(
-                                                    fontSize: 17..sp,
+                                                    fontSize: 14..sp,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
                                                     fontWeight: FontWeight.w500,
                                                     color: AppColors.white),
                                               ),
                                             ),
                                           ),
                                         )
+                                      : cont.isListing == 11
+                                          ? SizedBox(
+                                              width: 1,
+                                            )
+                                          : InkWell(
+                                              onTap: () async {
+                                                if (authCont.user?.email ==
+                                                    "") {
+                                                  Get.to(Login());
+                                                } else {
+                                                  cont.listingModel
+                                                              ?.isFavorite ==
+                                                          "0"
+                                                      ? cont.listingModel
+                                                          ?.isFavorite = "1"
+                                                      : cont.listingModel
+                                                          ?.isFavorite = "0";
+                                                  cont.update();
+                                                  bool isAddedF = await cont
+                                                      .favouriteItem();
+                                                  if (isAddedF) {
+                                                    errorAlertToast(
+                                                        "Successfully".tr);
+                                                  } else {
+                                                    cont.listingModel
+                                                                ?.isFavorite ==
+                                                            "0"
+                                                        ? cont.listingModel
+                                                            ?.isFavorite = "1"
+                                                        : cont.listingModel
+                                                            ?.isFavorite = "0";
+                                                  }
+                                                }
+                                              },
+                                              child: Container(
+                                                padding: EdgeInsets.symmetric(
+                                                    vertical: 10,
+                                                    horizontal: 10),
+                                                // height: MediaQuery.of(context).size.height,
+                                                decoration: BoxDecoration(
+                                                    color:
+                                                        AppColors.k0xFF0254B8,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            60)),
+                                                child: Center(
+                                                  child: Text(
+                                                    cont.listingModel
+                                                                ?.isFavorite ==
+                                                            '0'
+                                                        ? 'Add to Favorites'.tr
+                                                        : 'Remove to Favorites'
+                                                            .tr,
+                                                    style: TextStyle(
+                                                        fontSize: 14..sp,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                        color: AppColors.white),
+                                                  ),
+                                                ),
+                                              ),
+                                            )),
                             ],
                           ),
                         ),

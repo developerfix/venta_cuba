@@ -31,7 +31,7 @@ class ListingView extends StatelessWidget {
           shrinkWrap: true,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            childAspectRatio: 0.55.r,
+            childAspectRatio: 0.50.r,
             mainAxisSpacing: 25,
             crossAxisSpacing: 25,
           ),
@@ -102,7 +102,7 @@ class ListingView extends StatelessWidget {
                           child: Column(
                             children: [
                               SizedBox(
-                                width: 140.w,
+                                height: 20.h,
                                 child: Text(
                                   item.title ?? "",
                                   maxLines: 1,
@@ -118,7 +118,7 @@ class ListingView extends StatelessWidget {
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 8.0),
                                 child: SizedBox(
-                                  height: 17.h,
+                                  height: 16.h,
                                   child: Text(
                                     '${item.address ?? ""}',
                                     overflow: TextOverflow.ellipsis,
@@ -130,16 +130,22 @@ class ListingView extends StatelessWidget {
                                 ),
                               ),
                               SizedBox(height: 2.h),
-                              Text(
-                                item.price == "0"
-                                    ? " "
-                                    : "${PriceFormatter().formatNumber(int.parse(item.price ?? '0'))}\$ ${PriceFormatter().getCurrency(item.currency)}",
-                                // "${item.id}",
-                                style: TextStyle(
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.k0xFF0254B8),
+                              SizedBox(
+                                height: 16.h,
+                                child: Text(
+                                  item.price == "0"
+                                      ? " "
+                                      : "${PriceFormatter().formatNumber(int.parse(item.price ?? '0'))}\$ ${PriceFormatter().getCurrency(item.currency)}",
+                                  textAlign: TextAlign.center,
+                                  overflow: TextOverflow.ellipsis,
+                                  // "${item.id}",
+                                  style: TextStyle(
+                                      fontSize: 14..sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.k0xFF0254B8),
+                                ),
                               ),
+                              SizedBox(height: 5.h),
                             ],
                           ),
                         )
