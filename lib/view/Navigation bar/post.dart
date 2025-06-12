@@ -383,27 +383,20 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
 
       await Future.wait(images.map((element) async {
         try {
-          if (source == ImageSource.camera) {
-            // Normalize only camera image
-            final fileName =
-                'normalized_${DateTime.now().millisecondsSinceEpoch}.jpg';
-            final normalizedPath = '${tempDir.path}/$fileName';
+          final fileName =
+              'normalized_${DateTime.now().millisecondsSinceEpoch}.jpg';
+          final normalizedPath = '${tempDir.path}/$fileName';
 
-            final originalFile = File(element.path);
-            final img.Image? image =
-                img.decodeImage(await originalFile.readAsBytes());
-            if (image == null) return;
+          final originalFile = File(element.path);
+          final img.Image? image =
+              img.decodeImage(await originalFile.readAsBytes());
+          if (image == null) return;
 
-            final normalizedFile = File(normalizedPath);
-            await normalizedFile
-                .writeAsBytes(img.encodeJpg(image, quality: 85));
+          final normalizedFile = File(normalizedPath);
+          await normalizedFile.writeAsBytes(img.encodeJpg(image, quality: 50));
 
-            if (await normalizedFile.exists()) {
-              homeCont.postImages.add(normalizedPath);
-            }
-          } else {
-            // Use gallery image as-is
-            homeCont.postImages.add(element.path);
+          if (await normalizedFile.exists()) {
+            homeCont.postImages.add(normalizedPath);
           }
         } catch (e) {
           print('Error processing image: $e');
