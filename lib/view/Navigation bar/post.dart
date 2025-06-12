@@ -6,14 +6,19 @@ import 'package:dotted_border/dotted_border.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:gallery_saver_plus/gallery_saver.dart';
+import 'package:mime/mime.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:photo_manager/photo_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:venta_cuba/Controllers/home_controller.dart';
 import 'package:venta_cuba/Models/SelectedCategoryModel.dart';
+import 'package:image/image.dart' as img;
 import 'package:venta_cuba/view/Navigation%20bar/navigation_bar.dart';
 import 'package:venta_cuba/view/constants/Colors.dart';
 import 'package:venta_cuba/view/privacy_policy/privacy_policy_screen.dart';
@@ -48,7 +53,8 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
   bool _isUnderlined = false;
   final FocusNode _focusNode = FocusNode();
   bool isChecked = true;
-
+  String? imageLink;
+  File? imageFile;
   String currentText = '';
   double height = 0;
   List<CustomCitiesList>? searchCity = [];
@@ -306,7 +312,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                   GestureDetector(
                       onTap: () {
                         setState(() {
-                          getImage(ImageSource.camera);
+                          pickImage(ImageSource.camera, imageType);
                           Get.back();
                         });
                       },
@@ -353,44 +359,63 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
     );
   }
 
-  String? imageLink;
-  File? imageFile;
-
   ///===================================================================================================Pick image
   final ImagePicker _picker = ImagePicker();
-  Future<void> getImage(ImageSource source) async {
-    final pickedFile = await _picker.pickImage(source: source);
+  Future<void> pickImage(ImageSource source, String imageFirst) async {
+    homeCont.isLoadingImages.value = true;
 
-    if (pickedFile != null) {
-      imageFile = File(pickedFile.path);
-      imageLink = pickedFile.path;
-      homeCont.postImages.add(imageLink!);
-      print(imageLink);
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
-      );
-      setState(() {});
-    } else {
-      print('No image selected.');
+    try {
+      List<XFile> images = [];
+
+      if (source == ImageSource.camera) {
+        final XFile? pickedFile =
+            await _picker.pickImage(source: ImageSource.camera);
+        if (pickedFile != null && pickedFile.path.isNotEmpty) {
+          images = [pickedFile];
+        }
+      } else {
+        images = await _picker.pickMultiImage();
+      }
+
+      if (images.isEmpty) return;
+
+      final tempDir = await getTemporaryDirectory();
+
+      await Future.wait(images.map((element) async {
+        try {
+          if (source == ImageSource.camera) {
+            // Normalize only camera image
+            final fileName =
+                'normalized_${DateTime.now().millisecondsSinceEpoch}.jpg';
+            final normalizedPath = '${tempDir.path}/$fileName';
+
+            final originalFile = File(element.path);
+            final img.Image? image =
+                img.decodeImage(await originalFile.readAsBytes());
+            if (image == null) return;
+
+            final normalizedFile = File(normalizedPath);
+            await normalizedFile
+                .writeAsBytes(img.encodeJpg(image, quality: 85));
+
+            if (await normalizedFile.exists()) {
+              homeCont.postImages.add(normalizedPath);
+            }
+          } else {
+            // Use gallery image as-is
+            homeCont.postImages.add(element.path);
+          }
+        } catch (e) {
+          print('Error processing image: $e');
+        }
+      }));
+
+      homeCont.update();
+    } catch (e) {
+      print('Error in pickImage: $e');
+    } finally {
+      homeCont.isLoadingImages.value = false;
     }
-  }
-
-  pickImage(ImageSource source, String imageFirst) async {
-    final image = await ImagePicker().pickMultiImage();
-    if (image.isEmpty) return;
-    image.forEach((element) {
-      final imageTemp = File(element.path);
-      homeCont.postImages.add(imageTemp.path);
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
-      );
-    });
-
-    homeCont.update();
   }
 
   CustomCitiesList? city;
@@ -543,30 +568,38 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                 strokeWidth: 1,
                                 // Border width
                                 radius: Radius.circular(10),
-                                child: Container(
-                                  child: Center(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Image.asset('assets/images/upload.png'),
-                                        Text(
-                                          'Upload Your Image Here'.tr,
-                                          style: TextStyle(
-                                              fontSize: 13..sp,
-                                              fontWeight: FontWeight.w500,
-                                              color: AppColors.black),
-                                        ),
-                                        Text(
-                                          'Maximum 50mb Size'.tr,
-                                          style: TextStyle(
-                                              fontSize: 10..sp,
-                                              fontWeight: FontWeight.w400,
-                                              color: AppColors.k0xFFA9ABAC),
-                                        ),
-                                      ],
+                                child: Obx(
+                                  () => Container(
+                                    child: Center(
+                                      child: homeCont.isLoadingImages.isTrue
+                                          ? Text('Uploading...')
+                                          : Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.center,
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Image.asset(
+                                                    'assets/images/upload.png'),
+                                                Text(
+                                                  'Upload Your Image Here'.tr,
+                                                  style: TextStyle(
+                                                      fontSize: 13..sp,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      color: AppColors.black),
+                                                ),
+                                                Text(
+                                                  'Maximum 50mb Size'.tr,
+                                                  style: TextStyle(
+                                                      fontSize: 10..sp,
+                                                      fontWeight:
+                                                          FontWeight.w400,
+                                                      color: AppColors
+                                                          .k0xFFA9ABAC),
+                                                ),
+                                              ],
+                                            ),
                                     ),
                                   ),
                                 )),
@@ -656,44 +689,56 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                 ),
                                 SizedBox(width: 10),
                                 if (cont.postImages.length == index + 1)
-                                  InkWell(
-                                    onTap: () {
-                                      if (homeCont.postImages.length >= 20) {
-                                        errorAlertToast(
-                                            "You can select only 20 images".tr);
-                                      } else {
-                                        imagePickerOption("image");
-                                      }
-                                    },
-                                    child: Stack(
-                                      children: [
-                                        DottedBorder(
-                                          borderType: BorderType.RRect,
-                                          color: AppColors.k0xFFC4C4C4,
-                                          // Border color
-                                          strokeWidth: 1,
-                                          // Border width
-                                          radius: Radius.circular(10),
-                                          child: Container(
-                                            width: 140.w,
-                                            height: 120.h,
-                                            child: Column(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                Icon(
-                                                  Icons.add,
-                                                  size: 30,
-                                                ),
-                                                CustomText(
-                                                  text: "Add Photo".tr,
-                                                  fontSize: 20,
-                                                )
-                                              ],
+                                  Obx(
+                                    () => InkWell(
+                                      onTap: () {
+                                        if (homeCont.isLoadingImages.isFalse) {
+                                          if (homeCont.postImages.length >=
+                                              20) {
+                                            errorAlertToast(
+                                                "You can select only 20 images"
+                                                    .tr);
+                                          } else {
+                                            imagePickerOption("image");
+                                          }
+                                        }
+                                      },
+                                      child: Stack(
+                                        children: [
+                                          DottedBorder(
+                                            borderType: BorderType.RRect,
+                                            color: AppColors.k0xFFC4C4C4,
+                                            // Border color
+                                            strokeWidth: 1,
+                                            // Border width
+                                            radius: Radius.circular(10),
+                                            child: Container(
+                                              width: 140.w,
+                                              height: 120.h,
+                                              child: homeCont
+                                                      .isLoadingImages.isTrue
+                                                  ? Center(
+                                                      child:
+                                                          CircularProgressIndicator())
+                                                  : Column(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .center,
+                                                      children: [
+                                                        Icon(
+                                                          Icons.add,
+                                                          size: 30,
+                                                        ),
+                                                        CustomText(
+                                                          text: "Add Photo".tr,
+                                                          fontSize: 20,
+                                                        )
+                                                      ],
+                                                    ),
                                             ),
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
                                   ),
                               ],

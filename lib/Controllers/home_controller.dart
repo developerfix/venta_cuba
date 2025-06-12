@@ -57,6 +57,7 @@ class HomeController extends GetxController {
   TextEditingController titleCont = TextEditingController();
   TextEditingController descriptionCont = TextEditingController();
   bool isLoading = false;
+  Rx<bool> isLoadingImages = false.obs;
   int isSelectedReport = 0;
   double subtotal = 0.0;
   TextEditingController makeController = TextEditingController();
@@ -982,6 +983,7 @@ class HomeController extends GetxController {
     bool isBusinessAccount = false;
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     isBusinessAccount = sharedPreferences.getBool("accountType") ?? false;
+    print('postImages:$postImages');
     Response response = await api.postWithForm(
         "api/addListing",
         {
