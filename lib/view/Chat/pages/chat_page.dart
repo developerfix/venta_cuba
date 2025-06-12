@@ -657,6 +657,8 @@ class _ChatPageState extends State<ChatPage> {
         };
         String? id = widget.chatId ?? widget.createChatid;
         await chatCont.sendMessage(id ?? "", chatMessageMap);
+        String message = chatCont.messageController.text;
+
         chatCont.scrollController
             .jumpTo(chatCont.scrollController.position.maxScrollExtent);
         chatCont.messageController.clear();
@@ -667,7 +669,6 @@ class _ChatPageState extends State<ChatPage> {
             );
           }
         });
-
         firebaseMessaging.sendNotificationFCM(
             title: "${authCont.user?.firstName} ${authCont.user?.lastName}",
             name: "${authCont.user?.firstName} ${authCont.user?.lastName}",
@@ -675,7 +676,7 @@ class _ChatPageState extends State<ChatPage> {
                 ? "Voice Message"
                 : messageType == "image"
                     ? "Image"
-                    : chatCont.messageController.text,
+                    : message,
             deviceToken: widget.deviceToken,
             userId: authCont.user?.userId.toString(),
             remoteId: widget.remoteUid,
