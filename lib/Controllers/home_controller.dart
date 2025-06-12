@@ -56,8 +56,9 @@ class HomeController extends GetxController {
   TextEditingController addressController = TextEditingController();
   TextEditingController titleCont = TextEditingController();
   TextEditingController descriptionCont = TextEditingController();
-  bool isLoading = false;
+  RxList<UploadingImage> uploadingImages = <UploadingImage>[].obs;
   Rx<bool> isLoadingImages = false.obs;
+  bool isLoading = false;
   int isSelectedReport = 0;
   double subtotal = 0.0;
   TextEditingController makeController = TextEditingController();

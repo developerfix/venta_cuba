@@ -6,15 +6,12 @@ import 'package:dotted_border/dotted_border.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:gallery_saver_plus/gallery_saver.dart';
-import 'package:mime/mime.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:photo_manager/photo_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:venta_cuba/Controllers/home_controller.dart';
 import 'package:venta_cuba/Models/SelectedCategoryModel.dart';
@@ -33,6 +30,25 @@ import 'package:venta_cuba/Models/SubCategoriesModel.dart' as sub;
 import 'package:venta_cuba/Models/SubSubCategoriesModel.dart' as subSub;
 
 import '../terms_of_use/terms_of_use_screen.dart';
+
+// Add this class at the top of the file
+class UploadingImage {
+  String path;
+  double progress;
+  String status; // e.g., "Picking", "Normalizing", "Uploaded", "Failed"
+  bool isUploading;
+  bool isUploaded;
+  String? errorMessage;
+
+  UploadingImage({
+    required this.path,
+    this.progress = 0.0,
+    this.status = 'Picking',
+    this.isUploading = true,
+    this.isUploaded = false,
+    this.errorMessage,
+  });
+}
 
 class Post extends StatefulWidget {
   final bool isUpdate;
@@ -361,10 +377,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
 
   ///===================================================================================================Pick image
   final ImagePicker _picker = ImagePicker();
-  Future<void> pickImage(ImageSource source, String imageFirst) async {
-    homeCont.isLoadingImages.value = true;
 
+  Future<void> pickImage(ImageSource source, String imageFirst) async {
     try {
+      homeCont.isLoadingImages.value = true;
       List<XFile> images = [];
 
       if (source == ImageSource.camera) {
@@ -387,17 +403,64 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
               'normalized_${DateTime.now().millisecondsSinceEpoch}.jpg';
           final normalizedPath = '${tempDir.path}/$fileName';
 
+          // Create uploading progress tracker
+          final uploadingImage = UploadingImage(
+            path: element.path,
+          );
+
+          setState(() {
+            homeCont.uploadingImages.add(uploadingImage);
+          });
+          print('homeCont.uploadingImages:${homeCont.uploadingImages.length}');
+
+          // Update progress to 10% (starting)
+          setState(() {
+            uploadingImage.progress = 0.1;
+          });
+
+          // Read original file
           final originalFile = File(element.path);
           final img.Image? image =
               img.decodeImage(await originalFile.readAsBytes());
-          if (image == null) return;
+          if (image == null) {
+            setState(() {
+              homeCont.uploadingImages.remove(uploadingImage);
+            });
+            return;
+          }
 
+          // Update progress to 30% (read complete)
+          setState(() {
+            uploadingImage.progress = 0.3;
+          });
+
+          // Normalize and compress image
           final normalizedFile = File(normalizedPath);
           await normalizedFile.writeAsBytes(img.encodeJpg(image, quality: 50));
 
+          // Update progress to 70% (normalization complete)
+          setState(() {
+            uploadingImage.progress = 0.7;
+            uploadingImage.path =
+                normalizedPath; // Update path to normalized image
+          });
+
           if (await normalizedFile.exists()) {
             homeCont.postImages.add(normalizedPath);
+
+            // Complete progress
+            setState(() {
+              uploadingImage.progress = 1.0;
+              uploadingImage.isUploading = false;
+              uploadingImage.isUploaded = true;
+            });
           }
+
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: Duration(milliseconds: 500),
+            curve: Curves.easeInOut,
+          );
         } catch (e) {
           print('Error processing image: $e');
         }
@@ -531,7 +594,8 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                         ],
                       ),
                       SizedBox(height: 50..h),
-                      if (cont.postImages.length == 0)
+                      if (cont.postImages.length == 0 &&
+                          homeCont.uploadingImages != 0)
                         GestureDetector(
                           onTap: () async {
                             if (homeCont.postImages.length >= 20) {
@@ -561,38 +625,30 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                 strokeWidth: 1,
                                 // Border width
                                 radius: Radius.circular(10),
-                                child: Obx(
-                                  () => Container(
-                                    child: Center(
-                                      child: homeCont.isLoadingImages.isTrue
-                                          ? Text('Uploading...')
-                                          : Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.center,
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                Image.asset(
-                                                    'assets/images/upload.png'),
-                                                Text(
-                                                  'Upload Your Image Here'.tr,
-                                                  style: TextStyle(
-                                                      fontSize: 13..sp,
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                      color: AppColors.black),
-                                                ),
-                                                Text(
-                                                  'Maximum 50mb Size'.tr,
-                                                  style: TextStyle(
-                                                      fontSize: 10..sp,
-                                                      fontWeight:
-                                                          FontWeight.w400,
-                                                      color: AppColors
-                                                          .k0xFFA9ABAC),
-                                                ),
-                                              ],
-                                            ),
+                                child: Container(
+                                  child: Center(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Image.asset('assets/images/upload.png'),
+                                        Text(
+                                          'Upload Your Image Here'.tr,
+                                          style: TextStyle(
+                                              fontSize: 13..sp,
+                                              fontWeight: FontWeight.w500,
+                                              color: AppColors.black),
+                                        ),
+                                        Text(
+                                          'Maximum 50mb Size'.tr,
+                                          style: TextStyle(
+                                              fontSize: 10..sp,
+                                              fontWeight: FontWeight.w400,
+                                              color: AppColors.k0xFFA9ABAC),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 )),
@@ -604,32 +660,81 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                         height: 10.h,
                       ),
                       SizedBox(
-                        height: cont.postImages.length == 0 ? 0 : 120.h,
+                        height: homeCont.uploadingImages.isEmpty ? 0 : 120.h,
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
                           controller: _scrollController,
                           itemBuilder: (context, index) {
+                            final image = homeCont.uploadingImages[index];
                             return Row(
                               children: [
                                 Stack(
                                   children: [
                                     DottedBorder(
-                                        borderType: BorderType.RRect,
-                                        color: AppColors.k0xFFC4C4C4,
-                                        // Border color
-                                        strokeWidth: 1,
-                                        // Border width
-                                        radius: Radius.circular(10),
+                                      borderType: BorderType.RRect,
+                                      color: AppColors.k0xFFC4C4C4,
+                                      strokeWidth: 1,
+                                      radius: Radius.circular(10),
+                                      child: Container(
+                                        child: ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          child: Image.file(
+                                            File(image.path),
+                                            width: 140.w,
+                                            height: 120.h,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+
+                                    // Upload progress overlay
+                                    if (image.isUploading)
+                                      Positioned.fill(
                                         child: Container(
-                                          child: ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              child: Image.file(
-                                                  File(cont.postImages[index]),
-                                                  width: 140.w,
-                                                  height: 120.h,
-                                                  fit: BoxFit.cover)),
-                                        )),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black54,
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                          ),
+                                          child: Center(
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                SizedBox(
+                                                  width: 40,
+                                                  height: 40,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                    value: image.progress,
+                                                    strokeWidth: 3,
+                                                    backgroundColor:
+                                                        Colors.white30,
+                                                    valueColor:
+                                                        AlwaysStoppedAnimation<
+                                                                Color>(
+                                                            AppColors
+                                                                .k0xFF0254B8),
+                                                  ),
+                                                ),
+                                                SizedBox(height: 8),
+                                                Text(
+                                                  '${(image.progress * 100).toStringAsFixed(0)}%',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 12.sp,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+
+                                    // Remove button
                                     Positioned(
                                       top: 3.h,
                                       right: 15.w,
@@ -637,75 +742,80 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                         onTap: () {
                                           cont.postImages.removeAt(index);
                                           cont.update();
+                                          setState(() {
+                                            homeCont.uploadingImages
+                                                .removeAt(index);
+                                          });
                                         },
                                         child: Container(
-                                            padding: EdgeInsets.all(4),
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              color: Colors.black38,
-                                            ),
-                                            child: Center(
-                                                child: Icon(
+                                          padding: EdgeInsets.all(4),
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Colors.black38,
+                                          ),
+                                          child: Center(
+                                            child: Icon(
                                               Icons.close,
                                               size: 18,
                                               color: Colors.white,
-                                            ))),
+                                            ),
+                                          ),
+                                        ),
                                       ),
                                     ),
+
+                                    // Cover indicator
                                     Positioned(
                                       top: 3.h,
                                       left: 5.w,
                                       child: Visibility(
                                         visible: index == 0,
                                         child: Container(
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 8),
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(5),
+                                            color: Colors.black38,
+                                          ),
+                                          child: Padding(
                                             padding: EdgeInsets.symmetric(
-                                                horizontal: 8),
-                                            decoration: BoxDecoration(
-                                              borderRadius:
-                                                  BorderRadius.circular(5),
-                                              color: Colors.black38,
+                                                horizontal: 2.0.w,
+                                                vertical: 1.h),
+                                            child: Text(
+                                              "cover".tr,
+                                              style: TextStyle(
+                                                  fontSize: 16,
+                                                  color: Colors.white),
                                             ),
-                                            child: Padding(
-                                              padding: EdgeInsets.symmetric(
-                                                  horizontal: 2.0.w,
-                                                  vertical: 1.h),
-                                              child: Text(
-                                                "cover".tr,
-                                                style: TextStyle(
-                                                    fontSize: 16,
-                                                    color: Colors.white),
-                                              ),
-                                            )),
+                                          ),
+                                        ),
                                       ),
                                     )
                                   ],
                                 ),
                                 SizedBox(width: 10),
-                                if (cont.postImages.length == index + 1)
-                                  Obx(
-                                    () => InkWell(
-                                      onTap: () {
-                                        if (homeCont.isLoadingImages.isFalse) {
-                                          if (homeCont.postImages.length >=
-                                              20) {
-                                            errorAlertToast(
-                                                "You can select only 20 images"
-                                                    .tr);
-                                          } else {
-                                            imagePickerOption("image");
-                                          }
-                                        }
-                                      },
-                                      child: Stack(
-                                        children: [
-                                          DottedBorder(
-                                            borderType: BorderType.RRect,
-                                            color: AppColors.k0xFFC4C4C4,
-                                            // Border color
-                                            strokeWidth: 1,
-                                            // Border width
-                                            radius: Radius.circular(10),
-                                            child: Container(
+                                if (homeCont.uploadingImages.length ==
+                                    index + 1)
+                                  InkWell(
+                                    onTap: () {
+                                      if (homeCont.uploadingImages.length >=
+                                          20) {
+                                        errorAlertToast(
+                                            "You can select only 20 images".tr);
+                                      } else {
+                                        imagePickerOption("image");
+                                      }
+                                    },
+                                    child: Stack(
+                                      children: [
+                                        DottedBorder(
+                                          borderType: BorderType.RRect,
+                                          color: AppColors.k0xFFC4C4C4,
+                                          strokeWidth: 1,
+                                          radius: Radius.circular(10),
+                                          child: Obx(
+                                            () => Container(
                                               width: 140.w,
                                               height: 120.h,
                                               child: homeCont
@@ -730,25 +840,23 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                     ),
                                             ),
                                           ),
-                                        ],
-                                      ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                               ],
                             );
                           },
                           separatorBuilder: (context, index) {
-                            return SizedBox(
-                              width: 0.w,
-                            );
+                            return SizedBox(width: 0.w);
                           },
-                          itemCount: cont.postImages.length,
+                          itemCount: homeCont.uploadingImages.length,
                         ),
                       ),
                       SelectionArea(
                         child: Text(
                           'Photos: '.tr +
-                              cont.postImages.length.toString() +
+                              homeCont.uploadingImages.length.toString() +
                               '/20 Select your cover photo first, include picture with different angles and details'
                                   .tr,
                           style: TextStyle(

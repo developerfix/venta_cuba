@@ -56,13 +56,9 @@ dependencies:
   image: any
   textfield_tags: ^2.0.2
   dropdown_button2: ^2.3.9
-  photo_manager: ^3.7.1
-  gallery_saver_plus: ^3.2.8
   photo_view: ^0.14.0
   path_provider: ^2.1.5
-  mime: any
   share_plus: any
-  exif: any
   video_player: ^2.9.2
   # Location
   geocoding: ^3.0.0
