@@ -35,19 +35,30 @@ import '../terms_of_use/terms_of_use_screen.dart';
 class UploadingImage {
   String path;
   double progress;
-  String status; // e.g., "Picking", "Normalizing", "Uploaded", "Failed"
+  String
+      status; // e.g., "Picking", "Processing", "Compressing", "Uploaded", "Failed"
   bool isUploading;
   bool isUploaded;
   String? errorMessage;
+  DateTime startTime;
 
   UploadingImage({
     required this.path,
     this.progress = 0.0,
-    this.status = 'Picking',
+    this.status = 'Starting...',
     this.isUploading = true,
     this.isUploaded = false,
     this.errorMessage,
-  });
+    DateTime? startTime,
+  }) : startTime = startTime ?? DateTime.now();
+
+  String get progressPercentage => '${(progress * 100).toStringAsFixed(0)}%';
+
+  String get statusMessage {
+    if (isUploaded) return 'Completed';
+    if (errorMessage != null) return 'Failed';
+    return status;
+  }
 }
 
 class Post extends StatefulWidget {
@@ -394,19 +405,25 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
         images = await _picker.pickMultiImage();
       }
 
-      if (images.isEmpty) return;
+      if (images.isEmpty) {
+        homeCont.isLoadingImages.value = false;
+        return;
+      }
 
       final tempDir = await getTemporaryDirectory();
 
-      await Future.wait(images.map((element) async {
+      // Process images sequentially for better progress tracking
+      for (int i = 0; i < images.length; i++) {
+        final element = images[i];
         try {
           final fileName =
-              'normalized_${DateTime.now().millisecondsSinceEpoch}.jpg';
+              'normalized_${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
           final normalizedPath = '${tempDir.path}/$fileName';
 
           // Create uploading progress tracker
           final uploadingImage = UploadingImage(
             path: element.path,
+            status: 'Preparing...',
           );
 
           setState(() {
@@ -414,37 +431,58 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
           });
           print('homeCont.uploadingImages:${homeCont.uploadingImages.length}');
 
-          // Update progress to 10% (starting)
+          // Simulate initial delay and update progress
+          await Future.delayed(Duration(milliseconds: 100));
           setState(() {
-            uploadingImage.progress = 0.1;
+            uploadingImage.progress = 0.05;
+            uploadingImage.status = 'Reading image...';
           });
 
           // Read original file
           final originalFile = File(element.path);
-          final img.Image? image =
-              img.decodeImage(await originalFile.readAsBytes());
+          final fileBytes = await originalFile.readAsBytes();
+
+          setState(() {
+            uploadingImage.progress = 0.25;
+            uploadingImage.status = 'Processing...';
+          });
+
+          final img.Image? image = img.decodeImage(fileBytes);
           if (image == null) {
             setState(() {
-              homeCont.uploadingImages.remove(uploadingImage);
+              uploadingImage.errorMessage = 'Invalid image format';
+              uploadingImage.isUploading = false;
+              uploadingImage.status = 'Failed';
             });
-            return;
+            continue;
           }
 
-          // Update progress to 30% (read complete)
           setState(() {
-            uploadingImage.progress = 0.3;
+            uploadingImage.progress = 0.50;
+            uploadingImage.status = 'Optimizing...';
           });
+
+          // Add small delay to show progress
+          await Future.delayed(Duration(milliseconds: 200));
 
           // Normalize and compress image
           final normalizedFile = File(normalizedPath);
-          await normalizedFile.writeAsBytes(img.encodeJpg(image, quality: 50));
+          final compressedBytes = img.encodeJpg(image, quality: 50);
 
-          // Update progress to 70% (normalization complete)
           setState(() {
-            uploadingImage.progress = 0.7;
-            uploadingImage.path =
-                normalizedPath; // Update path to normalized image
+            uploadingImage.progress = 0.75;
+            uploadingImage.status = 'Saving...';
           });
+
+          await normalizedFile.writeAsBytes(compressedBytes);
+
+          setState(() {
+            uploadingImage.progress = 0.90;
+            uploadingImage.status = 'Finalizing...';
+          });
+
+          // Add small delay for final step
+          await Future.delayed(Duration(milliseconds: 150));
 
           if (await normalizedFile.exists()) {
             homeCont.postImages.add(normalizedPath);
@@ -454,24 +492,168 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
               uploadingImage.progress = 1.0;
               uploadingImage.isUploading = false;
               uploadingImage.isUploaded = true;
+              uploadingImage.status = 'Completed';
+              uploadingImage.path =
+                  normalizedPath; // Update path to normalized image
+            });
+
+            // Auto-scroll to show new image
+            if (_scrollController.hasClients) {
+              _scrollController.animateTo(
+                _scrollController.position.maxScrollExtent,
+                duration: Duration(milliseconds: 500),
+                curve: Curves.easeInOut,
+              );
+            }
+          } else {
+            setState(() {
+              uploadingImage.errorMessage = 'Failed to save image';
+              uploadingImage.isUploading = false;
+              uploadingImage.status = 'Failed';
             });
           }
-
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
-            duration: Duration(milliseconds: 500),
-            curve: Curves.easeInOut,
-          );
         } catch (e) {
           print('Error processing image: $e');
+          // Find the uploading image and mark it as failed
+          final failedImage = homeCont.uploadingImages.lastWhere(
+            (img) => img.path == element.path,
+            orElse: () => UploadingImage(path: element.path),
+          );
+          setState(() {
+            failedImage.errorMessage = 'Processing failed';
+            failedImage.isUploading = false;
+            failedImage.status = 'Failed';
+          });
         }
-      }));
+      }
 
       homeCont.update();
     } catch (e) {
       print('Error in pickImage: $e');
+      // Show error message to user
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to process images. Please try again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
       homeCont.isLoadingImages.value = false;
+    }
+  }
+
+  // Retry method for failed image uploads
+  Future<void> _retryImageUpload(XFile imageFile, int insertIndex) async {
+    try {
+      final tempDir = await getTemporaryDirectory();
+      final fileName =
+          'normalized_${DateTime.now().millisecondsSinceEpoch}_retry.jpg';
+      final normalizedPath = '${tempDir.path}/$fileName';
+
+      // Create new uploading progress tracker
+      final uploadingImage = UploadingImage(
+        path: imageFile.path,
+        status: 'Retrying...',
+      );
+
+      setState(() {
+        homeCont.uploadingImages.insert(insertIndex, uploadingImage);
+      });
+
+      // Simulate initial delay and update progress
+      await Future.delayed(Duration(milliseconds: 100));
+      setState(() {
+        uploadingImage.progress = 0.05;
+        uploadingImage.status = 'Reading image...';
+      });
+
+      // Read original file
+      final originalFile = File(imageFile.path);
+      final fileBytes = await originalFile.readAsBytes();
+
+      setState(() {
+        uploadingImage.progress = 0.25;
+        uploadingImage.status = 'Processing...';
+      });
+
+      final img.Image? image = img.decodeImage(fileBytes);
+      if (image == null) {
+        setState(() {
+          uploadingImage.errorMessage = 'Invalid image format';
+          uploadingImage.isUploading = false;
+          uploadingImage.status = 'Failed';
+        });
+        return;
+      }
+
+      setState(() {
+        uploadingImage.progress = 0.50;
+        uploadingImage.status = 'Optimizing...';
+      });
+
+      // Add small delay to show progress
+      await Future.delayed(Duration(milliseconds: 200));
+
+      // Normalize and compress image
+      final normalizedFile = File(normalizedPath);
+      final compressedBytes = img.encodeJpg(image, quality: 50);
+
+      setState(() {
+        uploadingImage.progress = 0.75;
+        uploadingImage.status = 'Saving...';
+      });
+
+      await normalizedFile.writeAsBytes(compressedBytes);
+
+      setState(() {
+        uploadingImage.progress = 0.90;
+        uploadingImage.status = 'Finalizing...';
+      });
+
+      // Add small delay for final step
+      await Future.delayed(Duration(milliseconds: 150));
+
+      if (await normalizedFile.exists()) {
+        homeCont.postImages.insert(insertIndex, normalizedPath);
+
+        // Complete progress
+        setState(() {
+          uploadingImage.progress = 1.0;
+          uploadingImage.isUploading = false;
+          uploadingImage.isUploaded = true;
+          uploadingImage.status = 'Completed';
+          uploadingImage.path = normalizedPath;
+        });
+
+        homeCont.update();
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Image uploaded successfully!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        setState(() {
+          uploadingImage.errorMessage = 'Failed to save image';
+          uploadingImage.isUploading = false;
+          uploadingImage.status = 'Failed';
+        });
+      }
+    } catch (e) {
+      print('Error retrying image upload: $e');
+      // Find the uploading image and mark it as failed
+      final failedImage = homeCont.uploadingImages.firstWhere(
+        (img) => img.path == imageFile.path,
+        orElse: () => UploadingImage(path: imageFile.path),
+      );
+      setState(() {
+        failedImage.errorMessage = 'Retry failed';
+        failedImage.isUploading = false;
+        failedImage.status = 'Failed';
+      });
     }
   }
 
@@ -691,11 +873,15 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                     ),
 
                                     // Upload progress overlay
-                                    if (image.isUploading)
+                                    if (image.isUploading ||
+                                        image.errorMessage != null)
                                       Positioned.fill(
                                         child: Container(
                                           decoration: BoxDecoration(
-                                            color: Colors.black54,
+                                            color: image.errorMessage != null
+                                                ? Colors.red.withOpacity(0.8)
+                                                : Colors.black
+                                                    .withOpacity(0.75),
                                             borderRadius:
                                                 BorderRadius.circular(10),
                                           ),
@@ -704,59 +890,129 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                               mainAxisAlignment:
                                                   MainAxisAlignment.center,
                                               children: [
-                                                SizedBox(
-                                                  width: 40,
-                                                  height: 40,
-                                                  child:
-                                                      CircularProgressIndicator(
-                                                    value: image.progress,
-                                                    strokeWidth: 3,
-                                                    backgroundColor:
-                                                        Colors.white30,
-                                                    valueColor:
-                                                        AlwaysStoppedAnimation<
-                                                                Color>(
-                                                            AppColors
-                                                                .k0xFF0254B8),
+                                                if (image.errorMessage ==
+                                                    null) ...[
+                                                  // Progress indicator for uploading
+                                                  SizedBox(
+                                                    width: 45,
+                                                    height: 45,
+                                                    child: Stack(
+                                                      children: [
+                                                        CircularProgressIndicator(
+                                                          value: image.progress,
+                                                          strokeWidth: 4,
+                                                          backgroundColor:
+                                                              Colors.white30,
+                                                          valueColor:
+                                                              AlwaysStoppedAnimation<
+                                                                      Color>(
+                                                                  AppColors
+                                                                      .k0xFF0254B8),
+                                                        ),
+                                                        Center(
+                                                          child: Text(
+                                                            image
+                                                                .progressPercentage,
+                                                            style: TextStyle(
+                                                              color:
+                                                                  Colors.white,
+                                                              fontSize: 10.sp,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
                                                   ),
-                                                ),
-                                                SizedBox(height: 8),
-                                                Text(
-                                                  '${(image.progress * 100).toStringAsFixed(0)}%',
-                                                  style: TextStyle(
+                                                  SizedBox(height: 8),
+                                                  Text(
+                                                    image.statusMessage,
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 11.sp,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                    ),
+                                                    textAlign: TextAlign.center,
+                                                  ),
+                                                ] else ...[
+                                                  // Error state
+                                                  Icon(
+                                                    Icons.error_outline,
                                                     color: Colors.white,
-                                                    fontSize: 12.sp,
-                                                    fontWeight: FontWeight.bold,
+                                                    size: 30,
                                                   ),
-                                                ),
+                                                  SizedBox(height: 8),
+                                                  Text(
+                                                    'Failed',
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 12.sp,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                  SizedBox(height: 4),
+                                                  Text(
+                                                    'Tap to retry',
+                                                    style: TextStyle(
+                                                      color: Colors.white70,
+                                                      fontSize: 10.sp,
+                                                    ),
+                                                  ),
+                                                ],
                                               ],
                                             ),
                                           ),
                                         ),
                                       ),
 
-                                    // Remove button
+                                    // Remove/Retry button
                                     Positioned(
                                       top: 3.h,
                                       right: 15.w,
                                       child: InkWell(
-                                        onTap: () {
-                                          cont.postImages.removeAt(index);
-                                          cont.update();
-                                          setState(() {
-                                            homeCont.uploadingImages
-                                                .removeAt(index);
-                                          });
+                                        onTap: () async {
+                                          if (image.errorMessage != null) {
+                                            // Retry failed upload
+                                            final originalPath = image.path;
+                                            setState(() {
+                                              homeCont.uploadingImages
+                                                  .removeAt(index);
+                                            });
+
+                                            // Retry the upload for this specific image
+                                            final xFile = XFile(originalPath);
+                                            await _retryImageUpload(
+                                                xFile, index);
+                                          } else {
+                                            // Remove image
+                                            if (index <
+                                                cont.postImages.length) {
+                                              cont.postImages.removeAt(index);
+                                            }
+                                            cont.update();
+                                            setState(() {
+                                              homeCont.uploadingImages
+                                                  .removeAt(index);
+                                            });
+                                          }
                                         },
                                         child: Container(
                                           padding: EdgeInsets.all(4),
                                           decoration: BoxDecoration(
                                             shape: BoxShape.circle,
-                                            color: Colors.black38,
+                                            color: image.errorMessage != null
+                                                ? Colors.orange.withOpacity(0.8)
+                                                : Colors.black38,
                                           ),
                                           child: Center(
                                             child: Icon(
-                                              Icons.close,
+                                              image.errorMessage != null
+                                                  ? Icons.refresh
+                                                  : Icons.close,
                                               size: 18,
                                               color: Colors.white,
                                             ),
@@ -764,6 +1020,26 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                         ),
                                       ),
                                     ),
+
+                                    // Success indicator for completed uploads
+                                    if (image.isUploaded &&
+                                        image.errorMessage == null)
+                                      Positioned(
+                                        bottom: 5.h,
+                                        right: 5.w,
+                                        child: Container(
+                                          padding: EdgeInsets.all(4),
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Colors.green,
+                                          ),
+                                          child: Icon(
+                                            Icons.check,
+                                            size: 16,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
 
                                     // Cover indicator
                                     Positioned(
