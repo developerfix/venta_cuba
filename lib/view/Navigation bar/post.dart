@@ -83,6 +83,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
       homeCont.selectedSubCategory = null;
       homeCont.selectedSubSubCategory = null;
     });
+    homeCont.uploadingImages.clear();
     homeCont.postImages.clear();
     homeCont.titleCont.clear();
     homeCont.priceCont?.clear();
