@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
 import '../Controller/ChatController.dart';
 import '../custom_text.dart';
@@ -94,7 +95,10 @@ class _ChatsState extends State<Chats> {
                             ['listingLocation'],
                         lastMessage: snapshot.data.docs[index]['message'],
                         messageType: snapshot.data.docs[index]['messageType'],
-                        messageTime: snapshot.data.docs[index]['time'],
+                        messageTime:
+                            snapshot.data.docs[index]['time'] is Timestamp
+                                ? snapshot.data.docs[index]['time'] as Timestamp
+                                : null,
                         userName: snapshot.data.docs[index]['senderId'] ==
                                 "${authCont.user?.userId}"
                             ? snapshot.data.docs[index]['sendToName']
@@ -103,10 +107,43 @@ class _ChatsState extends State<Chats> {
                                 "${authCont.user?.userId}"
                             ? snapshot.data.docs[index]['senderToImage']
                             : snapshot.data.docs[index]['senderImage'],
-                        deviceToken: snapshot.data.docs[index]['senderId'] ==
-                                "${authCont.user?.userId}"
-                            ? snapshot.data.docs[index]['sendToDeviceToken']
-                            : snapshot.data.docs[index]['userDeviceToken'],
+                        deviceToken: (() {
+                          // Debug: Print all chat document data
+                          print("🔥 === CHAT DOCUMENT DEBUG ===");
+                          var chatDoc = snapshot.data.docs[index];
+                          print("🔥 Document ID: ${chatDoc.id}");
+                          print("🔥 All fields: ${chatDoc.data()}");
+
+                          String currentUserId = "${authCont.user?.userId}";
+                          String senderId = chatDoc['senderId'] ?? "";
+                          String sendToId = chatDoc['sendToId'] ?? "";
+                          String? userDeviceToken = chatDoc['userDeviceToken'];
+                          String? sendToDeviceToken =
+                              chatDoc['sendToDeviceToken'];
+
+                          print("🔥 Current user ID: $currentUserId");
+                          print("🔥 Sender ID: $senderId");
+                          print("🔥 SendTo ID: $sendToId");
+                          print("🔥 userDeviceToken: $userDeviceToken");
+                          print("🔥 sendToDeviceToken: $sendToDeviceToken");
+
+                          // Logic: Get the device token of the OTHER user (not yourself)
+                          String? token;
+                          if (senderId == currentUserId) {
+                            // You are the sender, get recipient's token
+                            token = sendToDeviceToken;
+                            print(
+                                "🔥 ✅ You are SENDER → Using recipient's token: $token");
+                          } else {
+                            // You are the recipient, get sender's token
+                            token = userDeviceToken;
+                            print(
+                                "🔥 ✅ You are RECIPIENT → Using sender's token: $token");
+                          }
+
+                          print("🔥 === END DEBUG ===");
+                          return token;
+                        })(),
                         remoteUid: snapshot.data.docs[index]['senderId'] ==
                                 "${authCont.user?.userId}"
                             ? snapshot.data.docs[index]['sendToId']

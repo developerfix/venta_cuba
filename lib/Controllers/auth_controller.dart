@@ -19,6 +19,8 @@ import '../view/auth/login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../view/auth/otp_verification2.dart';
 import 'package:http/http.dart' as http;
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 String deviceToken = '';
 
@@ -374,6 +376,11 @@ class AuthController extends GetxController {
     print(jsonDecode(prefss.getString("user_data")!));
     try {
       user = UserData.fromJson(jsonDecode(prefss.getString("user_data")!));
+      // Sync device token with current Firebase token
+      if (user != null && user!.deviceToken != deviceToken) {
+        user!.deviceToken = deviceToken;
+        await prefss.setString("user_data", jsonEncode(user!.toJson()));
+      }
     } catch (e) {
       Get.offAll(const Login());
       print(e);
@@ -429,6 +436,9 @@ class AuthController extends GetxController {
   }
 
   Future login() async {
+    // Get fresh device token before login
+    await refreshDeviceToken();
+
     Response response = await api.postData(
       "api/login",
       {
@@ -451,6 +461,18 @@ class AuthController extends GetxController {
     }
     print(
         "........................................................${response.statusCode}");
+  }
+
+  Future<void> refreshDeviceToken() async {
+    try {
+      String? token = await FirebaseMessaging.instance.getToken();
+      if (token != null) {
+        deviceToken = token;
+        print('Refreshed device token: $token');
+      }
+    } catch (e) {
+      print('Error refreshing device token: $e');
+    }
   }
 
   Future forgetPassword() async {
@@ -630,6 +652,84 @@ class AuthController extends GetxController {
     }
   }
 
+  Future<void> updateDeviceToken(String newToken) async {
+    try {
+      deviceToken = newToken;
+      // Update the user data model with the new device token
+      if (user != null) {
+        user!.deviceToken = newToken;
+        // Save updated user data to local storage
+        await prefs.setString("user_data", jsonEncode(user!.toJson()));
+
+        // Also update device token in all chat documents for this user
+        await updateDeviceTokenInAllChats(newToken);
+      }
+      print('🔥 Device token updated locally: $newToken');
+    } catch (e) {
+      print('🔥 Error updating device token: $e');
+    }
+  }
+
+  // Update device token in all chat documents where this user participates
+  Future<void> updateDeviceTokenInAllChats(String newToken) async {
+    try {
+      if (user?.userId == null) return;
+
+      print('🔥 Updating device token in all chat documents...');
+
+      final chatCollection = FirebaseFirestore.instance.collection("chat");
+      String currentUserId = user!.userId.toString();
+
+      // Query all chat documents where this user is either sender or recipient
+      QuerySnapshot senderChats = await chatCollection
+          .where('senderId', isEqualTo: currentUserId)
+          .get();
+
+      QuerySnapshot recipientChats = await chatCollection
+          .where('sendToId', isEqualTo: currentUserId)
+          .get();
+
+      // Update device token in chats where user is the sender
+      for (QueryDocumentSnapshot doc in senderChats.docs) {
+        await chatCollection.doc(doc.id).update({
+          'userDeviceToken': newToken,
+        });
+        print('🔥 Updated userDeviceToken in chat ${doc.id}');
+      }
+
+      // Update device token in chats where user is the recipient
+      for (QueryDocumentSnapshot doc in recipientChats.docs) {
+        await chatCollection.doc(doc.id).update({
+          'sendToDeviceToken': newToken,
+        });
+        print('🔥 Updated sendToDeviceToken in chat ${doc.id}');
+      }
+
+      print(
+          '🔥 ✅ Device token updated in ${senderChats.docs.length + recipientChats.docs.length} chat documents');
+    } catch (e) {
+      print('🔥 Error updating device token in chats: $e');
+    }
+  }
+
+  // Get current device token for a specific user (for notifications)
+  Future<String?> getCurrentDeviceTokenForUser(String userId) async {
+    try {
+      // If it's the current user, return their current device token
+      if (user?.userId == userId) {
+        return user?.deviceToken;
+      }
+
+      // For other users, you would typically call an API to get their current device token
+      // Since we don't have that API, we'll return null and rely on the stored token
+      print('🔥 Cannot get device token for user $userId - no API available');
+      return null;
+    } catch (e) {
+      print('🔥 Error getting device token for user $userId: $e');
+      return null;
+    }
+  }
+
   Future saveSocialMediaLink() async {
     Response response = await api.postWithForm(
       "api/save-social-media-link",
@@ -694,6 +794,9 @@ class AuthController extends GetxController {
   }
 
   Future<void> logout() async {
+    // Clear local device token
+    deviceToken = "";
+
     Response response = await api.postWithForm(
       "api/logout",
       {},
@@ -708,6 +811,7 @@ class AuthController extends GetxController {
       await prefs.remove('lastRadius');
       await prefs.remove('saveAddress');
       await prefs.remove('saveRadius');
+
       Get.offAll(() => const Login());
     } else {
       errorAlertToast('Something went wrong\nPlease try again!'.tr);

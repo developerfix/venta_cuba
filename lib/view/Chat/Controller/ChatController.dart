@@ -68,6 +68,40 @@ class ChatController extends GetxController {
     chatCollection.doc(userAndPostId).update(imageData);
   }
 
+  // Update device token in chat document
+  Future<void> updateDeviceTokenInChat(
+      String chatId, String userId, String newDeviceToken) async {
+    try {
+      // Get the chat document
+      DocumentSnapshot chatDoc = await chatCollection.doc(chatId).get();
+
+      if (chatDoc.exists) {
+        Map<String, dynamic> updateData = {};
+
+        // Determine which field to update based on user ID
+        String? senderId = chatDoc.get('senderId');
+        String? sendToId = chatDoc.get('sendToId');
+
+        if (senderId == userId) {
+          updateData['userDeviceToken'] = newDeviceToken;
+          print(
+              "🔥 Updated userDeviceToken for sender $userId in chat $chatId");
+        } else if (sendToId == userId) {
+          updateData['sendToDeviceToken'] = newDeviceToken;
+          print(
+              "🔥 Updated sendToDeviceToken for recipient $userId in chat $chatId");
+        }
+
+        if (updateData.isNotEmpty) {
+          await chatCollection.doc(chatId).update(updateData);
+          print("🔥 Device token updated successfully in chat document");
+        }
+      }
+    } catch (e) {
+      print("🔥 Error updating device token in chat: $e");
+    }
+  }
+
   Future<bool>? addChatRoom(chatRoom, chatRoomId) {
     chatCollection.doc(chatRoomId).set(chatRoom).catchError((e) {
       print(e);

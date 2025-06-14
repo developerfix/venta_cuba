@@ -1,20 +1,39 @@
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show SystemChrome, SystemUiOverlayStyle;
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:venta_cuba/Controllers/location_controller.dart';
+import 'package:venta_cuba/Controllers/auth_controller.dart';
 import 'package:venta_cuba/Services/Notfication/notficationservice.dart';
 import 'package:venta_cuba/languages/languages.dart';
 import 'package:venta_cuba/view/splash%20Screens/white_screen.dart';
 import 'Notification/firebase_messaging.dart';
 
+// Background message handler - MUST be top-level function
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  print('🔥 Background message received: ${message.messageId}');
+  print('🔥 Background message data: ${message.data}');
+  print(
+      '🔥 Background notification: ${message.notification?.title} - ${message.notification?.body}');
+
+  // Show local notification for background messages
+  await FCM.showBackgroundNotification(message);
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SharedPreferences.getInstance();
   await Firebase.initializeApp();
+
+  // Register background message handler
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
   await Future.delayed(Duration(seconds: 1));
 // usage of any Firebase services.
   await FirebaseAppCheck.instance.activate(
@@ -27,6 +46,26 @@ Future<void> main() async {
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
     GlobalKey<ScaffoldMessengerState>();
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+class AppLifecycleObserver extends WidgetsBindingObserver {
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      // App came to foreground, refresh device token
+      try {
+        final authCont = Get.find<AuthController>();
+        authCont.refreshDeviceToken();
+        // Also update device tokens in all chat documents
+        if (authCont.user?.userId != null) {
+          authCont.updateDeviceTokenInAllChats(deviceToken);
+        }
+      } catch (e) {
+        print('Error refreshing token on app resume: $e');
+      }
+    }
+  }
+}
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -64,6 +103,14 @@ class _MyAppState extends State<MyApp> {
       });
       Get.updateLocale(locale);
     });
+
+    // Listen for app lifecycle changes to refresh token
+    WidgetsBinding.instance.addObserver(AppLifecycleObserver());
+
+    // Check notification permissions after a delay
+    Future.delayed(Duration(seconds: 3), () {
+      checkNotificationPermissions();
+    });
   }
 
   locationCheck() async {
@@ -71,6 +118,15 @@ class _MyAppState extends State<MyApp> {
     bool isLocationOn = sharedPreferences.getBool('isLocationOn') ?? false;
     if (isLocationOn) {
       //locationCont.getLocation();
+    }
+  }
+
+  checkNotificationPermissions() async {
+    try {
+      await firebaseMessaging.requestNotificationPermissions();
+      print('Notification permissions checked');
+    } catch (e) {
+      print('Error checking notification permissions: $e');
     }
   }
 

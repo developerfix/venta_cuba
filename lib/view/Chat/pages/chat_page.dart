@@ -93,6 +93,9 @@ class _ChatPageState extends State<ChatPage> {
     getChat();
     saveFile();
 
+    // Update device tokens when chat is opened
+    updateDeviceTokensOnChatOpen();
+
     chatCont.scrollController.addListener(() {
       if (chatCont.scrollController.position.pixels ==
           chatCont.scrollController.position.maxScrollExtent) {
@@ -105,6 +108,22 @@ class _ChatPageState extends State<ChatPage> {
     });
     chatCont.isLast = widget.isLast ?? false;
     updateImage();
+  }
+
+  // Update device tokens when chat is opened
+  Future<void> updateDeviceTokensOnChatOpen() async {
+    try {
+      if (widget.chatId != null && authCont.user?.userId != null) {
+        print("🔥 📱 Updating device token on chat open...");
+        await chatCont.updateDeviceTokenInChat(
+          widget.chatId!,
+          authCont.user!.userId.toString(),
+          deviceToken,
+        );
+      }
+    } catch (e) {
+      print("🔥 ❌ Error updating device token on chat open: $e");
+    }
   }
 
   void _scrollToBottom() {
@@ -669,22 +688,148 @@ class _ChatPageState extends State<ChatPage> {
             );
           }
         });
-        firebaseMessaging.sendNotificationFCM(
-            title: "${authCont.user?.firstName} ${authCont.user?.lastName}",
-            name: "${authCont.user?.firstName} ${authCont.user?.lastName}",
-            body: messageType == "voice"
-                ? "Voice Message"
-                : messageType == "image"
-                    ? "Image"
-                    : message,
-            deviceToken: widget.deviceToken,
-            userId: authCont.user?.userId.toString(),
-            remoteId: widget.remoteUid,
-            profileImage: "",
-            type: "message");
+        // Send notification with improved error handling
+        await sendNotificationToRecipient(message, messageType);
       }
     } catch (e) {
       print("Error sending message: $e");
+    }
+  }
+
+  Future<void> sendNotificationToRecipient(
+      String message, String messageType) async {
+    try {
+      print("🔥 === NOTIFICATION SENDING DEBUG ===");
+      print("🔥 Current user ID: ${authCont.user?.userId}");
+      print(
+          "🔥 Current user name: ${authCont.user?.firstName} ${authCont.user?.lastName}");
+      print("🔥 Recipient UID: ${widget.remoteUid}");
+      print("🔥 Device token from chat: ${widget.deviceToken}");
+      print("🔥 Message: $message");
+      print("🔥 Message type: $messageType");
+
+      // CRITICAL CHECK: Are you sending to yourself?
+      if ("${authCont.user?.userId}" == widget.remoteUid) {
+        print(
+            "🔥 🚨 WARNING: You are trying to send notification to YOURSELF!");
+        print("🔥 🚨 Current user ID: ${authCont.user?.userId}");
+        print("🔥 🚨 Remote user ID: ${widget.remoteUid}");
+        print(
+            "🔥 🚨 This should NOT happen - there's a bug in the chat logic!");
+        return;
+      }
+
+      // Update sender's device token in chat document before sending notification
+      if (widget.chatId != null && authCont.user?.userId != null) {
+        print("🔥 📱 Updating sender's device token in chat document...");
+        await chatCont.updateDeviceTokenInChat(
+          widget.chatId!,
+          authCont.user!.userId.toString(),
+          deviceToken,
+        );
+      }
+
+      // Get the most recent device token from chat document
+      String? deviceTokenToUse = await getRecipientDeviceToken();
+
+      // Validate device token
+      if (deviceTokenToUse == null || deviceTokenToUse.isEmpty) {
+        print("🔥 ❌ Device token from chat is null/empty");
+        print("🔥 ❌ Notification will not be sent");
+        return;
+      }
+
+      // Basic validation of device token format
+      if (deviceTokenToUse.length < 50) {
+        print(
+            "🔥 ⚠️ Device token seems too short (${deviceTokenToUse.length} chars): $deviceTokenToUse");
+      } else {
+        print(
+            "🔥 ✅ Device token looks valid (${deviceTokenToUse.length} chars)");
+      }
+
+      // Send the notification
+      print("🔥 📤 Sending FCM notification...");
+      bool notificationSent = await sendNotificationWithRetry(
+        deviceTokenToUse,
+        messageType,
+        message,
+      );
+
+      if (notificationSent) {
+        print("🔥 ✅ Notification sent successfully to ${widget.remoteUid}");
+      } else {
+        print("🔥 ❌ Failed to send notification to ${widget.remoteUid}");
+      }
+    } catch (e) {
+      print("🔥 ❌ Error sending notification: $e");
+    }
+  }
+
+  // Get recipient's device token from chat document
+  Future<String?> getRecipientDeviceToken() async {
+    try {
+      if (widget.chatId == null) return widget.deviceToken;
+
+      DocumentSnapshot chatDoc = await FirebaseFirestore.instance
+          .collection("chat")
+          .doc(widget.chatId!)
+          .get();
+
+      if (!chatDoc.exists) return widget.deviceToken;
+
+      String currentUserId = authCont.user!.userId.toString();
+      String? senderId = chatDoc.get('senderId');
+      String? sendToId = chatDoc.get('sendToId');
+
+      // Get the recipient's device token (not your own)
+      if (senderId == currentUserId) {
+        // You are the sender, get recipient's token
+        return chatDoc.get('sendToDeviceToken');
+      } else {
+        // You are the recipient, get sender's token
+        return chatDoc.get('userDeviceToken');
+      }
+    } catch (e) {
+      print("🔥 ❌ Error getting recipient device token: $e");
+      return widget.deviceToken; // Fallback to original token
+    }
+  }
+
+  Future<bool> sendNotificationWithRetry(
+      String deviceToken, String messageType, String message) async {
+    try {
+      // First attempt with the provided device token
+      bool success = await firebaseMessaging.sendNotificationFCM(
+          title: "${authCont.user?.firstName} ${authCont.user?.lastName}",
+          name: "${authCont.user?.firstName} ${authCont.user?.lastName}",
+          body: messageType == "voice"
+              ? "Voice Message"
+              : messageType == "image"
+                  ? "Image"
+                  : message,
+          deviceToken: deviceToken,
+          userId: authCont.user?.userId.toString(),
+          remoteId: widget.remoteUid,
+          profileImage: authCont.user?.profileImage ?? "",
+          type: "message");
+
+      if (!success) {
+        print(
+            "🔥 ❌ Notification failed - device token is likely expired/invalid");
+        print("🔥 💡 Device token for user ${widget.remoteUid}: $deviceToken");
+        print("🔥 💡 This token needs to be refreshed in the chat document");
+        print("🔥 💡 Possible solutions:");
+        print(
+            "🔥 💡 1. Ask the other user to open the app to refresh their token");
+        print("🔥 💡 2. Implement backend API to get fresh device tokens");
+        print("🔥 💡 3. Update chat documents when users refresh their tokens");
+      }
+
+      return success;
+    } catch (e) {
+      print("🔥 ❌ Error in notification retry: $e");
+      return false;
     }
   }
 

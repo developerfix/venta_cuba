@@ -1330,7 +1330,7 @@ class _FrameScreenState extends State<FrameScreen> {
                                 "sendToName":
                                     "${cont.listingModel?.user?.firstName} ${cont.listingModel?.user?.lastName}",
                                 "message": "",
-                                "time": "",
+                                "time": FieldValue.serverTimestamp(),
                                 "messageTime": "",
                                 "sender": "",
                                 "senderImage": "${authCont.user?.profileImage}",
