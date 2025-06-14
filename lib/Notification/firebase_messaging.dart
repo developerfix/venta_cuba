@@ -183,9 +183,19 @@ class FCM {
     _firebaseMessaging.requestPermission(sound: true, badge: true, alert: true);
   }
 
-  setNotifications(BuildContext context) {
+  setNotifications(BuildContext context) async {
     initializing();
     firebaseCloudMessagingListeners(context);
+    if (Platform.isIOS) {
+      try {
+        String? apnsToken = await _firebaseMessaging.getAPNSToken();
+        print('APNS Token: $apnsToken');
+        await Future.delayed(Duration(seconds: 2));
+      } catch (e) {
+        print('error:$e');
+      }
+    }
+
     _firebaseMessaging.getToken().then((token) {
       deviceToken = token ?? "";
       debugPrint('device token_id:_______________$token _______________');

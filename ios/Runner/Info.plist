@@ -8,6 +8,10 @@
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
 	<string>VentaCuba</string>
+	 <key>FirebaseAppDelegateProxyEnabled</key>
+    <false/>
+    <key>FirebaseScreenReportingEnabled</key>
+    <true/>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
