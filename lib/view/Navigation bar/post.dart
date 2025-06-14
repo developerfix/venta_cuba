@@ -89,9 +89,9 @@ class UploadingImage {
   String get progressPercentage => '${(progress * 100).toStringAsFixed(0)}%';
 
   String get statusMessage {
-    if (isUploaded) return 'Completed';
-    if (errorMessage != null) return 'Failed';
-    return status;
+    if (isUploaded) return 'Completed'.tr;
+    if (errorMessage != null) return 'Failed'.tr;
+    return status.tr;
   }
 
   Stream<ImageProcessingResult>? get progressStream =>
@@ -127,7 +127,7 @@ void imageProcessingIsolate(ImageProcessingData data) async {
     // Send initial progress
     data.sendPort.send(ImageProcessingResult(
       progress: 0.1,
-      status: 'Reading image...',
+      status: 'Reading image...'.tr,
     ));
 
     // Read and decode image
@@ -136,14 +136,14 @@ void imageProcessingIsolate(ImageProcessingData data) async {
 
     data.sendPort.send(ImageProcessingResult(
       progress: 0.3,
-      status: 'Processing...',
+      status: 'Processing...'.tr,
     ));
 
     final image = img.decodeImage(fileBytes);
     if (image == null) {
       data.sendPort.send(ImageProcessingResult(
         progress: 0.0,
-        status: 'Failed',
+        status: 'Failed'.tr,
         error: 'Invalid image format',
       ));
       return;
@@ -151,7 +151,7 @@ void imageProcessingIsolate(ImageProcessingData data) async {
 
     data.sendPort.send(ImageProcessingResult(
       progress: 0.6,
-      status: 'Optimizing...',
+      status: 'Optimizing...'.tr,
     ));
 
     // Compress image
@@ -159,7 +159,7 @@ void imageProcessingIsolate(ImageProcessingData data) async {
 
     data.sendPort.send(ImageProcessingResult(
       progress: 0.8,
-      status: 'Saving...',
+      status: 'Saving...'.tr,
     ));
 
     // Save compressed image
@@ -168,13 +168,13 @@ void imageProcessingIsolate(ImageProcessingData data) async {
 
     data.sendPort.send(ImageProcessingResult(
       progress: 1.0,
-      status: 'Completed',
+      status: 'Completed'.tr,
       outputPath: data.outputPath,
     ));
   } catch (e) {
     data.sendPort.send(ImageProcessingResult(
       progress: 0.0,
-      status: 'Failed',
+      status: 'Failed'.tr,
       error: 'Processing failed: $e',
     ));
   }
@@ -549,7 +549,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
         // Create uploading progress tracker
         final uploadingImage = UploadingImage(
           path: element.path,
-          status: 'Queued...',
+          status: 'Preparing...'.tr,
         );
         uploadingImage.initProgressStream();
 
@@ -663,7 +663,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
       // Create new uploading progress tracker
       final uploadingImage = UploadingImage(
         path: imageFile.path,
-        status: 'Retrying...',
+        status: 'Preparing...'.tr,
       );
       uploadingImage.initProgressStream();
 
@@ -998,7 +998,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                       ),
                                                       SizedBox(height: 8),
                                                       Text(
-                                                        'Failed',
+                                                        'Failed'.tr,
                                                         style: TextStyle(
                                                           color: Colors.white,
                                                           fontSize: 12.sp,
@@ -2602,7 +2602,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                               ),
                               SizedBox(height: 16),
                               Text(
-                                'Processing images...',
+                                'Processing images...'.tr,
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w500,
@@ -2611,7 +2611,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                               ),
                               SizedBox(height: 8),
                               Text(
-                                'Please wait while we optimize your images',
+                                'Please wait while we optimize your images'.tr,
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: AppColors.k0xFFA9ABAC,
