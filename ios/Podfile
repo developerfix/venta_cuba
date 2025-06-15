@@ -32,6 +32,10 @@ target 'Runner' do
   use_modular_headers!
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+
+  # Fix SDWebImage version compatibility issue
+  pod 'SDWebImage', '~> 5.19.0'
+
   target 'RunnerTests' do
     inherit! :search_paths
   end

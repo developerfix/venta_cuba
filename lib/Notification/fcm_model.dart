@@ -2,8 +2,9 @@ class FCMModel {
   Data? data;
   NotificationData? notification;
   String? token;
+  ApnsConfig? apns;
 
-  FCMModel({this.data, this.notification, this.token});
+  FCMModel({this.data, this.notification, this.token, this.apns});
 
   FCMModel.fromJson(Map<String, dynamic> json) {
     data = json['data'] != null ? Data.fromJson(json['data']) : null;
@@ -11,6 +12,7 @@ class FCMModel {
         ? NotificationData.fromJson(json['notification'])
         : null;
     token = json['token'];
+    apns = json['apns'] != null ? ApnsConfig.fromJson(json['apns']) : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -21,6 +23,9 @@ class FCMModel {
     }
     if (notification != null) {
       data['notification'] = notification!.toJson();
+    }
+    if (apns != null) {
+      data['apns'] = apns!.toJson();
     }
     data['token'] = token;
     return data;
@@ -37,14 +42,13 @@ class Data {
   String? type;
 
   Data(
-      {
-        this.userId,
-        this.remoteId,
-        this.name,
-        this.profileImage,
-        this.title,
-        this.body,
-        this.type});
+      {this.userId,
+      this.remoteId,
+      this.name,
+      this.profileImage,
+      this.title,
+      this.body,
+      this.type});
 
   Data.fromJson(Map<String, dynamic> json) {
     userId = json['user_id'];
@@ -83,8 +87,67 @@ class NotificationData {
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['title'] = title;
-
     data['body'] = body;
+    return data;
+  }
+}
+
+class ApnsConfig {
+  ApnsPayload? payload;
+
+  ApnsConfig({this.payload});
+
+  ApnsConfig.fromJson(Map<String, dynamic> json) {
+    payload =
+        json['payload'] != null ? ApnsPayload.fromJson(json['payload']) : null;
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    if (payload != null) {
+      data['payload'] = payload!.toJson();
+    }
+    return data;
+  }
+}
+
+class ApnsPayload {
+  Aps? aps;
+
+  ApnsPayload({this.aps});
+
+  ApnsPayload.fromJson(Map<String, dynamic> json) {
+    aps = json['aps'] != null ? Aps.fromJson(json['aps']) : null;
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    if (aps != null) {
+      data['aps'] = aps!.toJson();
+    }
+    return data;
+  }
+}
+
+class Aps {
+  int? badge;
+  String? sound;
+
+  Aps({this.badge, this.sound});
+
+  Aps.fromJson(Map<String, dynamic> json) {
+    badge = json['badge'];
+    sound = json['sound'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    if (badge != null) {
+      data['badge'] = badge;
+    }
+    if (sound != null) {
+      data['sound'] = sound;
+    }
     return data;
   }
 }

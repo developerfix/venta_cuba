@@ -22,6 +22,9 @@ class FCM {
   final streamCtrl = StreamController<String>.broadcast();
   final authCont = Get.put(AuthController());
 
+  // Badge count management
+  static int _badgeCount = 0;
+
   // static SharedPreference sharedPreference = SharedPreference();
   // final NavigationService _navigationService = locator<NavigationService>();
   //
@@ -143,7 +146,8 @@ class FCM {
       String payLoad,
       bool wakeUpScreen,
       bool autoCancel,
-      AndroidNotificationCategory category) async {
+      AndroidNotificationCategory category,
+      {int? badgeCount}) async {
     var vibrationPattern = Int64List(8);
 
     vibrationPattern[0] = 0;
@@ -172,8 +176,19 @@ class FCM {
                 BigTextStyleInformation(body, htmlFormatSummaryText: true),
             ticker: ticker);
 
+    // Use provided badge count or increment current count
+    int currentBadgeCount = badgeCount ?? (getBadgeCount() + 1);
+    if (badgeCount == null) {
+      incrementBadgeCount();
+    }
+
     DarwinNotificationDetails iosNotificationDetails =
-        const DarwinNotificationDetails();
+        DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+      badgeNumber: currentBadgeCount,
+    );
 
     NotificationDetails notificationDetails = NotificationDetails(
         android: androidNotificationDetails, iOS: iosNotificationDetails);
@@ -278,6 +293,61 @@ class FCM {
     }
   }
 
+  // Badge management methods
+  static void incrementBadgeCount() {
+    _badgeCount++;
+    print('🔥 Badge count incremented to: $_badgeCount');
+  }
+
+  static void resetBadgeCount() {
+    _badgeCount = 0;
+    print('🔥 Badge count reset to: $_badgeCount');
+  }
+
+  static int getBadgeCount() {
+    return _badgeCount;
+  }
+
+  static void setBadgeCount(int count) {
+    _badgeCount = count;
+    print('🔥 Badge count set to: $_badgeCount');
+  }
+
+  // Clear badge count and update app icon
+  static Future<void> clearBadgeCount() async {
+    resetBadgeCount();
+    if (Platform.isIOS) {
+      try {
+        // Show a notification with badge count 0 to clear the badge
+        DarwinNotificationDetails iosNotificationDetails =
+            const DarwinNotificationDetails(
+          presentAlert: false,
+          presentBadge: true,
+          presentSound: false,
+          badgeNumber: 0,
+        );
+
+        NotificationDetails notificationDetails = NotificationDetails(
+          iOS: iosNotificationDetails,
+        );
+
+        await flutterLocalNotificationsPlugin.show(
+          999999, // Use a unique ID for badge clearing
+          '',
+          '',
+          notificationDetails,
+        );
+
+        // Cancel the notification immediately so it doesn't show
+        await flutterLocalNotificationsPlugin.cancel(999999);
+
+        print('🔥 iOS badge cleared');
+      } catch (e) {
+        print('🔥 Error clearing iOS badge: $e');
+      }
+    }
+  }
+
   Future<void> updateTokenOnServer(String token) async {
     try {
       // Only update if user is logged in
@@ -304,6 +374,7 @@ class FCM {
     String? title,
     String? body,
     String? type,
+    int? badgeCount,
   }) async {
     // Ensure a fresh token
     NotificationService notificationService = NotificationService();
@@ -312,6 +383,12 @@ class FCM {
     if (notificationAccessToken.isEmpty) {
       print('🔥 Error: No valid access token available');
       return false;
+    }
+
+    // Increment badge count if not provided
+    if (badgeCount == null) {
+      incrementBadgeCount();
+      badgeCount = getBadgeCount();
     }
 
     Data data = Data(
@@ -324,10 +401,22 @@ class FCM {
       type: type,
     );
     NotificationData notification = NotificationData(title: title, body: body);
+
+    // Create APNS configuration with badge count
+    ApnsConfig apnsConfig = ApnsConfig(
+      payload: ApnsPayload(
+        aps: Aps(
+          badge: badgeCount,
+          sound: 'default',
+        ),
+      ),
+    );
+
     FCMModel fcmModel = FCMModel(
       data: data,
       token: deviceToken,
       notification: notification,
+      apns: apnsConfig,
     );
 
     var headers = {
@@ -418,6 +507,9 @@ class FCM {
           message.data['body'] ??
           'You have a new message';
 
+      // Increment badge count for background notifications
+      incrementBadgeCount();
+
       await notification(
         body,
         title,
@@ -427,6 +519,7 @@ class FCM {
         false,
         false,
         AndroidNotificationCategory.message,
+        badgeCount: getBadgeCount(),
       );
 
       print('🔥 Background notification shown successfully');

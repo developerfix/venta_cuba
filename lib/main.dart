@@ -52,7 +52,7 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.resumed) {
-      // App came to foreground, refresh device token
+      // App came to foreground, refresh device token and clear badge
       try {
         final authCont = Get.find<AuthController>();
         authCont.refreshDeviceToken();
@@ -60,6 +60,10 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
         if (authCont.user?.userId != null) {
           authCont.updateDeviceTokenInAllChats(deviceToken);
         }
+
+        // Clear badge count when app becomes active
+        FCM.clearBadgeCount();
+        print('🔥 Badge cleared on app resume');
       } catch (e) {
         print('Error refreshing token on app resume: $e');
       }

@@ -7,6 +7,7 @@ import 'package:venta_cuba/view/Navigation%20bar/selecct_category_post.dart';
 import 'package:venta_cuba/view/auth/login.dart';
 import 'package:venta_cuba/view/constants/Colors.dart';
 import '../../Controllers/auth_controller.dart';
+import '../../Notification/firebase_messaging.dart';
 import '../Chat/pages/chats.dart';
 import '../home screen/home_screen.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -48,10 +49,18 @@ class _Navigation_BarState extends State<Navigation_Bar> {
                 if (authCont.user?.email == "") {
                   Get.to(Login());
                 } else {
+                  // Clear badge count when switching to chat tab
+                  if (index == 1) {
+                    // Reset badge count for app icon
+                    FCM.clearBadgeCount();
+                    // Reset unread messages indicator
+                    cont.hasUnreadMessages.value = false;
+                    cont.update();
+                  }
+
                   cont.currentIndexBottomAppBar = index;
                   cont.update();
                 }
-                ;
               }
             },
             items: [
