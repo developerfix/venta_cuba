@@ -15,6 +15,7 @@ import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
 import 'package:venta_cuba/Utils/funcations.dart';
+import 'package:venta_cuba/view/Navigation%20bar/post.dart';
 import '../../../Controllers/home_controller.dart';
 import '../../../Notification/firebase_messaging.dart';
 import '../../../Utils/global_variabel.dart';
@@ -275,64 +276,74 @@ class _ChatPageState extends State<ChatPage> {
         children: <Widget>[
           // chat messages here
           chatMessages(),
-          InkWell(
-            onTap: () {
-              homeCont.getListingDetails("${widget.listingId}");
-            },
-            child: Container(
-              width: double.maxFinite,
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              decoration: BoxDecoration(color: Colors.white, boxShadow: [
-                BoxShadow(
-                    color: Colors.black26, blurRadius: 5, offset: Offset(0, 5))
-              ]),
-              child: Row(
-                children: [
-                  ClipRRect(
-                      borderRadius: BorderRadius.circular(7),
-                      child: CachedNetworkImage(
-                        height: 50,
-                        width: 50,
-                        imageUrl: widget.listingImage ?? "",
-                        imageBuilder: (context, imageProvider) => Container(
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: InkWell(
+              onTap: () {
+                homeCont.getListingDetails("${widget.listingId}");
+              },
+              child: Container(
+                width: double.maxFinite,
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                decoration: BoxDecoration(color: Colors.white, boxShadow: [
+                  BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 5,
+                      offset: Offset(0, 5))
+                ]),
+                child: Row(
+                  children: [
+                    ClipRRect(
+                        borderRadius: BorderRadius.circular(7),
+                        child: CachedNetworkImage(
                           height: 50,
                           width: 50,
-                          decoration: BoxDecoration(
-                            image: DecorationImage(
-                              image: imageProvider,
-                              fit: BoxFit.cover,
+                          imageUrl: widget.listingImage ?? "",
+                          imageBuilder: (context, imageProvider) => Container(
+                            height: 50,
+                            width: 50,
+                            decoration: BoxDecoration(
+                              image: DecorationImage(
+                                image: imageProvider,
+                                fit: BoxFit.cover,
+                              ),
                             ),
                           ),
-                        ),
-                        placeholder: (context, url) => SizedBox(
-                          height: 50,
-                          width: 50,
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
+                          placeholder: (context, url) => SizedBox(
+                            height: 50,
+                            width: 50,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
                             ),
                           ),
-                        ),
-                        errorWidget: (context, url, error) =>
-                            Center(child: Text("No Image".tr)),
-                      )),
-                  SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CustomText(
-                          text:
-                              "\$${homeCont.listingModel?.price ?? widget.listingPrice}"),
-                      CustomText(
-                          text: homeCont.listingModel?.title ??
-                              widget.listingName),
-                      CustomText(
-                          text: homeCont.listingModel?.address ??
-                              widget.listingLocation),
-                    ],
-                  )
-                ],
+                          errorWidget: (context, url, error) =>
+                              Center(child: Text("No Image".tr)),
+                        )),
+                    SizedBox(width: 10),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Only show price if it's greater than 0 and not empty
+                        if (_shouldShowPrice())
+                          CustomText(
+                              text:
+                                  "${PriceFormatter().formatNumber(int.parse(homeCont.listingModel?.price ?? widget.listingPrice ?? '0'))}\$ ${homeCont.listingModel?.currency ?? 'USD'}"),
+
+                        CustomText(
+                            text: homeCont.listingModel?.title ??
+                                widget.listingName),
+                        CustomText(
+                            text: homeCont.listingModel?.address ??
+                                widget.listingLocation),
+                      ],
+                    )
+                  ],
+                ),
               ),
             ),
           ),
@@ -422,6 +433,10 @@ class _ChatPageState extends State<ChatPage> {
                               child: TextField(
                                 focusNode: focusNode,
                                 controller: cont.messageController,
+                                maxLines: null,
+                                minLines: 1,
+                                keyboardType: TextInputType.multiline,
+                                textInputAction: TextInputAction.newline,
                                 decoration: InputDecoration.collapsed(
                                     hintText: 'Type Message'.tr,
                                     hintStyle: TextStyle(
@@ -573,7 +588,7 @@ class _ChatPageState extends State<ChatPage> {
                   GetBuilder<ChatController>(builder: (cont) {
                     return Expanded(
                       child: ListView.builder(
-                        padding: EdgeInsets.only(bottom: 20.h, top: 20.h),
+                        padding: EdgeInsets.only(bottom: 20.h, top: 80.h),
                         controller: cont.scrollController,
                         itemCount: snapshot.data.docs.length,
                         itemBuilder: (context, index) {
@@ -831,6 +846,35 @@ class _ChatPageState extends State<ChatPage> {
       print("🔥 ❌ Error in notification retry: $e");
       return false;
     }
+  }
+
+  // Helper method to check if price should be shown
+  bool _shouldShowPrice() {
+    // Check homeCont.listingModel?.price first
+    var modelPrice = homeCont.listingModel?.price;
+    if (modelPrice != null) {
+      String priceStr = modelPrice.toString().trim();
+      if (priceStr.isNotEmpty && priceStr != "0" && priceStr != "0.0") {
+        double? price = double.tryParse(priceStr);
+        if (price != null && price > 0) {
+          return true;
+        }
+      }
+    }
+
+    // Check widget.listingPrice as fallback
+    var widgetPrice = widget.listingPrice;
+    if (widgetPrice != null) {
+      String priceStr = widgetPrice.toString().trim();
+      if (priceStr.isNotEmpty && priceStr != "0" && priceStr != "0.0") {
+        double? price = double.tryParse(priceStr);
+        if (price != null && price > 0) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   updateImage() {
