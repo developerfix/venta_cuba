@@ -29,8 +29,12 @@ import UserNotifications
   override func userNotificationCenter(_ center: UNUserNotificationCenter,
                                      willPresent notification: UNNotification,
                                      withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-    // Show notification with badge, sound, and alert
-    completionHandler([.alert, .badge, .sound])
+    // Show notification with badge, sound, and alert - ensure sound is always played
+    if #available(iOS 14.0, *) {
+      completionHandler([.alert, .badge, .sound, .banner])
+    } else {
+      completionHandler([.alert, .badge, .sound])
+    }
   }
 
   // Handle notification tap
