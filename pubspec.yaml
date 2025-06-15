@@ -86,6 +86,7 @@ dependencies:
   #For Firebase Notification Token
   googleapis_auth:
   googleapis:
+  flutter_app_badge_control: ^0.0.2
 
 dev_dependencies:
   flutter_test:

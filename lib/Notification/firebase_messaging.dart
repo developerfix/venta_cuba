@@ -8,6 +8,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_app_badge_control/flutter_app_badge_control.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:venta_cuba/Services/Notfication/notficationservice.dart';
 import 'package:venta_cuba/Utils/global_variabel.dart';
 
@@ -50,7 +52,14 @@ class FCM {
 
     androidInitializationSettings =
         const AndroidInitializationSettings('@drawable/profits');
-    iosInitializationSettings = const DarwinInitializationSettings();
+    iosInitializationSettings = const DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+      defaultPresentAlert: true,
+      defaultPresentBadge: true,
+      defaultPresentSound: true,
+    );
     initializationSettings = InitializationSettings(
         iOS: iosInitializationSettings, android: androidInitializationSettings);
     await flutterLocalNotificationsPlugin.initialize(
@@ -179,7 +188,7 @@ class FCM {
     // Use provided badge count or increment current count
     int currentBadgeCount = badgeCount ?? (getBadgeCount() + 1);
     if (badgeCount == null) {
-      incrementBadgeCount();
+      await incrementBadgeCount();
     }
 
     DarwinNotificationDetails iosNotificationDetails =
@@ -187,7 +196,9 @@ class FCM {
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
+      sound: 'default', // Explicitly set default sound
       badgeNumber: currentBadgeCount,
+      interruptionLevel: InterruptionLevel.active,
     );
 
     NotificationDetails notificationDetails = NotificationDetails(
@@ -200,7 +211,8 @@ class FCM {
 
   Future<void> ios_permission() async {
     if (Platform.isIOS) {
-      await flutterLocalNotificationsPlugin
+      // Request local notification permissions first
+      final bool? result = await flutterLocalNotificationsPlugin
           .resolvePlatformSpecificImplementation<
               IOSFlutterLocalNotificationsPlugin>()
           ?.requestPermissions(
@@ -208,19 +220,44 @@ class FCM {
             badge: true,
             sound: true,
           );
+
+      print('🔥 iOS Local Notification Permissions Result: $result');
+
+      // Also request Firebase messaging permissions
+      NotificationSettings settings =
+          await _firebaseMessaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+        carPlay: false,
+        criticalAlert: false,
+        provisional: false,
+        announcement: false,
+      );
+
+      print('🔥 Firebase iOS Permissions - Sound: ${settings.sound}');
+      print('🔥 Firebase iOS Permissions - Alert: ${settings.alert}');
+      print('🔥 Firebase iOS Permissions - Badge: ${settings.badge}');
     } else if (Platform.isAndroid) {
       // Android notification permissions are handled automatically
       print('🔥 Android platform detected - permissions handled automatically');
+      await _firebaseMessaging.requestPermission(
+          sound: true, badge: true, alert: true);
     }
-    _firebaseMessaging.requestPermission(sound: true, badge: true, alert: true);
   }
 
   setNotifications(BuildContext context) async {
     initializing();
     firebaseCloudMessagingListeners(context);
 
+    // Load badge count from storage
+    await loadBadgeCount();
+
     // Request notification permissions
     await requestNotificationPermissions();
+
+    // Check and log current permission status for debugging
+    await checkNotificationPermissions();
 
     if (Platform.isIOS) {
       try {
@@ -294,36 +331,149 @@ class FCM {
   }
 
   // Badge management methods
-  static void incrementBadgeCount() {
+  static Future<void> incrementBadgeCount() async {
     _badgeCount++;
     print('🔥 Badge count incremented to: $_badgeCount');
+    await _updateAppIconBadge(_badgeCount);
   }
 
-  static void resetBadgeCount() {
+  static Future<void> resetBadgeCount() async {
     _badgeCount = 0;
     print('🔥 Badge count reset to: $_badgeCount');
+    await _updateAppIconBadge(0);
   }
 
   static int getBadgeCount() {
     return _badgeCount;
   }
 
-  static void setBadgeCount(int count) {
+  static Future<void> setBadgeCount(int count) async {
     _badgeCount = count;
     print('🔥 Badge count set to: $_badgeCount');
+    await _updateAppIconBadge(count);
+  }
+
+  // Update app icon badge using flutter_app_badge_control
+  static Future<void> _updateAppIconBadge(int count) async {
+    try {
+      if (count > 0) {
+        await FlutterAppBadgeControl.updateBadgeCount(count);
+        print('🔥 App icon badge updated to: $count');
+      } else {
+        await FlutterAppBadgeControl.removeBadge();
+        print('🔥 App icon badge removed');
+      }
+      // Save badge count to persistent storage
+      await _saveBadgeCount(count);
+    } catch (e) {
+      print('🔥 Error updating app icon badge: $e');
+    }
+  }
+
+  // Save badge count to SharedPreferences
+  static Future<void> _saveBadgeCount(int count) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('badge_count', count);
+      print('🔥 Badge count saved to storage: $count');
+    } catch (e) {
+      print('🔥 Error saving badge count: $e');
+    }
+  }
+
+  // Load badge count from SharedPreferences
+  static Future<void> loadBadgeCount() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _badgeCount = prefs.getInt('badge_count') ?? 0;
+      print('🔥 Badge count loaded from storage: $_badgeCount');
+
+      // Update app icon badge on app start
+      await _updateAppIconBadge(_badgeCount);
+    } catch (e) {
+      print('🔥 Error loading badge count: $e');
+      _badgeCount = 0;
+    }
+  }
+
+  // Public method to check if badge control is supported
+  static Future<bool> isBadgeSupported() async {
+    try {
+      return await FlutterAppBadgeControl.isAppBadgeSupported();
+    } catch (e) {
+      print('🔥 Error checking badge support: $e');
+      return false;
+    }
+  }
+
+  // Public method to manually update badge (useful for chat read status)
+  static Future<void> updateBadgeForReadMessages(int unreadCount) async {
+    await setBadgeCount(unreadCount);
+  }
+
+  // Check and log notification permissions status (useful for debugging)
+  static Future<void> checkNotificationPermissions() async {
+    try {
+      final FirebaseMessaging messaging = FirebaseMessaging.instance;
+      NotificationSettings settings = await messaging.getNotificationSettings();
+
+      print('🔥 === CURRENT NOTIFICATION PERMISSIONS STATUS ===');
+      print('🔥 Authorization Status: ${settings.authorizationStatus}');
+      print('🔥 Alert Setting: ${settings.alert}');
+      print('🔥 Badge Setting: ${settings.badge}');
+      print('🔥 Sound Setting: ${settings.sound}');
+      print('🔥 Critical Alert: ${settings.criticalAlert}');
+      print('🔥 Announcement: ${settings.announcement}');
+
+      if (Platform.isIOS) {
+        print(
+            '🔥 iOS Sound Permission: ${settings.sound == AppleNotificationSetting.enabled ? "ENABLED" : "DISABLED"}');
+        if (settings.sound != AppleNotificationSetting.enabled) {
+          print(
+              '🔥 ⚠️ WARNING: Sound permission is not enabled! User needs to enable it in Settings.');
+        }
+      }
+    } catch (e) {
+      print('🔥 Error checking notification permissions: $e');
+    }
+  }
+
+  // Test notification with sound (useful for debugging)
+  static Future<void> sendTestNotificationWithSound() async {
+    try {
+      print('🔥 Sending test notification with sound...');
+
+      await notification(
+        'This is a test notification to verify sound is working',
+        'Test Notification Sound',
+        'test_channel',
+        'test',
+        '{"type": "test"}',
+        false,
+        true,
+        AndroidNotificationCategory.message,
+        badgeCount: 1,
+      );
+
+      print('🔥 Test notification sent successfully');
+    } catch (e) {
+      print('🔥 Error sending test notification: $e');
+    }
   }
 
   // Clear badge count and update app icon
   static Future<void> clearBadgeCount() async {
-    resetBadgeCount();
+    await resetBadgeCount();
+
+    // Additional iOS notification badge clearing for compatibility
     if (Platform.isIOS) {
       try {
-        // Show a notification with badge count 0 to clear the badge
+        // Show a notification with badge count 0 to clear the notification badge
         DarwinNotificationDetails iosNotificationDetails =
             const DarwinNotificationDetails(
-          presentAlert: false,
+          presentAlert: true,
           presentBadge: true,
-          presentSound: false,
+          presentSound: true,
           badgeNumber: 0,
         );
 
@@ -341,11 +491,13 @@ class FCM {
         // Cancel the notification immediately so it doesn't show
         await flutterLocalNotificationsPlugin.cancel(999999);
 
-        print('🔥 iOS badge cleared');
+        print('🔥 iOS notification badge cleared');
       } catch (e) {
-        print('🔥 Error clearing iOS badge: $e');
+        print('🔥 Error clearing iOS notification badge: $e');
       }
     }
+
+    print('🔥 Badge count cleared successfully');
   }
 
   Future<void> updateTokenOnServer(String token) async {
@@ -387,7 +539,7 @@ class FCM {
 
     // Increment badge count if not provided
     if (badgeCount == null) {
-      incrementBadgeCount();
+      await incrementBadgeCount();
       badgeCount = getBadgeCount();
     }
 
@@ -497,7 +649,14 @@ class FCM {
       await flutterLocalNotificationsPlugin.initialize(
         InitializationSettings(
           android: AndroidInitializationSettings('@drawable/profits'),
-          iOS: DarwinInitializationSettings(),
+          iOS: DarwinInitializationSettings(
+            requestAlertPermission: true,
+            requestBadgePermission: true,
+            requestSoundPermission: true,
+            defaultPresentAlert: true,
+            defaultPresentBadge: true,
+            defaultPresentSound: true,
+          ),
         ),
       );
 
@@ -508,7 +667,7 @@ class FCM {
           'You have a new message';
 
       // Increment badge count for background notifications
-      incrementBadgeCount();
+      await incrementBadgeCount();
 
       await notification(
         body,
