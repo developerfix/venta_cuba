@@ -49,7 +49,7 @@ import UserNotifications
   // Reset badge when app becomes active
   override func applicationDidBecomeActive(_ application: UIApplication) {
     super.applicationDidBecomeActive(application)
-    // Optionally reset badge count when app becomes active
-    // application.applicationIconBadgeNumber = 0
+    // Reset badge count when app becomes active
+    application.applicationIconBadgeNumber = 0
   }
 }
