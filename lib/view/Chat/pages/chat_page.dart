@@ -15,6 +15,7 @@ import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
 import 'package:venta_cuba/Utils/funcations.dart';
+import 'package:venta_cuba/view/Navigation%20bar/post.dart';
 import '../../../Controllers/home_controller.dart';
 import '../../../Notification/firebase_messaging.dart';
 import '../../../Utils/global_variabel.dart';
@@ -66,12 +67,14 @@ class _ChatPageState extends State<ChatPage> {
   final homeCont = Get.put(HomeController());
   final authCont = Get.put(AuthController());
   bool isKeyBoardOpen = true;
+  late FocusNode focusNode; // Add the missing FocusNode declaration
 
   @override
   void dispose() {
     chatCont.isShow = false;
     isONImageScreen = false;
     isKeyBoardOpen = true;
+    focusNode.dispose(); // Dispose the FocusNode
     super.dispose();
   }
 
@@ -89,12 +92,21 @@ class _ChatPageState extends State<ChatPage> {
   void initState() {
     super.initState();
 
+    print("🔥 === CHAT PAGE INIT STATE ===");
+    print("🔥 Chat ID: ${widget.chatId}");
+    print("🔥 User Name: ${widget.userName}");
+    print("🔥 Listing ID: ${widget.listingId}");
+    print("🔥 Remote UID: ${widget.remoteUid}");
+
     focusNode = FocusNode();
     getChat();
     saveFile();
 
     // Update device tokens when chat is opened
     updateDeviceTokensOnChatOpen();
+
+    // Initialize listing data for this specific chat
+    _initializeListingData();
 
     chatCont.scrollController.addListener(() {
       if (chatCont.scrollController.position.pixels ==
@@ -110,6 +122,26 @@ class _ChatPageState extends State<ChatPage> {
     updateImage();
   }
 
+  // Initialize listing data for this specific chat
+  void _initializeListingData() {
+    // Use addPostFrameCallback to ensure this runs after the build is complete
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Clear any cached listing data first to prevent showing wrong data
+      homeCont.listingModel = null;
+      homeCont.update();
+
+      // Fetch the correct listing details if listingId is available
+      if (widget.listingId != null &&
+          widget.listingId!.isNotEmpty &&
+          widget.listingId != "null") {
+        print("🔥 Fetching listing details for ID: ${widget.listingId}");
+        homeCont.getListingDetails(widget.listingId!, showDialog: false);
+      } else {
+        print("🔥 No valid listing ID provided: ${widget.listingId}");
+      }
+    });
+  }
+
   // Update device tokens when chat is opened
   Future<void> updateDeviceTokensOnChatOpen() async {
     try {
@@ -119,6 +151,12 @@ class _ChatPageState extends State<ChatPage> {
           widget.chatId!,
           authCont.user!.userId.toString(),
           deviceToken,
+        );
+
+        // Also mark chat as read when opened
+        await chatCont.markChatAsRead(
+          widget.chatId!,
+          authCont.user!.userId.toString(),
         );
       }
     } catch (e) {
@@ -253,20 +291,51 @@ class _ChatPageState extends State<ChatPage> {
             SizedBox(
               width: 16.w,
             ),
-            SizedBox(
-              height: 50..h,
-              child: SelectionArea(
-                child: Center(
-                  child: CustomText(
-                    text: widget.userName == ""
-                        ? "No Name"
-                        : widget.userName ?? "No Name",
-                    fontSize: 16..sp,
-                    fontWeight: FontWeight.w600,
-                    fontColor: Colors.black,
-                  ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CustomText(
+                  text: widget.userName == ""
+                      ? "No Name"
+                      : widget.userName ?? "No Name",
+                  fontSize: 16..sp,
+                  fontWeight: FontWeight.w600,
+                  fontColor: Colors.black,
                 ),
-              ),
+                SizedBox(height: 2.h),
+                // Show last active time or online status
+                if (widget.remoteUid != null)
+                  StreamBuilder<DocumentSnapshot>(
+                    stream: chatCont.getUserPresence(widget.remoteUid!),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData && snapshot.data!.exists) {
+                        Map<String, dynamic> presenceData =
+                            snapshot.data!.data() as Map<String, dynamic>;
+
+                        bool isOnline = chatCont.isUserOnline(presenceData);
+                        Timestamp? lastActiveTime =
+                            presenceData['lastActiveTime'];
+
+                        return CustomText(
+                          text: isOnline
+                              ? "Online"
+                              : chatCont.formatLastActiveTime(lastActiveTime),
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w400,
+                          fontColor:
+                              isOnline ? Colors.green : Colors.grey[600]!,
+                        );
+                      }
+                      return CustomText(
+                        text: "Last seen long ago",
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w400,
+                        fontColor: Colors.grey[600]!,
+                      );
+                    },
+                  ),
+              ],
             ),
           ],
         ),
@@ -275,64 +344,94 @@ class _ChatPageState extends State<ChatPage> {
         children: <Widget>[
           // chat messages here
           chatMessages(),
-          InkWell(
-            onTap: () {
-              homeCont.getListingDetails("${widget.listingId}");
-            },
-            child: Container(
-              width: double.maxFinite,
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              decoration: BoxDecoration(color: Colors.white, boxShadow: [
-                BoxShadow(
-                    color: Colors.black26, blurRadius: 5, offset: Offset(0, 5))
-              ]),
-              child: Row(
-                children: [
-                  ClipRRect(
-                      borderRadius: BorderRadius.circular(7),
-                      child: CachedNetworkImage(
-                        height: 50,
-                        width: 50,
-                        imageUrl: widget.listingImage ?? "",
-                        imageBuilder: (context, imageProvider) => Container(
-                          height: 50,
-                          width: 50,
-                          decoration: BoxDecoration(
-                            image: DecorationImage(
-                              image: imageProvider,
-                              fit: BoxFit.cover,
-                            ),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: InkWell(
+              onTap: () {
+                homeCont.getListingDetails("${widget.listingId}",
+                    showDialog: true);
+              },
+              child: Container(
+                width: double.maxFinite,
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                decoration: BoxDecoration(color: Colors.white, boxShadow: [
+                  BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 5,
+                      offset: Offset(0, 5))
+                ]),
+                child: GetBuilder<HomeController>(
+                  builder: (controller) {
+                    return Row(
+                      children: [
+                        ClipRRect(
+                            borderRadius: BorderRadius.circular(7),
+                            child: CachedNetworkImage(
+                              height: 50,
+                              width: 50,
+                              imageUrl: _getListingImage(),
+                              imageBuilder: (context, imageProvider) =>
+                                  Container(
+                                height: 50,
+                                width: 50,
+                                decoration: BoxDecoration(
+                                  image: DecorationImage(
+                                    image: imageProvider,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              placeholder: (context, url) => SizedBox(
+                                height: 50,
+                                width: 50,
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              ),
+                              errorWidget: (context, url, error) =>
+                                  Center(child: Text("No Image".tr)),
+                            )),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Only show price if it's valid
+                              if (_shouldShowPrice())
+                                CustomText(
+                                  text: _getFormattedPrice(),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                  fontColor: Colors.green[700]!,
+                                ),
+                              // Show title/name
+                              if (_getListingTitle().isNotEmpty)
+                                CustomText(
+                                  text: _getListingTitle(),
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 13,
+                                  fontColor: Colors.black,
+                                ),
+                              // Show location
+                              if (_getListingLocation().isNotEmpty)
+                                CustomText(
+                                  text: _getListingLocation(),
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 12,
+                                  fontColor: Colors.grey[600]!,
+                                ),
+                            ],
                           ),
-                        ),
-                        placeholder: (context, url) => SizedBox(
-                          height: 50,
-                          width: 50,
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                            ),
-                          ),
-                        ),
-                        errorWidget: (context, url, error) =>
-                            Center(child: Text("No Image".tr)),
-                      )),
-                  SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CustomText(
-                          text:
-                              "\$${homeCont.listingModel?.price ?? widget.listingPrice}"),
-                      CustomText(
-                          text: homeCont.listingModel?.title ??
-                              widget.listingName),
-                      CustomText(
-                          text: homeCont.listingModel?.address ??
-                              widget.listingLocation),
-                    ],
-                  )
-                ],
+                        )
+                      ],
+                    );
+                  },
+                ),
               ),
             ),
           ),
@@ -422,6 +521,10 @@ class _ChatPageState extends State<ChatPage> {
                               child: TextField(
                                 focusNode: focusNode,
                                 controller: cont.messageController,
+                                maxLines: null,
+                                minLines: 1,
+                                keyboardType: TextInputType.multiline,
+                                textInputAction: TextInputAction.newline,
                                 decoration: InputDecoration.collapsed(
                                     hintText: 'Type Message'.tr,
                                     hintStyle: TextStyle(
@@ -573,7 +676,7 @@ class _ChatPageState extends State<ChatPage> {
                   GetBuilder<ChatController>(builder: (cont) {
                     return Expanded(
                       child: ListView.builder(
-                        padding: EdgeInsets.only(bottom: 20.h, top: 20.h),
+                        padding: EdgeInsets.only(bottom: 20.h, top: 80.h),
                         controller: cont.scrollController,
                         itemCount: snapshot.data.docs.length,
                         itemBuilder: (context, index) {
@@ -833,6 +936,113 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
+  // Helper method to get listing image URL
+  String _getListingImage() {
+    // Prefer the fetched listing model data over widget data
+    if (homeCont.listingModel?.gallery != null &&
+        homeCont.listingModel!.gallery!.isNotEmpty) {
+      return homeCont.listingModel!.gallery!.first;
+    }
+    // Fallback to widget data
+    return widget.listingImage ?? "";
+  }
+
+  // Helper method to get listing title
+  String _getListingTitle() {
+    // Prefer the fetched listing model data over widget data
+    if (homeCont.listingModel?.title != null &&
+        homeCont.listingModel!.title!.isNotEmpty &&
+        homeCont.listingModel!.title != "null") {
+      return homeCont.listingModel!.title!;
+    }
+    // Fallback to widget data
+    if (widget.listingName != null &&
+        widget.listingName!.isNotEmpty &&
+        widget.listingName != "null") {
+      return widget.listingName!;
+    }
+    return "Listing";
+  }
+
+  // Helper method to get listing location
+  String _getListingLocation() {
+    // Prefer the fetched listing model data over widget data
+    if (homeCont.listingModel?.address != null &&
+        homeCont.listingModel!.address!.isNotEmpty &&
+        homeCont.listingModel!.address != "null") {
+      return homeCont.listingModel!.address!;
+    }
+    // Fallback to widget data
+    if (widget.listingLocation != null &&
+        widget.listingLocation!.isNotEmpty &&
+        widget.listingLocation != "null") {
+      return widget.listingLocation!;
+    }
+    return "";
+  }
+
+  // Helper method to get formatted price
+  String _getFormattedPrice() {
+    String price = "0";
+    String currency = "USD";
+
+    // Try to get price from listing model first
+    if (homeCont.listingModel?.price != null &&
+        homeCont.listingModel!.price!.isNotEmpty &&
+        homeCont.listingModel!.price != "null") {
+      price = homeCont.listingModel!.price!;
+      currency = homeCont.listingModel?.currency ?? "USD";
+    } else if (widget.listingPrice != null &&
+        widget.listingPrice!.isNotEmpty &&
+        widget.listingPrice != "null") {
+      // Fallback to widget data
+      price = widget.listingPrice!;
+    }
+
+    // Ensure currency is not empty or null, fallback to 'USD'
+    if (currency.isEmpty || currency == "null") {
+      currency = "USD";
+    }
+
+    try {
+      int priceInt = int.parse(price);
+      return "${PriceFormatter().formatNumber(priceInt)}\$ ${currency}";
+    } catch (e) {
+      return "$price\$ $currency";
+    }
+  }
+
+  // Helper method to check if price should be shown
+  bool _shouldShowPrice() {
+    // Check homeCont.listingModel?.price first
+    var modelPrice = homeCont.listingModel?.price;
+    if (modelPrice != null && modelPrice.isNotEmpty && modelPrice != "null") {
+      String priceStr = modelPrice.toString().trim();
+      if (priceStr.isNotEmpty && priceStr != "0" && priceStr != "0.0") {
+        double? price = double.tryParse(priceStr);
+        if (price != null && price > 0) {
+          return true;
+        }
+      }
+    }
+
+    // Check widget.listingPrice as fallback
+    var widgetPrice = widget.listingPrice;
+    if (widgetPrice != null &&
+        widgetPrice.isNotEmpty &&
+        widgetPrice != "null") {
+      String priceStr = widgetPrice.toString().trim();
+      if (priceStr.isNotEmpty && priceStr != "0" && priceStr != "0.0") {
+        double? price = double.tryParse(priceStr);
+        if (price != null && price > 0) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
   updateImage() {
     Map<String, dynamic> chatMessageMap =
         "${widget.senderId}" == "${authCont.user?.userId}"
@@ -875,7 +1085,7 @@ class _ChatPageState extends State<ChatPage> {
         .putFile(File(pickedFile.path))
         .then((p) async {
           final url = await storageRef.getDownloadURL();
-          chatCont.messageController.text = url ?? "";
+          chatCont.messageController.text = url;
         })
         .timeout(Duration(seconds: 50))
         .onError((error, stackTrace) {

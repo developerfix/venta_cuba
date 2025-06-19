@@ -73,7 +73,7 @@ class FCM {
     print('🔥 Starting Firebase messaging listeners...');
 
     // Listen for messages when app is in foreground
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
       print('🔥 Received foreground message: ${message.messageId}');
       print('🔥 Message data: ${message.data}');
       print(
@@ -84,6 +84,11 @@ class FCM {
       // Set the unread messages flag to true when a new message arrives
       authCont.hasUnreadMessages.value = true;
       authCont.update();
+
+      // Increment badge count for new chat messages
+      if (messageData["type"] == "message") {
+        await incrementBadgeCount();
+      }
 
       // Always show notifications in foreground (removed conditional check)
       String title =
@@ -356,17 +361,30 @@ class FCM {
   // Update app icon badge using flutter_app_badge_control
   static Future<void> _updateAppIconBadge(int count) async {
     try {
-      if (count > 0) {
-        await FlutterAppBadgeControl.updateBadgeCount(count);
-        print('🔥 App icon badge updated to: $count');
+      // Check if badge is supported first
+      bool isSupported = await FlutterAppBadgeControl.isAppBadgeSupported();
+      print('🔥 Badge support: $isSupported');
+
+      if (isSupported) {
+        if (count > 0) {
+          await FlutterAppBadgeControl.updateBadgeCount(count);
+          print('🔥 App icon badge updated to: $count');
+        } else {
+          await FlutterAppBadgeControl.removeBadge();
+          print('🔥 App icon badge removed');
+        }
       } else {
-        await FlutterAppBadgeControl.removeBadge();
-        print('🔥 App icon badge removed');
+        print('🔥 Badge not supported on this device/launcher');
+        // For Android devices that don't support badges, we can use notification channels
+        // The notification itself will show the count
       }
+
       // Save badge count to persistent storage
       await _saveBadgeCount(count);
     } catch (e) {
       print('🔥 Error updating app icon badge: $e');
+      // Fallback: still save the count even if badge update fails
+      await _saveBadgeCount(count);
     }
   }
 
@@ -578,7 +596,7 @@ class FCM {
     var request = http.Request(
       'POST',
       Uri.parse(
-          'https://fcm.googleapis.com/v1/projects/ventacuba-acf38/messages:send'),
+          'https://fcm.googleapis.com/v1/projects/ventacuba-latest-version/messages:send?access_token=$notificationAccessToken'),
     );
     request.body = jsonEncode({"message": fcmModel.toJson()});
     print('Request body: ${request.body}');

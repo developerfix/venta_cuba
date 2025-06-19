@@ -3,14 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:get/get.dart';
-import 'package:googleapis/androidpublisher/v3.dart';
 import 'package:intl/intl.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
-import 'package:venta_cuba/view/Chat/widgets/widgets.dart';
 import '../Controller/ChatController.dart';
 import '../custom_text.dart';
 import '../pages/chat_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' as firestoree;
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class GroupTile extends StatefulWidget {
   final String userName;
@@ -27,6 +26,8 @@ class GroupTile extends StatefulWidget {
   final String? listingPrice;
   final String? listingLocation;
   final String? listingId;
+  final bool isUnread; // New parameter for unread status
+  final String? remoteUserId; // Add remote user ID for presence tracking
 
   const GroupTile({
     Key? key,
@@ -44,6 +45,8 @@ class GroupTile extends StatefulWidget {
     this.listingId,
     this.listingLocation,
     this.deviceToken,
+    this.isUnread = false, // Default to false
+    this.remoteUserId, // Add remote user ID parameter
   }) : super(key: key);
 
   @override
@@ -72,48 +75,66 @@ class _GroupTileState extends State<GroupTile> {
     }
   }
 
+  // Navigation function to handle chat page navigation
+  Future<void> _navigateToChat() async {
+    // Mark chat as read when user taps on it
+
+    // Navigate to ChatPage
+    Get.to(() => ChatPage(
+          isLast: true,
+          chatId: widget.userChatId,
+          listingImage: widget.listingImage,
+          listingName: widget.listingName,
+          listingPrice: widget.listingPrice,
+          listingLocation: widget.listingLocation,
+          listingId: widget.listingId,
+          userName: widget.userName,
+          remoteUid: widget.remoteUid,
+          senderId: widget.senderId,
+          userImage: widget.userImage,
+          deviceToken: widget.deviceToken,
+        ));
+    if (widget.userChatId != null && authCont.user?.userId != null) {
+      await chatCont.markChatAsRead(
+          widget.userChatId!, "${authCont.user?.userId}");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
+        // Slidable with proper tap detection
         Slidable(
-            endActionPane: ActionPane(
-              motion: BehindMotion(),
-              children: [
-                SlidableAction(
-                  icon: Icons.delete,
-                  label: "Delete",
-                  onPressed: (context) {
-                    chatCont.deleteChat(widget.userChatId ?? "");
-                    // showCustomDialog(widget.userChatId ?? "");
-                  },
-                ),
-              ],
-            ),
-            child: GestureDetector(
-              onTap: () {
-                authCont.currentIndexBottomAppBar = 1;
-                authCont.update();
-                setState(() {});
-
-                nextScreen(
-                    context,
-                    ChatPage(
-                      isLast: true,
-                      chatId: widget.userChatId,
-                      listingImage: widget.listingImage,
-                      listingName: widget.listingName,
-                      listingPrice: widget.listingPrice,
-                      listingLocation: widget.listingLocation,
-                      listingId: widget.listingId,
-                      userName: widget.userName,
-                      remoteUid: widget.remoteUid,
-                      senderId: widget.senderId,
-                      userImage: widget.userImage,
-                      deviceToken: widget.deviceToken,
-                    ));
-              },
+          endActionPane: ActionPane(
+            motion: BehindMotion(),
+            children: [
+              SlidableAction(
+                icon: Icons.delete,
+                label: "Delete",
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                onPressed: (context) {
+                  chatCont.deleteChat(widget.userChatId ?? "");
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("Chat deleted"),
+                      backgroundColor: Colors.red,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: _navigateToChat,
+              splashColor: Colors.grey.withOpacity(0.3),
+              highlightColor: Colors.grey.withOpacity(0.1),
               child: Container(
+                width: double.infinity,
                 height: 60.h,
                 child: Column(
                   children: [
@@ -124,36 +145,78 @@ class _GroupTileState extends State<GroupTile> {
                       padding: EdgeInsets.symmetric(horizontal: 10.w),
                       child: Row(
                         children: [
-                          CachedNetworkImage(
-                            height: 50..h,
-                            width: 50..w,
-                            imageUrl: widget.userImage ?? "",
-                            imageBuilder: (context, imageProvider) => Container(
-                              height: 50..h,
-                              width: 50..w,
-                              decoration: BoxDecoration(
-                                  image: DecorationImage(
-                                    image: imageProvider,
-                                    fit: BoxFit.cover,
-                                  ),
-                                  shape: BoxShape.circle),
-                            ),
-                            placeholder: (context, url) => SizedBox(
-                                height: 50..h,
-                                width: 50..w,
-                                child: Center(
-                                    child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ))),
-                            errorWidget: (context, url, error) => Container(
-                              height: 50..h,
-                              width: 50..w,
-                              decoration: BoxDecoration(
-                                  image: DecorationImage(
-                                      image: AssetImage(
-                                          "assets/images/notImage.jpg")),
-                                  shape: BoxShape.circle),
-                            ),
+                          Stack(
+                            children: [
+                              CachedNetworkImage(
+                                height: 50.h,
+                                width: 50.w,
+                                imageUrl: widget.userImage ?? "",
+                                imageBuilder: (context, imageProvider) =>
+                                    Container(
+                                  height: 50.h,
+                                  width: 50.w,
+                                  decoration: BoxDecoration(
+                                      image: DecorationImage(
+                                        image: imageProvider,
+                                        fit: BoxFit.cover,
+                                      ),
+                                      shape: BoxShape.circle),
+                                ),
+                                placeholder: (context, url) => SizedBox(
+                                    height: 50.h,
+                                    width: 50.w,
+                                    child: Center(
+                                        child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ))),
+                                errorWidget: (context, url, error) => Container(
+                                  height: 50.h,
+                                  width: 50.w,
+                                  decoration: BoxDecoration(
+                                      image: DecorationImage(
+                                          image: AssetImage(
+                                              "assets/images/notImage.jpg")),
+                                      shape: BoxShape.circle),
+                                ),
+                              ),
+                              // Online status indicator
+                              if (widget.remoteUserId != null)
+                                StreamBuilder<DocumentSnapshot>(
+                                  stream: chatCont
+                                      .getUserPresence(widget.remoteUserId!),
+                                  builder: (context, snapshot) {
+                                    if (snapshot.hasData &&
+                                        snapshot.data!.exists) {
+                                      Map<String, dynamic> presenceData =
+                                          snapshot.data!.data()
+                                              as Map<String, dynamic>;
+
+                                      bool isOnline =
+                                          chatCont.isUserOnline(presenceData);
+
+                                      if (isOnline) {
+                                        return Positioned(
+                                          bottom: 2,
+                                          right: 2,
+                                          child: Container(
+                                            width: 14.w,
+                                            height: 14.h,
+                                            decoration: BoxDecoration(
+                                              color: Colors.green,
+                                              shape: BoxShape.circle,
+                                              border: Border.all(
+                                                color: Colors.white,
+                                                width: 2,
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                    return SizedBox.shrink();
+                                  },
+                                ),
+                            ],
                           ),
                           SizedBox(
                             width: 10.w,
@@ -171,16 +234,36 @@ class _GroupTileState extends State<GroupTile> {
                                       text: widget.userName == ""
                                           ? "No Name".tr
                                           : widget.userName,
-                                      fontWeight: FontWeight.w500,
+                                      fontWeight: widget.isUnread
+                                          ? FontWeight.bold
+                                          : FontWeight.w500,
                                       fontSize: 14,
-                                      fontColor: Color(0xFFA8AAAC),
+                                      fontColor: widget.isUnread
+                                          ? Colors.black
+                                          : Color(0xFFA8AAAC),
                                     ),
-                                    CustomText(
-                                      text: _formatMessageTime(
-                                          widget.messageTime),
-                                      fontSize: 13.sp,
-                                      fontWeight: FontWeight.w400,
-                                      fontColor: Color(0xFF3F3B3B),
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        CustomText(
+                                          text: _formatMessageTime(
+                                              widget.messageTime),
+                                          fontSize: 13.sp,
+                                          fontWeight: FontWeight.w400,
+                                          fontColor: Color(0xFF3F3B3B),
+                                        ),
+                                        if (widget.isUnread) ...[
+                                          SizedBox(width: 5.w),
+                                          Container(
+                                            width: 8.w,
+                                            height: 8.h,
+                                            decoration: BoxDecoration(
+                                              color: Colors.blue,
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                        ],
+                                      ],
                                     ),
                                   ],
                                 ),
@@ -195,8 +278,12 @@ class _GroupTileState extends State<GroupTile> {
                                   text: widget.messageType == "image"
                                       ? "Image".tr
                                       : "${widget.lastMessage}",
-                                  fontWeight: FontWeight.w500,
-                                  fontColor: Colors.black,
+                                  fontWeight: widget.isUnread
+                                      ? FontWeight.bold
+                                      : FontWeight.w500,
+                                  fontColor: widget.isUnread
+                                      ? Colors.black
+                                      : Colors.grey[600]!,
                                   fontSize: 13,
                                   textOverflow: TextOverflow.clip,
                                 ),
@@ -212,8 +299,10 @@ class _GroupTileState extends State<GroupTile> {
                   ],
                 ),
               ),
-            )),
-        SizedBox(height: 1.h, child: Divider()),
+            ),
+          ),
+        ),
+        Divider(),
       ],
     );
   }
