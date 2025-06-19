@@ -21,6 +21,7 @@ import '../view/auth/otp_verification2.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../view/Chat/Controller/ChatController.dart';
 
 String deviceToken = '';
 
@@ -381,6 +382,9 @@ class AuthController extends GetxController {
         user!.deviceToken = deviceToken;
         await prefss.setString("user_data", jsonEncode(user!.toJson()));
       }
+
+      // Set user as online when they log in
+      await setUserOnline();
     } catch (e) {
       Get.offAll(const Login());
       print(e);
@@ -663,10 +667,37 @@ class AuthController extends GetxController {
 
         // Also update device token in all chat documents for this user
         await updateDeviceTokenInAllChats(newToken);
+
+        // Update user presence as online when token is updated
+        await setUserOnline();
       }
       print('🔥 Device token updated locally: $newToken');
     } catch (e) {
       print('🔥 Error updating device token: $e');
+    }
+  }
+
+  // Set user as online
+  Future<void> setUserOnline() async {
+    try {
+      if (user?.userId != null) {
+        final chatController = Get.find<ChatController>();
+        await chatController.setUserOnline(user!.userId.toString());
+      }
+    } catch (e) {
+      print('🔥 Error setting user online: $e');
+    }
+  }
+
+  // Set user as offline
+  Future<void> setUserOffline() async {
+    try {
+      if (user?.userId != null) {
+        final chatController = Get.find<ChatController>();
+        await chatController.setUserOffline(user!.userId.toString());
+      }
+    } catch (e) {
+      print('🔥 Error setting user offline: $e');
     }
   }
 
@@ -794,6 +825,9 @@ class AuthController extends GetxController {
   }
 
   Future<void> logout() async {
+    // Set user as offline before logout
+    await setUserOffline();
+
     // Clear local device token
     deviceToken = "";
 

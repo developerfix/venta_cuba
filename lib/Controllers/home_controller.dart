@@ -12,6 +12,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
 import 'package:venta_cuba/Controllers/location_controller.dart';
+import 'package:venta_cuba/Notification/firebase_messaging.dart';
 import 'package:venta_cuba/Models/AllPromoCodesModel.dart';
 import 'package:venta_cuba/Models/CheckUserPackageModle.dart';
 import 'package:venta_cuba/Models/ListingModel.dart';
@@ -188,6 +189,15 @@ class HomeController extends GetxController {
     await prefs.setString(
         'lastNotificationViewTime', DateTime.now().toString());
     hasUnreadNotifications.value = false;
+
+    // Reset badge count when notifications are viewed
+    try {
+      await FCM.resetBadgeCount();
+      print('🔥 Badge count reset after viewing notifications');
+    } catch (e) {
+      print('🔥 Error resetting badge count: $e');
+    }
+
     update();
   }
 
@@ -747,9 +757,14 @@ class HomeController extends GetxController {
 
           hasUnreadNotifications.value = hasUnread;
           print('notyyyyyy hasUnreadNotifications:${hasUnreadNotifications}');
+
+          // Update badge count based on actual unread notifications
+          await updateBadgeCountFromNotifications();
         } else {
           hasUnreadNotifications.value =
               allNotificationModel?.data?.isNotEmpty ?? false;
+          // Update badge count based on actual unread notifications
+          await updateBadgeCountFromNotifications();
         }
         update();
       }
@@ -757,6 +772,40 @@ class HomeController extends GetxController {
       if (!silent) {
         errorAlertToast('Something went wrong\nPlease try again!'.tr);
       }
+    }
+  }
+
+  // Update badge count based on actual unread notifications
+  Future<void> updateBadgeCountFromNotifications() async {
+    try {
+      int unreadCount = 0;
+
+      if (allNotificationModel?.data != null) {
+        String? lastViewTimeStr = await getLastNotificationViewTime();
+
+        if (lastViewTimeStr != null) {
+          DateTime lastViewLocal = DateTime.parse(lastViewTimeStr);
+
+          unreadCount = allNotificationModel!.data!.where((notif) {
+            if (notif.timestamp == null) return false;
+            try {
+              DateTime notifTimeUtc = DateTime.parse(notif.timestamp! + 'Z');
+              DateTime notifTimeLocal = notifTimeUtc.toLocal();
+              return notifTimeLocal.isAfter(lastViewLocal);
+            } catch (e) {
+              return false;
+            }
+          }).length;
+        } else {
+          unreadCount = allNotificationModel!.data!.length;
+        }
+      }
+
+      // Update badge count
+      await FCM.setBadgeCount(unreadCount);
+      print('🔥 Badge count updated to: $unreadCount unread notifications');
+    } catch (e) {
+      print('🔥 Error updating badge count from notifications: $e');
     }
   }
 
@@ -1496,18 +1545,21 @@ class HomeController extends GetxController {
   //   }
   // }
 
-  Future getListingDetails(String listingId) async {
+  Future getListingDetails(String listingId, {bool showDialog = true}) async {
     Response response = await api.postWithForm(
         "api/getListingDetails",
         {
           'listing_id': listingId,
           'user_id': authCont.user?.userId,
         },
-        showdialog: true);
+        showdialog: showDialog);
     if (response.statusCode == 200) {
       isListing = 0;
       listingModel = ListingModel.fromJson(response.body["data"]);
-      Get.to(FrameScreen());
+      update(); // Ensure UI updates when listing details are fetched
+      if (showDialog) {
+        Get.to(FrameScreen());
+      }
     } else {
       errorAlertToast('Something went wrong\nPlease try again!'.tr);
     }

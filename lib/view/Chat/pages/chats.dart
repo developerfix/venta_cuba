@@ -30,6 +30,8 @@ class _ChatsState extends State<Chats> {
       gettingUserData();
       authCont.hasUnreadMessages.value = false;
       authCont.update();
+      // Update badge count when chats page is loaded
+      chatCont.updateBadgeCountFromChats();
     });
   }
 
@@ -77,40 +79,95 @@ class _ChatsState extends State<Chats> {
           if (snapshot.data != null) {
             print("${snapshot.data.docs.length}");
             if (snapshot.data.docs.length != 0) {
+              // Convert snapshot to a list that can be sorted
+              List chatDocs = snapshot.data.docs.toList();
+
+              // Sort the list by time in descending order (latest first)
+              chatDocs.sort((a, b) {
+                // Get timestamps with proper null handling
+                Timestamp? timeA;
+                Timestamp? timeB;
+
+                try {
+                  timeA = a.data().containsKey('time') && a['time'] is Timestamp
+                      ? a['time'] as Timestamp
+                      : null;
+                } catch (e) {
+                  timeA = null;
+                }
+
+                try {
+                  timeB = b.data().containsKey('time') && b['time'] is Timestamp
+                      ? b['time'] as Timestamp
+                      : null;
+                } catch (e) {
+                  timeB = null;
+                }
+
+                // Handle null cases - put documents without timestamps at the end
+                if (timeA == null && timeB == null) return 0;
+                if (timeA == null) return 1; // A goes after B
+                if (timeB == null) return -1; // B goes after A
+
+                // Both have timestamps - sort in descending order (latest first)
+                return timeB.compareTo(timeA);
+              });
+
               return ListView.builder(
-                itemCount: snapshot.data.docs.length,
+                itemCount: chatDocs.length,
                 itemBuilder: (context, index) {
-                  if (snapshot.data.docs[index]['senderId'] ==
+                  if (chatDocs[index]['senderId'] ==
                           "${authCont.user?.userId}" ||
-                      snapshot.data.docs[index]['sendToId'] ==
+                      chatDocs[index]['sendToId'] ==
                           "${authCont.user?.userId}") {
+                    // Only show chats that have actual messages
+                    bool hasMessages = chatDocs[index]['isMessaged'] == true ||
+                        (chatDocs[index]['message'] != null &&
+                            chatDocs[index]['message']
+                                .toString()
+                                .trim()
+                                .isNotEmpty &&
+                            chatDocs[index]['message'] != "");
+
+                    if (!hasMessages) {
+                      return Container(); // Don't show empty chats
+                    }
+
+                    // Calculate unread status for this chat
+                    bool isUnread = chatCont.hasUnreadMessages(
+                        chatDocs[index].data(), "${authCont.user?.userId}");
+
                     return GroupTile(
-                        userChatId: snapshot.data.docs[index].id,
-                        senderId: snapshot.data.docs[index]['senderId'],
-                        listingImage: snapshot.data.docs[index]['listingImage'],
-                        listingId: snapshot.data.docs[index]['listingId'],
-                        listingName: snapshot.data.docs[index]['listingName'],
-                        listingPrice: snapshot.data.docs[index]['listingPrice'],
-                        listingLocation: snapshot.data.docs[index]
-                            ['listingLocation'],
-                        lastMessage: snapshot.data.docs[index]['message'],
-                        messageType: snapshot.data.docs[index]['messageType'],
-                        messageTime:
-                            snapshot.data.docs[index]['time'] is Timestamp
-                                ? snapshot.data.docs[index]['time'] as Timestamp
-                                : null,
-                        userName: snapshot.data.docs[index]['senderId'] ==
+                        userChatId: chatDocs[index].id,
+                        senderId: chatDocs[index]['senderId'],
+                        listingImage: chatDocs[index]['listingImage'],
+                        listingId: chatDocs[index]['listingId'],
+                        listingName: chatDocs[index]['listingName'],
+                        listingPrice: chatDocs[index]['listingPrice'],
+                        listingLocation: chatDocs[index]['listingLocation'],
+                        lastMessage: chatDocs[index]['message'],
+                        messageType: chatDocs[index]['messageType'],
+                        messageTime: chatDocs[index]['time'] is Timestamp
+                            ? chatDocs[index]['time'] as Timestamp
+                            : null,
+                        userName: chatDocs[index]['senderId'] ==
                                 "${authCont.user?.userId}"
-                            ? snapshot.data.docs[index]['sendToName']
-                            : snapshot.data.docs[index]['userName'],
-                        userImage: snapshot.data.docs[index]['senderId'] ==
+                            ? chatDocs[index]['sendToName']
+                            : chatDocs[index]['userName'],
+                        userImage: chatDocs[index]['senderId'] ==
                                 "${authCont.user?.userId}"
-                            ? snapshot.data.docs[index]['senderToImage']
-                            : snapshot.data.docs[index]['senderImage'],
+                            ? chatDocs[index]['senderToImage']
+                            : chatDocs[index]['senderImage'],
+                        isUnread: isUnread, // Pass the unread status
+                        remoteUserId: chatDocs[index]['senderId'] ==
+                                "${authCont.user?.userId}"
+                            ? chatDocs[index]['sendToId']
+                            : chatDocs[index][
+                                'senderId'], // Pass remote user ID for presence tracking
                         deviceToken: (() {
                           // Debug: Print all chat document data
                           print("🔥 === CHAT DOCUMENT DEBUG ===");
-                          var chatDoc = snapshot.data.docs[index];
+                          var chatDoc = chatDocs[index];
                           print("🔥 Document ID: ${chatDoc.id}");
                           print("🔥 All fields: ${chatDoc.data()}");
 
@@ -144,10 +201,10 @@ class _ChatsState extends State<Chats> {
                           print("🔥 === END DEBUG ===");
                           return token;
                         })(),
-                        remoteUid: snapshot.data.docs[index]['senderId'] ==
+                        remoteUid: chatDocs[index]['senderId'] ==
                                 "${authCont.user?.userId}"
-                            ? snapshot.data.docs[index]['sendToId']
-                            : snapshot.data.docs[index]['senderId']);
+                            ? chatDocs[index]['sendToId']
+                            : chatDocs[index]['senderId']);
                   } else {
                     return Container();
                   }

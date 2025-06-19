@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:venta_cuba/Notification/firebase_messaging.dart';
+import 'package:venta_cuba/Controllers/auth_controller.dart';
 
 class ChatController extends GetxController {
   String? path;
@@ -15,6 +17,8 @@ class ChatController extends GetxController {
 
   final CollectionReference chatCollection =
       FirebaseFirestore.instance.collection("chat");
+  final CollectionReference usersCollection =
+      FirebaseFirestore.instance.collection("users");
   FirebaseStorage firebaseStorage = FirebaseStorage.instance;
   Future getAllUser() async {
     return chatCollection.snapshots();
@@ -66,6 +70,188 @@ class ChatController extends GetxController {
 
   updateImage(String userAndPostId, Map<String, dynamic> imageData) async {
     chatCollection.doc(userAndPostId).update(imageData);
+  }
+
+  // Mark chat as read for the current user
+  Future<void> markChatAsRead(String chatId, String userId) async {
+    try {
+      Map<String, dynamic> updateData = {};
+
+      // Get the chat document to determine user role
+      DocumentSnapshot chatDoc = await chatCollection.doc(chatId).get();
+
+      if (chatDoc.exists) {
+        String? senderId = chatDoc.get('senderId');
+        String? sendToId = chatDoc.get('sendToId');
+
+        // Update the appropriate lastReadTime field based on user role
+        if (senderId == userId) {
+          updateData['senderLastReadTime'] = FieldValue.serverTimestamp();
+        } else if (sendToId == userId) {
+          updateData['recipientLastReadTime'] = FieldValue.serverTimestamp();
+        }
+
+        if (updateData.isNotEmpty) {
+          await chatCollection.doc(chatId).update(updateData);
+          print("🔥 ✅ Chat marked as read for user $userId in chat $chatId");
+
+          // Update badge count when messages are read
+          await updateBadgeCountFromChats();
+        }
+      }
+    } catch (e) {
+      print("🔥 ❌ Error marking chat as read: $e");
+    }
+  }
+
+  // Update badge count based on actual unread chat messages
+  Future<void> updateBadgeCountFromChats() async {
+    try {
+      final authCont = Get.find<AuthController>();
+      if (authCont.user?.userId == null) return;
+
+      String currentUserId = authCont.user!.userId.toString();
+      int unreadCount = 0;
+
+      // Get all chat documents where this user participates
+      QuerySnapshot chatSnapshot = await chatCollection.get();
+
+      for (QueryDocumentSnapshot chatDoc in chatSnapshot.docs) {
+        Map<String, dynamic> chatData = chatDoc.data() as Map<String, dynamic>;
+
+        // Check if this user is part of this chat
+        String? senderId = chatData['senderId']?.toString();
+        String? sendToId = chatData['sendToId']?.toString();
+
+        if (senderId == currentUserId || sendToId == currentUserId) {
+          // Check if this chat has unread messages for this user
+          bool isUnread = hasUnreadMessages(chatData, currentUserId);
+          if (isUnread) {
+            unreadCount++;
+          }
+        }
+      }
+
+      // Update the app badge with the actual unread count
+      await FCM.setBadgeCount(unreadCount);
+      print("🔥 ✅ Badge count updated to: $unreadCount unread chats");
+    } catch (e) {
+      print("🔥 ❌ Error updating badge count from chats: $e");
+    }
+  }
+
+  // Check if chat has unread messages for the current user
+  bool hasUnreadMessages(Map<String, dynamic> chatData, String currentUserId) {
+    try {
+      String? senderId = chatData['senderId'];
+      String? sendToId = chatData['sendToId'];
+      String? lastMessageSendBy = chatData['sendBy'];
+      Timestamp? lastMessageTime =
+          chatData['time'] is Timestamp ? chatData['time'] : null;
+
+      // If there's no last message time, consider it as read
+      if (lastMessageTime == null) return false;
+
+      // If the current user sent the last message, it's not unread for them
+      if (lastMessageSendBy == currentUserId) return false;
+
+      // Get the appropriate lastReadTime based on user role
+      Timestamp? lastReadTime;
+      if (senderId == currentUserId) {
+        lastReadTime = chatData['senderLastReadTime'] is Timestamp
+            ? chatData['senderLastReadTime']
+            : null;
+      } else if (sendToId == currentUserId) {
+        lastReadTime = chatData['recipientLastReadTime'] is Timestamp
+            ? chatData['recipientLastReadTime']
+            : null;
+      }
+
+      // If no lastReadTime exists, consider it unread
+      if (lastReadTime == null) return true;
+
+      // Compare last message time with last read time
+      return lastMessageTime.compareTo(lastReadTime) > 0;
+    } catch (e) {
+      print("🔥 ❌ Error checking unread status: $e");
+      return false;
+    }
+  }
+
+  // Update user presence (online/offline status)
+  Future<void> updateUserPresence(String userId, bool isOnline) async {
+    try {
+      Map<String, dynamic> presenceData = {
+        'isOnline': isOnline,
+        'lastActiveTime': FieldValue.serverTimestamp(),
+      };
+
+      await usersCollection
+          .doc(userId)
+          .set(presenceData, SetOptions(merge: true));
+      print("🔥 ✅ User presence updated: $userId - Online: $isOnline");
+    } catch (e) {
+      print("🔥 ❌ Error updating user presence: $e");
+    }
+  }
+
+  // Get user presence data
+  Stream<DocumentSnapshot> getUserPresence(String userId) {
+    return usersCollection.doc(userId).snapshots();
+  }
+
+  // Set user as online when app becomes active
+  Future<void> setUserOnline(String userId) async {
+    await updateUserPresence(userId, true);
+  }
+
+  // Set user as offline when app goes to background
+  Future<void> setUserOffline(String userId) async {
+    await updateUserPresence(userId, false);
+  }
+
+  // Format last active time for display
+  String formatLastActiveTime(Timestamp? lastActiveTime) {
+    if (lastActiveTime == null) return "Last seen long ago";
+
+    DateTime lastActive = lastActiveTime.toDate();
+    DateTime now = DateTime.now();
+    Duration difference = now.difference(lastActive);
+
+    if (difference.inMinutes < 1) {
+      return "Active now";
+    } else if (difference.inMinutes < 60) {
+      return "Last seen ${difference.inMinutes} minutes ago";
+    } else if (difference.inHours < 24) {
+      return "Last seen ${difference.inHours} hours ago";
+    } else if (difference.inDays < 7) {
+      return "Last seen ${difference.inDays} days ago";
+    } else {
+      return "Last seen long ago";
+    }
+  }
+
+  // Check if user is currently online
+  bool isUserOnline(Map<String, dynamic>? presenceData) {
+    if (presenceData == null) return false;
+
+    bool isOnline = presenceData['isOnline'] ?? false;
+    Timestamp? lastActiveTime = presenceData['lastActiveTime'];
+
+    if (!isOnline) return false;
+
+    // Consider user offline if last active time is more than 5 minutes ago
+    if (lastActiveTime != null) {
+      DateTime lastActive = lastActiveTime.toDate();
+      DateTime now = DateTime.now();
+      Duration difference = now.difference(lastActive);
+
+      if (difference.inMinutes > 5) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   // Update device token in chat document

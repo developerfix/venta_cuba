@@ -11,6 +11,7 @@ import 'package:venta_cuba/Controllers/auth_controller.dart';
 import 'package:venta_cuba/Services/Notfication/notficationservice.dart';
 import 'package:venta_cuba/languages/languages.dart';
 import 'package:venta_cuba/view/splash%20Screens/white_screen.dart';
+import 'package:venta_cuba/view/Chat/Controller/ChatController.dart';
 import 'Notification/firebase_messaging.dart';
 
 // Background message handler - MUST be top-level function
@@ -52,21 +53,45 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.resumed) {
-      // App came to foreground, refresh device token and clear badge
+      // App came to foreground, refresh device token and update badge
+      _handleAppResume();
+    } else if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      // App went to background or was closed, set user as offline
       try {
         final authCont = Get.find<AuthController>();
-        authCont.refreshDeviceToken();
-        // Also update device tokens in all chat documents
-        if (authCont.user?.userId != null) {
-          authCont.updateDeviceTokenInAllChats(deviceToken);
-        }
-
-        // Clear badge count when app becomes active
-        FCM.clearBadgeCount();
-        print('🔥 Badge cleared on app resume');
+        authCont.setUserOffline();
+        print('🔥 User set as offline');
       } catch (e) {
-        print('Error refreshing token on app resume: $e');
+        print('Error setting user offline: $e');
       }
+    }
+  }
+
+  Future<void> _handleAppResume() async {
+    try {
+      final authCont = Get.find<AuthController>();
+      authCont.refreshDeviceToken();
+      // Also update device tokens in all chat documents
+      if (authCont.user?.userId != null) {
+        authCont.updateDeviceTokenInAllChats(deviceToken);
+      }
+
+      // Set user as online when app becomes active
+      authCont.setUserOnline();
+
+      // Update badge count based on actual unread messages when app becomes active
+      try {
+        final chatCont = Get.find<ChatController>();
+        await chatCont.updateBadgeCountFromChats();
+        print('🔥 Badge count updated on app resume');
+      } catch (e) {
+        // If ChatController is not initialized, just clear the badge
+        FCM.clearBadgeCount();
+        print('🔥 Badge cleared on app resume (ChatController not found)');
+      }
+    } catch (e) {
+      print('Error refreshing token on app resume: $e');
     }
   }
 }
@@ -115,6 +140,7 @@ class _MyAppState extends State<MyApp> {
     Future.delayed(Duration(seconds: 3), () {
       checkNotificationPermissions();
     });
+    Get.lazyPut(() => ChatController());
   }
 
   locationCheck() async {
