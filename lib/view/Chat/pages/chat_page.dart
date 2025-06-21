@@ -261,83 +261,92 @@ class _ChatPageState extends State<ChatPage> {
             ),
           ),
         ),
-        title: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            CachedNetworkImage(
-              height: 50..h,
-              width: 50.w,
-              imageUrl: "${widget.userImage}",
-              imageBuilder: (context, imageProvider) => Container(
-                height: 180..h,
-                width: MediaQuery.of(context).size.width,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  image: DecorationImage(
-                    image: imageProvider,
-                    fit: BoxFit.cover,
+        title: GestureDetector(
+          onTap: () {
+            final HomeController homeController = Get.find();
+            homeController.sellerId = widget.remoteUid.toString();
+            homeController.getSellerDetails(
+                homeController.isBusinessAccount ? "1" : "0", 0, true);
+          },
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CachedNetworkImage(
+                height: 50..h,
+                width: 50.w,
+                imageUrl: "${widget.userImage}",
+                imageBuilder: (context, imageProvider) => Container(
+                  height: 180..h,
+                  width: MediaQuery.of(context).size.width,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    image: DecorationImage(
+                      image: imageProvider,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
+                placeholder: (context, url) => SizedBox(
+                    height: 50..h,
+                    width: 50.w,
+                    child: Center(
+                        child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                    ))),
+                errorWidget: (context, url, error) => Icon(Icons.error),
               ),
-              placeholder: (context, url) => SizedBox(
-                  height: 50..h,
-                  width: 50.w,
-                  child: Center(
-                      child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                  ))),
-              errorWidget: (context, url, error) => Icon(Icons.error),
-            ),
-            SizedBox(
-              width: 16.w,
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CustomText(
-                  text: widget.userName == ""
-                      ? "No Name"
-                      : widget.userName ?? "No Name",
-                  fontSize: 16..sp,
-                  fontWeight: FontWeight.w600,
-                  fontColor: Colors.black,
-                ),
-                SizedBox(height: 2.h),
-                // Show last active time or online status
-                if (widget.remoteUid != null)
-                  StreamBuilder<DocumentSnapshot>(
-                    stream: chatCont.getUserPresence(widget.remoteUid!),
-                    builder: (context, snapshot) {
-                      if (snapshot.hasData && snapshot.data!.exists) {
-                        Map<String, dynamic> presenceData =
-                            snapshot.data!.data() as Map<String, dynamic>;
+              SizedBox(
+                width: 16.w,
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CustomText(
+                    text: widget.userName == ""
+                        ? "No Name"
+                        : widget.userName ?? "No Name",
+                    fontSize: 16..sp,
+                    fontWeight: FontWeight.w600,
+                    fontColor: Colors.black,
+                  ),
 
-                        bool isOnline = chatCont.isUserOnline(presenceData);
-                        Timestamp? lastActiveTime =
-                            presenceData['lastActiveTime'];
+                  SizedBox(height: 2.h),
+                  // Show last active time or online status
+                  if (widget.remoteUid != null)
+                    StreamBuilder<DocumentSnapshot>(
+                      stream: chatCont.getUserPresence(widget.remoteUid!),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData && snapshot.data!.exists) {
+                          Map<String, dynamic> presenceData =
+                              snapshot.data!.data() as Map<String, dynamic>;
 
+                          bool isOnline = chatCont.isUserOnline(presenceData);
+                          Timestamp? lastActiveTime =
+                              presenceData['lastActiveTime'];
+
+                          return CustomText(
+                            text: isOnline
+                                ? "Online".tr
+                                : chatCont.formatLastActiveTime(lastActiveTime),
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w400,
+                            fontColor:
+                                isOnline ? Colors.green : Colors.grey[600]!,
+                          );
+                        }
                         return CustomText(
-                          text: isOnline
-                              ? "Online"
-                              : chatCont.formatLastActiveTime(lastActiveTime),
+                          text: "Last seen long ago".tr,
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w400,
-                          fontColor:
-                              isOnline ? Colors.green : Colors.grey[600]!,
+                          fontColor: Colors.grey[600]!,
                         );
-                      }
-                      return CustomText(
-                        text: "Last seen long ago",
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w400,
-                        fontColor: Colors.grey[600]!,
-                      );
-                    },
-                  ),
-              ],
-            ),
-          ],
+                      },
+                    ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
       body: Stack(

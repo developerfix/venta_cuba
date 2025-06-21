@@ -373,13 +373,19 @@ class _FrameScreenState extends State<FrameScreen> {
                                       fontWeight: FontWeight.w400,
                                       color: Colors.black),
                                 ),
-                                Text(
-                                  '${cont.listingModel?.additionalFeatures?.optionalDetails?.website}',
-                                  style: TextStyle(
-                                      fontSize: 15..sp,
-                                      fontWeight: FontWeight.w400,
-                                      color: AppColors.black),
-                                ),
+                                if (cont.listingModel?.additionalFeatures
+                                            ?.optionalDetails?.website !=
+                                        null ||
+                                    cont.listingModel?.additionalFeatures
+                                            ?.optionalDetails?.website !=
+                                        'null')
+                                  Text(
+                                    '${cont.listingModel?.additionalFeatures?.optionalDetails?.website}',
+                                    style: TextStyle(
+                                        fontSize: 15.sp,
+                                        fontWeight: FontWeight.w400,
+                                        color: AppColors.black),
+                                  ),
                               ],
                             ),
                             Row(
@@ -1126,10 +1132,26 @@ class _FrameScreenState extends State<FrameScreen> {
                                     SizedBox(height: 15.h),
                                     GestureDetector(
                                       onTap: () {
+                                        final title =
+                                            cont.listingModel!.title ?? "";
+                                        final imageUrl = (cont.listingModel!
+                                                        .gallery !=
+                                                    null &&
+                                                cont.listingModel!.gallery!
+                                                    .isNotEmpty)
+                                            ? cont.listingModel!.gallery!.first
+                                            : null;
+                                        // If you have a listing URL, construct it here. Otherwise, leave as empty string.
+                                        // final listingId = cont.listingModel!.id?.toString() ?? "";
+                                        // final listingUrl = "https://ventacuba.com/listing/$listingId";
+                                        String shareContent = title;
+                                        if (imageUrl != null &&
+                                            imageUrl.isNotEmpty) {
+                                          shareContent += "\n$imageUrl";
+                                        }
                                         Share.share(
-                                          cont.listingModel!.title ?? "",
-                                          subject:
-                                              cont.listingModel!.title ?? "",
+                                          shareContent,
+                                          subject: title,
                                         );
                                       },
                                       child: Row(
@@ -1417,8 +1439,50 @@ class ImageViewerPage extends StatefulWidget {
   _ImageViewerPageState createState() => _ImageViewerPageState();
 }
 
-class _ImageViewerPageState extends State<ImageViewerPage> {
+class _ImageViewerPageState extends State<ImageViewerPage>
+    with SingleTickerProviderStateMixin {
   int currentPage = 0;
+  double _dragOffset = 0.0;
+  double _opacity = 1.0;
+  late AnimationController _animationController;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 200));
+    _animation = Tween<double>(begin: 0, end: 0).animate(_animationController)
+      ..addListener(() {
+        setState(() {
+          _dragOffset = _animation.value;
+          _opacity = 1.0 - (_dragOffset.abs() / 300).clamp(0, 0.7);
+        });
+      });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _onVerticalDragUpdate(DragUpdateDetails details) {
+    setState(() {
+      _dragOffset += details.delta.dy;
+      _opacity = 1.0 - (_dragOffset.abs() / 300).clamp(0, 0.7);
+    });
+  }
+
+  void _onVerticalDragEnd(DragEndDetails details) {
+    if (_dragOffset.abs() > 120) {
+      Navigator.of(context).pop();
+    } else {
+      _animation = Tween<double>(begin: _dragOffset, end: 0)
+          .animate(_animationController);
+      _animationController.forward(from: 0);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1427,25 +1491,35 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
       body: Stack(
         children: [
           // PageView to display images
-          PageView.builder(
-            itemCount: widget.imageUrls.length,
-            onPageChanged: (page) {
-              setState(() {
-                currentPage = page;
-              });
-            },
-            itemBuilder: (context, index) {
-              return InteractiveViewer(
-                panEnabled: true, // Enables panning
-                boundaryMargin: EdgeInsets.all(20),
-                minScale: 0.5, // Minimum zoom scale
-                maxScale: 4.0, // Maximum zoom scale
-                child: Image.network(
-                  widget.imageUrls[index],
-                  fit: BoxFit.contain,
+          GestureDetector(
+            onVerticalDragUpdate: _onVerticalDragUpdate,
+            onVerticalDragEnd: _onVerticalDragEnd,
+            child: Opacity(
+              opacity: _opacity,
+              child: Transform.translate(
+                offset: Offset(0, _dragOffset),
+                child: PageView.builder(
+                  itemCount: widget.imageUrls.length,
+                  onPageChanged: (page) {
+                    setState(() {
+                      currentPage = page;
+                    });
+                  },
+                  itemBuilder: (context, index) {
+                    return InteractiveViewer(
+                      panEnabled: true,
+                      boundaryMargin: EdgeInsets.all(20),
+                      minScale: 0.5,
+                      maxScale: 4.0,
+                      child: CachedNetworkImage(
+                        imageUrl: widget.imageUrls[index],
+                        fit: BoxFit.contain,
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
+              ),
+            ),
           ),
           // Top bar with image index and close button
           Positioned(

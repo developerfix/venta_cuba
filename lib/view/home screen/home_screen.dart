@@ -308,17 +308,27 @@ class _HomeScreenState extends State<HomeScreen> {
                                   SizedBox(
                                     width: 290.w,
                                     // height: 20.h,
-                                    child: Text(
-                                      homeCont.address != ''
-                                          ? "${homeCont.address} ${"within the".tr} ${cont.radius.toInt()} km"
-                                          : '${cont.address}',
+                                    child: homeCont.address == ''
+                                        ? Text(
+                                            'Click here to enter a location to see publications near you.'
+                                                .tr,
+                                            // overflow: TextOverflow.clip,
+                                            style: TextStyle(
+                                                fontSize: 14..sp,
+                                                fontWeight: FontWeight.w500,
+                                                color: AppColors.k0xFF403C3C),
+                                          )
+                                        : Text(
+                                            homeCont.address != ''
+                                                ? "${homeCont.address} ${"within the".tr} ${cont.radius.toInt()} km"
+                                                : '${cont.address}',
 
-                                      // overflow: TextOverflow.clip,
-                                      style: TextStyle(
-                                          fontSize: 17..sp,
-                                          fontWeight: FontWeight.w500,
-                                          color: AppColors.k0xFF403C3C),
-                                    ),
+                                            // overflow: TextOverflow.clip,
+                                            style: TextStyle(
+                                                fontSize: 17..sp,
+                                                fontWeight: FontWeight.w500,
+                                                color: AppColors.k0xFF403C3C),
+                                          ),
                                   )
                                 ],
                               ),

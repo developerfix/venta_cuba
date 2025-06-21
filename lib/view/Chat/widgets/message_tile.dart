@@ -4,16 +4,16 @@ import 'dart:typed_data';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
-// import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
+import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:venta_cuba/Utils/funcations.dart';
 import '../../../Utils/global_variabel.dart';
 import '../custom_text.dart';
-import '../pages/chat_page.dart';
 
 class MessageTile extends StatefulWidget {
   final String message;
@@ -129,7 +129,7 @@ class _MessageTileState extends State<MessageTile> {
                               horizontal: 5.w, vertical: 2.h),
                           child: SelectionArea(
                             child: Text(widget.message,
-                                textAlign: TextAlign.start,
+                                textAlign: TextAlign.left,
                                 style: TextStyle(
                                     fontSize: 17,
                                     color: widget.sentByMe
@@ -158,44 +158,32 @@ class _MessageTileState extends State<MessageTile> {
   }
 }
 
-// Future<void> saveImageToGallery(String imageUrl) async {
-//   try {
-//     // Download the image from the URL
-//     var response = await http.get(Uri.parse(imageUrl));
-
-//     if (response.statusCode == 200) {
-//       Uint8List bytes = response.bodyBytes;
-
-//       // Get the application documents directory
-//       final appDir = await getApplicationDocumentsDirectory();
-
-//       // Generate a unique filename
-//       String fileName = DateTime.now().millisecondsSinceEpoch.toString() + '.png';
-
-//       // Create a new file with the generated filename
-//       final file = File('${appDir.path}/$fileName');
-
-//       // Write the image bytes to the file
-//       await file.writeAsBytes(bytes);
-
-//       print('Image saved locally: ${file.path}');
-
-//       // Save the image to the gallery
-//       final result = await ImageGallerySaverPlus.saveFile(file.path, isReturnPathOfIOS: true);
-
-//       if (result != null && result.isNotEmpty) {
-//         print('Image saved to gallery: $result');
-//         errorAlertToast("Saved".tr);
-//       } else {
-//         print('Failed to save image to gallery. File path is null or empty.');
-//       }
-//     } else {
-//       print('Failed to download image: ${response.statusCode}');
-//     }
-//   } catch (e) {
-//     print('Error saving image to gallery: $e');
-//   }
-// }
+Future<void> saveImageToGallery(String imageUrl) async {
+  try {
+    // Try to get the cached file first for instant saving
+    final cacheManager = DefaultCacheManager();
+    final fileInfo = await cacheManager.getFileFromCache(imageUrl);
+    File? file;
+    if (fileInfo != null && await fileInfo.file.exists()) {
+      file = fileInfo.file;
+    } else {
+      // If not cached, download and cache it
+      final fileFetched = await cacheManager.getSingleFile(imageUrl);
+      file = fileFetched;
+    }
+    // Save the image to the gallery
+    final result = await ImageGallerySaverPlus.saveFile(file.path,
+        isReturnPathOfIOS: true);
+    if (result != null && result.isNotEmpty) {
+      print('Image saved to gallery: $result');
+      errorAlertToast("Saved".tr);
+    } else {
+      print('Failed to save image to gallery. File path is null or empty.');
+    }
+  } catch (e) {
+    print('Error saving image to gallery: $e');
+  }
+}
 
 final _transformationController = TransformationController();
 TapDownDetails? _doubleTapDetails;
@@ -214,56 +202,149 @@ void _handleDoubleTap() {
   }
 }
 
-class ImageView extends StatelessWidget {
+class ImageView extends StatefulWidget {
   final String? image;
   const ImageView({super.key, this.image});
+
+  @override
+  State<ImageView> createState() => _ImageViewState();
+}
+
+class _ImageViewState extends State<ImageView>
+    with SingleTickerProviderStateMixin {
+  bool isSharingImage = false;
+  bool isDownloadingImage = false;
+
+  double _dragOffset = 0.0;
+  double _opacity = 1.0;
+  late AnimationController _animationController;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 200));
+    _animation = Tween<double>(begin: 0, end: 0).animate(_animationController)
+      ..addListener(() {
+        setState(() {
+          _dragOffset = _animation.value;
+          _opacity = 1.0 - (_dragOffset.abs() / 300).clamp(0, 0.7);
+        });
+      });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _onVerticalDragUpdate(DragUpdateDetails details) {
+    setState(() {
+      _dragOffset += details.delta.dy;
+      _opacity = 1.0 - (_dragOffset.abs() / 300).clamp(0, 0.7);
+    });
+  }
+
+  void _onVerticalDragEnd(DragEndDetails details) {
+    if (_dragOffset.abs() > 120) {
+      Get.back();
+    } else {
+      _animation = Tween<double>(begin: _dragOffset, end: 0)
+          .animate(_animationController);
+      _animationController.forward(from: 0);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          leading: InkWell(
-              onTap: () {
-                Get.back();
-              },
-              child: Icon(
-                Icons.arrow_back_ios,
-                color: Colors.black,
-              )),
-          actions: [
-            GestureDetector(
-              onTap: () {
-                // saveImageToGallery(image!);
-              },
-              child: Icon(Icons.file_download_rounded),
-            ),
-            SizedBox(width: 20),
-            GestureDetector(
-              onTap: () async {
-                final response = await http.get(Uri.parse(image!));
-                final directory = await getTemporaryDirectory();
-                File file = await File('${directory.path}/Image.png')
-                    .writeAsBytes(response.bodyBytes);
-                await Share.shareXFiles([XFile(file.path)], text: '');
-                // Share.share(image!);
-              },
-              child: Icon(Icons.share),
-            ),
-            SizedBox(width: 20)
-          ],
-        ),
-        body: Center(
-          child: PhotoView(
-            minScale: PhotoViewComputedScale.contained,
-            maxScale: PhotoViewComputedScale.covered * 2,
-            imageProvider: NetworkImage(image!),
-            // child: Image.network(
-            //   image ?? "",
-            //   height: double.infinity,
-            //   width: double.infinity,
-            //   fit: BoxFit.contain,
-            // ),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        leading: InkWell(
+            onTap: () {
+              Get.back();
+            },
+            child: Icon(
+              Icons.arrow_back_ios,
+              color: Colors.black,
+            )),
+        actions: [
+          GestureDetector(
+            onTap: isDownloadingImage
+                ? null
+                : () async {
+                    setState(() {
+                      isDownloadingImage = true;
+                    });
+
+                    await saveImageToGallery(widget.image!);
+                    setState(() {
+                      isDownloadingImage = false;
+                    });
+                  },
+            child: isDownloadingImage
+                ? SizedBox(
+                    height: 16, width: 16, child: CircularProgressIndicator())
+                : Icon(Icons.file_download_rounded),
           ),
-        ));
+          SizedBox(width: 20),
+          GestureDetector(
+            onTap: isSharingImage
+                ? null
+                : () async {
+                    setState(() {
+                      isSharingImage = true;
+                    });
+                    try {
+                      // Try to get the cached file first for instant sharing
+                      final cacheManager = DefaultCacheManager();
+                      final fileInfo =
+                          await cacheManager.getFileFromCache(widget.image!);
+                      File? file;
+                      if (fileInfo != null && await fileInfo.file.exists()) {
+                        file = fileInfo.file;
+                      } else {
+                        // If not cached, download and cache it
+                        final fileFetched =
+                            await cacheManager.getSingleFile(widget.image!);
+                        file = fileFetched;
+                      }
+                      await Share.shareXFiles([XFile(file.path)], text: '');
+                    } catch (e) {
+                      // fallback: share the image URL if file fails
+                      await Share.share(widget.image!);
+                    }
+                    setState(() {
+                      isSharingImage = false;
+                    });
+                  },
+            child: isSharingImage
+                ? SizedBox(
+                    height: 16, width: 16, child: CircularProgressIndicator())
+                : Icon(Icons.share),
+          ),
+          SizedBox(width: 20)
+        ],
+      ),
+      body: Center(
+        child: GestureDetector(
+          onVerticalDragUpdate: _onVerticalDragUpdate,
+          onVerticalDragEnd: _onVerticalDragEnd,
+          child: Opacity(
+            opacity: _opacity,
+            child: Transform.translate(
+              offset: Offset(0, _dragOffset),
+              child: PhotoView(
+                minScale: PhotoViewComputedScale.contained,
+                maxScale: PhotoViewComputedScale.covered * 2,
+                imageProvider: CachedNetworkImageProvider(widget.image!),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

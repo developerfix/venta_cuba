@@ -212,22 +212,22 @@ class ChatController extends GetxController {
 
   // Format last active time for display
   String formatLastActiveTime(Timestamp? lastActiveTime) {
-    if (lastActiveTime == null) return "Last seen long ago";
+    if (lastActiveTime == null) return "Last seen long ago".tr;
 
     DateTime lastActive = lastActiveTime.toDate();
     DateTime now = DateTime.now();
     Duration difference = now.difference(lastActive);
 
     if (difference.inMinutes < 1) {
-      return "Active now";
+      return "Active now".tr;
     } else if (difference.inMinutes < 60) {
-      return "Last seen ${difference.inMinutes} minutes ago";
+      return "Last seen".tr + " ${difference.inMinutes} " + "minutes ago".tr;
     } else if (difference.inHours < 24) {
-      return "Last seen ${difference.inHours} hours ago";
+      return "Last seen".tr + " ${difference.inHours} " + "hours ago".tr;
     } else if (difference.inDays < 7) {
-      return "Last seen ${difference.inDays} days ago";
+      return "Last seen".tr + " ${difference.inDays} " + "days ago".tr;
     } else {
-      return "Last seen long ago";
+      return "Last seen long ago".tr;
     }
   }
 

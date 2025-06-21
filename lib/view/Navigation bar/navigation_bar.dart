@@ -33,6 +33,7 @@ class _Navigation_BarState extends State<Navigation_Bar> {
           backgroundColor: Colors.white,
           body: _buildScreen(cont.currentIndexBottomAppBar),
           bottomNavigationBar: BottomNavigationBar(
+            enableFeedback: false,
             backgroundColor: Colors.white,
             type: BottomNavigationBarType.fixed,
             selectedItemColor: AppColors.k0xFF0254B8,
@@ -51,9 +52,6 @@ class _Navigation_BarState extends State<Navigation_Bar> {
                 } else {
                   // Clear badge count when switching to chat tab
                   if (index == 1) {
-                    // Reset badge count for app icon
-                    FCM.clearBadgeCount();
-                    // Reset unread messages indicator
                     cont.hasUnreadMessages.value = false;
                     cont.update();
                   }

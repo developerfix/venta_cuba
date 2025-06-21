@@ -10,6 +10,16 @@ class Languages extends Translations {
               'Record your screen while making the money transfer as we show you in the video. This will be your proof of payment if we do not receive your transaction number by SMS.',
           'please select category': 'please select category',
           'ago': '{0} {1} ago',
+          'Online': 'Online',
+          'Last seen': 'Last seen',
+          'minutes ago': 'minutes ago',
+          'hours ago': 'hours ago',
+          'days ago': 'days ago',
+          'Last seen long ago': 'Last seen long ago',
+          'Active now': 'Active now',
+          'Last seen minutes ago': 'Last seen {minutes} minutes ago',
+          'Last seen hours ago': 'Last seen {hours} hours ago',
+          'Last seen days ago': 'Last seen {days} days ago',
           'month': 'month',
           'months': 'months',
           'day': 'day',
@@ -892,13 +902,25 @@ It is not allowed to use our member-to-member communication resources to send sp
           "days": "days",
           "ago": "ago",
           "please select": "Please select somthing from list",
-          "Your VentaCuba Otp code is": "Your VentaCuba Otp code is"
+          "Your VentaCuba Otp code is": "Your VentaCuba Otp code is",
+          'Click here to enter a location to see publications near you.':
+              'Click here to enter a location to see publications near you.',
         },
         "es_ES": {
           'upload_video':
               'Graba tu pantalla mientras realizas la transferencia de dinero tal como te mostramos en el video. Ese será tu comprobante de pago si no recibimos tu número de transacción por SMS.',
           'please select category': 'por favor seleccione categoría',
           'ago': 'hace {0} {1}',
+          'Online': 'En línea',
+          'Last seen': 'Visto',
+          'minutes ago': 'minutos atrás',
+          'hours ago': 'horas atrás',
+          'days ago': 'días atrás',
+          'Last seen long ago': 'Visto hace mucho tiempo',
+          'Active now': 'Activo ahora',
+          'Last seen minutes ago': 'Visto hace {minutes} minutos',
+          'Last seen hours ago': 'Visto hace {hours} horas',
+          'Last seen days ago': 'Visto hace {days} días',
           'month': 'mes',
           'months': 'meses',
           'day': 'día',
@@ -1818,6 +1840,8 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
           "Create an account": "Crea una cuenta",
           "Don’t have an account?": "¿No tienes una cuenta?",
           "Video Picked Successfully": "Vídeo seleccionado correctamente",
+          'Click here to enter a location to see publications near you.':
+              'Haga clic aquí para ingresar una ubicación para ver publicaciones cerca de usted.',
         }
       };
 }

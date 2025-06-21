@@ -51,7 +51,7 @@ dependencies:
   permission_handler: ^11.0.1
   file_picker: ^8.1.0
   flutter_rating_bar: ^4.0.1
-  # image_gallery_saver_plus: ^3.0.5
+  image_gallery_saver_plus: ^4.0.1
   flutter_slidable: ^3.1.2
   image: any
   textfield_tags: ^2.0.2
