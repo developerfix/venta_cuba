@@ -73,6 +73,9 @@ class _FavouriteListingsState extends State<FavouriteListings> {
                   Get.back();
 
                   if (isRemoved) {
+                    // Reload home screen data to refresh favorite status
+                    cont.getListing();
+
                     errorAlertToast(
                         'All favourite listings removed successfully'.tr);
                   } else {
@@ -347,55 +350,49 @@ class _FavouriteListingsState extends State<FavouriteListings> {
                                               bool isAddedF =
                                                   await cont.favouriteItem();
                                               if (isAddedF) {
-                                                // Since we're in favorites screen, clicking heart means unfavoriting
-                                                // So we should always remove the item from the list
+                                                String itemIdToSync =
+                                                    data.itemId ?? "";
+
+                                                // Remove from favorites list
                                                 cont.userFavouriteListingModelList
                                                     .removeAt(index);
 
-                                                // Update the corresponding item in home listing if it exists
-                                                String itemIdToUpdate =
-                                                    data.itemId ?? "";
-                                                for (int i = 0;
-                                                    i <
-                                                        cont.listingModelList
-                                                            .length;
-                                                    i++) {
-                                                  if (cont.listingModelList[i]
-                                                          .itemId ==
-                                                      itemIdToUpdate) {
-                                                    cont.listingModelList[i]
-                                                        .isFavorite = "0";
+                                                // Update ALL lists that might contain this item
+                                                // Main listing list
+                                                for (var item
+                                                    in cont.listingModelList) {
+                                                  if (item.itemId ==
+                                                      itemIdToSync) {
+                                                    item.isFavorite = "0";
                                                     break;
                                                   }
                                                 }
 
-                                                // Also update in search results
-                                                for (int i = 0;
-                                                    i <
-                                                        cont.listingModelSearchList
-                                                            .length;
-                                                    i++) {
-                                                  if (cont
-                                                          .listingModelSearchList[
-                                                              i]
-                                                          .itemId ==
-                                                      itemIdToUpdate) {
-                                                    cont
-                                                        .listingModelSearchList[
-                                                            i]
-                                                        .isFavorite = "0";
+                                                // Search listing list
+                                                for (var item in cont
+                                                    .listingModelSearchList) {
+                                                  if (item.itemId ==
+                                                      itemIdToSync) {
+                                                    item.isFavorite = "0";
                                                     break;
                                                   }
                                                 }
 
-                                                // Force update all GetBuilder widgets listening to this controller
+                                                // User listing list (my listings)
+                                                for (var item in cont
+                                                    .userListingModelList) {
+                                                  if (item.itemId ==
+                                                      itemIdToSync) {
+                                                    item.isFavorite = "0";
+                                                    break;
+                                                  }
+                                                }
+
+                                                // Force UI update
                                                 cont.update();
 
-                                                // Also trigger update on the next frame to ensure UI rebuilds
-                                                WidgetsBinding.instance
-                                                    .addPostFrameCallback((_) {
-                                                  cont.update();
-                                                });
+                                                // Reload home screen data to refresh favorite status
+                                                cont.getListing();
 
                                                 errorAlertToast(
                                                     "Successfully".tr);

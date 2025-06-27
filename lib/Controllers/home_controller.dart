@@ -1553,13 +1553,28 @@ class HomeController extends GetxController {
         'category_id': selectedCategory?.id ?? "",
         'sub_category_id': selectedSubCategory?.id ?? "",
         'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
+        'latitude': lat ?? "23.124792615936276",
+        'longitude': lng ?? "-82.38597269330762",
         'radius': radius.toString(),
         'min_price': minPriceController.text.trim(),
         'max_price': maxPriceController.text.trim(),
         'search_by_title': searchController.text.trim(),
       };
 
-      Get.log("Request Data: $requestData");
+      Get.log("=== SEARCH REQUEST DEBUG ===");
+      Get.log("Search Text: '${searchController.text.trim()}'");
+      Get.log("Selected Category ID: ${selectedCategory?.id}");
+      Get.log("Selected Category Name: ${selectedCategory?.name}");
+      Get.log("Selected SubCategory ID: ${selectedSubCategory?.id}");
+      Get.log("Selected SubCategory Name: ${selectedSubCategory?.name}");
+      Get.log("Selected SubSubCategory ID: ${selectedSubSubCategory?.id}");
+      Get.log("Selected SubSubCategory Name: ${selectedSubSubCategory?.name}");
+      Get.log("Min Price: '${minPriceController.text.trim()}'");
+      Get.log("Max Price: '${maxPriceController.text.trim()}'");
+      Get.log("Latitude: ${lat}");
+      Get.log("Longitude: ${lng}");
+      Get.log("Radius: ${radius}");
+      Get.log("Full Request Data: $requestData");
 
       Response response = await api.postWithForm(
         "api/getListing?page=${currentSearchPage.value}",
@@ -1572,14 +1587,28 @@ class HomeController extends GetxController {
 
       if (response.statusCode == 200) {
         List<dynamic> dataListing = response.body['data']['data'] ?? [];
-        Get.log("SEARCH LIST COUNT ${dataListing.length}");
+        Get.log("=== SEARCH RESPONSE DEBUG ===");
+        Get.log("API returned ${dataListing.length} items");
 
         if (dataListing.isNotEmpty) {
           List<ListingModel> newListings =
               dataListing.map((e) => ListingModel.fromJson(e)).toList();
 
+          // Debug: Log first few items to verify category filtering
+          for (int i = 0;
+              i < (newListings.length > 3 ? 3 : newListings.length);
+              i++) {
+            Get.log(
+                "Item ${i + 1}: '${newListings[i].title}' - Category: ${newListings[i].category?.name} (ID: ${newListings[i].category?.id})");
+          }
+
           // Apply client-side price filtering
           newListings = applyPriceFilter(newListings);
+          Get.log("After price filtering: ${newListings.length} items");
+
+          // Apply client-side category filtering as backup
+          newListings = applyCategoryFilter(newListings);
+          Get.log("After category filtering: ${newListings.length} items");
 
           listingModelSearchList.addAll(newListings);
           currentSearchPage.value++; // Increment page correctly
@@ -1589,6 +1618,8 @@ class HomeController extends GetxController {
 
           // Apply sorting after fetching data
           applySortingToSearchList();
+          Get.log(
+              "Final search results count: ${listingModelSearchList.length}");
           update();
         } else {
           hasMoreSearch.value = false;
@@ -1699,6 +1730,46 @@ class HomeController extends GetxController {
       return true;
     }).toList();
   }
+
+  // Method to apply client-side category filtering
+  List<ListingModel> applyCategoryFilter(List<ListingModel> listings) {
+    // If no category is selected, return all listings
+    if (selectedCategory == null &&
+        selectedSubCategory == null &&
+        selectedSubSubCategory == null) {
+      Get.log("No category filter applied - showing all listings");
+      return listings;
+    }
+
+    return listings.where((listing) {
+      // Check sub-subcategory first (most specific)
+      if (selectedSubSubCategory != null) {
+        bool matches = listing.subSubCategory?.id == selectedSubSubCategory?.id;
+        Get.log(
+            "SubSubCategory filter: ${listing.title} - Expected: ${selectedSubSubCategory?.id}, Got: ${listing.subSubCategory?.id}, Match: $matches");
+        return matches;
+      }
+
+      // Check subcategory
+      if (selectedSubCategory != null) {
+        bool matches = listing.subCategory?.id == selectedSubCategory?.id;
+        Get.log(
+            "SubCategory filter: ${listing.title} - Expected: ${selectedSubCategory?.id}, Got: ${listing.subCategory?.id}, Match: $matches");
+        return matches;
+      }
+
+      // Check main category
+      if (selectedCategory != null) {
+        bool matches = listing.category?.id == selectedCategory?.id;
+        Get.log(
+            "Category filter: ${listing.title} - Expected: ${selectedCategory?.id}, Got: ${listing.category?.id}, Match: $matches");
+        return matches;
+      }
+
+      return true;
+    }).toList();
+  }
+
   // Future getListingSearch({bool isLoadingShow = true}) async {
   //   print(searchLongitude);
   //   Response response = await api.postWithForm(
@@ -1829,6 +1900,162 @@ class HomeController extends GetxController {
     }
   }
 
+  /// Helper method to sync favorite status in home screen when changed from favorites screen
+  void syncFavoriteStatusInHomeScreen(String itemId, String newFavoriteStatus) {
+    try {
+      bool itemFound = false;
+
+      // Update in main listing list
+      for (int i = 0; i < listingModelList.length; i++) {
+        if (listingModelList[i].itemId == itemId) {
+          listingModelList[i].isFavorite = newFavoriteStatus;
+          itemFound = true;
+          print(
+              "Updated item $itemId favorite status to $newFavoriteStatus in main listing list");
+          break;
+        }
+      }
+
+      // Update in search list
+      for (int i = 0; i < listingModelSearchList.length; i++) {
+        if (listingModelSearchList[i].itemId == itemId) {
+          listingModelSearchList[i].isFavorite = newFavoriteStatus;
+          print(
+              "Updated item $itemId favorite status to $newFavoriteStatus in search list");
+          break;
+        }
+      }
+
+      // Update the current listing model if it matches
+      if (listingModel?.itemId == itemId) {
+        listingModel?.isFavorite = newFavoriteStatus;
+        print(
+            "Updated current listing model $itemId favorite status to $newFavoriteStatus");
+      }
+
+      if (itemFound) {
+        print(
+            "Successfully synced item $itemId to favorite status $newFavoriteStatus");
+      } else {
+        print("Warning: Item $itemId not found in main listing list for sync");
+      }
+
+      // Force update all GetBuilder widgets
+      update();
+
+      // Also trigger update on the next frame to ensure UI rebuilds
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        update();
+      });
+
+      // Force update using GetX's global update mechanism
+      Get.forceAppUpdate();
+    } catch (e) {
+      print("Error syncing favorite status in home screen: $e");
+    }
+  }
+
+  /// Helper method to sync seller favorite status in home screen when changed from favorites screen
+  void syncSellerFavoriteStatusInHomeScreen(
+      String sellerId, String newFavoriteStatus) {
+    try {
+      // Update in main listing list
+      for (int i = 0; i < listingModelList.length; i++) {
+        if (listingModelList[i].user?.id.toString() == sellerId) {
+          listingModelList[i].isSellerFavorite = newFavoriteStatus;
+          print(
+              "Updated seller $sellerId favorite status to $newFavoriteStatus in home screen");
+        }
+      }
+
+      // Update in search list
+      for (int i = 0; i < listingModelSearchList.length; i++) {
+        if (listingModelSearchList[i].user?.id.toString() == sellerId) {
+          listingModelSearchList[i].isSellerFavorite = newFavoriteStatus;
+        }
+      }
+
+      // Update the current listing model if it matches
+      if (listingModel?.user?.id.toString() == sellerId) {
+        listingModel?.isSellerFavorite = newFavoriteStatus;
+      }
+
+      update();
+    } catch (e) {
+      print("Error syncing seller favorite status in home screen: $e");
+    }
+  }
+
+  /// Helper method to sync multiple favorite status changes at once
+  void syncMultipleFavoriteStatusInHomeScreen(
+      List<String> itemIds, String newFavoriteStatus) {
+    try {
+      for (String itemId in itemIds) {
+        // Update in main listing list
+        for (int i = 0; i < listingModelList.length; i++) {
+          if (listingModelList[i].itemId == itemId) {
+            listingModelList[i].isFavorite = newFavoriteStatus;
+            break;
+          }
+        }
+
+        // Update in search list
+        for (int i = 0; i < listingModelSearchList.length; i++) {
+          if (listingModelSearchList[i].itemId == itemId) {
+            listingModelSearchList[i].isFavorite = newFavoriteStatus;
+            break;
+          }
+        }
+      }
+
+      // Update the current listing model if it matches any of the items
+      if (listingModel?.itemId != null &&
+          itemIds.contains(listingModel?.itemId)) {
+        listingModel?.isFavorite = newFavoriteStatus;
+      }
+
+      update();
+      print(
+          "Updated ${itemIds.length} items favorite status to $newFavoriteStatus in home screen");
+    } catch (e) {
+      print("Error syncing multiple favorite status in home screen: $e");
+    }
+  }
+
+  /// Helper method to sync multiple seller favorite status changes at once
+  void syncMultipleSellerFavoriteStatusInHomeScreen(
+      List<String> sellerIds, String newFavoriteStatus) {
+    try {
+      for (String sellerId in sellerIds) {
+        // Update in main listing list
+        for (int i = 0; i < listingModelList.length; i++) {
+          if (listingModelList[i].user?.id.toString() == sellerId) {
+            listingModelList[i].isSellerFavorite = newFavoriteStatus;
+          }
+        }
+
+        // Update in search list
+        for (int i = 0; i < listingModelSearchList.length; i++) {
+          if (listingModelSearchList[i].user?.id.toString() == sellerId) {
+            listingModelSearchList[i].isSellerFavorite = newFavoriteStatus;
+          }
+        }
+      }
+
+      // Update the current listing model if it matches any of the sellers
+      if (listingModel?.user?.id != null &&
+          sellerIds.contains(listingModel?.user?.id.toString())) {
+        listingModel?.isSellerFavorite = newFavoriteStatus;
+      }
+
+      update();
+      print(
+          "Updated ${sellerIds.length} sellers favorite status to $newFavoriteStatus in home screen");
+    } catch (e) {
+      print("Error syncing multiple seller favorite status in home screen: $e");
+    }
+  }
+
   Future<bool> favouriteSeller() async {
     print("'seller_id': $sellerId,");
     Response response = await api.postWithForm(
@@ -1896,7 +2123,9 @@ class HomeController extends GetxController {
 
       // Clear the local list regardless of individual failures
       userFavouriteListingModelList.clear();
-      update();
+
+      // Sync with home screen - mark all removed items as unfavorited
+      syncMultipleFavoriteStatusInHomeScreen(itemIds, "0");
 
       print("Removed $successCount out of ${itemIds.length} listings");
       return successCount > 0; // Return true if at least one was removed
@@ -1954,7 +2183,9 @@ class HomeController extends GetxController {
 
       // Clear the local list regardless of individual failures
       favouriteSellerModel.data?.clear();
-      update();
+
+      // Sync with home screen - mark all removed sellers as unfavorited
+      syncMultipleSellerFavoriteStatusInHomeScreen(sellerIds, "0");
 
       print("Removed $successCount out of ${sellerIds.length} sellers");
       return successCount > 0; // Return true if at least one was removed
@@ -1999,10 +2230,16 @@ class HomeController extends GetxController {
       favouriteSellerModel.data
           ?.removeWhere((seller) => seller.sellerId == sellerId);
       print("Removed seller $sellerId from local favorites list");
+
+      // Sync with home screen
+      syncSellerFavoriteStatusInHomeScreen(sellerId ?? "", "0");
     } else {
       // Add to favorites list - we need to get seller details to add to the list
       // For now, we'll just refresh the favorites list from the server
       _refreshFavoriteSellersList();
+
+      // Sync with home screen
+      syncSellerFavoriteStatusInHomeScreen(sellerId ?? "", "1");
     }
   }
 
@@ -2093,29 +2330,37 @@ class HomeController extends GetxController {
       if (response.statusCode == 200) {
         subCategoriesModel = SubCategoriesModel.fromJson(response.body);
         isType = 1;
-        isNavigate
-            ? {
-                // getListing(),
-                Get.to(CategoryFrom()),
-                // ?.then((value) {
-                // selectedCategory = null;
-                selectedSubCategory = null,
-                selectedSubSubCategory = null,
 
-                // getListing();
-                getListingSearch(),
-                // })
-              }
-            : {
-                if (subCategoriesModel?.data?.isEmpty ?? false)
-                  {
-                    selectedSubCategory = null,
-                    selectedSubSubCategory = null,
-                    Get.back(),
-                  }
-                else
-                  {update()}
-              };
+        // Check if this is being called from search screen
+        if (isSearchScreen) {
+          // For search screen, just update the data without navigation
+          update();
+        } else {
+          // Original navigation logic for other screens
+          isNavigate
+              ? {
+                  // getListing(),
+                  Get.to(CategoryFrom()),
+                  // ?.then((value) {
+                  // selectedCategory = null;
+                  selectedSubCategory = null,
+                  selectedSubSubCategory = null,
+
+                  // getListing();
+                  getListingSearch(),
+                  // })
+                }
+              : {
+                  if (subCategoriesModel?.data?.isEmpty ?? false)
+                    {
+                      selectedSubCategory = null,
+                      selectedSubSubCategory = null,
+                      Get.back(),
+                    }
+                  else
+                    {update()}
+                };
+        }
       } else {
         errorAlertToast('Something went wrong\nPlease try again!'.tr);
       }
@@ -2193,20 +2438,30 @@ class HomeController extends GetxController {
       currentSearchPage.value = 1;
       listingModelSearchList.clear();
       update();
-      isNavigate
-          ? {
-              getListingSearch(),
-              Get.to(SubSubCategories()),
-            }
-          : {
-              if (subSubCategoriesModel?.data?.isEmpty ?? false)
-                {
-                  selectedSubSubCategory = null,
-                  isSearchScreen ? {Get.back(), getListingSearch()} : Get.back()
-                }
-              else
-                {getListingSearch(), update()}
-            };
+
+      // Check if this is being called from search screen
+      if (isSearchScreen) {
+        // For search screen, just update the data without navigation
+        update();
+      } else {
+        // Original navigation logic for other screens
+        isNavigate
+            ? {
+                getListingSearch(),
+                Get.to(SubSubCategories()),
+              }
+            : {
+                if (subSubCategoriesModel?.data?.isEmpty ?? false)
+                  {
+                    selectedSubSubCategory = null,
+                    isSearchScreen
+                        ? {Get.back(), getListingSearch()}
+                        : Get.back()
+                  }
+                else
+                  {getListingSearch(), update()}
+              };
+      }
     } else {
       errorAlertToast('Something went wrong\nPlease try again!'.tr);
     }

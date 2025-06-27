@@ -181,9 +181,20 @@ class _SearchState extends State<Search> {
   }
 
   @override
+  void dispose() {
+    // Reset search screen flags when leaving the screen
+    homeCont.isSearchScreen = false;
+    super.dispose();
+  }
+
+  @override
   void initState() {
     super.initState();
     getAdd();
+
+    // Set search screen flag to prevent navigation to other screens
+    homeCont.isSearchScreen = true;
+    homeCont.isNavigate = false;
 
     // Perform initial search when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -193,6 +204,18 @@ class _SearchState extends State<Search> {
         homeCont.getListingSearch();
       }
     });
+  }
+
+  String _getSelectedCategoryText(HomeController cont) {
+    if (cont.selectedSubSubCategory != null) {
+      return '${cont.selectedSubSubCategory?.name}';
+    } else if (cont.selectedSubCategory != null) {
+      return '${cont.selectedSubCategory?.name}';
+    } else if (cont.selectedCategory != null) {
+      return '${cont.selectedCategory?.name}';
+    } else {
+      return 'All Categories'.tr;
+    }
   }
 
   @override
@@ -322,7 +345,6 @@ class _SearchState extends State<Search> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            cont.isType = 0;
                             showDialogDropDown(context);
                           },
                           child: Padding(
@@ -340,13 +362,13 @@ class _SearchState extends State<Search> {
                                 children: [
                                   Center(
                                     child: Text(
-                                      homeCont.selectedCategory != null
-                                          ? '${homeCont.selectedCategory?.name}'
-                                          : 'Other'.tr,
+                                      _getSelectedCategoryText(homeCont),
                                       style: TextStyle(
                                           fontSize: 13..sp,
                                           fontWeight: FontWeight.w500,
                                           color: AppColors.black),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
                                     ),
                                   ),
                                   Container(
@@ -671,7 +693,6 @@ class _SearchState extends State<Search> {
                           homeCont.update();
                           bool isAddedF = await homeCont.favouriteItem();
                           if (isAddedF) {
-                            // Sync with other lists
                             String itemId =
                                 homeCont.listingModelSearchList[index].itemId ??
                                     "";
@@ -679,26 +700,14 @@ class _SearchState extends State<Search> {
                                     .listingModelSearchList[index].isFavorite ??
                                 "0";
 
-                            // Update home listing
-                            for (int i = 0;
-                                i < homeCont.listingModelList.length;
-                                i++) {
-                              if (homeCont.listingModelList[i].itemId ==
-                                  itemId) {
-                                homeCont.listingModelList[i].isFavorite =
-                                    newFavoriteStatus;
-                                break;
-                              }
-                            }
+                            // Sync with home screen
+                            homeCont.syncFavoriteStatusInHomeScreen(
+                                itemId, newFavoriteStatus);
 
-                            // Update favorites list
-                            if (newFavoriteStatus == "0") {
-                              homeCont.userFavouriteListingModelList
-                                  .removeWhere(
-                                      (favItem) => favItem.itemId == itemId);
-                            }
+                            // Sync with favorites list
+                            homeCont.syncFavoriteStatusInFavoritesList(
+                                itemId, newFavoriteStatus);
 
-                            homeCont.update();
                             errorAlertToast("Successfully".tr);
                           } else {
                             homeCont.listingModel?.isFavorite == "0"
@@ -851,7 +860,6 @@ class _SearchState extends State<Search> {
                         homeCont.update();
                         bool isAddedF = await homeCont.favouriteItem();
                         if (isAddedF) {
-                          // Sync with other lists
                           String itemId =
                               homeCont.listingModelSearchList[index].itemId ??
                                   "";
@@ -859,24 +867,14 @@ class _SearchState extends State<Search> {
                                   .listingModelSearchList[index].isFavorite ??
                               "0";
 
-                          // Update home listing
-                          for (int i = 0;
-                              i < homeCont.listingModelList.length;
-                              i++) {
-                            if (homeCont.listingModelList[i].itemId == itemId) {
-                              homeCont.listingModelList[i].isFavorite =
-                                  newFavoriteStatus;
-                              break;
-                            }
-                          }
+                          // Sync with home screen
+                          homeCont.syncFavoriteStatusInHomeScreen(
+                              itemId, newFavoriteStatus);
 
-                          // Update favorites list
-                          if (newFavoriteStatus == "0") {
-                            homeCont.userFavouriteListingModelList.removeWhere(
-                                (favItem) => favItem.itemId == itemId);
-                          }
+                          // Sync with favorites list
+                          homeCont.syncFavoriteStatusInFavoritesList(
+                              itemId, newFavoriteStatus);
 
-                          homeCont.update();
                           errorAlertToast("Successfully".tr);
                         } else {
                           homeCont.listingModel?.isFavorite == "0"
@@ -1679,152 +1677,246 @@ class _PokeToDialBottomSheetContent1State
   }
 }
 
-showDialogDropDown(BuildContext context) {
+// Professional Category Selection Dialog
+void showDialogDropDown(BuildContext context) {
   showDialog(
-      barrierColor: Colors.transparent,
-      context: context,
-      builder: (context) {
-        return GetBuilder(
-            init: HomeController(),
-            builder: (cont) {
-              return Dialog(
-                child: Container(
-                  height: 300.h,
-                  width: 200.w,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.only(
-                            top: 10.h, bottom: 5.h, left: 10.w, right: 20.w),
-                        child: InkWell(
-                            onTap: () {
-                              if (cont.isType == 0) {
-                                cont.selectedCategoryModel = null;
-                                cont.selectedCategory = null;
-                                cont.selectedSubSubCategory = null;
-                                cont.update();
-                                Get.back();
-                              } else {
-                                cont.isType = cont.isType - 1;
-                                cont.update();
-                              }
-                            },
-                            child: Icon(Icons.arrow_circle_left_outlined)),
-                      ),
-                      Expanded(
-                        child: Padding(
-                            padding: EdgeInsets.only(left: 20.w, right: 20.w),
-                            child: cont.loadingCategory.value
-                                ? Center(
-                                    child: SizedBox(
-                                        height: 30.h,
-                                        width: 30.h,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                        )),
-                                  )
-                                : ListView.separated(
-                                    itemBuilder: (context, index) {
-                                      return InkWell(
-                                        onTap: () {
-                                          if (cont.isType == 0) {
-                                            cont.selectedCategory = cont
-                                                .categoriesModel?.data?[index];
-                                            cont.selectedCategoryModel =
-                                                SelectedCategoryModel(
-                                                    id: cont.categoriesModel
-                                                        ?.data?[index].id,
-                                                    name: cont.categoriesModel
-                                                        ?.data?[index].name,
-                                                    icon: cont.categoriesModel
-                                                        ?.data?[index].icon,
-                                                    type: 0);
-                                            cont.isNavigate = false;
-                                            cont.selectedSubCategory = null;
-                                            cont.selectedSubSubCategory = null;
-                                            cont.isSearchScreen = true;
-                                            cont.currentSearchPage.value = 1;
-                                            cont.listingModelSearchList.clear();
-                                            cont.update();
-                                            cont.getSubCategories();
-                                            cont.getListingSearch();
-                                          } else if (cont.isType == 1) {
-                                            cont.selectedSubCategory = cont
-                                                .subCategoriesModel
-                                                ?.data?[index];
-                                            cont.selectedCategoryModel =
-                                                SelectedCategoryModel(
-                                                    id: cont.subCategoriesModel
-                                                        ?.data?[index].id,
-                                                    name: cont
-                                                        .subCategoriesModel
-                                                        ?.data?[index]
-                                                        .name,
-                                                    icon: "",
-                                                    type: 1);
-                                            cont.isNavigate = false;
-                                            cont.isSearchScreen = true;
-                                            cont.getSubSubCategories();
+    context: context,
+    barrierDismissible: true,
+    builder: (context) => CategorySelectionDialog(),
+  );
+}
 
-                                            cont.update();
-                                            cont.getListingSearch();
-                                          } else {
-                                            cont.selectedSubSubCategory = cont
-                                                .subSubCategoriesModel
-                                                ?.data?[index];
-                                            cont.selectedCategoryModel =
-                                                SelectedCategoryModel(
-                                                    id: cont
-                                                        .subSubCategoriesModel
-                                                        ?.data?[index]
-                                                        .id,
-                                                    name: cont
-                                                        .subSubCategoriesModel
-                                                        ?.data?[index]
-                                                        .name,
-                                                    icon: "",
-                                                    type: 2);
-                                            cont.currentSearchPage.value = 1;
-                                            cont.listingModelSearchList.clear();
+class CategorySelectionDialog extends StatefulWidget {
+  @override
+  _CategorySelectionDialogState createState() =>
+      _CategorySelectionDialogState();
+}
 
-                                            cont.update();
-                                            Get.back();
-                                            cont.getListingSearch();
-                                          }
-                                        },
-                                        child: Text(
-                                          cont.isType == 0
-                                              ? "${cont.categoriesModel?.data?[index].name}"
-                                              : cont.isType == 1
-                                                  ? "${cont.subCategoriesModel?.data?[index].name}"
-                                                  : "${cont.subSubCategoriesModel?.data?[index].name}",
-                                          style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w400),
-                                        ),
-                                      );
-                                    },
-                                    separatorBuilder: (context, index) {
-                                      return SizedBox(
-                                        height: 10.h,
-                                      );
-                                    },
-                                    itemCount: cont.isType == 0
-                                        ? cont.categoriesModel?.data?.length ??
-                                            0
-                                        : cont.isType == 1
-                                            ? cont.subCategoriesModel?.data
-                                                    ?.length ??
-                                                0
-                                            : cont.subSubCategoriesModel?.data
-                                                    ?.length ??
-                                                0)),
+class _CategorySelectionDialogState extends State<CategorySelectionDialog> {
+  final homeCont = Get.find<HomeController>();
+  int currentLevel = 0; // 0: Categories, 1: SubCategories, 2: SubSubCategories
+
+  @override
+  Widget build(BuildContext context) {
+    return GetBuilder<HomeController>(
+      builder: (cont) {
+        return Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Container(
+            height: 400.h,
+            width: 300.w,
+            padding: EdgeInsets.all(16),
+            child: Column(
+              children: [
+                // Header with back button and title
+                Row(
+                  children: [
+                    if (currentLevel > 0)
+                      IconButton(
+                        onPressed: () => _navigateBack(),
+                        icon: Icon(Icons.arrow_back_ios, size: 20),
                       ),
-                    ],
-                  ),
+                    Expanded(
+                      child: Text(
+                        _getDialogTitle(),
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => _clearSelection(),
+                      icon: Icon(Icons.clear, size: 20),
+                    ),
+                  ],
                 ),
-              );
-            });
+                // Content
+                Expanded(
+                  child: _buildContent(),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String _getDialogTitle() {
+    switch (currentLevel) {
+      case 0:
+        return 'Select Category'.tr;
+      case 1:
+        return 'Select Subcategory'.tr;
+      case 2:
+        return 'Select Sub-subcategory'.tr;
+      default:
+        return 'Select Category'.tr;
+    }
+  }
+
+  Widget _buildContent() {
+    if (homeCont.loadingCategory.value || homeCont.loadingSubCategory.value) {
+      return Center(child: CircularProgressIndicator());
+    }
+
+    List<dynamic> items = _getCurrentLevelItems();
+
+    if (items.isEmpty) {
+      return Center(
+        child: Text(
+          'No items available'.tr,
+          style: TextStyle(fontSize: 16.sp, color: Colors.grey),
+        ),
+      );
+    }
+
+    return ListView.separated(
+      itemCount: items.length,
+      separatorBuilder: (context, index) => Divider(height: 1),
+      itemBuilder: (context, index) {
+        final item = items[index];
+        return ListTile(
+          title: Text(
+            _getItemName(item),
+            style: TextStyle(fontSize: 16.sp),
+          ),
+          onTap: () => _selectItem(item, index),
+          trailing:
+              currentLevel < 2 ? Icon(Icons.arrow_forward_ios, size: 16) : null,
+        );
+      },
+    );
+  }
+
+  List<dynamic> _getCurrentLevelItems() {
+    switch (currentLevel) {
+      case 0:
+        return homeCont.categoriesModel?.data ?? [];
+      case 1:
+        return homeCont.subCategoriesModel?.data ?? [];
+      case 2:
+        return homeCont.subSubCategoriesModel?.data ?? [];
+      default:
+        return [];
+    }
+  }
+
+  String _getItemName(dynamic item) {
+    return item?.name?.toString() ?? 'Unknown';
+  }
+
+  void _selectItem(dynamic item, int index) async {
+    switch (currentLevel) {
+      case 0:
+        await _selectCategory(item);
+        break;
+      case 1:
+        await _selectSubCategory(item);
+        break;
+      case 2:
+        await _selectSubSubCategory(item);
+        break;
+    }
+  }
+
+  Future<void> _selectCategory(dynamic category) async {
+    homeCont.selectedCategory = category;
+    homeCont.selectedSubCategory = null;
+    homeCont.selectedSubSubCategory = null;
+    homeCont.isNavigate = false;
+    homeCont.isSearchScreen = true;
+
+    // Load subcategories
+    await homeCont.getSubCategories();
+
+    // Check if subcategories exist
+    if (homeCont.subCategoriesModel?.data?.isNotEmpty ?? false) {
+      setState(() {
+        currentLevel = 1;
       });
+    } else {
+      // No subcategories, apply filter and close dialog
+      _applyFilterAndClose();
+    }
+  }
+
+  Future<void> _selectSubCategory(dynamic subCategory) async {
+    homeCont.selectedSubCategory = subCategory;
+    homeCont.selectedSubSubCategory = null;
+
+    // Load sub-subcategories
+    await homeCont.getSubSubCategories();
+
+    // Check if sub-subcategories exist
+    if (homeCont.subSubCategoriesModel?.data?.isNotEmpty ?? false) {
+      setState(() {
+        currentLevel = 2;
+      });
+    } else {
+      // No sub-subcategories, apply filter and close dialog
+      _applyFilterAndClose();
+    }
+  }
+
+  Future<void> _selectSubSubCategory(dynamic subSubCategory) async {
+    homeCont.selectedSubSubCategory = subSubCategory;
+    _applyFilterAndClose();
+  }
+
+  void _navigateBack() {
+    if (currentLevel > 0) {
+      setState(() {
+        currentLevel--;
+      });
+
+      // Clear the selection for the current level
+      switch (currentLevel) {
+        case 0:
+          homeCont.selectedSubCategory = null;
+          homeCont.selectedSubSubCategory = null;
+          break;
+        case 1:
+          homeCont.selectedSubSubCategory = null;
+          break;
+      }
+    }
+  }
+
+  void _clearSelection() {
+    homeCont.selectedCategory = null;
+    homeCont.selectedSubCategory = null;
+    homeCont.selectedSubSubCategory = null;
+    _applyFilterAndClose();
+  }
+
+  void _applyFilterAndClose() {
+    Get.log("=== APPLYING FILTER AND CLOSING ===");
+    Get.log("Selected Category: ${homeCont.selectedCategory?.name}");
+    Get.log("Selected SubCategory: ${homeCont.selectedSubCategory?.name}");
+    Get.log(
+        "Selected SubSubCategory: ${homeCont.selectedSubSubCategory?.name}");
+
+    // Ensure we stay in search screen
+    homeCont.isSearchScreen = true;
+    homeCont.isNavigate = false;
+
+    // Reset search pagination and clear current results
+    homeCont.currentSearchPage.value = 1;
+    homeCont.listingModelSearchList.clear();
+    homeCont.hasMoreSearch.value = true;
+
+    // Update UI
+    homeCont.update();
+
+    // Close dialog
+    Get.back();
+
+    // Trigger search with new filters
+    Get.log("Triggering search with category filter...");
+    homeCont.getListingSearch();
+  }
 }

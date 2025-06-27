@@ -170,12 +170,11 @@ class ListingView extends StatelessWidget {
                           cont.update();
                           bool isAddedF = await cont.favouriteItem();
                           if (isAddedF) {
-                            // If unfavorited, remove from favorites list
-                            if (item.isFavorite == "0") {
-                              cont.userFavouriteListingModelList.removeWhere(
-                                  (favItem) => favItem.itemId == item.itemId);
-                            }
-                            // Update all other lists to keep them in sync
+                            // Sync with favorites list
+                            cont.syncFavoriteStatusInFavoritesList(
+                                item.itemId ?? "", item.isFavorite ?? "0");
+
+                            // Update search list to keep it in sync
                             for (int i = 0;
                                 i < cont.listingModelSearchList.length;
                                 i++) {

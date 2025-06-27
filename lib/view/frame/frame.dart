@@ -848,6 +848,17 @@ class _FrameScreenState extends State<FrameScreen> {
                                                 "isSellerFavorite.............${cont.listingModel?.isSellerFavorite}");
                                             print(
                                                 "object.............${jsonEncode(homeCont.listingModel)}");
+
+                                            // Sync seller favorite status with home screen
+                                            String sellerId = cont
+                                                    .listingModel?.user?.id
+                                                    .toString() ??
+                                                "";
+                                            String newStatus = cont.listingModel
+                                                    ?.isSellerFavorite ??
+                                                "0";
+                                            cont.syncSellerFavoriteStatusInHomeScreen(
+                                                sellerId, newStatus);
                                           } else {
                                             // Revert the UI change if the API call failed
                                             cont.listingModel
@@ -1335,6 +1346,18 @@ class _FrameScreenState extends State<FrameScreen> {
                                                   if (isAddedF) {
                                                     errorAlertToast(
                                                         "Successfully".tr);
+
+                                                    // Sync listing favorite status with home screen
+                                                    String itemId = cont
+                                                            .listingModel
+                                                            ?.itemId ??
+                                                        "";
+                                                    String newStatus = cont
+                                                            .listingModel
+                                                            ?.isFavorite ??
+                                                        "0";
+                                                    cont.syncFavoriteStatusInHomeScreen(
+                                                        itemId, newStatus);
                                                   } else {
                                                     cont.listingModel
                                                                 ?.isFavorite ==

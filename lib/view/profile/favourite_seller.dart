@@ -73,6 +73,9 @@ class _FavouriteSellerState extends State<FavouriteSeller> {
                   Get.back();
 
                   if (isRemoved) {
+                    // Reload home screen data to refresh favorite status
+                    cont.getListing();
+
                     errorAlertToast(
                         'All favourite sellers removed successfully'.tr);
                   } else {
@@ -304,9 +307,38 @@ class _FavouriteSellerState extends State<FavouriteSeller> {
                                               bool isAddedF =
                                                   await cont.favouriteSeller();
                                               if (isAddedF) {
+                                                String removedSellerId = cont
+                                                        .favouriteSellerModel
+                                                        .data?[index]
+                                                        .sellerId ??
+                                                    "";
+
+                                                // Remove from favorites list
                                                 cont.favouriteSellerModel.data
                                                     ?.removeAt(index);
+
+                                                // DIRECTLY update the home screen data - this is the key fix
+                                                for (var item
+                                                    in cont.listingModelList) {
+                                                  if (item.user?.id
+                                                          .toString() ==
+                                                      removedSellerId) {
+                                                    item.isSellerFavorite = "0";
+                                                  }
+                                                }
+
+                                                for (var item in cont
+                                                    .listingModelSearchList) {
+                                                  if (item.user?.id
+                                                          .toString() ==
+                                                      removedSellerId) {
+                                                    item.isSellerFavorite = "0";
+                                                  }
+                                                }
+
+                                                // Force UI update
                                                 cont.update();
+
                                                 errorAlertToast(
                                                     "Successfully".tr);
                                               }
