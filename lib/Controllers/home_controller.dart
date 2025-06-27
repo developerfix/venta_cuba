@@ -1553,11 +1553,9 @@ class HomeController extends GetxController {
         'category_id': selectedCategory?.id ?? "",
         'sub_category_id': selectedSubCategory?.id ?? "",
         'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
-        'latitude': lat ?? "23.124792615936276",
-        'longitude': lng ?? "-82.38597269330762",
         'radius': radius.toString(),
-        'min_price': '', // Let API return all results, filter client-side
-        'max_price': '', // Let API return all results, filter client-side
+        'min_price': minPriceController.text.trim(),
+        'max_price': maxPriceController.text.trim(),
         'search_by_title': searchController.text.trim(),
       };
 
