@@ -9,6 +9,10 @@ class Languages extends Translations {
           'upload_video':
               'Record your screen while making the money transfer as we show you in the video. This will be your proof of payment if we do not receive your transaction number by SMS.',
           'please select category': 'please select category',
+          'Select a category to post': 'Select a category to post',
+          'Please select a category': 'Please select a category',
+          'Please select a subcategory': 'Please select a subcategory',
+          'Please select a sub-subcategory': 'Please select a sub-subcategory',
           'ago': '{0} {1} ago',
           'Online': 'Online',
           'Last seen': 'Last seen',
@@ -931,6 +935,12 @@ It is not allowed to use our member-to-member communication resources to send sp
           'upload_video':
               'Graba tu pantalla mientras realizas la transferencia de dinero tal como te mostramos en el video. Ese será tu comprobante de pago si no recibimos tu número de transacción por SMS.',
           'please select category': 'por favor seleccione categoría',
+          'Select a category to post': 'Seleccione una categoría para publicar',
+          'Please select a category': 'Por favor seleccione una categoría',
+          'Please select a subcategory':
+              'Por favor seleccione una subcategoría',
+          'Please select a sub-subcategory':
+              'Por favor seleccione una sub-subcategoría',
           'ago': 'hace {0} {1}',
           'Online': 'En línea',
           'Last seen': 'Visto',

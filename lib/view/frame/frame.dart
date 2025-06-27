@@ -1404,7 +1404,11 @@ class _FrameScreenState extends State<FrameScreen> {
                                 "time": FieldValue.serverTimestamp(),
                                 "messageTime": "",
                                 "sender": "",
-                                "senderImage": "${authCont.user?.profileImage}",
+                                "senderImage": cont
+                                            .listingModel?.businessStatus ==
+                                        "0"
+                                    ? "${cont.listingModel?.user?.profileImage}"
+                                    : "${cont.listingModel?.user?.businessLogo}",
                                 "senderToImage":
                                     "${cont.listingModel?.user?.profileImage}",
                                 "senderId": "${authCont.user?.userId}",
@@ -1429,9 +1433,11 @@ class _FrameScreenState extends State<FrameScreen> {
                                       "${cont.listingModel?.user?.firstName} ${cont.listingModel?.user?.lastName}",
                                   isLast: true,
                                   remoteUid: "${cont.listingModel?.user?.id}",
-                                  userImage:
-                                      cont.listingModel?.user?.profileImage ??
-                                          '',
+                                  userImage: cont
+                                              .listingModel?.businessStatus ==
+                                          "0"
+                                      ? "${cont.listingModel?.user?.profileImage}"
+                                      : "${cont.listingModel?.user?.businessLogo}",
                                   deviceToken:
                                       "${cont.listingModel?.user?.deviceToken}",
                                   listingImage:

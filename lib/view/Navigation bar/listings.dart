@@ -180,9 +180,9 @@ class _ListingsState extends State<Listings> {
                           physics: NeverScrollableScrollPhysics(),
                           children: [
                             authCont.isBusinessAccount &&
-                                        cont.bussinessPostCount.value == 0 ||
+                                        cont.bussinessPostCount == 0 ||
                                     !authCont.isBusinessAccount &&
-                                        cont.personalAcountPost.value == 0
+                                        cont.personalAcountPost == 0
                                 ? Container(
                                     child: Column(
                                       mainAxisAlignment:
@@ -225,19 +225,15 @@ class _ListingsState extends State<Listings> {
                                     children: [
                                       authCont.isBusinessAccount
                                           ? CustomText(
-                                              text: cont.bussinessPostCount
-                                                          .value ==
-                                                      0
+                                              text: cont.bussinessPostCount == 0
                                                   ? "0 Listing".tr
-                                                  : "${cont.bussinessPostCount.value} ${"Listings".tr}",
+                                                  : "${cont.bussinessPostCount} ${"Listings".tr}",
                                               fontSize: 16.sp,
                                             )
                                           : CustomText(
-                                              text: cont.personalAcountPost
-                                                          .value ==
-                                                      0
+                                              text: cont.personalAcountPost == 0
                                                   ? "0 Listing".tr
-                                                  : "${cont.personalAcountPost.value} ${"Listings".tr}",
+                                                  : "${cont.personalAcountPost} ${"Listings".tr}",
                                               fontSize: 16.sp,
                                             ),
                                       SizedBox(height: 4),
@@ -1317,13 +1313,11 @@ class _ListingsState extends State<Listings> {
               homeCont.userListingModelList.removeAt(index);
               // Update the counters based on account type
               if (homeCont.isBusinessAccount) {
-                homeCont.bussinessPostCount.value = homeCont
-                    .userListingModelList
+                homeCont.bussinessPostCount = homeCont.userListingModelList
                     .where((listing) => listing.businessStatus == "1")
                     .length;
               } else {
-                homeCont.personalAcountPost.value = homeCont
-                    .userListingModelList
+                homeCont.personalAcountPost = homeCont.userListingModelList
                     .where((listing) => listing.businessStatus == "0")
                     .length;
               }

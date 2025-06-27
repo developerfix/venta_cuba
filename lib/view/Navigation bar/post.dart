@@ -212,11 +212,11 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
       uploadingImage.dispose();
     }
 
-    Timer(Duration(seconds: 1), () {
-      homeCont.selectedCategory = null;
-      homeCont.selectedSubCategory = null;
-      homeCont.selectedSubSubCategory = null;
-    });
+    // Don't clear category selections in dispose - they should persist
+    // Categories will be cleared only when:
+    // 1. User successfully posts (handled in addListing method)
+    // 2. User explicitly navigates away from post flow
+    // 3. App is restarted
     homeCont.uploadingImages.clear();
     homeCont.postImages.clear();
     homeCont.titleCont.clear();
@@ -284,12 +284,96 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
     await homeCont.listingGetDraft();
   }
 
+  /// Initialize categories to prevent null values and ensure proper state
+  void _initializeCategories() {
+    // Don't reset categories if they're already selected (user came from category selection)
+    // Only load categories if not already loaded
+    if (homeCont.categoriesModel == null ||
+        homeCont.categoriesModel?.data?.isEmpty == true) {
+      homeCont.getCategories();
+    }
+
+    // If we have selected categories, make sure the related data is loaded
+    // This ensures that when user comes from category selection, all necessary data is available
+    if (homeCont.selectedCategory != null) {
+      // If we have a category but no subcategory data, load subcategories
+      if (homeCont.subCategoriesModel == null) {
+        homeCont.isNavigate = false; // Prevent navigation during initialization
+        homeCont.getSubCategories();
+      }
+
+      // If we have a subcategory but no sub-subcategory data, load sub-subcategories
+      if (homeCont.selectedSubCategory != null &&
+          homeCont.subSubCategoriesModel == null) {
+        homeCont.isNavigate = false; // Prevent navigation during initialization
+        homeCont.getSubSubCategories();
+      }
+    }
+  }
+
+  /// Reset subcategories when category changes to prevent stuck states
+  void _resetSubCategories() {
+    homeCont.selectedSubCategory = null;
+    homeCont.selectedSubSubCategory = null;
+    homeCont.subCategoriesModel = null;
+    homeCont.subSubCategoriesModel = null;
+    homeCont.update();
+  }
+
+  /// Reset sub-subcategories when subcategory changes
+  void _resetSubSubCategories() {
+    homeCont.selectedSubSubCategory = null;
+    homeCont.subSubCategoriesModel = null;
+    homeCont.update();
+  }
+
+  /// Get the appropriate display text for category selection
+  Widget _getCategoryDisplayText(HomeController cont) {
+    if (cont.selectedSubSubCategory != null) {
+      return Text("${cont.selectedSubSubCategory?.name ?? 'Unknown'}");
+    } else if (cont.selectedSubCategory != null) {
+      return Text("${cont.selectedSubCategory?.name ?? 'Unknown'}");
+    } else if (cont.selectedCategory != null) {
+      return Text("${cont.selectedCategory?.name ?? 'Unknown'}");
+    } else {
+      return Text('please select category'.tr);
+    }
+  }
+
+  /// Validate category selection with specific error messages
+  bool _validateCategorySelection(HomeController cont) {
+    if (cont.selectedCategory?.id == null) {
+      errorAlertToast("Please select a category".tr);
+      return false;
+    }
+
+    // Check if subcategories are available and required
+    if (cont.subCategoriesModel?.data?.isNotEmpty == true &&
+        cont.selectedSubCategory?.id == null) {
+      errorAlertToast("Please select a subcategory".tr);
+      return false;
+    }
+
+    // Check if sub-subcategories are available and required
+    if (cont.subSubCategoriesModel?.data?.isNotEmpty == true &&
+        cont.selectedSubSubCategory?.id == null) {
+      errorAlertToast("Please select a sub-subcategory".tr);
+      return false;
+    }
+
+    return true;
+  }
+
   late AnimationController _controller;
   late Animation<Offset> _offsetAnimation;
 
   @override
   void initState() {
     homeCont.isType = 0;
+
+    // Initialize categories to prevent null values
+    _initializeCategories();
+
     citiesList.forEach((element) {
       if (element.cityName == authCont.user?.city) {
         homeCont.lat = element.latitude;
@@ -817,8 +901,9 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                       width: 230.w,
                                       child: SelectionArea(
                                         child: Text(
-                                          '${"Posting in".tr} ${cont.selectedCategory?.name}'
-                                              .tr,
+                                          cont.selectedCategory?.name != null
+                                              ? '${"Posting in".tr} ${cont.selectedCategory?.name}'
+                                              : 'Select a category to post'.tr,
                                           style: TextStyle(
                                               fontSize: 16..sp,
                                               fontWeight: FontWeight.w500,
@@ -1293,15 +1378,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     SelectionArea(
-                                        child: cont.selectedCategory == null
-                                            ? Text('please select category'.tr)
-                                            : Text(cont.selectedSubSubCategory !=
-                                                    null
-                                                ? "${cont.selectedSubSubCategory?.name}"
-                                                : cont.selectedSubCategory !=
-                                                        null
-                                                    ? "${cont.selectedSubCategory?.name}"
-                                                    : "${homeCont.selectedCategory?.name}")),
+                                        child: _getCategoryDisplayText(cont)),
                                     Icon(Icons.arrow_drop_down)
                                   ],
                                 ),
@@ -1354,7 +1431,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                 ['USD', 'MLC', 'CUP'].contains(
                                                     cont.selectedCurrency)
                                             ? cont.selectedCurrency
-                                            : 'USD', // Fallback to 'USD' if invalid or null
+                                            : 'CUP', // Fallback to 'CUP' if invalid or null
                                         onChanged: (value) {
                                           cont.selectedCurrency = value;
                                           cont.update(); // Trigger UI rebuild
@@ -2584,11 +2661,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                               errorAlertToast(
                                                   "Please Enter Description"
                                                       .tr);
-                                            } else if (cont
-                                                    .selectedCategory?.id ==
-                                                null) {
-                                              errorAlertToast(
-                                                  "Category is required");
+                                            } else if (!_validateCategorySelection(
+                                                cont)) {
+                                              // Category validation with specific error messages
+                                              return;
                                             } else {
                                               cont.addListing(context);
                                             }
@@ -2761,13 +2837,17 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                 onTap: () {
                                   Get.log("type ${cont.isType}");
                                   if (cont.isType == 0) {
-                                    cont.selectedCategory = null;
-                                    cont.selectedSubCategory = null;
-                                    cont.selectedSubSubCategory = null;
-                                    cont.update();
+                                    // Only clear selections if user explicitly closes at category level
                                     Navigator.pop(context);
+                                  } else if (cont.isType == 1) {
+                                    // Going back from subcategory to category - clear subcategories
+                                    _resetSubCategories();
+                                    cont.isType = 0;
+                                    cont.update();
                                   } else {
-                                    cont.isType = cont.isType - 1;
+                                    // Going back from sub-subcategory to subcategory - clear sub-subcategories
+                                    _resetSubSubCategories();
+                                    cont.isType = 1;
                                     cont.update();
                                   }
                                 },
@@ -2821,9 +2901,9 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           return InkWell(
                                             onTap: () {
                                               if (cont.isType == 0) {
-                                                cont.selectedSubCategory = null;
-                                                cont.selectedSubSubCategory =
-                                                    null;
+                                                // Reset subcategories when selecting a new category
+                                                _resetSubCategories();
+
                                                 cont.selectedCategory = cont
                                                     .categoriesModel
                                                     ?.data?[index];
@@ -2845,8 +2925,9 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                 cont.update();
                                                 cont.getSubCategories();
                                               } else if (cont.isType == 1) {
-                                                cont.selectedSubSubCategory =
-                                                    null;
+                                                // Reset sub-subcategories when selecting a new subcategory
+                                                _resetSubSubCategories();
+
                                                 cont.selectedSubCategory = cont
                                                     .subCategoriesModel
                                                     ?.data?[index];

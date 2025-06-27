@@ -1091,6 +1091,7 @@ class HomeController extends GetxController {
     bool isBusinessAccount = false;
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     isBusinessAccount = sharedPreferences.getBool("accountType") ?? false;
+    print('isBusinessAccount:$isBusinessAccount');
     print('postImages:$postImages');
     Response response = await api.postWithForm(
         "api/addListing",
@@ -1467,12 +1468,12 @@ class HomeController extends GetxController {
     }
   }
 
-  RxInt personalAcountPost = 0.obs;
-  RxInt bussinessPostCount = 0.obs;
+  int personalAcountPost = 0;
+  int bussinessPostCount = 0;
 
   Future getSellerListingByStatus() async {
-    personalAcountPost.value = 0;
-    bussinessPostCount.value = 0;
+    personalAcountPost = 0;
+    bussinessPostCount = 0;
 
     fetchAccountType();
     Map<String, dynamic> data = {};
@@ -1494,15 +1495,20 @@ class HomeController extends GetxController {
     if (response.statusCode == 200) {
       List<dynamic> dataListing = [];
       dataListing.addAll(response.body['data']);
+      print('dataListing"${dataListing}');
       userListingModelList.clear();
       dataListing.forEach((element) {
-        if (element["business_status"] == 1) {
-          bussinessPostCount.value++;
+        print('dataListing business_status${element["business_status"]}');
+        if (element["business_status"] == "1") {
+          bussinessPostCount++;
+          print('dataListing bussinessPostCount ++"${bussinessPostCount}');
         } else {
-          personalAcountPost.value++;
+          personalAcountPost++;
         }
         userListingModelList.add(ListingModel.fromJson(element));
       });
+      print('dataListing"${userListingModelList}');
+      print('dataListing bussinessPostCount"${bussinessPostCount}');
       listingLoading = false;
       update();
     } else {
