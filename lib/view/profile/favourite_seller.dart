@@ -299,23 +299,19 @@ class _FavouriteSellerState extends State<FavouriteSeller> {
                                             if (authCont.user?.email == "") {
                                               Get.to(Login());
                                             } else {
-                                              cont.sellerId = cont
-                                                  .favouriteSellerModel
-                                                  .data?[index]
-                                                  .sellerId
-                                                  .toString();
+                                              // Capture seller ID BEFORE making any changes
+                                              String removedSellerId = cont
+                                                      .favouriteSellerModel
+                                                      .data?[index]
+                                                      .sellerId ??
+                                                  "";
+
+                                              cont.sellerId = removedSellerId;
                                               bool isAddedF =
                                                   await cont.favouriteSeller();
                                               if (isAddedF) {
-                                                String removedSellerId = cont
-                                                        .favouriteSellerModel
-                                                        .data?[index]
-                                                        .sellerId ??
-                                                    "";
-
-                                                // Remove from favorites list
-                                                cont.favouriteSellerModel.data
-                                                    ?.removeAt(index);
+                                                // DON'T remove here - the controller already removed it in _updateLocalFavoriteSellersList()
+                                                // cont.favouriteSellerModel.data?.removeAt(index); // REMOVED THIS LINE
 
                                                 // DIRECTLY update the home screen data - this is the key fix
                                                 for (var item

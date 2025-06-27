@@ -2094,11 +2094,10 @@ class HomeController extends GetxController {
         return true; // Nothing to remove
       }
 
-      print("Removing ${itemIds.length} favourite listings...");
+      print("Removing ${itemIds.length} favourite listings concurrently...");
 
-      // Remove each item individually using direct API calls (avoid side effects)
-      int successCount = 0;
-      for (String itemId in itemIds) {
+      // Make ALL API calls concurrently for super fast deletion
+      List<Future<bool>> futures = itemIds.map((itemId) async {
         try {
           Response response =
               await api.postWithForm("api/favouriteItem", {'item_id': itemId},
@@ -2111,15 +2110,21 @@ class HomeController extends GetxController {
                   showdialog: false);
 
           if (response.statusCode == 200) {
-            successCount++;
             print("Successfully removed listing $itemId");
+            return true;
           } else {
             print("Failed to remove listing $itemId: ${response.statusCode}");
+            return false;
           }
         } catch (e) {
           print("Error removing listing $itemId: $e");
+          return false;
         }
-      }
+      }).toList();
+
+      // Wait for ALL requests to complete simultaneously
+      List<bool> results = await Future.wait(futures);
+      int successCount = results.where((success) => success).length;
 
       // Clear the local list regardless of individual failures
       userFavouriteListingModelList.clear();
@@ -2149,11 +2154,10 @@ class HomeController extends GetxController {
         return true; // Nothing to remove
       }
 
-      print("Removing ${sellerIds.length} favourite sellers...");
+      print("Removing ${sellerIds.length} favourite sellers concurrently...");
 
-      // Remove each seller individually using direct API calls (avoid side effects)
-      int successCount = 0;
-      for (String sellerIdToRemove in sellerIds) {
+      // Make ALL API calls concurrently for super fast deletion
+      List<Future<bool>> futures = sellerIds.map((sellerIdToRemove) async {
         try {
           Response response = await api.postWithForm(
               "api/favouriteSeller",
@@ -2170,16 +2174,22 @@ class HomeController extends GetxController {
               showdialog: false);
 
           if (response.statusCode == 200) {
-            successCount++;
             print("Successfully removed seller $sellerIdToRemove");
+            return true;
           } else {
             print(
                 "Failed to remove seller $sellerIdToRemove: ${response.statusCode}");
+            return false;
           }
         } catch (e) {
           print("Error removing seller $sellerIdToRemove: $e");
+          return false;
         }
-      }
+      }).toList();
+
+      // Wait for ALL requests to complete simultaneously
+      List<bool> results = await Future.wait(futures);
+      int successCount = results.where((success) => success).length;
 
       // Clear the local list regardless of individual failures
       favouriteSellerModel.data?.clear();
