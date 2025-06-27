@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:venta_cuba/Controllers/location_controller.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
+import 'package:venta_cuba/Controllers/home_controller.dart';
 import 'package:venta_cuba/Services/Notfication/notficationservice.dart';
 import 'package:venta_cuba/languages/languages.dart';
 import 'package:venta_cuba/view/splash%20Screens/white_screen.dart';
@@ -70,8 +71,14 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
 
   Future<void> _handleAppResume() async {
     try {
+      print('🔥 App resumed - handling badge count and user status');
+
+      // Handle app opened - reset badge count first
+      await FCM.handleAppOpened();
+
       final authCont = Get.find<AuthController>();
       authCont.refreshDeviceToken();
+
       // Also update device tokens in all chat documents
       if (authCont.user?.userId != null) {
         authCont.updateDeviceTokenInAllChats(deviceToken);
@@ -80,18 +87,25 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
       // Set user as online when app becomes active
       authCont.setUserOnline();
 
-      // Update badge count based on actual unread messages when app becomes active
+      // Update unread message indicators
       try {
         final chatCont = Get.find<ChatController>();
-        await chatCont.updateBadgeCountFromChats();
-        print('🔥 Badge count updated on app resume');
+        await chatCont.updateUnreadMessageIndicators();
+        print('🔥 Unread message indicators updated on app resume');
       } catch (e) {
-        // If ChatController is not initialized, just clear the badge
-        FCM.clearBadgeCount();
-        print('🔥 Badge cleared on app resume (ChatController not found)');
+        print('🔥 ChatController not found on app resume: $e');
+      }
+
+      // Update notification indicators
+      try {
+        final homeCont = Get.find<HomeController>();
+        await homeCont.updateNotificationIndicators();
+        print('🔥 Notification indicators updated on app resume');
+      } catch (e) {
+        print('🔥 HomeController not found on app resume: $e');
       }
     } catch (e) {
-      print('Error refreshing token on app resume: $e');
+      print('🔥 Error handling app resume: $e');
     }
   }
 }

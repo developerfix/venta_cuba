@@ -85,8 +85,11 @@ class FCM {
       authCont.hasUnreadMessages.value = true;
       authCont.update();
 
-      // Increment badge count for new chat messages
+      // Increment badge count for new messages
       if (messageData["type"] == "message") {
+        await incrementBadgeCount();
+      } else {
+        // For other notifications (like favorite seller posts), also increment badge
         await incrementBadgeCount();
       }
 
@@ -340,12 +343,14 @@ class FCM {
     _badgeCount++;
     print('🔥 Badge count incremented to: $_badgeCount');
     await _updateAppIconBadge(_badgeCount);
+    await _saveBadgeCount(_badgeCount);
   }
 
   static Future<void> resetBadgeCount() async {
     _badgeCount = 0;
     print('🔥 Badge count reset to: $_badgeCount');
     await _updateAppIconBadge(0);
+    await _saveBadgeCount(0);
   }
 
   static int getBadgeCount() {
@@ -356,6 +361,7 @@ class FCM {
     _badgeCount = count;
     print('🔥 Badge count set to: $_badgeCount');
     await _updateAppIconBadge(count);
+    await _saveBadgeCount(count);
   }
 
   // Update app icon badge using flutter_app_badge_control
@@ -489,9 +495,9 @@ class FCM {
         // Show a notification with badge count 0 to clear the notification badge
         DarwinNotificationDetails iosNotificationDetails =
             const DarwinNotificationDetails(
-          presentAlert: true,
+          presentAlert: false,
           presentBadge: true,
-          presentSound: true,
+          presentSound: false,
           badgeNumber: 0,
         );
 
@@ -516,6 +522,20 @@ class FCM {
     }
 
     print('🔥 Badge count cleared successfully');
+  }
+
+  // Method to handle app opening - should reset badge count
+  static Future<void> handleAppOpened() async {
+    print('🔥 App opened - resetting badge count');
+    await resetBadgeCount();
+
+    // Also clear any pending notifications
+    await flutterLocalNotificationsPlugin.cancelAll();
+
+    // For iOS, ensure the badge is properly cleared
+    if (Platform.isIOS) {
+      await clearBadgeCount();
+    }
   }
 
   Future<void> updateTokenOnServer(String token) async {

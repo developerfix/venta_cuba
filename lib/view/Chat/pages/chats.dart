@@ -30,8 +30,9 @@ class _ChatsState extends State<Chats> {
       gettingUserData();
       authCont.hasUnreadMessages.value = false;
       authCont.update();
-      // Update badge count when chats page is loaded
+      // Update badge count and unread indicators when chats page is loaded
       chatCont.updateBadgeCountFromChats();
+      chatCont.updateUnreadMessageIndicators();
     });
   }
 

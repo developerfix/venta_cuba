@@ -22,6 +22,81 @@ class FavouriteSeller extends StatefulWidget {
 
 class _FavouriteSellerState extends State<FavouriteSeller> {
   final authCont = Get.put(AuthController());
+
+  void _showRemoveAllSellersDialog(BuildContext context, HomeController cont) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Remove All Sellers'.tr),
+          content:
+              Text('Are you sure you want to remove all favourite sellers?'.tr),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Get.back();
+              },
+              child: Text('Cancel'.tr),
+            ),
+            TextButton(
+              onPressed: () async {
+                Get.back();
+                // Show loading indicator
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (BuildContext dialogContext) {
+                    return PopScope(
+                      canPop: false,
+                      child: Center(
+                        child: Container(
+                          padding: EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircularProgressIndicator(),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+
+                try {
+                  bool isRemoved = await cont.removeAllFavouriteSellers();
+
+                  Get.back();
+
+                  if (isRemoved) {
+                    errorAlertToast(
+                        'All favourite sellers removed successfully'.tr);
+                  } else {
+                    errorAlertToast(
+                        'Failed to remove some sellers. Please try again.'.tr);
+                  }
+                } catch (e) {
+                  Get.back();
+                  errorAlertToast(
+                      'Failed to remove sellers. Please try again.'.tr);
+                  print('Error in removeAllFavouriteSellers: $e');
+                }
+              },
+              child: Text(
+                'Remove All'.tr,
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,14 +127,21 @@ class _FavouriteSellerState extends State<FavouriteSeller> {
                             fontWeight: FontWeight.w500,
                             color: Colors.black),
                       ),
-                      Container(
-                        width: 10..w,
+                      GestureDetector(
+                        onTap:
+                            cont.favouriteSellerModel.data?.isNotEmpty == true
+                                ? () {
+                                    _showRemoveAllSellersDialog(context, cont);
+                                  }
+                                : null,
+                        child: Icon(
+                          Icons.delete,
+                          size: 20,
+                        ),
                       ),
                     ],
                   ),
-                  SizedBox(
-                    height: 50..h,
-                  ),
+                  SizedBox(height: 20..h),
                   Expanded(
                     child: cont.favouriteSellerModel.data!.isEmpty
                         ? Center(child: CustomText(text: "No Data Found".tr))
@@ -241,7 +323,8 @@ class _FavouriteSellerState extends State<FavouriteSeller> {
                                                         21.5..r)),
                                             child: SvgPicture.asset(
                                               'assets/icons/heart1.svg',
-                                              color: Colors.red,
+                                              colorFilter: ColorFilter.mode(
+                                                  Colors.red, BlendMode.srcIn),
                                             ),
                                           ),
                                         ),

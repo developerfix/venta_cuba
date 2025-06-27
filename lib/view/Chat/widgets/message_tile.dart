@@ -90,40 +90,9 @@ class _MessageTileState extends State<MessageTile> {
                             isONImageScreen = true;
                           });
                         },
-                        child: CachedNetworkImage(
-                          height: 100..h,
-                          width: 100.w,
-                          imageUrl: widget.message,
-                          imageBuilder: (context, imageProvider) => ClipRRect(
-                            borderRadius: BorderRadius.only(
-                              topLeft: Radius.circular(10.r),
-                              topRight: Radius.circular(10.r),
-                              bottomLeft: Radius.circular(10.r),
-                              bottomRight: Radius.circular(10.r),
-                            ),
-                            child: Container(
-                              height: 100..h,
-                              width: 100.w,
-                              decoration: BoxDecoration(
-                                image: DecorationImage(
-                                  image: imageProvider,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            ),
-                          ),
-                          placeholder: (context, url) => SizedBox(
-                              height: 100..h,
-                              width: 100.w,
-                              child: Center(
-                                  child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ))),
-                          errorWidget: (context, url, error) =>
-                              Icon(Icons.error),
-                        ))
+                        child: _buildImageWidget(widget.message),
+                      )
                     : SizedBox(
-                        // width: 247.w,
                         child: Padding(
                           padding: EdgeInsets.symmetric(
                               horizontal: 5.w, vertical: 2.h),
@@ -141,6 +110,7 @@ class _MessageTileState extends State<MessageTile> {
               ],
             ),
           ),
+
           SizedBox(
             height: 2.h,
           ),
@@ -155,6 +125,57 @@ class _MessageTileState extends State<MessageTile> {
         ],
       ),
     );
+  }
+
+  Widget _buildImageWidget(String path) {
+    final isNetwork = path.startsWith('http://') || path.startsWith('https://');
+    if (isNetwork) {
+      return CachedNetworkImage(
+        height: 100..h,
+        width: 100.w,
+        imageUrl: path,
+        imageBuilder: (context, imageProvider) => ClipRRect(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(10.r),
+            topRight: Radius.circular(10.r),
+            bottomLeft: Radius.circular(10.r),
+            bottomRight: Radius.circular(10.r),
+          ),
+          child: Container(
+            height: 100..h,
+            width: 100.w,
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: imageProvider,
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+        ),
+        placeholder: (context, url) => SizedBox(
+            height: 100..h,
+            width: 100.w,
+            child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
+        errorWidget: (context, url, error) => Icon(Icons.error),
+      );
+    } else {
+      // Local file
+      return ClipRRect(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(10.r),
+          topRight: Radius.circular(10.r),
+          bottomLeft: Radius.circular(10.r),
+          bottomRight: Radius.circular(10.r),
+        ),
+        child: Image.file(
+          File(path),
+          height: 100..h,
+          width: 100.w,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => Icon(Icons.error),
+        ),
+      );
+    }
   }
 }
 

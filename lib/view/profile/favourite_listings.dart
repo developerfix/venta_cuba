@@ -21,6 +21,80 @@ class FavouriteListings extends StatefulWidget {
 
 class _FavouriteListingsState extends State<FavouriteListings> {
   final authCont = Get.put(AuthController());
+  final homeCont =
+      Get.find<HomeController>(); // Use existing controller instance
+
+  void _showRemoveAllListingsDialog(BuildContext context, HomeController cont) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Remove All Listings'.tr),
+          content: Text(
+              'Are you sure you want to remove all favourite listings?'.tr),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Get.back();
+              },
+              child: Text('Cancel'.tr),
+            ),
+            TextButton(
+              onPressed: () async {
+                Get.back();
+                // Show loading indicator
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (BuildContext dialogContext) {
+                    return PopScope(
+                      canPop: false,
+                      child: Center(
+                        child: Container(
+                          padding: EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircularProgressIndicator(),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+
+                try {
+                  bool isRemoved = await cont.removeAllFavouriteListings();
+                  Get.back();
+
+                  if (isRemoved) {
+                    errorAlertToast(
+                        'All favourite listings removed successfully'.tr);
+                  } else {
+                    errorAlertToast(
+                        'Failed to remove some listings. Please try again.'.tr);
+                  }
+                } catch (e) {
+                  Get.back();
+                  errorAlertToast(
+                      'Failed to remove listings. Please try again.'.tr);
+                }
+              },
+              child: Text(
+                'Remove All'.tr,
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,6 +103,7 @@ class _FavouriteListingsState extends State<FavouriteListings> {
       child: Scaffold(
         backgroundColor: AppColors.white,
         body: GetBuilder<HomeController>(
+          init: homeCont,
           builder: (cont) {
             return Padding(
               padding: const EdgeInsets.only(top: 20, left: 20, right: 20),
@@ -54,14 +129,22 @@ class _FavouriteListingsState extends State<FavouriteListings> {
                               fontWeight: FontWeight.w500,
                               color: AppColors.black),
                         ),
-                        Container(
-                          height: 24..h,
-                          width: 24..w,
-                          color: Colors.transparent,
-                        )
+                        GestureDetector(
+                          onTap: cont.userFavouriteListingModelList
+                                      .isNotEmpty ==
+                                  true
+                              ? () {
+                                  _showRemoveAllListingsDialog(context, cont);
+                                }
+                              : null,
+                          child: Icon(
+                            Icons.delete,
+                            size: 20,
+                          ),
+                        ),
                       ],
                     ),
-                    SizedBox(height: 60..h),
+                    SizedBox(height: 20..h),
                     Expanded(
                       child: cont.userFavouriteListingModelList.isEmpty
                           ? Center(child: CustomText(text: "No Data Found".tr))
@@ -252,6 +335,8 @@ class _FavouriteListingsState extends State<FavouriteListings> {
                                               Get.to(Login());
                                             } else {
                                               cont.listingModel = data;
+                                              String originalFavoriteStatus =
+                                                  data.isFavorite ?? "0";
                                               data.isFavorite == "0"
                                                   ? data.isFavorite = "1"
                                                   : data.isFavorite = "0";
@@ -262,12 +347,63 @@ class _FavouriteListingsState extends State<FavouriteListings> {
                                               bool isAddedF =
                                                   await cont.favouriteItem();
                                               if (isAddedF) {
+                                                // Since we're in favorites screen, clicking heart means unfavoriting
+                                                // So we should always remove the item from the list
+                                                cont.userFavouriteListingModelList
+                                                    .removeAt(index);
+
+                                                // Update the corresponding item in home listing if it exists
+                                                String itemIdToUpdate =
+                                                    data.itemId ?? "";
+                                                for (int i = 0;
+                                                    i <
+                                                        cont.listingModelList
+                                                            .length;
+                                                    i++) {
+                                                  if (cont.listingModelList[i]
+                                                          .itemId ==
+                                                      itemIdToUpdate) {
+                                                    cont.listingModelList[i]
+                                                        .isFavorite = "0";
+                                                    break;
+                                                  }
+                                                }
+
+                                                // Also update in search results
+                                                for (int i = 0;
+                                                    i <
+                                                        cont.listingModelSearchList
+                                                            .length;
+                                                    i++) {
+                                                  if (cont
+                                                          .listingModelSearchList[
+                                                              i]
+                                                          .itemId ==
+                                                      itemIdToUpdate) {
+                                                    cont
+                                                        .listingModelSearchList[
+                                                            i]
+                                                        .isFavorite = "0";
+                                                    break;
+                                                  }
+                                                }
+
+                                                // Force update all GetBuilder widgets listening to this controller
+                                                cont.update();
+
+                                                // Also trigger update on the next frame to ensure UI rebuilds
+                                                WidgetsBinding.instance
+                                                    .addPostFrameCallback((_) {
+                                                  cont.update();
+                                                });
+
                                                 errorAlertToast(
                                                     "Successfully".tr);
                                               } else {
-                                                data.isFavorite == "0"
-                                                    ? data.isFavorite = "1"
-                                                    : data.isFavorite = "0";
+                                                // Revert the change if API call failed
+                                                data.isFavorite =
+                                                    originalFavoriteStatus;
+                                                cont.update();
                                               }
                                             }
                                           },
@@ -283,9 +419,11 @@ class _FavouriteListingsState extends State<FavouriteListings> {
                                             ),
                                             child: SvgPicture.asset(
                                               'assets/icons/heart1.svg',
-                                              color: data.isFavorite == '0'
-                                                  ? Colors.grey
-                                                  : Colors.red,
+                                              colorFilter: ColorFilter.mode(
+                                                  data.isFavorite == '0'
+                                                      ? Colors.grey
+                                                      : Colors.red,
+                                                  BlendMode.srcIn),
                                             ),
                                           ),
                                         ),

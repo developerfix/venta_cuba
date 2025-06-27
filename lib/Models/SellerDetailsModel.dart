@@ -27,15 +27,22 @@ class SellerData {
   SellerRatingsCount? sellerRatingsCount;
   List<SellerRatings>? sellerRatings;
 
-  SellerData({this.sellerAbout, this.sellerListings, this.sellerRatings, this.sellerRatingsCount});
+  SellerData(
+      {this.sellerAbout,
+      this.sellerListings,
+      this.sellerRatings,
+      this.sellerRatingsCount});
 
   SellerData.fromJson(Map<String, dynamic> json) {
     sellerRatingsCount = json['seller_ratings_count'] != null
         ? new SellerRatingsCount.fromJson(json['seller_ratings_count'])
         : null;
-    sellerAbout = json['seller_about'] != null ? new User.fromJson(json['seller_about']) : null;
-    sellerListings =
-        json['seller_listings'] != null ? new SellerListings.fromJson(json['seller_listings']) : null;
+    sellerAbout = json['seller_about'] != null
+        ? new User.fromJson(json['seller_about'])
+        : null;
+    sellerListings = json['seller_listings'] != null
+        ? new SellerListings.fromJson(json['seller_listings'])
+        : null;
     if (json['seller_ratings'] != null) {
       sellerRatings = <SellerRatings>[];
       json['seller_ratings'].forEach((v) {
@@ -53,7 +60,8 @@ class SellerData {
       data['seller_listings'] = this.sellerListings!.toJson();
     }
     if (this.sellerRatings != null) {
-      data['seller_ratings'] = this.sellerRatings!.map((v) => v.toJson()).toList();
+      data['seller_ratings'] =
+          this.sellerRatings!.map((v) => v.toJson()).toList();
     }
     return data;
   }
@@ -348,14 +356,17 @@ class AdditionalFeatures {
   OptionalDetails? optionalDetails;
   String? videoLink;
 
-  AdditionalFeatures({this.type, this.listingDetails, this.optionalDetails, this.videoLink});
+  AdditionalFeatures(
+      {this.type, this.listingDetails, this.optionalDetails, this.videoLink});
 
   AdditionalFeatures.fromJson(Map<String, dynamic> json) {
     type = json['type'];
-    listingDetails =
-        json['listing_details'] != null ? new ListingDetails.fromJson(json['listing_details']) : null;
-    optionalDetails =
-        json['optional_details'] != null ? new OptionalDetails.fromJson(json['optional_details']) : null;
+    listingDetails = json['listing_details'] != null
+        ? new ListingDetails.fromJson(json['listing_details'])
+        : null;
+    optionalDetails = json['optional_details'] != null
+        ? new OptionalDetails.fromJson(json['optional_details'])
+        : null;
     videoLink = json['video_link'];
   }
 
@@ -437,13 +448,16 @@ class OptionalDetails {
   String? fulfillment;
   String? payment;
 
-  OptionalDetails({this.phoneNumber, this.condition, this.fulfillment, this.payment});
+  OptionalDetails(
+      {this.phoneNumber, this.condition, this.fulfillment, this.payment});
 
   OptionalDetails.fromJson(Map<String, dynamic> json) {
-    phoneNumber = json['phone_number'].toString();
-    condition = json['condition'].toString();
-    fulfillment = json['fulfillment'].toString();
-    payment = json['payment'].toString();
+    phoneNumber =
+        json['phone_number'] != null ? json['phone_number'].toString() : null;
+    condition = json['condition'] != null ? json['condition'].toString() : null;
+    fulfillment =
+        json['fulfillment'] != null ? json['fulfillment'].toString() : null;
+    payment = json['payment'] != null ? json['payment'].toString() : null;
   }
 
   Map<String, dynamic> toJson() {

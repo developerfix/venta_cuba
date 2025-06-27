@@ -63,6 +63,7 @@ class ChatPage extends StatefulWidget {
 
 class _ChatPageState extends State<ChatPage> {
   FCM firebaseMessaging = FCM();
+
   final chatCont = Get.put(ChatController());
   final homeCont = Get.put(HomeController());
   final authCont = Get.put(AuthController());
@@ -108,14 +109,19 @@ class _ChatPageState extends State<ChatPage> {
     // Initialize listing data for this specific chat
     _initializeListingData();
 
+    // Improved scroll listener with better logic
     chatCont.scrollController.addListener(() {
-      if (chatCont.scrollController.position.pixels ==
-          chatCont.scrollController.position.maxScrollExtent) {
-        chatCont.isShow = false;
-        chatCont.update();
-      } else {
-        chatCont.isShow = true;
-        chatCont.update();
+      if (chatCont.scrollController.hasClients) {
+        final maxScroll = chatCont.scrollController.position.maxScrollExtent;
+        final currentScroll = chatCont.scrollController.position.pixels;
+
+        // Show scroll-to-bottom button if user is not near the bottom (within 100 pixels)
+        bool shouldShow = (maxScroll - currentScroll) > 100;
+
+        if (chatCont.isShow != shouldShow) {
+          chatCont.isShow = shouldShow;
+          chatCont.update();
+        }
       }
     });
     chatCont.isLast = widget.isLast ?? false;
@@ -164,12 +170,23 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  void _scrollToBottom() {
+  void _scrollToBottom({bool animated = false}) {
     if (chatCont.scrollController.hasClients) {
-      chatCont.scrollController
-          .jumpTo(chatCont.scrollController.position.maxScrollExtent);
+      final maxScrollExtent =
+          chatCont.scrollController.position.maxScrollExtent;
+      if (animated) {
+        chatCont.scrollController.animateTo(
+          maxScrollExtent,
+          duration: Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      } else {
+        chatCont.scrollController.jumpTo(maxScrollExtent);
+      }
     } else {
-      Timer(Duration(milliseconds: 400), () => _scrollToBottom());
+      // Retry after a short delay if scroll controller is not ready
+      Timer(Duration(milliseconds: 100),
+          () => _scrollToBottom(animated: animated));
     }
   }
 
@@ -244,7 +261,6 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   Widget build(BuildContext context) {
-    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -538,16 +554,15 @@ class _ChatPageState extends State<ChatPage> {
                                     hintText: 'Type Message'.tr,
                                     hintStyle: TextStyle(
                                       fontSize: 14,
-                                      color: Colors.black.withOpacity(0.5),
+                                      color:
+                                          Colors.black.withValues(alpha: 0.5),
                                     )),
                                 onTap: () {
-                                  print("object");
-
-                                  // cont.scrollController.jumpTo(chatCont
-                                  //     .scrollController
-                                  //     .position
-                                  //     .physics
-                                  //     .maxFlingVelocity);
+                                  // Scroll to bottom when text field is tapped (keyboard appears)
+                                  Future.delayed(Duration(milliseconds: 300),
+                                      () {
+                                    _scrollToBottom(animated: true);
+                                  });
                                   cont.update();
                                 },
                                 onChanged: (String? value) {
@@ -601,8 +616,7 @@ class _ChatPageState extends State<ChatPage> {
                 visible: cont.isShow,
                 child: InkWell(
                   onTap: () {
-                    chatCont.scrollController.jumpTo(
-                        chatCont.scrollController.position.maxScrollExtent);
+                    _scrollToBottom(animated: true);
                   },
                   child: Container(
                     height: 40.h,
@@ -612,7 +626,7 @@ class _ChatPageState extends State<ChatPage> {
                       color: Colors.white,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.grey.withOpacity(0.5),
+                          color: Colors.grey.withValues(alpha: 0.5),
                           spreadRadius: 5,
                           blurRadius: 7,
                           offset: Offset(
@@ -679,97 +693,99 @@ class _ChatPageState extends State<ChatPage> {
     return StreamBuilder(
       stream: chatCont.chats,
       builder: (context, AsyncSnapshot snapshot) {
-        return snapshot.hasData
-            ? Column(
-                children: [
-                  GetBuilder<ChatController>(builder: (cont) {
-                    return Expanded(
-                      child: ListView.builder(
-                        padding: EdgeInsets.only(bottom: 20.h, top: 80.h),
-                        controller: cont.scrollController,
-                        itemCount: snapshot.data.docs.length,
-                        itemBuilder: (context, index) {
-                          var sendBy = snapshot.data.docs[index].get('sendBy');
-                          print(sendBy);
-                          Timestamp? timestamp =
-                              snapshot.data.docs[index].get('time');
-                          String formattedTime = timestamp != null
-                              ? DateFormat('h:mm a')
-                                  .format(timestamp.toDate().toLocal())
-                              : "";
-                          return "${authCont.user?.userId}" == sendBy
-                              ? Slidable(
-                                  endActionPane: ActionPane(
-                                    extentRatio: 0.25,
-                                    motion: StretchMotion(),
-                                    children: [
-                                      SlidableAction(
-                                        icon: Icons.save,
-                                        label: "Save",
-                                        backgroundColor: Colors.blue,
-                                        onPressed: (context) {
-                                          if (snapshot.data.docs[index]
-                                                  ['messageType'] ==
-                                              'image') {
-                                            // saveImageToGallery(snapshot
-                                            //     .data.docs[index]['message']);
-                                          }
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                  child: MessageTile(
-                                      message: snapshot.data.docs[index]
-                                          ['message'],
-                                      sender: snapshot.data.docs[index]
-                                          ['sender'],
-                                      messageType: snapshot.data.docs[index]
-                                          ['messageType'],
-                                      messageTime: formattedTime,
-                                      sentByMe:
-                                          "${authCont.user?.userId}" == sendBy),
-                                )
-                              : Slidable(
-                                  startActionPane: ActionPane(
-                                    extentRatio: 0.25,
-                                    motion: StretchMotion(),
-                                    children: [
-                                      SlidableAction(
-                                        icon: Icons.save,
-                                        label: "Save",
-                                        backgroundColor: Colors.blue,
-                                        onPressed: (context) {
-                                          if (snapshot.data.docs[index]
-                                                  ['messageType'] ==
-                                              'image') {
-                                            // saveImageToGallery(snapshot
-                                            //     .data.docs[index]['message']);
-                                          }
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                  child: MessageTile(
-                                      message: snapshot.data.docs[index]
-                                          ['message'],
-                                      sender: snapshot.data.docs[index]
-                                          ['sender'],
-                                      messageType: snapshot.data.docs[index]
-                                          ['messageType'],
-                                      messageTime: formattedTime,
-                                      sentByMe:
-                                          "${authCont.user?.userId}" == sendBy),
-                                );
-                        },
-                      ),
-                    );
-                  }),
-                  SizedBox(
-                    height: 53.h,
-                  )
-                ],
-              )
-            : Container();
+        if (!snapshot.hasData) {
+          return Container();
+        }
+
+        // Schedule scroll to bottom after the widget tree is built
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToBottom();
+        });
+
+        return Column(
+          children: [
+            GetBuilder<ChatController>(builder: (cont) {
+              return Expanded(
+                child: ListView.builder(
+                  padding: EdgeInsets.only(bottom: 20.h, top: 80.h),
+                  controller: cont.scrollController,
+                  itemCount: snapshot.data.docs.length,
+                  itemBuilder: (context, index) {
+                    var sendBy = snapshot.data.docs[index].get('sendBy');
+                    print(sendBy);
+                    Timestamp? timestamp =
+                        snapshot.data.docs[index].get('time');
+                    String formattedTime = timestamp != null
+                        ? DateFormat('h:mm a')
+                            .format(timestamp.toDate().toLocal())
+                        : "";
+
+                    return "${authCont.user?.userId}" == sendBy
+                        ? Slidable(
+                            endActionPane: ActionPane(
+                              extentRatio: 0.25,
+                              motion: StretchMotion(),
+                              children: [
+                                SlidableAction(
+                                  icon: Icons.save,
+                                  label: "Save",
+                                  backgroundColor: Colors.blue,
+                                  onPressed: (context) {
+                                    if (snapshot.data.docs[index]
+                                            ['messageType'] ==
+                                        'image') {
+                                      // saveImageToGallery(snapshot
+                                      //     .data.docs[index]['message']);
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
+                            child: MessageTile(
+                                message: snapshot.data.docs[index]['message'],
+                                sender: snapshot.data.docs[index]['sender'],
+                                messageType: snapshot.data.docs[index]
+                                    ['messageType'],
+                                messageTime: formattedTime,
+                                sentByMe: "${authCont.user?.userId}" == sendBy),
+                          )
+                        : Slidable(
+                            startActionPane: ActionPane(
+                              extentRatio: 0.25,
+                              motion: StretchMotion(),
+                              children: [
+                                SlidableAction(
+                                  icon: Icons.save,
+                                  label: "Save",
+                                  backgroundColor: Colors.blue,
+                                  onPressed: (context) {
+                                    if (snapshot.data.docs[index]
+                                            ['messageType'] ==
+                                        'image') {
+                                      // saveImageToGallery(snapshot
+                                      //     .data.docs[index]['message']);
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
+                            child: MessageTile(
+                                message: snapshot.data.docs[index]['message'],
+                                sender: snapshot.data.docs[index]['sender'],
+                                messageType: snapshot.data.docs[index]
+                                    ['messageType'],
+                                messageTime: formattedTime,
+                                sentByMe: "${authCont.user?.userId}" == sendBy),
+                          );
+                  },
+                ),
+              );
+            }),
+            SizedBox(
+              height: 53.h,
+            )
+          ],
+        );
       },
     );
   }
@@ -790,16 +806,14 @@ class _ChatPageState extends State<ChatPage> {
         await chatCont.sendMessage(id ?? "", chatMessageMap);
         String message = chatCont.messageController.text;
 
-        chatCont.scrollController
-            .jumpTo(chatCont.scrollController.position.maxScrollExtent);
+        // Clear the message controller first
         chatCont.messageController.clear();
-        Future.delayed(Duration(milliseconds: 500), () {
-          if (chatCont.scrollController.hasClients) {
-            chatCont.scrollController.jumpTo(
-              chatCont.scrollController.position.maxScrollExtent,
-            );
-          }
+
+        // Scroll to bottom with a slight delay to ensure message is added
+        Future.delayed(Duration(milliseconds: 100), () {
+          _scrollToBottom(animated: true);
         });
+
         // Send notification with improved error handling
         await sendNotificationToRecipient(message, messageType);
       }
@@ -892,7 +906,6 @@ class _ChatPageState extends State<ChatPage> {
 
       String currentUserId = authCont.user!.userId.toString();
       String? senderId = chatDoc.get('senderId');
-      String? sendToId = chatDoc.get('sendToId');
 
       // Get the recipient's device token (not your own)
       if (senderId == currentUserId) {
@@ -1073,32 +1086,77 @@ class _ChatPageState extends State<ChatPage> {
     final pickedFile = await ImagePicker().pickImage(
       source: ImageSource.camera,
     );
-    await uploadImage(pickedFile);
-    sendMessage("image");
+    if (pickedFile != null) {
+      // Add a temporary message with local image path
+      _addTemporaryImageMessage(pickedFile.path);
+      // Start upload in background
+      uploadImage(pickedFile, localPath: pickedFile.path);
+    }
   }
 
   void _openGallery(BuildContext context) async {
     final pickedFile = await ImagePicker().pickImage(
       source: ImageSource.gallery,
     );
-    await uploadImage(pickedFile);
-    sendMessage("image");
+    if (pickedFile != null) {
+      // Add a temporary message with local image path
+      _addTemporaryImageMessage(pickedFile.path);
+      // Start upload in background
+      uploadImage(pickedFile, localPath: pickedFile.path);
+    }
   }
 
-  Future uploadImage(var pickedFile) async {
+  void _addTemporaryImageMessage(String localPath) {
+    // Add a temporary message to the chat with a local file path and a 'pending' flag
+    Map<String, dynamic> chatMessageMap = {
+      "message": localPath,
+      "isMessaged": true,
+      "messageType": "image",
+      "sender": "${authCont.user?.firstName} ${authCont.user?.lastName}",
+      "time": FieldValue.serverTimestamp(),
+      "sendBy": "${authCont.user?.userId}",
+      "pending": true, // Custom flag to indicate this is a local/pending image
+    };
+    String? id = widget.chatId ?? widget.createChatid;
+    chatCont.sendMessage(id ?? "", chatMessageMap);
+
+    // Scroll to bottom after adding temporary image message
+    Future.delayed(Duration(milliseconds: 100), () {
+      _scrollToBottom(animated: true);
+    });
+  }
+
+  Future uploadImage(var pickedFile, {required String localPath}) async {
     final storageRef = FirebaseStorage.instance
         .ref()
         .child('images/${DateTime.now().millisecondsSinceEpoch}.jpg');
+    try {
+      await storageRef.putFile(File(pickedFile.path)).then((p) async {
+        final url = await storageRef.getDownloadURL();
+        // Update the previously sent temporary message with the real image URL
+        _replaceTemporaryImageMessage(localPath, url);
+      }).timeout(Duration(seconds: 50));
+    } catch (error) {
+      print(error);
+    }
+  }
 
-    await storageRef
-        .putFile(File(pickedFile.path))
-        .then((p) async {
-          final url = await storageRef.getDownloadURL();
-          chatCont.messageController.text = url;
-        })
-        .timeout(Duration(seconds: 50))
-        .onError((error, stackTrace) {
-          print(error);
-        });
+  void _replaceTemporaryImageMessage(String localPath, String imageUrl) async {
+    // Find and update the message in Firestore where message == localPath and pending == true
+    String? id = widget.chatId ?? widget.createChatid;
+    var chatCollection = FirebaseFirestore.instance
+        .collection("chat")
+        .doc(id)
+        .collection("messages");
+    var query = await chatCollection
+        .where("message", isEqualTo: localPath)
+        .where("pending", isEqualTo: true)
+        .get();
+    for (var doc in query.docs) {
+      await doc.reference.update({
+        "message": imageUrl,
+        "pending": FieldValue.delete(), // Remove the pending flag
+      });
+    }
   }
 }

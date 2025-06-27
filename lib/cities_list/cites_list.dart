@@ -10,13 +10,47 @@ class CustomCitiesList {
       required this.countryName,
       required this.latitude,
       required this.longitude});
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is CustomCitiesList &&
+        other.cityName == cityName &&
+        other.provinceName == provinceName &&
+        other.countryName == countryName &&
+        other.latitude == latitude &&
+        other.longitude == longitude;
+  }
+
+  @override
+  int get hashCode {
+    return cityName.hashCode ^
+        provinceName.hashCode ^
+        countryName.hashCode ^
+        latitude.hashCode ^
+        longitude.hashCode;
+  }
 }
 
 class CustomProvinceNameList {
   String provinceName;
   String countryName;
 
-  CustomProvinceNameList({required this.provinceName, required this.countryName});
+  CustomProvinceNameList(
+      {required this.provinceName, required this.countryName});
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is CustomProvinceNameList &&
+        other.provinceName == provinceName &&
+        other.countryName == countryName;
+  }
+
+  @override
+  int get hashCode {
+    return provinceName.hashCode ^ countryName.hashCode;
+  }
 }
 
 List<CustomCitiesList> citiesList = [
@@ -200,7 +234,7 @@ List<CustomCitiesList> citiesList = [
   ),
   CustomCitiesList(
     cityName: "Camagüey",
-    provinceName: "Camagüey ",
+    provinceName: "Camagüey",
     countryName: "Cuba",
     latitude: "21.3839",
     longitude: "-77.9075",
@@ -690,7 +724,7 @@ List<CustomCitiesList> citiesList = [
   ),
   CustomCitiesList(
     cityName: "Mataguá",
-    provinceName: "Villa Clara ",
+    provinceName: "Villa Clara",
     countryName: "Cuba",
     latitude: "22.237",
     longitude: "-79.9992",
@@ -914,7 +948,7 @@ List<CustomCitiesList> citiesList = [
   ),
   CustomCitiesList(
     cityName: "San Antonio de las Vueltas",
-    provinceName: "Villa Clara ",
+    provinceName: "Villa Clara",
     countryName: "Cuba",
     latitude: "22.5167",
     longitude: "-79.7021",
@@ -998,7 +1032,7 @@ List<CustomCitiesList> citiesList = [
   ),
   CustomCitiesList(
     cityName: "Santa Clara",
-    provinceName: "Villa Clara admin",
+    provinceName: "Villa Clara",
     countryName: "Cuba",
     latitude: "22.4069",
     longitude: "-79.9649",
@@ -1061,7 +1095,7 @@ List<CustomCitiesList> citiesList = [
   ),
   CustomCitiesList(
     cityName: "Trinidad",
-    provinceName: "Sancti Spíritus ",
+    provinceName: "Sancti Spíritus",
     countryName: "Cuba",
     latitude: "21.8042",
     longitude: "-79.9831",

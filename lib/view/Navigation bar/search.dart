@@ -43,6 +43,125 @@ class _SearchState extends State<Search> {
     );
   }
 
+  void _showSortBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.only(
+                  topRight: Radius.circular(40), topLeft: Radius.circular(40))),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  height: 4..h,
+                  width: 160..w,
+                  color: AppColors.k0xFFD9D9D9,
+                ),
+                SizedBox(height: 17..h),
+                Text(
+                  'Sort by'.tr,
+                  style: TextStyle(
+                      fontSize: 17..sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.black),
+                ),
+                SizedBox(height: 20..h),
+                GetBuilder<HomeController>(builder: (cont) {
+                  return Column(
+                    children: [
+                      ListTile(
+                        onTap: () {
+                          cont.selectedType = "Oldest First";
+                          cont.applySortingToSearchList();
+                          cont.update();
+                          Navigator.pop(context);
+                        },
+                        title: Text('Oldest First'.tr),
+                        leading: Radio(
+                          value: "Oldest First",
+                          groupValue: cont.selectedType,
+                          onChanged: (value) {
+                            cont.selectedType = value ?? "";
+                            cont.applySortingToSearchList();
+                            cont.update();
+                            Navigator.pop(context);
+                          },
+                        ),
+                      ),
+                      ListTile(
+                        onTap: () {
+                          cont.selectedType = "Newest First";
+                          cont.applySortingToSearchList();
+                          cont.update();
+                          Navigator.pop(context);
+                        },
+                        title: Text('Newest First'.tr),
+                        leading: Radio(
+                          value: "Newest First",
+                          groupValue: cont.selectedType,
+                          onChanged: (value) {
+                            cont.selectedType = value ?? "";
+                            cont.applySortingToSearchList();
+                            cont.update();
+                            Navigator.pop(context);
+                          },
+                        ),
+                      ),
+                      ListTile(
+                        onTap: () {
+                          cont.selectedType = "Highest Price";
+                          cont.applySortingToSearchList();
+                          cont.update();
+                          Navigator.pop(context);
+                        },
+                        title: Text('Highest Price'.tr),
+                        leading: Radio(
+                          value: "Highest Price",
+                          groupValue: cont.selectedType,
+                          onChanged: (value) {
+                            cont.selectedType = value ?? "";
+                            cont.applySortingToSearchList();
+                            cont.update();
+                            Navigator.pop(context);
+                          },
+                        ),
+                      ),
+                      ListTile(
+                        onTap: () {
+                          cont.selectedType = "Lowest Price";
+                          cont.applySortingToSearchList();
+                          cont.update();
+                          Navigator.pop(context);
+                        },
+                        title: Text('Lowest Price'.tr),
+                        leading: Radio(
+                          value: "Lowest Price",
+                          groupValue: cont.selectedType,
+                          onChanged: (value) {
+                            cont.selectedType = value ?? "";
+                            cont.applySortingToSearchList();
+                            cont.update();
+                            Navigator.pop(context);
+                          },
+                        ),
+                      ),
+                    ],
+                  );
+                }),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   bool isListView = false;
 
   void toggleView(bool listView) {
@@ -63,9 +182,17 @@ class _SearchState extends State<Search> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     getAdd();
+
+    // Perform initial search when screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (homeCont.listingModelSearchList.isEmpty) {
+        homeCont.currentSearchPage.value = 1;
+        homeCont.listingModelSearchList.clear();
+        homeCont.getListingSearch();
+      }
+    });
   }
 
   @override
@@ -107,6 +234,10 @@ class _SearchState extends State<Search> {
                           ),
                           child: TextField(
                             controller: cont.searchController,
+                            onChanged: (value) {
+                              // Trigger rebuild to show/hide close icon
+                              cont.update();
+                            },
                             onSubmitted: (value) {
                               cont.currentSearchPage.value = 1;
                               cont.listingModelSearchList.clear();
@@ -133,6 +264,26 @@ class _SearchState extends State<Search> {
                                         color: AppColors.k0xFFC4C4C4),
                                   ),
                                 ),
+                                suffixIcon: cont
+                                        .searchController.text.isNotEmpty
+                                    ? InkWell(
+                                        onTap: () {
+                                          cont.searchController.clear();
+                                          cont.currentSearchPage.value = 1;
+                                          cont.listingModelSearchList.clear();
+                                          cont.update();
+                                          cont.getListingSearch();
+                                        },
+                                        child: Container(
+                                          padding: EdgeInsets.all(12),
+                                          child: Icon(
+                                            Icons.close,
+                                            color: AppColors.k0xFFC4C4C4,
+                                            size: 20,
+                                          ),
+                                        ),
+                                      )
+                                    : null,
                                 hintText: 'What are you looking for?'.tr,
                                 hintStyle: TextStyle(
                                     color: Color(0xFFA9ABAC),
@@ -158,42 +309,13 @@ class _SearchState extends State<Search> {
                           child: Padding(
                             padding: const EdgeInsets.only(right: 17),
                             child: Container(
-                              height: 40..h,
-                              width: 98..w,
+                              padding: EdgeInsets.all(8),
                               decoration: BoxDecoration(
                                   color: AppColors.k0xFF0254B8.withOpacity(.2),
                                   borderRadius: BorderRadius.circular(60)),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceAround,
-                                children: [
-                                  Container(
-                                    height: 27..h,
-                                    width: 27..w,
-                                    decoration: BoxDecoration(
-                                        color: AppColors.k0xFF0254B8,
-                                        shape: BoxShape.circle),
-                                    child: Center(
-                                      child: Text(
-                                        '+1',
-                                        style: TextStyle(
-                                            fontSize: 13..sp,
-                                            fontWeight: FontWeight.w500,
-                                            color: AppColors.white),
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    height: 27..h,
-                                    width: 27..w,
-                                    decoration:
-                                        BoxDecoration(shape: BoxShape.circle),
-                                    child: Center(
-                                      child: SvgPicture.asset(
-                                          'assets/icons/list.svg'),
-                                    ),
-                                  ),
-                                ],
+                              child: Center(
+                                child:
+                                    SvgPicture.asset('assets/icons/list.svg'),
                               ),
                             ),
                           ),
@@ -385,28 +507,34 @@ class _SearchState extends State<Search> {
                           ],
                         ),
                       ),
-                      Container(
-                        padding: EdgeInsets.all(10),
-                        height: 49..h,
-                        decoration: BoxDecoration(
-                            border: Border.all(),
-                            borderRadius: BorderRadius.circular(60)),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            Container(
-                              height: 24..h,
-                              width: 24..w,
-                              child: SvgPicture.asset('assets/icons/sort.svg'),
-                            ),
-                            Text(
-                              'Sort'.tr,
-                              style: TextStyle(
-                                  fontSize: 16..sp,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.black),
-                            )
-                          ],
+                      GestureDetector(
+                        onTap: () {
+                          _showSortBottomSheet(context);
+                        },
+                        child: Container(
+                          padding: EdgeInsets.all(10),
+                          height: 49..h,
+                          decoration: BoxDecoration(
+                              border: Border.all(),
+                              borderRadius: BorderRadius.circular(60)),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              Container(
+                                height: 24..h,
+                                width: 24..w,
+                                child:
+                                    SvgPicture.asset('assets/icons/sort.svg'),
+                              ),
+                              Text(
+                                'Sort'.tr,
+                                style: TextStyle(
+                                    fontSize: 16..sp,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.black),
+                              )
+                            ],
+                          ),
                         ),
                       )
                     ],
@@ -578,6 +706,34 @@ class _SearchState extends State<Search> {
                           homeCont.update();
                           bool isAddedF = await homeCont.favouriteItem();
                           if (isAddedF) {
+                            // Sync with other lists
+                            String itemId =
+                                homeCont.listingModelSearchList[index].itemId ??
+                                    "";
+                            String newFavoriteStatus = homeCont
+                                    .listingModelSearchList[index].isFavorite ??
+                                "0";
+
+                            // Update home listing
+                            for (int i = 0;
+                                i < homeCont.listingModelList.length;
+                                i++) {
+                              if (homeCont.listingModelList[i].itemId ==
+                                  itemId) {
+                                homeCont.listingModelList[i].isFavorite =
+                                    newFavoriteStatus;
+                                break;
+                              }
+                            }
+
+                            // Update favorites list
+                            if (newFavoriteStatus == "0") {
+                              homeCont.userFavouriteListingModelList
+                                  .removeWhere(
+                                      (favItem) => favItem.itemId == itemId);
+                            }
+
+                            homeCont.update();
                             errorAlertToast("Successfully".tr);
                           } else {
                             homeCont.listingModel?.isFavorite == "0"
@@ -730,6 +886,32 @@ class _SearchState extends State<Search> {
                         homeCont.update();
                         bool isAddedF = await homeCont.favouriteItem();
                         if (isAddedF) {
+                          // Sync with other lists
+                          String itemId =
+                              homeCont.listingModelSearchList[index].itemId ??
+                                  "";
+                          String newFavoriteStatus = homeCont
+                                  .listingModelSearchList[index].isFavorite ??
+                              "0";
+
+                          // Update home listing
+                          for (int i = 0;
+                              i < homeCont.listingModelList.length;
+                              i++) {
+                            if (homeCont.listingModelList[i].itemId == itemId) {
+                              homeCont.listingModelList[i].isFavorite =
+                                  newFavoriteStatus;
+                              break;
+                            }
+                          }
+
+                          // Update favorites list
+                          if (newFavoriteStatus == "0") {
+                            homeCont.userFavouriteListingModelList.removeWhere(
+                                (favItem) => favItem.itemId == itemId);
+                          }
+
+                          homeCont.update();
                           errorAlertToast("Successfully".tr);
                         } else {
                           homeCont.listingModel?.isFavorite == "0"
@@ -854,6 +1036,12 @@ class _PokeToDialBottomSheetContentState
                       onTap: () {
                         cont.minPriceController.clear();
                         cont.maxPriceController.clear();
+                        // Refresh search results without price filter
+                        cont.currentSearchPage.value = 1;
+                        cont.listingModelSearchList.clear();
+                        cont.update();
+                        Get.log("Clearing price filters and refreshing search");
+                        cont.getListingSearch();
                       },
                       child: Text(
                         'Clear'.tr,
@@ -1192,25 +1380,50 @@ class _PokeToDialBottomSheetContentState
                 // ),
                 InkWell(
                   onTap: () {
-                    if (cont.minPriceController.text.isEmpty ||
-                        cont.minPriceController.text.isEmpty) {
+                    Get.log(
+                        "Apply button pressed - Min: '${cont.minPriceController.text}', Max: '${cont.maxPriceController.text}'");
+                    // Check if both fields are empty - allow search without price filter
+                    if (cont.minPriceController.text.isEmpty &&
+                        cont.maxPriceController.text.isEmpty) {
                       Get.back();
                       cont.currentSearchPage.value = 1;
                       cont.listingModelSearchList.clear();
                       cont.update();
                       cont.getListingSearch();
-                    } else if (double.parse(
-                            cont.minPriceController.text.toString()) >
-                        double.parse(cont.maxPriceController.text)) {
-                      errorAlertToast(
-                          "Maximum price always should be greater then minimum price."
-                              .tr);
-                    } else {
+                    }
+                    // Check if only one field is filled - this is valid
+                    else if (cont.minPriceController.text.isEmpty ||
+                        cont.maxPriceController.text.isEmpty) {
                       Get.back();
                       cont.currentSearchPage.value = 1;
                       cont.listingModelSearchList.clear();
                       cont.update();
                       cont.getListingSearch();
+                    }
+                    // Both fields are filled - validate that max > min
+                    else {
+                      try {
+                        double minPrice =
+                            double.parse(cont.minPriceController.text.trim());
+                        double maxPrice =
+                            double.parse(cont.maxPriceController.text.trim());
+
+                        if (minPrice > maxPrice) {
+                          errorAlertToast(
+                              "Maximum price should be greater than minimum price."
+                                  .tr);
+                        } else if (minPrice < 0 || maxPrice < 0) {
+                          errorAlertToast("Price cannot be negative.".tr);
+                        } else {
+                          Get.back();
+                          cont.currentSearchPage.value = 1;
+                          cont.listingModelSearchList.clear();
+                          cont.update();
+                          cont.getListingSearch();
+                        }
+                      } catch (e) {
+                        errorAlertToast("Please enter valid price values.".tr);
+                      }
                     }
                   },
                   child: Container(

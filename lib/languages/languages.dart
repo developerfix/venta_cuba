@@ -905,6 +905,27 @@ It is not allowed to use our member-to-member communication resources to send sp
           "Your VentaCuba Otp code is": "Your VentaCuba Otp code is",
           'Click here to enter a location to see publications near you.':
               'Click here to enter a location to see publications near you.',
+          // Remove all favourites translations
+          "Remove All Listings": "Remove All Listings",
+          "Remove All Sellers": "Remove All Sellers",
+          "Remove All": "Remove all",
+          "Are you sure you want to remove all favourite listings?":
+              "Are you sure you want to remove all favourite listings?",
+          "Are you sure you want to remove all favourite sellers?":
+              "Are you sure you want to remove all favourite sellers?",
+          "Removing all favourites...": "Removing all favourites...",
+          "All favourite listings removed successfully":
+              "All favourite listings removed successfully",
+          "All favourite sellers removed successfully":
+              "All favourite sellers removed successfully",
+          "Failed to remove some listings. Please try again.":
+              "Failed to remove some listings. Please try again.",
+          "Failed to remove some sellers. Please try again.":
+              "Failed to remove some sellers. Please try again.",
+          "Failed to remove listings. Please try again.":
+              "Failed to remove listings. Please try again.",
+          "Failed to remove sellers. Please try again.":
+              "Failed to remove sellers. Please try again.",
         },
         "es_ES": {
           'upload_video':
@@ -1825,6 +1846,27 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
           "Sign up": "ISaltar",
           "Please Enter Correct number": "Por favor ingrese el número correcto",
           "Password dose not match": "Las contraseñas no coinciden",
+          // Remove all favourites translations
+          "Remove All Listings": "Eliminar Todos los Anuncios",
+          "Remove All Sellers": "Eliminar Todos los Vendedores",
+          "Remove All": "Eliminar todo",
+          "Are you sure you want to remove all favourite listings?":
+              "¿Estás seguro de que quieres eliminar todos los anuncios favoritos?",
+          "Are you sure you want to remove all favourite sellers?":
+              "¿Estás seguro de que quieres eliminar todos los vendedores favoritos?",
+          "Removing all favourites...": "Eliminando todos los favoritos...",
+          "All favourite listings removed successfully":
+              "Todos los anuncios favoritos eliminados exitosamente",
+          "All favourite sellers removed successfully":
+              "Todos los vendedores favoritos eliminados exitosamente",
+          "Failed to remove some listings. Please try again.":
+              "Error al eliminar algunos anuncios. Por favor, inténtalo de nuevo.",
+          "Failed to remove some sellers. Please try again.":
+              "Error al eliminar algunos vendedores. Por favor, inténtalo de nuevo.",
+          "Failed to remove listings. Please try again.":
+              "Error al eliminar anuncios. Por favor, inténtalo de nuevo.",
+          "Failed to remove sellers. Please try again.":
+              "Error al eliminar vendedores. Por favor, inténtalo de nuevo.",
           "Please Enter 8 Character Confirm Password":
               "Por favor ingrese 8 caracteres. Confirme la contraseña",
           "Please Enter 8 Character Password":

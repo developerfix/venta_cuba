@@ -19,7 +19,10 @@ class ListingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final homeCont =
+        Get.find<HomeController>(); // Use existing controller instance
     return GetBuilder<HomeController>(
+      init: homeCont,
       builder: (cont) {
         // Make a copy and shuffle it
         // final shuffledList = List.from(cont.listingModelList)..shuffle();
@@ -161,12 +164,33 @@ class ListingView extends StatelessWidget {
                           Get.to(Login());
                         } else {
                           cont.listingModel = item; // Use shuffled item
+                          String originalFavoriteStatus =
+                              item.isFavorite ?? "0";
                           item.isFavorite = item.isFavorite == "0" ? "1" : "0";
                           cont.update();
                           bool isAddedF = await cont.favouriteItem();
-                          if (!isAddedF) {
-                            item.isFavorite =
-                                item.isFavorite == "0" ? "1" : "0";
+                          if (isAddedF) {
+                            // If unfavorited, remove from favorites list
+                            if (item.isFavorite == "0") {
+                              cont.userFavouriteListingModelList.removeWhere(
+                                  (favItem) => favItem.itemId == item.itemId);
+                            }
+                            // Update all other lists to keep them in sync
+                            for (int i = 0;
+                                i < cont.listingModelSearchList.length;
+                                i++) {
+                              if (cont.listingModelSearchList[i].itemId ==
+                                  item.itemId) {
+                                cont.listingModelSearchList[i].isFavorite =
+                                    item.isFavorite;
+                                break;
+                              }
+                            }
+                            cont.update();
+                          } else {
+                            // Revert the change if API call failed
+                            item.isFavorite = originalFavoriteStatus;
+                            cont.update();
                           }
                         }
                       },
@@ -179,8 +203,9 @@ class ListingView extends StatelessWidget {
                             borderRadius: BorderRadius.circular(100)),
                         child: SvgPicture.asset(
                           'assets/icons/heart1.svg',
-                          color:
+                          colorFilter: ColorFilter.mode(
                               item.isFavorite == '0' ? Colors.grey : Colors.red,
+                              BlendMode.srcIn),
                         ),
                       ),
                     ),

@@ -96,7 +96,7 @@ class HomeController extends GetxController {
   SubSubCategoriesModel? subSubCategoriesModel;
   double radius = 50.0;
   RxBool loadingHome = true.obs;
-  String? selectedCurrency = 'USD'; // Default currency
+  String? selectedCurrency = 'CUP'; // Default currency
   RxBool isPostLoading = false.obs;
   RxBool loadingCategory = false.obs;
   RxBool loadingSubCategory = false.obs;
@@ -201,6 +201,60 @@ class HomeController extends GetxController {
     update();
   }
 
+  // Update notification indicators for UI
+  Future<void> updateNotificationIndicators() async {
+    try {
+      // Check if user is logged in
+      if (authCont.user?.accessToken == null ||
+          authCont.user?.accessToken == "") {
+        hasUnreadNotifications.value = false;
+        update();
+        return;
+      }
+
+      String? lastViewTimeStr = await getLastNotificationViewTime();
+
+      if (lastViewTimeStr != null && allNotificationModel?.data != null) {
+        DateTime lastViewTime = DateTime.parse(lastViewTimeStr);
+        bool hasUnread = false;
+
+        for (var notification in allNotificationModel!.data!) {
+          if (notification.timestamp != null) {
+            try {
+              DateTime notificationTime =
+                  DateTime.parse(notification.timestamp!);
+              if (notificationTime.isAfter(lastViewTime)) {
+                hasUnread = true;
+                break;
+              }
+            } catch (e) {
+              print(
+                  '🔥 Error parsing notification timestamp: ${notification.timestamp}');
+              // If we can't parse the timestamp, consider it as unread to be safe
+              hasUnread = true;
+              break;
+            }
+          }
+        }
+
+        hasUnreadNotifications.value = hasUnread;
+        print('🔥 ✅ Notification indicator updated: $hasUnread');
+      } else {
+        // If no last view time or no notifications, check if there are any notifications
+        hasUnreadNotifications.value =
+            allNotificationModel?.data?.isNotEmpty ?? false;
+        print(
+            '🔥 ✅ Notification indicator set based on notification count: ${hasUnreadNotifications.value}');
+      }
+
+      update();
+    } catch (e) {
+      print('🔥 ❌ Error updating notification indicators: $e');
+      hasUnreadNotifications.value = false;
+      update();
+    }
+  }
+
   Future<String?> getLastNotificationViewTime() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString('lastNotificationViewTime');
@@ -218,6 +272,8 @@ class HomeController extends GetxController {
         await getCategories();
         await getListing();
         await getAllNotifications(silent: true);
+        // Load favorite sellers list silently to ensure it's available for checking
+        await _loadFavoriteSellersSilently();
         saveLocationAndRadius();
       }
     } catch (e, stackTrace) {
@@ -727,6 +783,8 @@ class HomeController extends GetxController {
         print('notyyyyyy not silent');
         Get.to(NotificationScreen());
         await saveLastNotificationViewTime(); // Save last viewed time
+        // Update notification indicators after viewing notifications
+        await updateNotificationIndicators();
       } else {
         print('notyyyyyy silent');
 
@@ -1458,59 +1516,184 @@ class HomeController extends GetxController {
   var isSearchLoading = false.obs;
 
   Future<void> getListingSearch({bool isLoadMore = false}) async {
-    // if (isSearchLoading.value) return;
+    if (isSearchLoading.value) return;
 
     isSearchLoading.value = true;
     update();
 
-    if (!isLoadMore) {
-      currentSearchPage.value = 1;
-      listingModelSearchList.clear();
-      hasMoreSearch.value = true; // Reset hasMore when fetching fresh data
-    }
+    try {
+      // Ensure coordinates are available
+      await getCoordinatesFromAddress();
 
-    if (!hasMoreSearch.value) {
-      isSearchLoading.value = false;
-      update();
-      return;
-    }
+      if (!isLoadMore) {
+        currentSearchPage.value = 1;
+        listingModelSearchList.clear();
+        hasMoreSearch.value = true; // Reset hasMore when fetching fresh data
+      }
 
-    Get.log("Fetching Search Page: ${currentSearchPage.value}");
+      if (!hasMoreSearch.value) {
+        isSearchLoading.value = false;
+        update();
+        return;
+      }
 
-    Response response = await api.postWithForm(
-      "api/getListing?page=${currentSearchPage.value}",
-      {
+      Get.log("Fetching Search Page: ${currentSearchPage.value}");
+      Get.log(
+          "Search Filters - Min: '${minPriceController.text.trim()}', Max: '${maxPriceController.text.trim()}', Search: '${searchController.text.trim()}'");
+      Get.log("Location - Lat: '${lat}', Lng: '${lng}', Radius: '${radius}'");
+
+      Map<String, dynamic> requestData = {
         'user_id': authCont.user?.userId ?? "",
         'category_id': selectedCategory?.id ?? "",
         'sub_category_id': selectedSubCategory?.id ?? "",
         'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
-        'min_price': minPriceController.text.trim(),
-        'max_price': maxPriceController.text.trim(),
+        'latitude': lat ?? "23.124792615936276",
+        'longitude': lng ?? "-82.38597269330762",
+        'radius': radius.toString(),
+        'min_price': '', // Let API return all results, filter client-side
+        'max_price': '', // Let API return all results, filter client-side
         'search_by_title': searchController.text.trim(),
-      },
-      showdialog: false,
-    );
+      };
 
-    if (response.statusCode == 200) {
-      List<dynamic> dataListing = response.body['data']['data'];
-      Get.log("SEARCH LIST COUNT ${dataListing.length}");
+      Get.log("Request Data: $requestData");
 
-      if (dataListing.isNotEmpty) {
-        listingModelSearchList
-            .addAll(dataListing.map((e) => ListingModel.fromJson(e)));
-        currentSearchPage.value++; // Increment page correctly
-        hasMoreSearch.value = dataListing.length == 15; // More pages available?
-        listingModelList = listingModelSearchList;
-        update();
+      Response response = await api.postWithForm(
+        "api/getListing?page=${currentSearchPage.value}",
+        requestData,
+        showdialog: false,
+      );
+
+      Get.log("Response Status: ${response.statusCode}");
+      Get.log("Response Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        List<dynamic> dataListing = response.body['data']['data'] ?? [];
+        Get.log("SEARCH LIST COUNT ${dataListing.length}");
+
+        if (dataListing.isNotEmpty) {
+          List<ListingModel> newListings =
+              dataListing.map((e) => ListingModel.fromJson(e)).toList();
+
+          // Apply client-side price filtering
+          newListings = applyPriceFilter(newListings);
+
+          listingModelSearchList.addAll(newListings);
+          currentSearchPage.value++; // Increment page correctly
+          hasMoreSearch.value =
+              dataListing.length == 15; // More pages available?
+          listingModelList = listingModelSearchList;
+
+          // Apply sorting after fetching data
+          applySortingToSearchList();
+          update();
+        } else {
+          hasMoreSearch.value = false;
+          Get.log("No more search results available");
+        }
       } else {
-        hasMoreSearch.value = false;
+        Get.log("API Error: ${response.statusCode}, ${response.body}",
+            isError: true);
+        errorAlertToast('Something went wrong\nPlease try again!'.tr);
       }
-    } else {
-      errorAlertToast('Something went wrong\nPlease try again!'.tr);
+    } catch (e, stackTrace) {
+      Get.log("Error in getListingSearch: $e\n$stackTrace", isError: true);
+      errorAlertToast('Something went wrong. Please try again.'.tr);
+    } finally {
+      isSearchLoading.value = false;
+      update();
+    }
+  }
+
+  // Method to apply sorting to search results
+  void applySortingToSearchList() {
+    switch (selectedType) {
+      case "Newest First":
+        listingModelSearchList.sort((a, b) {
+          DateTime dateA =
+              DateTime.tryParse(a.updatedAt ?? '') ?? DateTime.now();
+          DateTime dateB =
+              DateTime.tryParse(b.updatedAt ?? '') ?? DateTime.now();
+          return dateB.compareTo(dateA); // Newest first
+        });
+        break;
+      case "Oldest First":
+        listingModelSearchList.sort((a, b) {
+          DateTime dateA =
+              DateTime.tryParse(a.updatedAt ?? '') ?? DateTime.now();
+          DateTime dateB =
+              DateTime.tryParse(b.updatedAt ?? '') ?? DateTime.now();
+          return dateA.compareTo(dateB); // Oldest first
+        });
+        break;
+      case "Highest Price":
+        listingModelSearchList.sort((a, b) {
+          double priceA = double.tryParse(a.price ?? '0') ?? 0;
+          double priceB = double.tryParse(b.price ?? '0') ?? 0;
+          return priceB.compareTo(priceA); // Highest first
+        });
+        break;
+      case "Lowest Price":
+        listingModelSearchList.sort((a, b) {
+          double priceA = double.tryParse(a.price ?? '0') ?? 0;
+          double priceB = double.tryParse(b.price ?? '0') ?? 0;
+          return priceA.compareTo(priceB); // Lowest first
+        });
+        break;
+    }
+  }
+
+  // Method to apply client-side price filtering
+  List<ListingModel> applyPriceFilter(List<ListingModel> listings) {
+    String minPriceText = minPriceController.text.trim();
+    String maxPriceText = maxPriceController.text.trim();
+
+    // If no price filters are set, return all listings
+    if (minPriceText.isEmpty && maxPriceText.isEmpty) {
+      return listings;
     }
 
-    isSearchLoading.value = false;
-    update();
+    double? minPrice;
+    double? maxPrice;
+
+    // Parse min price
+    if (minPriceText.isNotEmpty) {
+      try {
+        minPrice = double.parse(minPriceText);
+      } catch (e) {
+        Get.log("Invalid min price format: $minPriceText");
+      }
+    }
+
+    // Parse max price
+    if (maxPriceText.isNotEmpty) {
+      try {
+        maxPrice = double.parse(maxPriceText);
+      } catch (e) {
+        Get.log("Invalid max price format: $maxPriceText");
+      }
+    }
+
+    // Filter listings based on price
+    return listings.where((listing) {
+      double? listingPrice;
+      try {
+        listingPrice = double.parse(listing.price ?? '0');
+      } catch (e) {
+        return false; // Exclude listings with invalid price
+      }
+
+      // Check min price constraint
+      if (minPrice != null && listingPrice < minPrice) {
+        return false;
+      }
+
+      // Check max price constraint
+      if (maxPrice != null && listingPrice > maxPrice) {
+        return false;
+      }
+
+      return true;
+    }).toList();
   }
   // Future getListingSearch({bool isLoadingShow = true}) async {
   //   print(searchLongitude);
@@ -1556,6 +1739,10 @@ class HomeController extends GetxController {
     if (response.statusCode == 200) {
       isListing = 0;
       listingModel = ListingModel.fromJson(response.body["data"]);
+
+      // Cross-check and update isSellerFavorite with local favorite sellers list
+      _updateSellerFavoriteStatus();
+
       update(); // Ensure UI updates when listing details are fetched
       if (showDialog) {
         Get.to(FrameScreen());
@@ -1592,6 +1779,52 @@ class HomeController extends GetxController {
     }
   }
 
+  /// Helper method to sync favorite status in home listing when changed from favorites screen
+  void syncFavoriteStatusInHomeListing(
+      String itemId, String newFavoriteStatus) {
+    try {
+      // Find and update the corresponding item in listingModelList
+      for (int i = 0; i < listingModelList.length; i++) {
+        if (listingModelList[i].itemId == itemId) {
+          listingModelList[i].isFavorite = newFavoriteStatus;
+          break;
+        }
+      }
+
+      // Also update in search results if they exist
+      for (int i = 0; i < listingModelSearchList.length; i++) {
+        if (listingModelSearchList[i].itemId == itemId) {
+          listingModelSearchList[i].isFavorite = newFavoriteStatus;
+          break;
+        }
+      }
+
+      print("Synced favorite status for item $itemId to $newFavoriteStatus");
+    } catch (e) {
+      print("Error syncing favorite status: $e");
+    }
+  }
+
+  /// Helper method to sync favorite status in favorites list when changed from home screen
+  void syncFavoriteStatusInFavoritesList(
+      String itemId, String newFavoriteStatus) {
+    try {
+      if (newFavoriteStatus == "0") {
+        // Remove from favorites list if unfavorited
+        userFavouriteListingModelList
+            .removeWhere((item) => item.itemId == itemId);
+        print("Removed item $itemId from favorites list");
+      } else {
+        // If favorited, we don't need to add it here as it will be fetched next time
+        // the favorites screen is opened
+        print(
+            "Item $itemId favorited - will be available in next favorites refresh");
+      }
+    } catch (e) {
+      print("Error syncing favorite status in favorites list: $e");
+    }
+  }
+
   Future<bool> favouriteSeller() async {
     print("'seller_id': $sellerId,");
     Response response = await api.postWithForm(
@@ -1608,10 +1841,228 @@ class HomeController extends GetxController {
         },
         showdialog: false);
     if (response.statusCode == 200) {
+      // Update local favorite sellers list to keep it in sync
+      _updateLocalFavoriteSellersList();
       return true;
     } else {
       errorAlertToast('Something went wrong\nPlease try again!'.tr);
       return false;
+    }
+  }
+
+  /// Remove all favourite listings
+  Future<bool> removeAllFavouriteListings() async {
+    try {
+      // Create a list of all item IDs to remove
+      List<String> itemIds = userFavouriteListingModelList
+          .map((item) => item.itemId ?? "")
+          .where((id) => id.isNotEmpty)
+          .toList();
+
+      if (itemIds.isEmpty) {
+        return true; // Nothing to remove
+      }
+
+      print("Removing ${itemIds.length} favourite listings...");
+
+      // Remove each item individually using direct API calls (avoid side effects)
+      int successCount = 0;
+      for (String itemId in itemIds) {
+        try {
+          Response response =
+              await api.postWithForm("api/favouriteItem", {'item_id': itemId},
+                  headers: {
+                    'Content-Type': 'application/json; charset=UTF-8',
+                    'Accept': 'application/json',
+                    'Access-Control-Allow-Origin': "*",
+                    'Authorization': 'Bearer ${authCont.user?.accessToken}'
+                  },
+                  showdialog: false);
+
+          if (response.statusCode == 200) {
+            successCount++;
+            print("Successfully removed listing $itemId");
+          } else {
+            print("Failed to remove listing $itemId: ${response.statusCode}");
+          }
+        } catch (e) {
+          print("Error removing listing $itemId: $e");
+        }
+      }
+
+      // Clear the local list regardless of individual failures
+      userFavouriteListingModelList.clear();
+      update();
+
+      print("Removed $successCount out of ${itemIds.length} listings");
+      return successCount > 0; // Return true if at least one was removed
+    } catch (e) {
+      print("Error removing all favourite listings: $e");
+      return false;
+    }
+  }
+
+  /// Remove all favourite sellers
+  Future<bool> removeAllFavouriteSellers() async {
+    try {
+      // Create a list of all seller IDs to remove
+      List<String> sellerIds = favouriteSellerModel.data
+              ?.map((seller) => seller.sellerId ?? "")
+              .where((id) => id.isNotEmpty)
+              .toList() ??
+          [];
+
+      if (sellerIds.isEmpty) {
+        return true; // Nothing to remove
+      }
+
+      print("Removing ${sellerIds.length} favourite sellers...");
+
+      // Remove each seller individually using direct API calls (avoid side effects)
+      int successCount = 0;
+      for (String sellerIdToRemove in sellerIds) {
+        try {
+          Response response = await api.postWithForm(
+              "api/favouriteSeller",
+              {
+                'seller_id': sellerIdToRemove,
+                'type': isBusinessAccount ? "Business" : "Personal"
+              },
+              headers: {
+                'Content-Type': 'application/json; charset=UTF-8',
+                'Accept': 'application/json',
+                'Access-Control-Allow-Origin': "*",
+                'Authorization': 'Bearer ${authCont.user?.accessToken}'
+              },
+              showdialog: false);
+
+          if (response.statusCode == 200) {
+            successCount++;
+            print("Successfully removed seller $sellerIdToRemove");
+          } else {
+            print(
+                "Failed to remove seller $sellerIdToRemove: ${response.statusCode}");
+          }
+        } catch (e) {
+          print("Error removing seller $sellerIdToRemove: $e");
+        }
+      }
+
+      // Clear the local list regardless of individual failures
+      favouriteSellerModel.data?.clear();
+      update();
+
+      print("Removed $successCount out of ${sellerIds.length} sellers");
+      return successCount > 0; // Return true if at least one was removed
+    } catch (e) {
+      print("Error removing all favourite sellers: $e");
+      return false;
+    }
+  }
+
+  /// Helper method to check if a seller is in the favorite sellers list
+  bool _isSellerInFavoritesList(String? sellerId) {
+    if (sellerId == null || favouriteSellerModel.data == null) {
+      return false;
+    }
+
+    return favouriteSellerModel.data!
+        .any((seller) => seller.sellerId == sellerId);
+  }
+
+  /// Helper method to update the isSellerFavorite status based on local favorite sellers list
+  void _updateSellerFavoriteStatus() {
+    if (listingModel?.user?.id != null) {
+      String currentSellerId = listingModel!.user!.id.toString();
+      bool isInFavorites = _isSellerInFavoritesList(currentSellerId);
+
+      // Update the isSellerFavorite field to match the actual favorite status
+      listingModel!.isSellerFavorite = isInFavorites ? "1" : "0";
+
+      print(
+          "Updated isSellerFavorite for seller $currentSellerId: ${listingModel!.isSellerFavorite}");
+    }
+  }
+
+  /// Helper method to update local favorite sellers list after adding/removing a seller
+  void _updateLocalFavoriteSellersList() {
+    if (sellerId == null) return;
+
+    bool isCurrentlyInFavorites = _isSellerInFavoritesList(sellerId);
+
+    if (isCurrentlyInFavorites) {
+      // Remove from favorites list
+      favouriteSellerModel.data
+          ?.removeWhere((seller) => seller.sellerId == sellerId);
+      print("Removed seller $sellerId from local favorites list");
+    } else {
+      // Add to favorites list - we need to get seller details to add to the list
+      // For now, we'll just refresh the favorites list from the server
+      _refreshFavoriteSellersList();
+    }
+  }
+
+  /// Helper method to refresh the favorite sellers list from server
+  Future<void> _refreshFavoriteSellersList() async {
+    try {
+      Response response = await api.postWithForm("api/getFavouriteSeller", {},
+          headers: {
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Accept': 'application/json',
+            'Access-Control-Allow-Origin': "*",
+            'Authorization': 'Bearer ${authCont.user?.accessToken}'
+          },
+          showdialog: false);
+
+      if (response.statusCode == 200) {
+        favouriteSellerModel = FavouriteSellerModel.fromJson(response.body);
+        if (!isBusinessAccount) {
+          favouriteSellerModel.data
+              ?.removeWhere((element) => element.type == "Business");
+        } else {
+          favouriteSellerModel.data
+              ?.removeWhere((element) => element.type == "Personal");
+        }
+        print("Refreshed favorite sellers list");
+      }
+    } catch (e) {
+      print("Error refreshing favorite sellers list: $e");
+    }
+  }
+
+  /// Helper method to load favorite sellers list silently during app initialization
+  Future<void> _loadFavoriteSellersSilently() async {
+    // Only load if user is logged in
+    if (authCont.user?.accessToken == null ||
+        authCont.user?.accessToken == "") {
+      return;
+    }
+
+    try {
+      Response response = await api.postWithForm("api/getFavouriteSeller", {},
+          headers: {
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Accept': 'application/json',
+            'Access-Control-Allow-Origin': "*",
+            'Authorization': 'Bearer ${authCont.user?.accessToken}'
+          },
+          showdialog: false);
+
+      if (response.statusCode == 200) {
+        favouriteSellerModel = FavouriteSellerModel.fromJson(response.body);
+        if (!isBusinessAccount) {
+          favouriteSellerModel.data
+              ?.removeWhere((element) => element.type == "Business");
+        } else {
+          favouriteSellerModel.data
+              ?.removeWhere((element) => element.type == "Personal");
+        }
+        print(
+            "Loaded favorite sellers list silently: ${favouriteSellerModel.data?.length ?? 0} sellers");
+      }
+    } catch (e) {
+      print("Error loading favorite sellers list silently: $e");
+      // Don't show error to user since this is a background operation
     }
   }
 

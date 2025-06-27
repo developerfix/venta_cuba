@@ -249,6 +249,40 @@ class _ShowAllListingSubState extends State<ShowAllListingSub> {
                                         bool isAddedF =
                                             await cont.favouriteItem();
                                         if (isAddedF) {
+                                          // Sync with other lists
+                                          String itemId = cont
+                                                  .listingModelList[index]
+                                                  .itemId ??
+                                              "";
+                                          String newFavoriteStatus = cont
+                                                  .listingModelList[index]
+                                                  .isFavorite ??
+                                              "0";
+
+                                          // Update search results
+                                          for (int i = 0;
+                                              i <
+                                                  cont.listingModelSearchList
+                                                      .length;
+                                              i++) {
+                                            if (cont.listingModelSearchList[i]
+                                                    .itemId ==
+                                                itemId) {
+                                              cont.listingModelSearchList[i]
+                                                      .isFavorite =
+                                                  newFavoriteStatus;
+                                              break;
+                                            }
+                                          }
+
+                                          // Update favorites list
+                                          if (newFavoriteStatus == "0") {
+                                            cont.userFavouriteListingModelList
+                                                .removeWhere((favItem) =>
+                                                    favItem.itemId == itemId);
+                                          }
+
+                                          cont.update();
                                           errorAlertToast("Successfully".tr);
                                         } else {
                                           cont.listingModelList[index]

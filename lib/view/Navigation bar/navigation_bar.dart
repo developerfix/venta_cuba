@@ -8,6 +8,7 @@ import 'package:venta_cuba/view/auth/login.dart';
 import 'package:venta_cuba/view/constants/Colors.dart';
 import '../../Controllers/auth_controller.dart';
 import '../../Notification/firebase_messaging.dart';
+import '../Chat/Controller/ChatController.dart';
 import '../Chat/pages/chats.dart';
 import '../home screen/home_screen.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -50,10 +51,18 @@ class _Navigation_BarState extends State<Navigation_Bar> {
                 if (authCont.user?.email == "") {
                   Get.to(Login());
                 } else {
-                  // Clear badge count when switching to chat tab
+                  // Clear unread message indicator when switching to chat tab
                   if (index == 1) {
                     cont.hasUnreadMessages.value = false;
                     cont.update();
+                    // Also update the actual badge count based on real unread messages
+                    try {
+                      final chatCont = Get.find<ChatController>();
+                      chatCont.updateBadgeCountFromChats();
+                    } catch (e) {
+                      print(
+                          '🔥 ChatController not found when switching to chat tab');
+                    }
                   }
 
                   cont.currentIndexBottomAppBar = index;

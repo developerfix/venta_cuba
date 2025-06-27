@@ -10,6 +10,7 @@ class ChatController extends GetxController {
   bool isLast = false;
   bool isTyping = false;
   bool isImageSend = false;
+
   Stream<QuerySnapshot>? chats;
   TextEditingController messageController = TextEditingController();
   ScrollController scrollController = ScrollController();
@@ -208,6 +209,45 @@ class ChatController extends GetxController {
   // Set user as offline when app goes to background
   Future<void> setUserOffline(String userId) async {
     await updateUserPresence(userId, false);
+  }
+
+  // Update unread message indicators for UI
+  Future<void> updateUnreadMessageIndicators() async {
+    try {
+      final authCont = Get.find<AuthController>();
+      if (authCont.user?.userId == null) return;
+
+      String currentUserId = authCont.user!.userId.toString();
+      bool hasUnread = false;
+
+      // Get all chat documents where this user participates
+      QuerySnapshot chatSnapshot = await chatCollection.get();
+
+      for (QueryDocumentSnapshot chatDoc in chatSnapshot.docs) {
+        Map<String, dynamic> chatData = chatDoc.data() as Map<String, dynamic>;
+
+        // Check if this user is part of this chat
+        String? senderId = chatData['senderId']?.toString();
+        String? sendToId = chatData['sendToId']?.toString();
+
+        if (senderId == currentUserId || sendToId == currentUserId) {
+          // Check if this chat has unread messages for this user
+          bool isUnread = hasUnreadMessages(chatData, currentUserId);
+          if (isUnread) {
+            hasUnread = true;
+            break; // Found at least one unread chat
+          }
+        }
+      }
+
+      // Update the UI indicator
+      authCont.hasUnreadMessages.value = hasUnread;
+      authCont.update();
+
+      print("🔥 ✅ Unread message indicator updated: $hasUnread");
+    } catch (e) {
+      print("🔥 ❌ Error updating unread message indicators: $e");
+    }
   }
 
   // Format last active time for display

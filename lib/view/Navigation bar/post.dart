@@ -221,12 +221,13 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
     homeCont.postImages.clear();
     homeCont.titleCont.clear();
     homeCont.priceCont?.clear();
-    homeCont.selectedCurrency = 'USD';
+    homeCont.selectedCurrency = 'CUP';
     homeCont.tags.clear();
     homeCont.postImages.clear();
     homeCont.descriptionCont.clear();
     homeCont.addressCont.clear();
     homeCont.youTubeController.clear();
+    homeCont.websiteController.clear();
     homeCont.phoneController.clear();
     homeCont.conditionController.clear();
     homeCont.fulfillmentController.clear();
@@ -396,7 +397,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
           homeCont.listingModel?.additionalFeatures?.listingDetails?.make ?? "";
       homeCont.titleCont.text = homeCont.listingModel?.title ?? "";
       homeCont.priceCont?.text = homeCont.listingModel?.price.toString() ?? "0";
-      homeCont.selectedCurrency = homeCont.listingModel?.currency ?? "USD";
+      homeCont.selectedCurrency = homeCont.listingModel?.currency ?? "CUP";
       homeCont.descriptionCont.text = homeCont.listingModel?.description ?? "";
       locationCont.locationEditingController.value.text =
           homeCont.listingModel?.address ?? "";
@@ -2022,12 +2023,31 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                             ),
                                             iconStyleData:
                                                 IconStyleData(iconSize: 0),
-                                            value: city,
+                                            value: () {
+                                              // Validate that the selected city belongs to the selected province
+                                              final filteredCities = citiesList
+                                                  .where((element) =>
+                                                      element.provinceName
+                                                          .trim() ==
+                                                      (province?.provinceName
+                                                              .trim() ??
+                                                          ""))
+                                                  .toList();
+
+                                              // If city is not in the filtered list, return null
+                                              if (city != null &&
+                                                  !filteredCities
+                                                      .contains(city)) {
+                                                return null;
+                                              }
+                                              return city;
+                                            }(),
                                             items: citiesList
-                                                .where((element) => element
-                                                    .provinceName
-                                                    .contains(province
-                                                            ?.provinceName ??
+                                                .where((element) =>
+                                                    element.provinceName
+                                                        .trim() ==
+                                                    (province?.provinceName
+                                                            .trim() ??
                                                         ""))
                                                 .map((item) => DropdownMenuItem(
                                                       value: item,

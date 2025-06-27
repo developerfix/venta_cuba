@@ -216,11 +216,13 @@ class OptionalDetails {
       this.payment});
 
   OptionalDetails.fromJson(Map<String, dynamic> json) {
-    phoneNumber = json['phone_number'].toString();
-    website = json['website'].toString();
-    condition = json['condition'].toString();
-    fulfillment = json['fulfillment'].toString();
-    payment = json['payment'].toString();
+    phoneNumber =
+        json['phone_number'] != null ? json['phone_number'].toString() : null;
+    website = json['website'] != null ? json['website'].toString() : null;
+    condition = json['condition'] != null ? json['condition'].toString() : null;
+    fulfillment =
+        json['fulfillment'] != null ? json['fulfillment'].toString() : null;
+    payment = json['payment'] != null ? json['payment'].toString() : null;
   }
 
   Map<String, dynamic> toJson() {

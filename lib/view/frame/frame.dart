@@ -54,16 +54,45 @@ class _FrameScreenState extends State<FrameScreen> {
     return stars;
   }
 
+  /// Helper function to check if an optional detail value is valid and not null/empty
+  bool _isValidOptionalDetail(String? value) {
+    return value != null && value != 'null' && value.trim().isNotEmpty;
+  }
+
   @override
   void initState() {
     print(
         "object.........>>>>>>>>>>>>>....${jsonEncode(homeCont.listingModel)}");
     homeCont.sellerId = homeCont.listingModel?.user?.id.toString();
     homeCont.checkUserPackage();
+
+    // Update seller favorite status when frame screen is opened
+    // This ensures the heart icon shows the correct state even when coming from favorite listings
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updateSellerFavoriteStatus();
+    });
+
     // TODO: implement initState
     // center =
     //     map.LatLng(double.parse(home.listingModel!.latitude!), double.parse(home.listingModel!.longitude!));
     super.initState();
+  }
+
+  /// Update seller favorite status based on the current favorite sellers list
+  void _updateSellerFavoriteStatus() {
+    if (homeCont.listingModel?.user?.id != null) {
+      String currentSellerId = homeCont.listingModel!.user!.id.toString();
+      bool isInFavorites = homeCont.favouriteSellerModel.data
+              ?.any((seller) => seller.sellerId == currentSellerId) ??
+          false;
+
+      // Update the isSellerFavorite field to match the actual favorite status
+      homeCont.listingModel!.isSellerFavorite = isInFavorites ? "1" : "0";
+
+      print(
+          "Frame: Updated isSellerFavorite for seller $currentSellerId: ${homeCont.listingModel!.isSellerFavorite}");
+      homeCont.update();
+    }
   }
 
   static Future<void> openMap(double latitude, double longitude) async {
@@ -373,12 +402,11 @@ class _FrameScreenState extends State<FrameScreen> {
                                       fontWeight: FontWeight.w400,
                                       color: Colors.black),
                                 ),
-                                if (cont.listingModel?.additionalFeatures
-                                            ?.optionalDetails?.website !=
-                                        null ||
-                                    cont.listingModel?.additionalFeatures
-                                            ?.optionalDetails?.website !=
-                                        'null')
+                                if (_isValidOptionalDetail(cont
+                                    .listingModel
+                                    ?.additionalFeatures
+                                    ?.optionalDetails
+                                    ?.website))
                                   Text(
                                     '${cont.listingModel?.additionalFeatures?.optionalDetails?.website}',
                                     style: TextStyle(
@@ -398,13 +426,18 @@ class _FrameScreenState extends State<FrameScreen> {
                                       fontWeight: FontWeight.w400,
                                       color: Colors.black),
                                 ),
-                                Text(
-                                  '${cont.listingModel?.additionalFeatures?.optionalDetails?.phoneNumber}',
-                                  style: TextStyle(
-                                      fontSize: 15..sp,
-                                      fontWeight: FontWeight.w400,
-                                      color: AppColors.black),
-                                ),
+                                if (_isValidOptionalDetail(cont
+                                    .listingModel
+                                    ?.additionalFeatures
+                                    ?.optionalDetails
+                                    ?.phoneNumber))
+                                  Text(
+                                    '${cont.listingModel?.additionalFeatures?.optionalDetails?.phoneNumber}',
+                                    style: TextStyle(
+                                        fontSize: 15..sp,
+                                        fontWeight: FontWeight.w400,
+                                        color: AppColors.black),
+                                  ),
                               ],
                             ),
                             Row(
@@ -417,13 +450,18 @@ class _FrameScreenState extends State<FrameScreen> {
                                       fontWeight: FontWeight.w400,
                                       color: Colors.black),
                                 ),
-                                Text(
-                                  '${cont.listingModel?.additionalFeatures?.optionalDetails?.condition}',
-                                  style: TextStyle(
-                                      fontSize: 15..sp,
-                                      fontWeight: FontWeight.w400,
-                                      color: AppColors.black),
-                                ),
+                                if (_isValidOptionalDetail(cont
+                                    .listingModel
+                                    ?.additionalFeatures
+                                    ?.optionalDetails
+                                    ?.condition))
+                                  Text(
+                                    '${cont.listingModel?.additionalFeatures?.optionalDetails?.condition}',
+                                    style: TextStyle(
+                                        fontSize: 15..sp,
+                                        fontWeight: FontWeight.w400,
+                                        color: AppColors.black),
+                                  ),
                               ],
                             ),
                             Row(
@@ -436,13 +474,18 @@ class _FrameScreenState extends State<FrameScreen> {
                                       fontWeight: FontWeight.w400,
                                       color: Colors.black),
                                 ),
-                                Text(
-                                  '${cont.listingModel?.additionalFeatures?.optionalDetails?.fulfillment}',
-                                  style: TextStyle(
-                                      fontSize: 15..sp,
-                                      fontWeight: FontWeight.w400,
-                                      color: AppColors.black),
-                                ),
+                                if (_isValidOptionalDetail(cont
+                                    .listingModel
+                                    ?.additionalFeatures
+                                    ?.optionalDetails
+                                    ?.fulfillment))
+                                  Text(
+                                    '${cont.listingModel?.additionalFeatures?.optionalDetails?.fulfillment}',
+                                    style: TextStyle(
+                                        fontSize: 15..sp,
+                                        fontWeight: FontWeight.w400,
+                                        color: AppColors.black),
+                                  ),
                               ],
                             ),
                             Row(
@@ -455,13 +498,18 @@ class _FrameScreenState extends State<FrameScreen> {
                                       fontWeight: FontWeight.w400,
                                       color: Colors.black),
                                 ),
-                                Text(
-                                  '${cont.listingModel?.additionalFeatures?.optionalDetails?.payment}',
-                                  style: TextStyle(
-                                      fontSize: 15..sp,
-                                      fontWeight: FontWeight.w400,
-                                      color: AppColors.black),
-                                ),
+                                if (_isValidOptionalDetail(cont
+                                    .listingModel
+                                    ?.additionalFeatures
+                                    ?.optionalDetails
+                                    ?.payment))
+                                  Text(
+                                    '${cont.listingModel?.additionalFeatures?.optionalDetails?.payment}',
+                                    style: TextStyle(
+                                        fontSize: 15..sp,
+                                        fontWeight: FontWeight.w400,
+                                        color: AppColors.black),
+                                  ),
                               ],
                             ),
                             SizedBox(height: 9..h),
@@ -801,6 +849,7 @@ class _FrameScreenState extends State<FrameScreen> {
                                             print(
                                                 "object.............${jsonEncode(homeCont.listingModel)}");
                                           } else {
+                                            // Revert the UI change if the API call failed
                                             cont.listingModel
                                                         ?.isSellerFavorite ==
                                                     "0"
@@ -1380,11 +1429,9 @@ class _FrameScreenState extends State<FrameScreen> {
                                       "${cont.listingModel?.user?.firstName} ${cont.listingModel?.user?.lastName}",
                                   isLast: true,
                                   remoteUid: "${cont.listingModel?.user?.id}",
-                                  userImage: cont.listingModel?.gallery !=
-                                              null &&
-                                          cont.listingModel!.gallery!.isNotEmpty
-                                      ? cont.listingModel?.gallery?.first
-                                      : "",
+                                  userImage:
+                                      cont.listingModel?.user?.profileImage ??
+                                          '',
                                   deviceToken:
                                       "${cont.listingModel?.user?.deviceToken}",
                                   listingImage:
