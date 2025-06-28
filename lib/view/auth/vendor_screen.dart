@@ -82,7 +82,7 @@ class _VendorScreenState extends State<VendorScreen> {
                       height: 60..h,
                       width: MediaQuery.of(context).size.width,
                       decoration: BoxDecoration(
-                          color: AppColors.k0xFFA9ABAC,
+                          color: Theme.of(context).dividerColor,
                           borderRadius: BorderRadius.circular(10)),
                       child: Center(
                         child: Text(
@@ -706,7 +706,7 @@ class _VendorScreenState extends State<VendorScreen> {
                           width: MediaQuery.of(context).size.width,
                           child: DottedBorder(
                               borderType: BorderType.RRect,
-                              color: AppColors.k0xFFC4C4C4,
+                              color: Theme.of(context).dividerColor,
                               // Border color
                               strokeWidth: 1,
                               // Border width
@@ -747,7 +747,10 @@ class _VendorScreenState extends State<VendorScreen> {
                                               style: TextStyle(
                                                   fontSize: 10..sp,
                                                   fontWeight: FontWeight.w400,
-                                                  color: AppColors.k0xFFA9ABAC),
+                                                  color: Theme.of(context)
+                                                      .textTheme
+                                                      .bodySmall
+                                                      ?.color),
                                             ),
                                           ],
                                         ),

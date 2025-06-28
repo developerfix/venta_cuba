@@ -317,8 +317,7 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
                           child: Center(
                             child: CustomText(
                               text: "Set Location".tr,
-                              fontColor:
-                                  Theme.of(context).colorScheme.onPrimary,
+                              fontColor: Colors.white,
                             ),
                           ),
                         ),

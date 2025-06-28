@@ -3,8 +3,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
 import 'package:venta_cuba/util/my_button.dart';
-import 'package:venta_cuba/view/constants/Colors.dart';
-import 'package:flutter_svg/svg.dart';
 
 class SocialMediaLinks extends StatefulWidget {
   const SocialMediaLinks({super.key});
@@ -41,6 +39,7 @@ class _SocialMediaLinksState extends State<SocialMediaLinks> {
                               child: Icon(
                                 Icons.arrow_back_ios,
                                 size: 20,
+                                color: Theme.of(context).iconTheme.color,
                               ),
                             ),
                             Text(
@@ -48,7 +47,10 @@ class _SocialMediaLinksState extends State<SocialMediaLinks> {
                               style: TextStyle(
                                   fontSize: 21..sp,
                                   fontWeight: FontWeight.w500,
-                                  color: AppColors.black),
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .titleLarge
+                                      ?.color),
                             ),
                             Container(
                               height: 24..h,
@@ -64,337 +66,402 @@ class _SocialMediaLinksState extends State<SocialMediaLinks> {
                           style: TextStyle(
                               fontSize: 16..sp,
                               fontWeight: FontWeight.w400,
-                              color: AppColors.black),
+                              color: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.color),
                         ),
                         SizedBox(height: 20..h),
-                        Container(
-                          height: 50..h,
-                          width: MediaQuery.of(context).size.width,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Container(
-                                height: 24..h,
-                                width: 24..w,
-                                child: Image.asset('assets/images/insta.png'),
-                              ),
-                              Container(
+                        Row(
+                          children: [
+                            Container(
+                              height: 24..h,
+                              width: 24..w,
+                              child: Image.asset('assets/images/insta.png'),
+                            ),
+                            SizedBox(width: 16..w),
+                            Expanded(
+                              child: Container(
                                 padding: EdgeInsets.symmetric(horizontal: 20),
                                 height: 50..h,
-                                width: MediaQuery.of(context).size.width * .78,
                                 decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(5),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: AppColors.black.withOpacity(.25),
+                                        color: Theme.of(context)
+                                            .shadowColor
+                                            .withValues(alpha: 0.25),
                                         blurRadius: 4,
                                       )
                                     ],
-                                    color: AppColors.white),
+                                    color: Theme.of(context).cardColor),
                                 child: TextField(
                                   controller: cont.instagramLinkCont,
                                   textAlignVertical: TextAlignVertical.center,
-                                  cursorColor: Colors.black,
+                                  cursorColor: Theme.of(context)
+                                      .textTheme
+                                      .bodyLarge
+                                      ?.color,
+                                  style: TextStyle(
+                                      color: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.color),
                                   decoration: InputDecoration(
                                       contentPadding:
                                           EdgeInsets.symmetric(vertical: 13),
                                       border: InputBorder.none,
+                                      enabledBorder: InputBorder.none,
                                       focusedBorder: InputBorder.none,
-                                      // prefixIcon: Icon(Icons.mail_outline,
-                                      //   color: Color(0xFFA9ABAC),
-                                      // ),
                                       hintText: 'Instagram Link'.tr,
-                                      hintStyle:
-                                          TextStyle(color: Color(0xFFA9ABAC))),
+                                      hintStyle: TextStyle(
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.color
+                                              ?.withValues(alpha: 0.6))),
                                 ),
-                              )
-                            ],
-                          ),
+                              ),
+                            )
+                          ],
                         ),
                         SizedBox(
                           height: 30..h,
                         ),
-                        Container(
-                          height: 50..h,
-                          width: MediaQuery.of(context).size.width,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Container(
-                                height: 24..h,
-                                width: 24..w,
-                                child: Image.asset('assets/images/fb.png'),
-                              ),
-                              Container(
+                        Row(
+                          children: [
+                            Container(
+                              height: 24..h,
+                              width: 24..w,
+                              child: Image.asset('assets/images/fb.png'),
+                            ),
+                            SizedBox(width: 16..w),
+                            Expanded(
+                              child: Container(
                                 padding: EdgeInsets.symmetric(horizontal: 20),
                                 height: 50..h,
-                                width: MediaQuery.of(context).size.width * .78,
                                 decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(5),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: AppColors.black.withOpacity(.25),
+                                        color: Theme.of(context)
+                                            .shadowColor
+                                            .withValues(alpha: 0.25),
                                         blurRadius: 4,
                                       )
                                     ],
-                                    color: AppColors.white),
+                                    color: Theme.of(context).cardColor),
                                 child: TextField(
                                   controller: cont.facebookLinkCont,
                                   textAlignVertical: TextAlignVertical.center,
-                                  cursorColor: Colors.black,
+                                  cursorColor: Theme.of(context)
+                                      .textTheme
+                                      .bodyLarge
+                                      ?.color,
+                                  style: TextStyle(
+                                      color: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.color),
                                   decoration: InputDecoration(
                                       contentPadding:
                                           EdgeInsets.symmetric(vertical: 13),
                                       border: InputBorder.none,
+                                      enabledBorder: InputBorder.none,
                                       focusedBorder: InputBorder.none,
-                                      // prefixIcon: Icon(Icons.mail_outline,
-                                      //   color: Color(0xFFA9ABAC),
-                                      // ),
                                       hintText: 'Facebook Link'.tr,
-                                      hintStyle:
-                                          TextStyle(color: Color(0xFFA9ABAC))),
+                                      hintStyle: TextStyle(
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.color
+                                              ?.withValues(alpha: 0.6))),
                                 ),
-                              )
-                            ],
-                          ),
+                              ),
+                            )
+                          ],
                         ),
                         SizedBox(
                           height: 30..h,
                         ),
-                        Container(
-                          height: 50..h,
-                          width: MediaQuery.of(context).size.width,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Container(
-                                height: 24..h,
-                                width: 24..w,
-                                child: Image.asset('assets/images/tiktok.png'),
-                              ),
-                              Container(
+                        Row(
+                          children: [
+                            Container(
+                              height: 24..h,
+                              width: 24..w,
+                              child: Image.asset('assets/images/tiktok.png'),
+                            ),
+                            SizedBox(width: 16..w),
+                            Expanded(
+                              child: Container(
                                 padding: EdgeInsets.symmetric(horizontal: 20),
                                 height: 50..h,
-                                width: MediaQuery.of(context).size.width * .78,
                                 decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(5),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: AppColors.black.withOpacity(.25),
+                                        color: Theme.of(context)
+                                            .shadowColor
+                                            .withValues(alpha: 0.25),
                                         blurRadius: 4,
                                       )
                                     ],
-                                    color: AppColors.white),
+                                    color: Theme.of(context).cardColor),
                                 child: TextField(
                                   controller: cont.tiktokLinkCont,
                                   textAlignVertical: TextAlignVertical.center,
-                                  cursorColor: Colors.black,
+                                  cursorColor: Theme.of(context)
+                                      .textTheme
+                                      .bodyLarge
+                                      ?.color,
+                                  style: TextStyle(
+                                      color: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.color),
                                   decoration: InputDecoration(
                                       contentPadding:
                                           EdgeInsets.symmetric(vertical: 13),
                                       border: InputBorder.none,
+                                      enabledBorder: InputBorder.none,
                                       focusedBorder: InputBorder.none,
-                                      // prefixIcon: Icon(Icons.mail_outline,
-                                      //   color: Color(0xFFA9ABAC),
-                                      // ),
                                       hintText: 'Tiktok Link'.tr,
-                                      hintStyle:
-                                          TextStyle(color: Color(0xFFA9ABAC))),
+                                      hintStyle: TextStyle(
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.color
+                                              ?.withValues(alpha: 0.6))),
                                 ),
-                              )
-                            ],
-                          ),
+                              ),
+                            )
+                          ],
                         ),
                         SizedBox(
                           height: 30..h,
                         ),
-                        Container(
-                          height: 50..h,
-                          width: MediaQuery.of(context).size.width,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Container(
-                                height: 24..h,
-                                width: 24..w,
-                                child: Image.asset(
-                                  'assets/images/youtube.png',
-                                  // color: Colors.blue,
-                                ),
+                        Row(
+                          children: [
+                            Container(
+                              height: 24..h,
+                              width: 24..w,
+                              child: Image.asset(
+                                'assets/images/youtube.png',
                               ),
-                              Container(
+                            ),
+                            SizedBox(width: 16..w),
+                            Expanded(
+                              child: Container(
                                 padding: EdgeInsets.symmetric(horizontal: 20),
                                 height: 50..h,
-                                width: MediaQuery.of(context).size.width * .78,
                                 decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(5),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: AppColors.black.withOpacity(.25),
+                                        color: Theme.of(context)
+                                            .shadowColor
+                                            .withValues(alpha: 0.25),
                                         blurRadius: 4,
                                       )
                                     ],
-                                    color: AppColors.white),
+                                    color: Theme.of(context).cardColor),
                                 child: TextField(
                                   controller: cont.youtubeLinkCont,
                                   textAlignVertical: TextAlignVertical.center,
-                                  cursorColor: Colors.black,
+                                  cursorColor: Theme.of(context)
+                                      .textTheme
+                                      .bodyLarge
+                                      ?.color,
+                                  style: TextStyle(
+                                      color: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.color),
                                   decoration: InputDecoration(
                                       contentPadding:
                                           EdgeInsets.symmetric(vertical: 13),
                                       border: InputBorder.none,
+                                      enabledBorder: InputBorder.none,
                                       focusedBorder: InputBorder.none,
-                                      // prefixIcon: Icon(Icons.mail_outline,
-                                      //   color: Color(0xFFA9ABAC),
-                                      // ),
                                       hintText: 'Youtube Link'.tr,
-                                      hintStyle:
-                                          TextStyle(color: Color(0xFFA9ABAC))),
+                                      hintStyle: TextStyle(
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.color
+                                              ?.withValues(alpha: 0.6))),
                                 ),
-                              )
-                            ],
-                          ),
+                              ),
+                            )
+                          ],
                         ),
                         SizedBox(
                           height: 30..h,
                         ),
-                        Container(
-                          height: 50..h,
-                          width: MediaQuery.of(context).size.width,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Container(
-                                height: 24..h,
-                                width: 24..w,
-                                child: Image.asset('assets/images/pin.png'),
-                              ),
-                              Container(
+                        Row(
+                          children: [
+                            Container(
+                              height: 24..h,
+                              width: 24..w,
+                              child: Image.asset('assets/images/pin.png'),
+                            ),
+                            SizedBox(width: 16..w),
+                            Expanded(
+                              child: Container(
                                 padding: EdgeInsets.symmetric(horizontal: 20),
                                 height: 50..h,
-                                width: MediaQuery.of(context).size.width * .78,
                                 decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(5),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: AppColors.black.withOpacity(.25),
+                                        color: Theme.of(context)
+                                            .shadowColor
+                                            .withValues(alpha: 0.25),
                                         blurRadius: 4,
                                       )
                                     ],
-                                    color: AppColors.white),
+                                    color: Theme.of(context).cardColor),
                                 child: TextField(
                                   controller: cont.pinterestLinkCont,
                                   textAlignVertical: TextAlignVertical.center,
-                                  cursorColor: Colors.black,
+                                  cursorColor: Theme.of(context)
+                                      .textTheme
+                                      .bodyLarge
+                                      ?.color,
+                                  style: TextStyle(
+                                      color: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.color),
                                   decoration: InputDecoration(
                                       contentPadding:
                                           EdgeInsets.symmetric(vertical: 13),
                                       border: InputBorder.none,
+                                      enabledBorder: InputBorder.none,
                                       focusedBorder: InputBorder.none,
-                                      // prefixIcon: Icon(Icons.mail_outline,
-                                      //   color: Color(0xFFA9ABAC),
-                                      // ),
                                       hintText: 'Pinterest Link'.tr,
-                                      hintStyle:
-                                          TextStyle(color: Color(0xFFA9ABAC))),
+                                      hintStyle: TextStyle(
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.color
+                                              ?.withValues(alpha: 0.6))),
                                 ),
-                              )
-                            ],
-                          ),
+                              ),
+                            )
+                          ],
                         ),
                         SizedBox(
                           height: 30..h,
                         ),
-                        Container(
-                          height: 50..h,
-                          width: MediaQuery.of(context).size.width,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Container(
-                                height: 24..h,
-                                width: 24..w,
-                                child: Image.asset('assets/images/x.png'),
-                              ),
-                              Container(
+                        Row(
+                          children: [
+                            Container(
+                              height: 24..h,
+                              width: 24..w,
+                              child: Image.asset('assets/images/x.png'),
+                            ),
+                            SizedBox(width: 16..w),
+                            Expanded(
+                              child: Container(
                                 padding: EdgeInsets.symmetric(horizontal: 20),
                                 height: 50..h,
-                                width: MediaQuery.of(context).size.width * .78,
                                 decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(5),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: AppColors.black.withOpacity(.25),
+                                        color: Theme.of(context)
+                                            .shadowColor
+                                            .withValues(alpha: 0.25),
                                         blurRadius: 4,
                                       )
                                     ],
-                                    color: AppColors.white),
+                                    color: Theme.of(context).cardColor),
                                 child: TextField(
                                   controller: cont.twitterLinkCont,
                                   textAlignVertical: TextAlignVertical.center,
-                                  cursorColor: Colors.black,
+                                  cursorColor: Theme.of(context)
+                                      .textTheme
+                                      .bodyLarge
+                                      ?.color,
+                                  style: TextStyle(
+                                      color: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.color),
                                   decoration: InputDecoration(
                                       contentPadding:
                                           EdgeInsets.symmetric(vertical: 13),
                                       border: InputBorder.none,
+                                      enabledBorder: InputBorder.none,
                                       focusedBorder: InputBorder.none,
-                                      // prefixIcon: Icon(Icons.mail_outline,
-                                      //   color: Color(0xFFA9ABAC),
-                                      // ),
                                       hintText: 'X Link'.tr,
-                                      hintStyle:
-                                          TextStyle(color: Color(0xFFA9ABAC))),
+                                      hintStyle: TextStyle(
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.color
+                                              ?.withValues(alpha: 0.6))),
                                 ),
-                              )
-                            ],
-                          ),
+                              ),
+                            )
+                          ],
                         ),
                         SizedBox(
                           height: 30..h,
                         ),
-                        Container(
-                          height: 50..h,
-                          width: MediaQuery.of(context).size.width,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Container(
-                                height: 24..h,
-                                width: 24..w,
-                                child: Image.asset('assets/images/linkd.png'),
-                              ),
-                              Container(
+                        Row(
+                          children: [
+                            Container(
+                              height: 24..h,
+                              width: 24..w,
+                              child: Image.asset('assets/images/linkd.png'),
+                            ),
+                            SizedBox(width: 16..w),
+                            Expanded(
+                              child: Container(
                                 padding: EdgeInsets.symmetric(horizontal: 20),
                                 height: 50..h,
-                                width: MediaQuery.of(context).size.width * .78,
                                 decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(5),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: AppColors.black.withOpacity(.25),
+                                        color: Theme.of(context)
+                                            .shadowColor
+                                            .withValues(alpha: 0.25),
                                         blurRadius: 4,
                                       )
                                     ],
-                                    color: AppColors.white),
+                                    color: Theme.of(context).cardColor),
                                 child: TextField(
                                   controller: cont.linkedinLinkCont,
                                   textAlignVertical: TextAlignVertical.center,
-                                  cursorColor: Colors.black,
+                                  cursorColor: Theme.of(context)
+                                      .textTheme
+                                      .bodyLarge
+                                      ?.color,
+                                  style: TextStyle(
+                                      color: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.color),
                                   decoration: InputDecoration(
                                       contentPadding:
                                           EdgeInsets.symmetric(vertical: 13),
                                       border: InputBorder.none,
+                                      enabledBorder: InputBorder.none,
                                       focusedBorder: InputBorder.none,
-                                      // prefixIcon: Icon(Icons.mail_outline,
-                                      //   color: Color(0xFFA9ABAC),
-                                      // ),
                                       hintText: 'Linkedin Link'.tr,
-                                      hintStyle:
-                                          TextStyle(color: Color(0xFFA9ABAC))),
+                                      hintStyle: TextStyle(
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.color
+                                              ?.withValues(alpha: 0.6))),
                                 ),
-                              )
-                            ],
-                          ),
+                              ),
+                            )
+                          ],
                         ),
                         SizedBox(height: 30..h),
                         InkWell(

@@ -9,7 +9,16 @@ import '../view/constants/Colors.dart';
 class CategoryList extends StatelessWidget {
   final String imagePath;
   final String text;
-  const CategoryList({super.key, required this.imagePath, required this.text});
+  final VoidCallback? onTitleTap;
+  final VoidCallback? onArrowTap;
+
+  const CategoryList({
+    super.key,
+    required this.imagePath,
+    required this.text,
+    this.onTitleTap,
+    this.onArrowTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -29,49 +38,64 @@ class CategoryList extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              CachedNetworkImage(
-                height: 45..h,
-                width: 45..w,
-                imageUrl: imagePath,
-                imageBuilder: (context, imageProvider) => Container(
-                  height: 45..h,
-                  width: 45..w,
-                  decoration: BoxDecoration(
-                      image: DecorationImage(
-                        image: imageProvider,
-                        fit: BoxFit.cover,
-                      ),
-                      shape: BoxShape.circle),
-                ),
-                placeholder: (context, url) => SizedBox(
+          // Expanded clickable area for title
+          Expanded(
+            child: GestureDetector(
+              onTap: onTitleTap,
+              child: Row(
+                children: [
+                  CachedNetworkImage(
                     height: 45..h,
                     width: 45..w,
-                    child: Center(
-                        child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                    ))),
-                errorWidget: (context, url, error) => Icon(Icons.error),
+                    imageUrl: imagePath,
+                    imageBuilder: (context, imageProvider) => Container(
+                      height: 45..h,
+                      width: 45..w,
+                      decoration: BoxDecoration(
+                          image: DecorationImage(
+                            image: imageProvider,
+                            fit: BoxFit.cover,
+                          ),
+                          shape: BoxShape.circle),
+                    ),
+                    placeholder: (context, url) => SizedBox(
+                        height: 45..h,
+                        width: 45..w,
+                        child: Center(
+                            child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                        ))),
+                    errorWidget: (context, url, error) => Icon(Icons.error),
+                  ),
+                  SizedBox(
+                    width: 10..w,
+                  ),
+                  Expanded(
+                    child: Text(
+                      text,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          fontSize: 15..sp,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.black),
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(
-                width: 10..w,
-              ),
-              Container(
-                constraints: BoxConstraints.loose(Size.fromWidth(200)),
-                child: Text(
-                  text,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 15..sp, fontWeight: FontWeight.w500, color: AppColors.black),
-                ),
-              ),
-            ],
+            ),
           ),
-          Icon(
-            Icons.arrow_forward_ios_outlined,
-            size: 15,
-            color: AppColors.k1xFF403C3C,
-          )
+          // Separate clickable area for arrow
+          GestureDetector(
+            onTap: onArrowTap,
+            child: Container(
+              padding: EdgeInsets.all(8),
+              child: Icon(
+                Icons.arrow_forward_ios_outlined,
+                size: 15,
+                color: AppColors.k1xFF403C3C,
+              ),
+            ),
+          ),
         ],
       ),
     );

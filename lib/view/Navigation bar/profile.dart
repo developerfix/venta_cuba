@@ -422,7 +422,9 @@ class _ProfileState extends State<Profile> {
                                     height: 30..h,
                                     width: 30..w,
                                     child: SvgPicture.asset(
-                                        'assets/icons/reload.svg')),
+                                      'assets/icons/reload.svg',
+                                      color: Theme.of(context).iconTheme.color,
+                                    )),
                               )
                             ],
                           ),
@@ -502,8 +504,10 @@ class _ProfileState extends State<Profile> {
                             Container(
                               height: 20..h,
                               width: 20..w,
-                              child:
-                                  SvgPicture.asset('assets/icons/person.svg'),
+                              child: SvgPicture.asset(
+                                'assets/icons/person.svg',
+                                color: Theme.of(context).iconTheme.color,
+                              ),
                             ),
                             SizedBox(
                               width: 5..w,
@@ -550,8 +554,10 @@ class _ProfileState extends State<Profile> {
                               Container(
                                 height: 25..h,
                                 width: 25..w,
-                                child:
-                                    Image.asset('assets/icons/thumbs-up.png'),
+                                child: Image.asset(
+                                  'assets/icons/thumbs-up.png',
+                                  color: Theme.of(context).iconTheme.color,
+                                ),
                               ),
                               SizedBox(width: 7..w),
                               Padding(
@@ -612,7 +618,9 @@ class _ProfileState extends State<Profile> {
                                     height: 20..h,
                                     width: 20..w,
                                     child: SvgPicture.asset(
-                                        'assets/icons/heartSimple.svg'),
+                                      'assets/icons/heartSimple.svg',
+                                      color: Theme.of(context).iconTheme.color,
+                                    ),
                                   ),
                                   SizedBox(
                                     width: 5..w,
@@ -664,7 +672,9 @@ class _ProfileState extends State<Profile> {
                                     height: 20..h,
                                     width: 20..w,
                                     child: SvgPicture.asset(
-                                        'assets/icons/notificationSimple.svg'),
+                                      'assets/icons/notificationSimple.svg',
+                                      color: Theme.of(context).iconTheme.color,
+                                    ),
                                   ),
                                   SizedBox(
                                     width: 5..w,

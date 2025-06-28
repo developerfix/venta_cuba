@@ -35,7 +35,7 @@ class _SubSubCategoriesState extends State<SubSubCategories> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: GetBuilder<HomeController>(
         builder: (cont) {
           return SelectionArea(
@@ -80,7 +80,8 @@ class _SubSubCategoriesState extends State<SubSubCategories> {
                       style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.black),
+                          color:
+                              Theme.of(context).textTheme.headlineSmall?.color),
                     ),
                     SizedBox(
                       height: 45..h,
@@ -119,11 +120,12 @@ class _SubSubCategoriesState extends State<SubSubCategories> {
                                           decoration: BoxDecoration(
                                             borderRadius:
                                                 BorderRadius.circular(10..r),
-                                            color: Colors.white,
+                                            color: Theme.of(context).cardColor,
                                             boxShadow: [
                                               BoxShadow(
-                                                color: Colors.grey
-                                                    .withOpacity(0.5),
+                                                color: Theme.of(context)
+                                                    .shadowColor
+                                                    .withValues(alpha: 0.1),
                                                 // Shadow color
                                                 offset: Offset(0, 3),
                                                 // Shadow offset
@@ -203,7 +205,8 @@ class _SubSubCategoriesState extends State<SubSubCategories> {
                                               ),
                                               Container(
                                                 // height: 65..h,
-                                                color: Colors.white,
+                                                color:
+                                                    Theme.of(context).cardColor,
                                                 child: Column(
                                                   children: [
                                                     SizedBox(
@@ -223,8 +226,11 @@ class _SubSubCategoriesState extends State<SubSubCategories> {
                                                             fontSize: 17..sp,
                                                             fontWeight:
                                                                 FontWeight.w600,
-                                                            color:
-                                                                Colors.black),
+                                                            color: Theme.of(
+                                                                    context)
+                                                                .textTheme
+                                                                .bodyLarge
+                                                                ?.color),
                                                       ),
                                                     ),
                                                     SizedBox(
@@ -275,31 +281,16 @@ class _SubSubCategoriesState extends State<SubSubCategories> {
                                           ),
                                         ),
                                         Positioned(
-                                          top: 10..h,
-                                          right: 10..w,
-                                          child: InkWell(
-                                            onTap: () async {
-                                              if (authCont.user?.email == "") {
-                                                Get.to(Login());
-                                              } else {
-                                                cont.listingModel = cont
-                                                    .listingModelList[index];
-                                                cont.listingModelList[index]
-                                                            .isFavorite ==
-                                                        "0"
-                                                    ? cont
-                                                        .listingModelList[index]
-                                                        .isFavorite = "1"
-                                                    : cont
-                                                        .listingModelList[index]
-                                                        .isFavorite = "0";
-                                                cont.update();
-                                                bool isAddedF =
-                                                    await cont.favouriteItem();
-                                                if (isAddedF) {
-                                                  errorAlertToast(
-                                                      "Successfully".tr);
+                                            top: 10..h,
+                                            right: 10..w,
+                                            child: InkWell(
+                                              onTap: () async {
+                                                if (authCont.user?.email ==
+                                                    "") {
+                                                  Get.to(Login());
                                                 } else {
+                                                  cont.listingModel = cont
+                                                      .listingModelList[index];
                                                   cont.listingModelList[index]
                                                               .isFavorite ==
                                                           "0"
@@ -311,30 +302,53 @@ class _SubSubCategoriesState extends State<SubSubCategories> {
                                                           .listingModelList[
                                                               index]
                                                           .isFavorite = "0";
-                                                }
-                                              }
-                                            },
-                                            child: Container(
-                                              padding: EdgeInsets.all(10),
-                                              height: 43..h,
-                                              width: 43..w,
-                                              decoration: BoxDecoration(
-                                                  color: Colors.white,
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          21.5..r)),
-                                              child: SvgPicture.asset(
-                                                'assets/icons/heart1.svg',
-                                                color:
+                                                  cont.update();
+                                                  bool isAddedF = await cont
+                                                      .favouriteItem();
+                                                  if (isAddedF) {
+                                                    errorAlertToast(
+                                                        "Successfully".tr);
+                                                  } else {
                                                     cont.listingModelList[index]
                                                                 .isFavorite ==
-                                                            '0'
-                                                        ? Colors.grey
-                                                        : Colors.red,
+                                                            "0"
+                                                        ? cont
+                                                            .listingModelList[
+                                                                index]
+                                                            .isFavorite = "1"
+                                                        : cont
+                                                            .listingModelList[
+                                                                index]
+                                                            .isFavorite = "0";
+                                                  }
+                                                }
+                                              },
+                                              child: Container(
+                                                padding: EdgeInsets.all(10),
+                                                height: 43..h,
+                                                width: 43..w,
+                                                decoration: BoxDecoration(
+                                                    color: Theme.of(context)
+                                                        .cardColor,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            21.5..r)),
+                                                child: SvgPicture.asset(
+                                                  'assets/icons/heart1.svg',
+                                                  colorFilter: ColorFilter.mode(
+                                                      cont
+                                                                  .listingModelList[
+                                                                      index]
+                                                                  .isFavorite ==
+                                                              '0'
+                                                          ? AppColors
+                                                              .k0xFF9F9F9F
+                                                          : AppColors
+                                                              .k0xFFFB0808,
+                                                      BlendMode.srcIn),
+                                                ),
                                               ),
-                                            ),
-                                          ),
-                                        )
+                                            ))
                                       ],
                                     ));
                               },

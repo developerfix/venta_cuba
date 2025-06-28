@@ -170,7 +170,10 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                       style: TextStyle(
                                           fontSize: 16..sp,
                                           fontWeight: FontWeight.w500,
-                                          color: AppColors.k1xFF403C3C),
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .titleLarge
+                                              ?.color),
                                     ),
                                   ),
                                   // SizedBox(height: 7..h),
@@ -181,7 +184,7 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                       Container(
                                         height: 20,
                                         width: 1,
-                                        color: Colors.black45,
+                                        color: Theme.of(context).dividerColor,
                                       ),
                                       SizedBox(width: 7),
                                       CustomTextMonthDays(
@@ -233,12 +236,16 @@ class _MyPublicPageState extends State<MyPublicPage> {
                           // Set the indicator weight (width)
                           labelPadding: EdgeInsets.symmetric(horizontal: 0),
                           padding: EdgeInsets.zero,
-                          labelColor: AppColors.k0xFF0254B8,
+                          labelColor: Theme.of(context).primaryColor,
                           labelStyle: TextStyle(
                             fontWeight: FontWeight.w500,
                             fontSize: 17..sp,
                           ),
-                          unselectedLabelColor: AppColors.k0xFFA9ABAC,
+                          unselectedLabelColor: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.color
+                              ?.withValues(alpha: 0.6),
                           tabs: [
                             CustomText(
                               text: 'Listings'.tr,
@@ -279,7 +286,10 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                         style: TextStyle(
                                             fontSize: 21..sp,
                                             fontWeight: FontWeight.w600,
-                                            color: AppColors.black),
+                                            color: Theme.of(context)
+                                                .textTheme
+                                                .titleLarge
+                                                ?.color),
                                       ),
                                     ),
                                     SizedBox(
@@ -292,7 +302,10 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                         style: TextStyle(
                                             fontSize: 18..sp,
                                             fontWeight: FontWeight.w600,
-                                            color: AppColors.black),
+                                            color: Theme.of(context)
+                                                .textTheme
+                                                .bodyLarge
+                                                ?.color),
                                         textAlign: TextAlign.center,
                                       ),
                                     ),
@@ -330,14 +343,19 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                           padding: EdgeInsets.symmetric(
                                               horizontal: 10, vertical: 10),
                                           decoration: BoxDecoration(
-                                              color: Colors.blue.shade100,
+                                              color: Theme.of(context)
+                                                  .primaryColor
+                                                  .withValues(alpha: 0.1),
                                               borderRadius:
                                                   BorderRadius.circular(100),
                                               border: Border.all(
-                                                  color: Colors.blue)),
+                                                  color: Theme.of(context)
+                                                      .primaryColor)),
                                           child: Row(
                                             children: [
-                                              Icon(Icons.compare_arrows),
+                                              Icon(Icons.compare_arrows,
+                                                  color: Theme.of(context)
+                                                      .primaryColor),
                                               CustomText(text: "Sort".tr)
                                             ],
                                           ),
@@ -462,8 +480,11 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                                                       fontWeight:
                                                                           FontWeight
                                                                               .w600,
-                                                                      color: Colors
-                                                                          .black),
+                                                                      color: Theme.of(
+                                                                              context)
+                                                                          .textTheme
+                                                                          .titleLarge
+                                                                          ?.color),
                                                                 ),
                                                               ),
                                                               SelectionArea(
@@ -482,8 +503,11 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                                                       fontWeight:
                                                                           FontWeight
                                                                               .w400,
-                                                                      color: AppColors
-                                                                          .k0xFF403C3C),
+                                                                      color: Theme.of(
+                                                                              context)
+                                                                          .textTheme
+                                                                          .bodyMedium
+                                                                          ?.color),
                                                                 ),
                                                               ),
                                                               SelectionArea(
@@ -507,8 +531,9 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                                                       fontWeight:
                                                                           FontWeight
                                                                               .w600,
-                                                                      color: AppColors
-                                                                          .k0xFF0254B8),
+                                                                      color: Theme.of(
+                                                                              context)
+                                                                          .primaryColor),
                                                                 ),
                                                               ),
                                                             ],
@@ -599,7 +624,10 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                     style: TextStyle(
                                         fontSize: 19..sp,
                                         fontWeight: FontWeight.w600,
-                                        color: AppColors.black),
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .titleLarge
+                                            ?.color),
                                   ),
                                 ),
                                 SizedBox(
@@ -617,7 +645,11 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                     style: TextStyle(
                                         fontSize: 15..sp,
                                         fontWeight: FontWeight.w400,
-                                        color: AppColors.k0xFF9F9F9F),
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.color
+                                            ?.withValues(alpha: 0.7)),
                                   ),
                                 ),
                                 RatingSummary(
@@ -719,18 +751,21 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                                   horizontal: 10),
                                               decoration: BoxDecoration(
                                                   color: selectedIndex == index
-                                                      ? Colors.blue.shade300
-                                                      : Colors.grey.shade300,
+                                                      ? Theme.of(context)
+                                                          .primaryColor
+                                                          .withValues(
+                                                              alpha: 0.3)
+                                                      : Theme.of(context)
+                                                          .cardColor,
                                                   borderRadius:
                                                       BorderRadius.circular(5),
                                                   border: Border.all(
                                                       color: selectedIndex ==
                                                               index
-                                                          ? Colors.blue
-                                                              .withOpacity(0.9)
-                                                          : Colors.grey
-                                                              .withOpacity(
-                                                                  0.9))),
+                                                          ? Theme.of(context)
+                                                              .primaryColor
+                                                          : Theme.of(context)
+                                                              .dividerColor)),
                                               child: Center(
                                                 child: CustomText(
                                                   text: index == 0
@@ -868,7 +903,10 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                       style: TextStyle(
                                           fontSize: 21..sp,
                                           fontWeight: FontWeight.w600,
-                                          color: AppColors.black),
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .titleLarge
+                                              ?.color),
                                     ),
                                   ],
                                 ),
@@ -883,7 +921,10 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                         style: TextStyle(
                                             fontSize: 18..sp,
                                             fontWeight: FontWeight.w500,
-                                            color: AppColors.black),
+                                            color: Theme.of(context)
+                                                .textTheme
+                                                .titleMedium
+                                                ?.color),
                                       ),
                                     ),
                                     SizedBox(
@@ -901,7 +942,11 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                           style: TextStyle(
                                               fontSize: 15..sp,
                                               fontWeight: FontWeight.w400,
-                                              color: AppColors.k0xFFA9ABAC),
+                                              color: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyMedium
+                                                  ?.color
+                                                  ?.withValues(alpha: 0.7)),
                                         ),
                                       ),
                                     ),
@@ -913,7 +958,10 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                       style: TextStyle(
                                           fontSize: 18..sp,
                                           fontWeight: FontWeight.w500,
-                                          color: AppColors.black),
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium
+                                              ?.color),
                                     ),
                                     SizedBox(
                                       height: 10..h,
@@ -932,7 +980,11 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                           style: TextStyle(
                                               fontSize: 15..sp,
                                               fontWeight: FontWeight.w400,
-                                              color: AppColors.k0xFFA9ABAC),
+                                              color: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyMedium
+                                                  ?.color
+                                                  ?.withValues(alpha: 0.7)),
                                         ),
                                       ),
                                     ),
@@ -944,7 +996,10 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                       style: TextStyle(
                                           fontSize: 18..sp,
                                           fontWeight: FontWeight.w500,
-                                          color: AppColors.black),
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium
+                                              ?.color),
                                     ),
                                     SizedBox(
                                       height: 10..h,
@@ -963,7 +1018,11 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                           style: TextStyle(
                                               fontSize: 15..sp,
                                               fontWeight: FontWeight.w400,
-                                              color: AppColors.k0xFFA9ABAC),
+                                              color: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyMedium
+                                                  ?.color
+                                                  ?.withValues(alpha: 0.7)),
                                         ),
                                       ),
                                     ),
@@ -975,7 +1034,10 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                       style: TextStyle(
                                           fontSize: 18..sp,
                                           fontWeight: FontWeight.w500,
-                                          color: AppColors.black),
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium
+                                              ?.color),
                                     ),
                                     SizedBox(
                                       height: 10..h,
@@ -994,7 +1056,11 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                           style: TextStyle(
                                               fontSize: 15..sp,
                                               fontWeight: FontWeight.w400,
-                                              color: AppColors.k0xFFA9ABAC),
+                                              color: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyMedium
+                                                  ?.color
+                                                  ?.withValues(alpha: 0.7)),
                                         ),
                                       ),
                                     ),
@@ -1006,7 +1072,10 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                       style: TextStyle(
                                           fontSize: 18..sp,
                                           fontWeight: FontWeight.w500,
-                                          color: AppColors.black),
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium
+                                              ?.color),
                                     ),
                                     SizedBox(
                                       height: 10..h,
@@ -1025,7 +1094,11 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                           style: TextStyle(
                                               fontSize: 15..sp,
                                               fontWeight: FontWeight.w400,
-                                              color: AppColors.k0xFFA9ABAC),
+                                              color: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyMedium
+                                                  ?.color
+                                                  ?.withValues(alpha: 0.7)),
                                         ),
                                       ),
                                     ),
@@ -1037,7 +1110,10 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                       style: TextStyle(
                                           fontSize: 18..sp,
                                           fontWeight: FontWeight.w500,
-                                          color: AppColors.black),
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium
+                                              ?.color),
                                     ),
                                     SizedBox(
                                       height: 10..h,
@@ -1056,7 +1132,11 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                           style: TextStyle(
                                               fontSize: 15..sp,
                                               fontWeight: FontWeight.w400,
-                                              color: AppColors.k0xFFA9ABAC),
+                                              color: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyMedium
+                                                  ?.color
+                                                  ?.withValues(alpha: 0.7)),
                                         ),
                                       ),
                                     ),
@@ -1068,7 +1148,10 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                       style: TextStyle(
                                           fontSize: 18..sp,
                                           fontWeight: FontWeight.w500,
-                                          color: AppColors.black),
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium
+                                              ?.color),
                                     ),
                                     SizedBox(
                                       height: 10..h,
@@ -1087,7 +1170,11 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                           style: TextStyle(
                                               fontSize: 15..sp,
                                               fontWeight: FontWeight.w400,
-                                              color: AppColors.k0xFFA9ABAC),
+                                              color: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyMedium
+                                                  ?.color
+                                                  ?.withValues(alpha: 0.7)),
                                         ),
                                       ),
                                     ),

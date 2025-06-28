@@ -51,7 +51,10 @@ class _SearchAndCurrentLocationPageState
                           color: Theme.of(context).cardColor,
                           borderRadius: BorderRadius.circular(5),
                           border: Border.all(
-                              color: AppColors.k0xFFA9ABAC.withOpacity(.33))),
+                              color: Theme.of(context)
+                                  .dividerColor
+                                  .withValues(alpha: 0.3),
+                              width: 1)),
                       child: TextField(
                         onTap: () {
                           locationCont.isTextFiled = 0;

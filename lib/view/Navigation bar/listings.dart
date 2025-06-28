@@ -66,6 +66,7 @@ class _ListingsState extends State<Listings> {
                       },
                       child: SvgPicture.asset(
                         'assets/icons/heartSimple.svg',
+                        color: Theme.of(context).iconTheme.color,
                       ),
                     ),
                     SizedBox(
@@ -94,7 +95,9 @@ class _ListingsState extends State<Listings> {
                                       child: Center(
                                           child: SvgPicture.asset(
                                               'assets/icons/notificationSimple.svg',
-                                              color: Colors.black)),
+                                              color: Theme.of(context)
+                                                  .iconTheme
+                                                  .color)),
                                     ),
                                   ),
                                   if (cont.hasUnreadNotifications.value)

@@ -99,10 +99,12 @@ class _ShowAllListingSubState extends State<ShowAllListingSub> {
                                   // height: 280..h,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(10..r),
-                                    color: Colors.white,
+                                    color: Theme.of(context).cardColor,
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.grey.withOpacity(0.5),
+                                        color: Theme.of(context)
+                                            .shadowColor
+                                            .withValues(alpha: 0.1),
                                         // Shadow color
                                         offset: Offset(0, 3),
                                         // Shadow offset
@@ -180,7 +182,10 @@ class _ShowAllListingSubState extends State<ShowAllListingSub> {
                                               style: TextStyle(
                                                   fontSize: 17..sp,
                                                   fontWeight: FontWeight.w600,
-                                                  color: Colors.black),
+                                                  color: Theme.of(context)
+                                                      .textTheme
+                                                      .bodyLarge
+                                                      ?.color),
                                             ),
                                           ),
                                           SizedBox(
@@ -300,16 +305,18 @@ class _ShowAllListingSubState extends State<ShowAllListingSub> {
                                       height: 43..h,
                                       width: 43..w,
                                       decoration: BoxDecoration(
-                                          color: Colors.white,
+                                          color: Theme.of(context).cardColor,
                                           borderRadius:
                                               BorderRadius.circular(21.5..r)),
                                       child: SvgPicture.asset(
                                         'assets/icons/heart1.svg',
-                                        color: cont.listingModelList[index]
-                                                    .isFavorite ==
-                                                '0'
-                                            ? Colors.grey
-                                            : Colors.red,
+                                        colorFilter: ColorFilter.mode(
+                                            cont.listingModelList[index]
+                                                        .isFavorite ==
+                                                    '0'
+                                                ? AppColors.k0xFF9F9F9F
+                                                : AppColors.k0xFFFB0808,
+                                            BlendMode.srcIn),
                                       ),
                                     ),
                                   ),

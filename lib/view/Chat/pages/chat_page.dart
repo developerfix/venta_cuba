@@ -536,14 +536,19 @@ class _ChatPageState extends State<ChatPage> {
                             borderRadius: BorderRadius.circular(30.r),
                             boxShadow: [
                               BoxShadow(
-                                color: Color(0x3F000000),
-                                blurRadius: 4,
-                                offset: Offset(0, 0),
+                                color: Theme.of(context)
+                                    .shadowColor
+                                    .withValues(alpha: 0.1),
+                                blurRadius: 8,
+                                offset: Offset(0, 2),
                                 spreadRadius: 0,
                               )
                             ],
                             border: Border.all(
-                                color: Theme.of(context).dividerColor)),
+                                color: Theme.of(context)
+                                    .dividerColor
+                                    .withValues(alpha: 0.3),
+                                width: 1)),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -557,7 +562,9 @@ class _ChatPageState extends State<ChatPage> {
                                 minLines: 1,
                                 keyboardType: TextInputType.multiline,
                                 textInputAction: TextInputAction.newline,
-                                decoration: InputDecoration.collapsed(
+                                decoration: InputDecoration(
+                                    border: InputBorder.none,
+                                    focusedBorder: InputBorder.none,
                                     hintText: 'Type Message'.tr,
                                     hintStyle: TextStyle(
                                       fontSize: 14,
@@ -596,8 +603,8 @@ class _ChatPageState extends State<ChatPage> {
                                   icon: Icon(
                                     Icons.send,
                                     color: cont.isTyping
-                                        ? Colors.blue
-                                        : Colors.grey,
+                                        ? Theme.of(context).primaryColor
+                                        : Theme.of(context).iconTheme.color,
                                   ),
                                   onPressed: () async {
                                     await sendMessage('text');

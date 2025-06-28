@@ -2358,6 +2358,12 @@ class HomeController extends GetxController {
                   selectedSubSubCategory = null,
 
                   // getListing();
+                  // Reset price filter when category changes in search screen
+                  if (isSearchScreen)
+                    {
+                      minPriceController.clear(),
+                      maxPriceController.clear(),
+                    },
                   getListingSearch(),
                   // })
                 }
@@ -2466,11 +2472,26 @@ class HomeController extends GetxController {
                   {
                     selectedSubSubCategory = null,
                     isSearchScreen
-                        ? {Get.back(), getListingSearch()}
+                        ? {
+                            // Reset price filter when category changes in search screen
+                            minPriceController.clear(),
+                            maxPriceController.clear(),
+                            Get.back(),
+                            getListingSearch()
+                          }
                         : Get.back()
                   }
                 else
-                  {getListingSearch(), update()}
+                  {
+                    // Reset price filter when category changes in search screen
+                    if (isSearchScreen)
+                      {
+                        minPriceController.clear(),
+                        maxPriceController.clear(),
+                      },
+                    getListingSearch(),
+                    update()
+                  }
               };
       }
     } else {

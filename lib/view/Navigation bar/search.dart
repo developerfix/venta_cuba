@@ -13,6 +13,7 @@ import '../../Controllers/auth_controller.dart';
 import '../../Models/ListingModel.dart';
 import '../../Models/SelectedCategoryModel.dart';
 import '../../cities_list/cites_list.dart';
+import '../../util/category_list.dart';
 import '../auth/login.dart';
 import '../frame/frame.dart';
 import '../widgets/scroll_to_top_button.dart';
@@ -62,7 +63,11 @@ class _SearchState extends State<Search> {
                 Container(
                   height: 4..h,
                   width: 160..w,
-                  color: AppColors.k0xFFD9D9D9,
+                  decoration: BoxDecoration(
+                    color:
+                        Theme.of(context).dividerColor.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
                 SizedBox(height: 17..h),
                 Text(
@@ -256,16 +261,26 @@ class _SearchState extends State<Search> {
                             Container(
                               width: MediaQuery.of(context).size.width * .75,
                               decoration: BoxDecoration(
-                                color: AppColors.k0xFFF0F1F1,
-                                borderRadius: BorderRadius.circular(35..r),
+                                color: Theme.of(context).cardColor,
                               ),
                               child: TextField(
                                 controller: cont.searchController,
                                 onChanged: (value) {
+                                  // Reset price filter when search text changes
+                                  cont.minPriceController.clear();
+                                  cont.maxPriceController.clear();
                                   // Trigger rebuild to show/hide close icon
                                   cont.update();
+
+                                  // Trigger search immediately when text changes
+                                  cont.currentSearchPage.value = 1;
+                                  cont.listingModelSearchList.clear();
+                                  cont.getListingSearch();
                                 },
                                 onSubmitted: (value) {
+                                  // Reset price filter when search is submitted
+                                  cont.minPriceController.clear();
+                                  cont.maxPriceController.clear();
                                   cont.currentSearchPage.value = 1;
                                   cont.listingModelSearchList.clear();
                                   cont.update();
@@ -283,6 +298,9 @@ class _SearchState extends State<Search> {
                                     focusedBorder: InputBorder.none,
                                     prefixIcon: InkWell(
                                       onTap: () {
+                                        // Reset price filter when search icon is tapped
+                                        cont.minPriceController.clear();
+                                        cont.maxPriceController.clear();
                                         cont.currentSearchPage.value = 1;
                                         cont.listingModelSearchList.clear();
                                         cont.update();
@@ -292,7 +310,9 @@ class _SearchState extends State<Search> {
                                         padding: EdgeInsets.all(12),
                                         child: SvgPicture.asset(
                                             'assets/icons/search.svg',
-                                            color: AppColors.k0xFFC4C4C4),
+                                            color: Theme.of(context)
+                                                .iconTheme
+                                                .color),
                                       ),
                                     ),
                                     suffixIcon: cont
@@ -300,6 +320,9 @@ class _SearchState extends State<Search> {
                                         ? InkWell(
                                             onTap: () {
                                               cont.searchController.clear();
+                                              // Reset price filter when search is cleared
+                                              cont.minPriceController.clear();
+                                              cont.maxPriceController.clear();
                                               cont.currentSearchPage.value = 1;
                                               cont.listingModelSearchList
                                                   .clear();
@@ -310,7 +333,9 @@ class _SearchState extends State<Search> {
                                               padding: EdgeInsets.all(12),
                                               child: Icon(
                                                 Icons.close,
-                                                color: AppColors.k0xFFC4C4C4,
+                                                color: Theme.of(context)
+                                                    .iconTheme
+                                                    .color,
                                                 size: 20,
                                               ),
                                             ),
@@ -318,7 +343,11 @@ class _SearchState extends State<Search> {
                                         : null,
                                     hintText: 'What are you looking for?'.tr,
                                     hintStyle: TextStyle(
-                                        color: Color(0xFFA9ABAC),
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.color
+                                            ?.withValues(alpha: 0.6),
                                         fontSize: 11..sp,
                                         fontWeight: FontWeight.w500)),
                               ),
@@ -392,7 +421,11 @@ class _SearchState extends State<Search> {
                                             shape: BoxShape.circle),
                                         child: Center(
                                           child: SvgPicture.asset(
-                                              'assets/icons/drop.svg'),
+                                            'assets/icons/drop.svg',
+                                            color: Theme.of(context)
+                                                .iconTheme
+                                                .color,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -439,7 +472,11 @@ class _SearchState extends State<Search> {
                                           Text(
                                             '${cont.listingModelSearchList.length} ',
                                             style: TextStyle(
-                                              color: AppColors.k1xFF403C3C,
+                                              color: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyMedium
+                                                  ?.color
+                                                  ?.withValues(alpha: 0.8),
                                               fontSize: 15..sp,
                                               fontWeight: FontWeight.w500,
                                             ),
@@ -447,7 +484,11 @@ class _SearchState extends State<Search> {
                                           Text(
                                             'results'.tr,
                                             style: TextStyle(
-                                              color: AppColors.k1xFF403C3C,
+                                              color: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyMedium
+                                                  ?.color
+                                                  ?.withValues(alpha: 0.8),
                                               fontSize: 15..sp,
                                               fontWeight: FontWeight.w500,
                                             ),
@@ -468,7 +509,11 @@ class _SearchState extends State<Search> {
                                         decoration: BoxDecoration(
                                             borderRadius:
                                                 BorderRadius.circular(60),
-                                            border: Border.all()),
+                                            border: Border.all(
+                                              color: Theme.of(context)
+                                                  .dividerColor,
+                                              width: 1,
+                                            )),
                                         child: Row(
                                           children: [
                                             GestureDetector(
@@ -490,7 +535,8 @@ class _SearchState extends State<Search> {
                                                                   60)),
                                                   color: isListView
                                                       ? Colors.transparent
-                                                      : AppColors.k0xFF0254B8,
+                                                      : Theme.of(context)
+                                                          .primaryColor,
                                                 ),
                                                 child: SvgPicture.asset(
                                                   'assets/icons/category.svg',
@@ -523,7 +569,8 @@ class _SearchState extends State<Search> {
                                                               Radius.circular(
                                                                   60)),
                                                   color: isListView
-                                                      ? AppColors.k0xFF0254B8
+                                                      ? Theme.of(context)
+                                                          .primaryColor
                                                       : Colors.transparent,
                                                 ),
                                                 child: SvgPicture.asset(
@@ -550,7 +597,11 @@ class _SearchState extends State<Search> {
                                           padding: EdgeInsets.all(10),
                                           height: 49..h,
                                           decoration: BoxDecoration(
-                                              border: Border.all(),
+                                              border: Border.all(
+                                                color: Theme.of(context)
+                                                    .dividerColor,
+                                                width: 1,
+                                              ),
                                               borderRadius:
                                                   BorderRadius.circular(60)),
                                           child: Row(
@@ -561,7 +612,19 @@ class _SearchState extends State<Search> {
                                                 height: 24..h,
                                                 width: 24..w,
                                                 child: SvgPicture.asset(
-                                                    'assets/icons/sort.svg'),
+                                                    'assets/icons/sort.svg',
+                                                    colorFilter:
+                                                        ColorFilter.mode(
+                                                            Theme.of(context)
+                                                                    .iconTheme
+                                                                    .color ??
+                                                                Theme.of(
+                                                                        context)
+                                                                    .textTheme
+                                                                    .bodyLarge
+                                                                    ?.color ??
+                                                                Colors.black,
+                                                            BlendMode.srcIn)),
                                               ),
                                               Text(
                                                 'Sort'.tr,
@@ -936,7 +999,11 @@ class _SearchState extends State<Search> {
                                   style: TextStyle(
                                       fontSize: 13..sp,
                                       fontWeight: FontWeight.w400,
-                                      color: AppColors.k0xFF403C3C),
+                                      color: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.color
+                                          ?.withValues(alpha: 0.7)),
                                 ),
                               ),
                               SizedBox(
@@ -953,7 +1020,7 @@ class _SearchState extends State<Search> {
                                   style: TextStyle(
                                       fontSize: 14..sp,
                                       fontWeight: FontWeight.w600,
-                                      color: AppColors.k0xFF0254B8),
+                                      color: Theme.of(context).primaryColor),
                                 ),
                               ),
                               SizedBox(
@@ -1049,78 +1116,95 @@ class _SearchState extends State<Search> {
             decoration:
                 BoxDecoration(borderRadius: BorderRadius.circular(10..r)),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  // height: 170..h,
-                  width: 170..w,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: CachedNetworkImage(
-                      height: 170..h,
-                      width: 170..w,
-                      imageUrl:
-                          listing.gallery != null && listing.gallery!.isNotEmpty
-                              ? "${listing.gallery?.first}"
-                              : "",
-                      imageBuilder: (context, imageProvider) => Container(
+                Expanded(
+                  child: Container(
+                    height: 170..h,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(10),
+                          bottomLeft: Radius.circular(10)),
+                      child: CachedNetworkImage(
                         height: 170..h,
                         width: 170..w,
-                        decoration: BoxDecoration(
-                          image: DecorationImage(
-                            image: imageProvider,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                      placeholder: (context, url) => SizedBox(
+                        imageUrl: listing.gallery != null &&
+                                listing.gallery!.isNotEmpty
+                            ? "${listing.gallery?.first}"
+                            : "",
+                        imageBuilder: (context, imageProvider) => Container(
                           height: 170..h,
                           width: 170..w,
-                          child: Center(
-                              child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ))),
-                      errorWidget: (context, url, error) =>
-                          Center(child: Text("No Image".tr)),
+                          decoration: BoxDecoration(
+                            image: DecorationImage(
+                              image: imageProvider,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        placeholder: (context, url) => SizedBox(
+                            height: 170..h,
+                            width: 170..w,
+                            child: Center(
+                                child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ))),
+                        errorWidget: (context, url, error) =>
+                            Center(child: Text("No Image".tr)),
+                      ),
                     ),
                   ),
                 ),
-                Container(
-                  // height: 79..h,
-                  width: MediaQuery.of(context).size.width * .37,
-                  color: Theme.of(context).cardColor,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '${listing.title}',
-                        maxLines: 2,
-                        style: TextStyle(
-                            fontSize: 17..sp,
-                            fontWeight: FontWeight.w600,
-                            color:
-                                Theme.of(context).textTheme.titleLarge?.color),
-                      ),
-                      Text(
-                        "${listing.address}",
-                        style: TextStyle(
-                            fontSize: 13..sp,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.k0xFF403C3C),
-                      ),
-                      Text(
-                        listing.price == "0"
-                            ? ""
-                            : "${PriceFormatter().formatNumber(int.parse(listing.price ?? '0'))}\$ ${PriceFormatter().getCurrency(listing.currency)}",
-                        style: TextStyle(
-                            fontSize: 14..sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.k0xFF0254B8),
-                      ),
-                    ],
+                Expanded(
+                    child: Container(
+                  height: 170..h,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor,
+                    borderRadius: BorderRadius.only(
+                        topRight: Radius.circular(10),
+                        bottomRight: Radius.circular(10)),
                   ),
-                )
+                  width: MediaQuery.of(context).size.width * .37,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${listing.title}',
+                          maxLines: 2,
+                          style: TextStyle(
+                              fontSize: 17..sp,
+                              fontWeight: FontWeight.w600,
+                              color: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge
+                                  ?.color),
+                        ),
+                        Text(
+                          "${listing.address}",
+                          style: TextStyle(
+                              fontSize: 13..sp,
+                              fontWeight: FontWeight.w400,
+                              color: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.color
+                                  ?.withValues(alpha: 0.7)),
+                        ),
+                        Text(
+                          listing.price == "0"
+                              ? ""
+                              : "${PriceFormatter().formatNumber(int.parse(listing.price ?? '0'))}\$ ${PriceFormatter().getCurrency(listing.currency)}",
+                          style: TextStyle(
+                              fontSize: 14..sp,
+                              fontWeight: FontWeight.w600,
+                              color: Theme.of(context).primaryColor),
+                        ),
+                      ],
+                    ),
+                  ),
+                ))
               ],
             ),
           ),
@@ -1273,7 +1357,11 @@ class _SearchState extends State<Search> {
                               style: TextStyle(
                                   fontSize: 13..sp,
                                   fontWeight: FontWeight.w400,
-                                  color: AppColors.k0xFF403C3C),
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.color
+                                      ?.withValues(alpha: 0.7)),
                             ),
                             Text(
                               listingList[index].price == "0"
@@ -1282,7 +1370,7 @@ class _SearchState extends State<Search> {
                               style: TextStyle(
                                   fontSize: 14..sp,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.k0xFF0254B8),
+                                  color: Theme.of(context).primaryColor),
                             ),
                           ],
                         ),
@@ -1416,7 +1504,11 @@ class _PokeToDialBottomSheetContentState
                 Container(
                   height: 4..h,
                   width: 160..w,
-                  color: AppColors.k0xFFD9D9D9,
+                  decoration: BoxDecoration(
+                    color:
+                        Theme.of(context).dividerColor.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
                 SizedBox(
                   height: 17..h,
@@ -1474,7 +1566,13 @@ class _PokeToDialBottomSheetContentState
                       width: MediaQuery.of(context).size.width * .42,
                       decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(5),
-                          color: AppColors.k0xFFD9D9D9.withOpacity(.28)),
+                          color: Theme.of(context).cardColor,
+                          border: Border.all(
+                            color: Theme.of(context)
+                                .dividerColor
+                                .withValues(alpha: 0.3),
+                            width: 1,
+                          )),
                       child: Center(
                         child: TextField(
                           controller: cont.minPriceController,
@@ -1498,7 +1596,13 @@ class _PokeToDialBottomSheetContentState
                       width: MediaQuery.of(context).size.width * .42,
                       decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(5),
-                          color: AppColors.k0xFFD9D9D9.withOpacity(.28)),
+                          color: Theme.of(context).cardColor,
+                          border: Border.all(
+                            color: Theme.of(context)
+                                .dividerColor
+                                .withValues(alpha: 0.3),
+                            width: 1,
+                          )),
                       child: Center(
                           child: TextField(
                         controller: cont.maxPriceController,
@@ -1579,9 +1683,10 @@ class _PokeToDialBottomSheetContentState
                       child: Text(
                         "Save Changes".tr,
                         style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w500,
-                            color: Theme.of(context).colorScheme.onPrimary),
+                          fontSize: 20,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                   ),
@@ -2274,9 +2379,21 @@ class _CategorySelectionDialogState extends State<CategorySelectionDialog> {
 
     return ListView.separated(
       itemCount: items.length,
-      separatorBuilder: (context, index) => Divider(height: 1),
+      separatorBuilder: (context, index) => SizedBox(height: 8),
       itemBuilder: (context, index) {
         final item = items[index];
+
+        // For categories (level 0), use CategoryList with separate click handlers
+        if (currentLevel == 0) {
+          return CategoryList(
+            imagePath: item?.icon ?? '',
+            text: _getItemName(item),
+            onTitleTap: () => _selectCategoryTitle(item),
+            onArrowTap: () => _selectCategoryArrow(item),
+          );
+        }
+
+        // For subcategories and sub-subcategories, use ListTile
         return ListTile(
           title: Text(
             _getItemName(item),
@@ -2322,6 +2439,40 @@ class _CategorySelectionDialogState extends State<CategorySelectionDialog> {
   }
 
   Future<void> _selectCategory(dynamic category) async {
+    homeCont.selectedCategory = category;
+    homeCont.selectedSubCategory = null;
+    homeCont.selectedSubSubCategory = null;
+    homeCont.isNavigate = false;
+    homeCont.isSearchScreen = true;
+
+    // Load subcategories
+    await homeCont.getSubCategories();
+
+    // Check if subcategories exist
+    if (homeCont.subCategoriesModel?.data?.isNotEmpty ?? false) {
+      setState(() {
+        currentLevel = 1;
+      });
+    } else {
+      // No subcategories, apply filter and close dialog
+      _applyFilterAndClose();
+    }
+  }
+
+  // When clicking on category title - show all posts in that category
+  Future<void> _selectCategoryTitle(dynamic category) async {
+    homeCont.selectedCategory = category;
+    homeCont.selectedSubCategory = null;
+    homeCont.selectedSubSubCategory = null;
+    homeCont.isNavigate = false;
+    homeCont.isSearchScreen = true;
+
+    // Apply filter immediately without navigating to subcategories
+    _applyFilterAndClose();
+  }
+
+  // When clicking on category arrow - navigate to subcategories
+  Future<void> _selectCategoryArrow(dynamic category) async {
     homeCont.selectedCategory = category;
     homeCont.selectedSubCategory = null;
     homeCont.selectedSubSubCategory = null;
@@ -2397,6 +2548,10 @@ class _CategorySelectionDialogState extends State<CategorySelectionDialog> {
     Get.log("Selected SubCategory: ${homeCont.selectedSubCategory?.name}");
     Get.log(
         "Selected SubSubCategory: ${homeCont.selectedSubSubCategory?.name}");
+
+    // Reset price filter when category selection changes
+    homeCont.minPriceController.clear();
+    homeCont.maxPriceController.clear();
 
     // Ensure we stay in search screen
     homeCont.isSearchScreen = true;

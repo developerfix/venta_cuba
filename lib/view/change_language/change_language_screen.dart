@@ -142,9 +142,11 @@ class _ChangeLanguageScreenState extends State<ChangeLanguageScreen> {
                 decoration: BoxDecoration(
                   color: _selection == 2
                       ? Colors.green.shade300
-                      : Colors.grey.shade300,
+                      : Theme.of(context).cardColor,
                   border: Border.all(
-                      color: _selection == 2 ? Colors.green : Colors.grey),
+                      color: _selection == 2
+                          ? Colors.green
+                          : Theme.of(context).unselectedWidgetColor),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(

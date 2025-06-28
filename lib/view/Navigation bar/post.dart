@@ -529,7 +529,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
             topRight: Radius.circular(20.0),
           ),
           child: Container(
-            color: Colors.white,
+            color: Theme.of(context).bottomSheetTheme.backgroundColor,
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -573,7 +573,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                       height: 60..h,
                       width: MediaQuery.of(context).size.width,
                       decoration: BoxDecoration(
-                          color: AppColors.k0xFFA9ABAC,
+                          color: Theme.of(context).dividerColor,
                           borderRadius: BorderRadius.circular(10)),
                       child: Center(
                         child: Text(
@@ -946,7 +946,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                   width: MediaQuery.of(context).size.width,
                                   child: DottedBorder(
                                       borderType: BorderType.RRect,
-                                      color: AppColors.k0xFFC4C4C4,
+                                      color: Theme.of(context).dividerColor,
                                       // Border color
                                       strokeWidth: 1,
                                       // Border width
@@ -976,8 +976,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                 style: TextStyle(
                                                     fontSize: 10..sp,
                                                     fontWeight: FontWeight.w400,
-                                                    color:
-                                                        AppColors.k0xFFA9ABAC),
+                                                    color: Theme.of(context)
+                                                        .textTheme
+                                                        .bodySmall
+                                                        ?.color),
                                               ),
                                             ],
                                           ),
@@ -1314,16 +1316,19 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                             Container(
                               height: 58..h,
                               decoration: BoxDecoration(
-                                  color: Colors.transparent,
-                                  borderRadius: BorderRadius.circular(5),
+                                  color: Theme.of(context).cardColor,
+                                  borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
-                                      color: AppColors.k0xFFA9ABAC
-                                          .withOpacity(.33))),
+                                      color: Theme.of(context)
+                                          .dividerColor
+                                          .withValues(alpha: 0.3))),
                               child: TextField(
                                 controller: cont.titleCont,
                                 decoration: InputDecoration(
                                   hintText: "Title".tr,
                                   border: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
                                   contentPadding: EdgeInsets.symmetric(
                                       vertical: 10, horizontal: 20),
                                 ),
@@ -1377,11 +1382,12 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                     horizontal: 20, vertical: 18),
                                 height: 58..h,
                                 decoration: BoxDecoration(
-                                    color: Colors.transparent,
-                                    borderRadius: BorderRadius.circular(5),
+                                    color: Theme.of(context).cardColor,
+                                    borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
-                                        color: AppColors.k0xFFA9ABAC
-                                            .withOpacity(.33))),
+                                        color: Theme.of(context)
+                                            .dividerColor
+                                            .withValues(alpha: 0.3))),
                                 child: Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
@@ -1396,30 +1402,34 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                             SizedBox(height: 15..h),
                             Container(
                               height: 58..h,
-                              padding: EdgeInsets.all(10..r),
                               decoration: BoxDecoration(
-                                  color: Colors.transparent,
-                                  borderRadius: BorderRadius.circular(5),
+                                  color: Theme.of(context).cardColor,
+                                  borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
-                                      color: AppColors.k0xFFA9ABAC
-                                          .withOpacity(.33))),
+                                      color: Theme.of(context)
+                                          .dividerColor
+                                          .withValues(alpha: 0.3),
+                                      width: 1)),
                               child: Row(
                                 children: [
-                                  SizedBox(width: 7..w),
                                   Expanded(
                                     child: TextField(
-                                      maxLength: 9,
                                       controller: cont.priceCont,
                                       keyboardType: TextInputType.number,
                                       decoration: InputDecoration(
                                         hintText: "Price (Optional)".tr,
                                         hintStyle: TextStyle(fontSize: 14),
                                         border: InputBorder.none,
-                                        contentPadding:
-                                            EdgeInsets.only(top: 10),
+                                        enabledBorder: InputBorder.none,
+                                        focusedBorder: InputBorder.none,
+                                        counterText:
+                                            "", // Hide character counter
+                                        contentPadding: EdgeInsets.symmetric(
+                                            vertical: 15, horizontal: 15),
                                       ),
                                       inputFormatters: [
                                         FilteringTextInputFormatter.digitsOnly,
+                                        LengthLimitingTextInputFormatter(9),
                                       ],
                                       cursorColor: Theme.of(context)
                                           .textTheme
@@ -1467,11 +1477,12 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                               // height: 160..h,
                               width: MediaQuery.of(context).size.width,
                               decoration: BoxDecoration(
-                                  color: Colors.transparent,
-                                  borderRadius: BorderRadius.circular(5),
+                                  color: Theme.of(context).cardColor,
+                                  borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
-                                      color: AppColors.k0xFFA9ABAC
-                                          .withOpacity(.33))),
+                                      color: Theme.of(context)
+                                          .dividerColor
+                                          .withValues(alpha: 0.3))),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -1479,8 +1490,9 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                     height: 35..h,
                                     width: MediaQuery.of(context).size.width,
                                     decoration: BoxDecoration(
-                                        color: AppColors.k0xFFC4C4C4
-                                            .withOpacity(.2)),
+                                        color: Theme.of(context)
+                                            .dividerColor
+                                            .withValues(alpha: 0.1)),
                                     child: Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.start,
@@ -1595,6 +1607,8 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                     ],
                                     decoration: InputDecoration(
                                         border: InputBorder.none,
+                                        enabledBorder: InputBorder.none,
+                                        focusedBorder: InputBorder.none,
                                         contentPadding: EdgeInsets.symmetric(
                                             horizontal: 10, vertical: 10)),
                                     cursorColor: Theme.of(context)
@@ -1657,12 +1671,15 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           Container(
                                             height: 58..h,
                                             decoration: BoxDecoration(
-                                                color: Colors.transparent,
+                                                color:
+                                                    Theme.of(context).cardColor,
                                                 borderRadius:
-                                                    BorderRadius.circular(5),
+                                                    BorderRadius.circular(8),
                                                 border: Border.all(
-                                                    color: AppColors.k0xFFA9ABAC
-                                                        .withOpacity(.33))),
+                                                    color: Theme.of(context)
+                                                        .dividerColor
+                                                        .withValues(
+                                                            alpha: 0.3))),
                                             child: TextField(
                                               decoration: InputDecoration(
                                                 hintText: "Make (Optional)",
@@ -1684,12 +1701,15 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           Container(
                                             height: 58..h,
                                             decoration: BoxDecoration(
-                                                color: Colors.transparent,
+                                                color:
+                                                    Theme.of(context).cardColor,
                                                 borderRadius:
-                                                    BorderRadius.circular(5),
+                                                    BorderRadius.circular(8),
                                                 border: Border.all(
-                                                    color: AppColors.k0xFFA9ABAC
-                                                        .withOpacity(.33))),
+                                                    color: Theme.of(context)
+                                                        .dividerColor
+                                                        .withValues(
+                                                            alpha: 0.3))),
                                             child: TextField(
                                               decoration: InputDecoration(
                                                 hintText: "Model (Optional)",
@@ -1717,14 +1737,16 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                     vertical: 18),
                                                 height: 58..h,
                                                 decoration: BoxDecoration(
-                                                    color: Colors.transparent,
+                                                    color: Theme.of(context)
+                                                        .cardColor,
                                                     borderRadius:
                                                         BorderRadius.circular(
-                                                            5),
+                                                            8),
                                                     border: Border.all(
-                                                        color: AppColors
-                                                            .k0xFFA9ABAC
-                                                            .withOpacity(.33))),
+                                                        color: Theme.of(context)
+                                                            .dividerColor
+                                                            .withValues(
+                                                                alpha: 0.3))),
                                                 child: DropdownButton(
                                                     onTap: () {
                                                       print(
@@ -1764,16 +1786,18 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                             vertical: 18),
                                                     height: 58..h,
                                                     decoration: BoxDecoration(
-                                                        color:
-                                                            Colors.transparent,
+                                                        color: Theme.of(context)
+                                                            .cardColor,
                                                         borderRadius:
                                                             BorderRadius
-                                                                .circular(5),
+                                                                .circular(8),
                                                         border: Border.all(
-                                                            color: AppColors
-                                                                .k0xFFA9ABAC
-                                                                .withOpacity(
-                                                                    .33))),
+                                                            color: Theme.of(
+                                                                    context)
+                                                                .dividerColor
+                                                                .withValues(
+                                                                    alpha:
+                                                                        0.3))),
                                                     child: DropdownButton(
                                                         hint: Text('Job Type'),
                                                         underline: SizedBox(),
@@ -1872,24 +1896,26 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                         isDense: true,
                                         focusedBorder: OutlineInputBorder(
                                           borderRadius:
-                                              BorderRadius.circular(5),
+                                              BorderRadius.circular(8),
                                           borderSide: BorderSide(
-                                              color: AppColors.k0xFFA9ABAC
-                                                  .withOpacity(.33)),
+                                              color: Theme.of(context)
+                                                  .primaryColor),
                                         ),
                                         enabledBorder: OutlineInputBorder(
                                           borderRadius:
-                                              BorderRadius.circular(5),
+                                              BorderRadius.circular(8),
                                           borderSide: BorderSide(
-                                              color: AppColors.k0xFFA9ABAC
-                                                  .withOpacity(.33)),
+                                              color: Theme.of(context)
+                                                  .dividerColor
+                                                  .withValues(alpha: 0.3)),
                                         ),
                                         border: OutlineInputBorder(
                                           borderRadius:
-                                              BorderRadius.circular(5),
+                                              BorderRadius.circular(8),
                                           borderSide: BorderSide(
-                                              color: AppColors.k0xFFA9ABAC
-                                                  .withOpacity(.33)),
+                                              color: Theme.of(context)
+                                                  .dividerColor
+                                                  .withValues(alpha: 0.3)),
                                         ),
                                         hintText:
                                             // cont.tags.isNotEmpty ? '' :
@@ -2048,8 +2074,9 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                               borderRadius:
                                                   BorderRadius.circular(5),
                                               border: Border.all(
-                                                  color: AppColors.k0xFFA9ABAC
-                                                      .withOpacity(.33))),
+                                                  color: Theme.of(context)
+                                                      .dividerColor
+                                                      .withValues(alpha: 0.3))),
                                           child: DropdownButtonHideUnderline(
                                             child: DropdownButton2<
                                                 CustomProvinceNameList>(
@@ -2174,8 +2201,9 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                               borderRadius:
                                                   BorderRadius.circular(5),
                                               border: Border.all(
-                                                  color: AppColors.k0xFFA9ABAC
-                                                      .withOpacity(.33))),
+                                                  color: Theme.of(context)
+                                                      .dividerColor
+                                                      .withValues(alpha: 0.3))),
                                           child: DropdownButtonHideUnderline(
                                             child: DropdownButton2<
                                                 CustomCitiesList>(
@@ -2459,8 +2487,9 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           borderRadius:
                                               BorderRadius.circular(5),
                                           border: Border.all(
-                                              color: AppColors.k0xFFA9ABAC
-                                                  .withOpacity(.33))),
+                                              color: Theme.of(context)
+                                                  .dividerColor
+                                                  .withValues(alpha: 0.3))),
                                       child: TextField(
                                         controller: cont.websiteController,
                                         decoration: InputDecoration(
@@ -2485,8 +2514,9 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           borderRadius:
                                               BorderRadius.circular(5),
                                           border: Border.all(
-                                              color: AppColors.k0xFFA9ABAC
-                                                  .withOpacity(.33))),
+                                              color: Theme.of(context)
+                                                  .dividerColor
+                                                  .withValues(alpha: 0.3))),
                                       child: TextField(
                                         controller: cont.phoneController,
                                         decoration: InputDecoration(
@@ -2512,8 +2542,9 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           borderRadius:
                                               BorderRadius.circular(5),
                                           border: Border.all(
-                                              color: AppColors.k0xFFA9ABAC
-                                                  .withOpacity(.33))),
+                                              color: Theme.of(context)
+                                                  .dividerColor
+                                                  .withValues(alpha: 0.3))),
                                       child: TextField(
                                         controller: cont.conditionController,
                                         decoration: InputDecoration(
@@ -2538,8 +2569,9 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           borderRadius:
                                               BorderRadius.circular(5),
                                           border: Border.all(
-                                              color: AppColors.k0xFFA9ABAC
-                                                  .withOpacity(.33))),
+                                              color: Theme.of(context)
+                                                  .dividerColor
+                                                  .withValues(alpha: 0.3))),
                                       child: TextField(
                                         controller: cont.fulfillmentController,
                                         decoration: InputDecoration(
@@ -2564,8 +2596,9 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           borderRadius:
                                               BorderRadius.circular(5),
                                           border: Border.all(
-                                              color: AppColors.k0xFFA9ABAC
-                                                  .withOpacity(.33))),
+                                              color: Theme.of(context)
+                                                  .dividerColor
+                                                  .withValues(alpha: 0.3))),
                                       child: TextField(
                                         controller: cont.paymentController,
                                         decoration: InputDecoration(
@@ -2639,8 +2672,9 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           borderRadius:
                                               BorderRadius.circular(5),
                                           border: Border.all(
-                                              color: AppColors.k0xFFA9ABAC
-                                                  .withOpacity(.33))),
+                                              color: Theme.of(context)
+                                                  .dividerColor
+                                                  .withValues(alpha: 0.3))),
                                       child: TextField(
                                         controller: cont.youTubeController,
                                         decoration: InputDecoration(
@@ -2803,16 +2837,20 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
               Obx(
                 () => homeCont.isLoadingImages.value
                     ? Container(
-                        color: Colors.black.withOpacity(0.3),
+                        color: Theme.of(context)
+                            .shadowColor
+                            .withValues(alpha: 0.3),
                         child: Center(
                           child: Container(
                             padding: EdgeInsets.all(20),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: Theme.of(context).cardColor,
                               borderRadius: BorderRadius.circular(15),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
+                                  color: Theme.of(context)
+                                      .shadowColor
+                                      .withValues(alpha: 0.1),
                                   blurRadius: 10,
                                   spreadRadius: 2,
                                 ),
@@ -2827,7 +2865,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                   child: CircularProgressIndicator(
                                     strokeWidth: 3,
                                     valueColor: AlwaysStoppedAnimation<Color>(
-                                      AppColors.k0xFF0254B8,
+                                      Theme.of(context).primaryColor,
                                     ),
                                   ),
                                 ),
@@ -2849,7 +2887,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                       .tr,
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: AppColors.k0xFFA9ABAC,
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.color,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -2899,11 +2940,22 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                       ),
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Theme.of(context)
+                              .bottomSheetTheme
+                              .backgroundColor,
                           borderRadius: BorderRadius.only(
                             topLeft: Radius.circular(20),
                             topRight: Radius.circular(20),
                           ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Theme.of(context)
+                                  .shadowColor
+                                  .withValues(alpha: 0.1),
+                              blurRadius: 10,
+                              offset: Offset(0, -2),
+                            ),
+                          ],
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -2932,7 +2984,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                     cont.update();
                                   }
                                 },
-                                child: Icon(Icons.close),
+                                child: Icon(
+                                  Icons.close,
+                                  color: Theme.of(context).iconTheme.color,
+                                ),
                               ),
                             ),
                             Expanded(
@@ -2946,6 +3001,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           width: 30.h,
                                           child: CircularProgressIndicator(
                                             strokeWidth: 2,
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                              Theme.of(context).primaryColor,
+                                            ),
                                           ),
                                         ),
                                       )
@@ -2979,134 +3038,126 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                     .status ??
                                                 true;
                                           }
-                                          return InkWell(
-                                            onTap: () {
-                                              if (cont.isType == 0) {
-                                                // Reset subcategories when selecting a new category
-                                                _resetSubCategories();
+                                          return Container(
+                                            margin: EdgeInsets.symmetric(
+                                                horizontal: 4.w),
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              color: Colors.transparent,
+                                            ),
+                                            child: InkWell(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              onTap: () {
+                                                if (cont.isType == 0) {
+                                                  // Reset subcategories when selecting a new category
+                                                  _resetSubCategories();
 
-                                                cont.selectedCategory = cont
-                                                    .categoriesModel
-                                                    ?.data?[index];
-                                                cont.selectedCategoryModel =
-                                                    SelectedCategoryModel(
-                                                        id: cont.categoriesModel
-                                                            ?.data?[index].id,
-                                                        name: cont
-                                                            .categoriesModel
-                                                            ?.data?[index]
-                                                            .name,
-                                                        icon: cont
-                                                            .categoriesModel
-                                                            ?.data?[index]
-                                                            .icon,
-                                                        type: 0);
-                                                cont.isNavigate = false;
-                                                cont.isSearchScreen = false;
-                                                cont.update();
-                                                cont.getSubCategories();
-                                              } else if (cont.isType == 1) {
-                                                // Reset sub-subcategories when selecting a new subcategory
-                                                _resetSubSubCategories();
+                                                  cont.selectedCategory = cont
+                                                      .categoriesModel
+                                                      ?.data?[index];
+                                                  cont.selectedCategoryModel =
+                                                      SelectedCategoryModel(
+                                                          id: cont
+                                                              .categoriesModel
+                                                              ?.data?[index]
+                                                              .id,
+                                                          name: cont
+                                                              .categoriesModel
+                                                              ?.data?[index]
+                                                              .name,
+                                                          icon: cont
+                                                              .categoriesModel
+                                                              ?.data?[index]
+                                                              .icon,
+                                                          type: 0);
+                                                  cont.isNavigate = false;
+                                                  cont.isSearchScreen = false;
+                                                  cont.update();
+                                                  cont.getSubCategories();
+                                                } else if (cont.isType == 1) {
+                                                  // Reset sub-subcategories when selecting a new subcategory
+                                                  _resetSubSubCategories();
 
-                                                cont.selectedSubCategory = cont
-                                                    .subCategoriesModel
-                                                    ?.data?[index];
-                                                cont.selectedCategoryModel =
-                                                    SelectedCategoryModel(
-                                                        id: cont
-                                                            .subCategoriesModel
-                                                            ?.data?[index]
-                                                            .id,
-                                                        name: cont
-                                                            .subCategoriesModel
-                                                            ?.data?[index]
-                                                            .name,
-                                                        icon: "",
-                                                        type: 1);
-                                                cont.isNavigate = false;
-                                                cont.isSearchScreen = false;
-                                                cont.getSubSubCategories();
-                                                // cont.isSelect1 = index;
-                                              } else {
-                                                cont.selectedSubSubCategory =
-                                                    cont.subSubCategoriesModel
-                                                        ?.data?[index];
-                                                cont.selectedCategoryModel =
-                                                    SelectedCategoryModel(
-                                                        id: cont
-                                                            .subSubCategoriesModel
-                                                            ?.data?[index]
-                                                            .id,
-                                                        name: cont
-                                                            .subSubCategoriesModel
-                                                            ?.data?[index]
-                                                            .name,
-                                                        icon: "",
-                                                        type: 2);
-                                                //   cont.isSelect2 = index;
-                                                cont.update();
-                                                Navigator.pop(context);
-                                                print(cont
-                                                    .selectedSubSubCategory);
-                                              }
-                                            },
-                                            child: Row(
-                                              children: [
-                                                Text(
-                                                  cont.isType == 0
-                                                      ? "${cont.categoriesModel?.data?[index].name}"
-                                                      : cont.isType == 1
-                                                          ? "${cont.subCategoriesModel?.data?[index].name}"
-                                                          : "${cont.subSubCategoriesModel?.data?[index].name}",
-                                                  style: TextStyle(
-                                                      fontSize: 18,
-                                                      fontWeight:
-                                                          FontWeight.w400),
+                                                  cont.selectedSubCategory =
+                                                      cont.subCategoriesModel
+                                                          ?.data?[index];
+                                                  cont.selectedCategoryModel =
+                                                      SelectedCategoryModel(
+                                                          id: cont
+                                                              .subCategoriesModel
+                                                              ?.data?[index]
+                                                              .id,
+                                                          name: cont
+                                                              .subCategoriesModel
+                                                              ?.data?[index]
+                                                              .name,
+                                                          icon: "",
+                                                          type: 1);
+                                                  cont.isNavigate = false;
+                                                  cont.isSearchScreen = false;
+                                                  cont.getSubSubCategories();
+                                                  // cont.isSelect1 = index;
+                                                } else {
+                                                  cont.selectedSubSubCategory =
+                                                      cont.subSubCategoriesModel
+                                                          ?.data?[index];
+                                                  cont.selectedCategoryModel =
+                                                      SelectedCategoryModel(
+                                                          id: cont
+                                                              .subSubCategoriesModel
+                                                              ?.data?[index]
+                                                              .id,
+                                                          name: cont
+                                                              .subSubCategoriesModel
+                                                              ?.data?[index]
+                                                              .name,
+                                                          icon: "",
+                                                          type: 2);
+                                                  //   cont.isSelect2 = index;
+                                                  cont.update();
+                                                  Navigator.pop(context);
+                                                  print(cont
+                                                      .selectedSubSubCategory);
+                                                }
+                                              },
+                                              child: Container(
+                                                padding: EdgeInsets.symmetric(
+                                                  horizontal: 16.w,
+                                                  vertical: 12.h,
                                                 ),
-                                                Spacer(),
-                                                cont.isType == 0
-                                                    ? isShowCat
-                                                        ? Icon(
-                                                            Icons
-                                                                .arrow_forward_ios,
-                                                            size: 14..r)
-                                                        : Container(
-                                                            height: 15,
-                                                            width: 15,
-                                                            decoration:
-                                                                BoxDecoration(
-                                                              shape: BoxShape
-                                                                  .circle,
-                                                              border:
-                                                                  Border.all(),
-                                                            ),
-                                                            child: cont.selectedCategory
-                                                                        ?.id ==
-                                                                    cont
-                                                                        .categoriesModel
-                                                                        ?.data?[
-                                                                            index]
-                                                                        .id
-                                                                ? Container(
-                                                                    height: 7,
-                                                                    width: 7,
-                                                                    margin: EdgeInsets
-                                                                        .all(2),
-                                                                    decoration: BoxDecoration(
-                                                                        color: Colors
-                                                                            .blue,
-                                                                        shape: BoxShape
-                                                                            .circle),
-                                                                  )
-                                                                : SizedBox(),
-                                                          )
-                                                    : cont.isType == 1
-                                                        ? isShowSubCat
+                                                child: Row(
+                                                  children: [
+                                                    Expanded(
+                                                      child: Text(
+                                                        cont.isType == 0
+                                                            ? "${cont.categoriesModel?.data?[index].name}"
+                                                            : cont.isType == 1
+                                                                ? "${cont.subCategoriesModel?.data?[index].name}"
+                                                                : "${cont.subSubCategoriesModel?.data?[index].name}",
+                                                        maxLines: 5,
+                                                        style: TextStyle(
+                                                            fontSize: 16,
+                                                            fontWeight:
+                                                                FontWeight.w400,
+                                                            color: Theme.of(
+                                                                    context)
+                                                                .textTheme
+                                                                .bodyLarge
+                                                                ?.color),
+                                                      ),
+                                                    ),
+                                                    cont.isType == 0
+                                                        ? isShowCat
                                                             ? Icon(
                                                                 Icons
                                                                     .arrow_forward_ios,
-                                                                size: 14..r)
+                                                                size: 14..r,
+                                                                color: Theme.of(
+                                                                        context)
+                                                                    .iconTheme
+                                                                    .color)
                                                             : Container(
                                                                 height: 15,
                                                                 width: 15,
@@ -3115,13 +3166,17 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                                   shape: BoxShape
                                                                       .circle,
                                                                   border: Border
-                                                                      .all(),
+                                                                      .all(
+                                                                    color: Theme.of(
+                                                                            context)
+                                                                        .dividerColor,
+                                                                    width: 1,
+                                                                  ),
                                                                 ),
-                                                                //   child: cont.isSelect1 == index
-                                                                child: cont.selectedSubCategory
+                                                                child: cont.selectedCategory
                                                                             ?.id ==
                                                                         cont
-                                                                            .subCategoriesModel
+                                                                            .categoriesModel
                                                                             ?.data?[index]
                                                                             .id
                                                                     ? Container(
@@ -3133,49 +3188,105 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                                             EdgeInsets.all(2),
                                                                         decoration: BoxDecoration(
                                                                             color:
-                                                                                Colors.blue,
+                                                                                Theme.of(context).primaryColor,
                                                                             shape: BoxShape.circle),
                                                                       )
                                                                     : SizedBox(),
                                                               )
-                                                        : Container(
-                                                            height: 15,
-                                                            width: 15,
-                                                            decoration:
-                                                                BoxDecoration(
-                                                              shape: BoxShape
-                                                                  .circle,
-                                                              border:
-                                                                  Border.all(),
-                                                            ),
-                                                            // child: cont.isSelect2 == index
-                                                            child: cont.selectedSubSubCategory
-                                                                        ?.id ==
-                                                                    cont
-                                                                        .subSubCategoriesModel
-                                                                        ?.data?[
-                                                                            index]
-                                                                        .id
-                                                                ? Container(
-                                                                    height: 7,
-                                                                    width: 7,
-                                                                    margin: EdgeInsets
-                                                                        .all(2),
-                                                                    decoration: BoxDecoration(
-                                                                        color: Colors
-                                                                            .blue,
-                                                                        shape: BoxShape
-                                                                            .circle),
+                                                        : cont.isType == 1
+                                                            ? isShowSubCat
+                                                                ? Icon(
+                                                                    Icons
+                                                                        .arrow_forward_ios,
+                                                                    size: 14..r,
+                                                                    color: Theme.of(
+                                                                            context)
+                                                                        .iconTheme
+                                                                        .color)
+                                                                : Container(
+                                                                    height: 15,
+                                                                    width: 15,
+                                                                    decoration:
+                                                                        BoxDecoration(
+                                                                      shape: BoxShape
+                                                                          .circle,
+                                                                      border:
+                                                                          Border
+                                                                              .all(
+                                                                        color: Theme.of(context)
+                                                                            .dividerColor,
+                                                                        width:
+                                                                            1,
+                                                                      ),
+                                                                    ),
+                                                                    //   child: cont.isSelect1 == index
+                                                                    child: cont.selectedSubCategory?.id ==
+                                                                            cont.subCategoriesModel?.data?[index].id
+                                                                        ? Container(
+                                                                            height:
+                                                                                7,
+                                                                            width:
+                                                                                7,
+                                                                            margin:
+                                                                                EdgeInsets.all(2),
+                                                                            decoration:
+                                                                                BoxDecoration(color: Theme.of(context).primaryColor, shape: BoxShape.circle),
+                                                                          )
+                                                                        : SizedBox(),
                                                                   )
-                                                                : SizedBox(),
-                                                          ),
-                                              ],
+                                                            : Container(
+                                                                height: 15,
+                                                                width: 15,
+                                                                decoration:
+                                                                    BoxDecoration(
+                                                                  shape: BoxShape
+                                                                      .circle,
+                                                                  border: Border
+                                                                      .all(
+                                                                    color: Theme.of(
+                                                                            context)
+                                                                        .dividerColor,
+                                                                    width: 1,
+                                                                  ),
+                                                                ),
+                                                                // child: cont.isSelect2 == index
+                                                                child: cont.selectedSubSubCategory
+                                                                            ?.id ==
+                                                                        cont
+                                                                            .subSubCategoriesModel
+                                                                            ?.data?[index]
+                                                                            .id
+                                                                    ? Container(
+                                                                        height:
+                                                                            7,
+                                                                        width:
+                                                                            7,
+                                                                        margin:
+                                                                            EdgeInsets.all(2),
+                                                                        decoration: BoxDecoration(
+                                                                            color:
+                                                                                Theme.of(context).primaryColor,
+                                                                            shape: BoxShape.circle),
+                                                                      )
+                                                                    : SizedBox(),
+                                                              ),
+                                                  ],
+                                                ),
+                                              ),
                                             ),
                                           );
                                         },
                                         separatorBuilder: (context, index) {
-                                          return SizedBox(
-                                            height: 10.h,
+                                          return Padding(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 20.w),
+                                            child: Divider(
+                                              height: 1,
+                                              thickness: 0.5,
+                                              color: Theme.of(context)
+                                                  .dividerColor
+                                                  .withValues(alpha: 0.3),
+                                            ),
                                           );
                                         },
                                       ),

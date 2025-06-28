@@ -61,7 +61,8 @@ class _CategoryFromState extends State<CategoryFrom> {
                       style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.black),
+                          color:
+                              Theme.of(context).textTheme.headlineSmall?.color),
                     ),
                     SizedBox(height: 20..h),
                     GestureDetector(
@@ -78,7 +79,7 @@ class _CategoryFromState extends State<CategoryFrom> {
                       child: CustomText(
                         text: "View all".tr,
                         fontSize: 16.sp,
-                        fontColor: Colors.green,
+                        fontColor: Theme.of(context).primaryColor,
                       ),
                     ),
                     SizedBox(height: 20..h),
@@ -115,11 +116,12 @@ class _CategoryFromState extends State<CategoryFrom> {
                                           decoration: BoxDecoration(
                                             borderRadius:
                                                 BorderRadius.circular(10..r),
-                                            color: Colors.white,
+                                            color: Theme.of(context).cardColor,
                                             boxShadow: [
                                               BoxShadow(
-                                                color: Colors.grey
-                                                    .withOpacity(0.5),
+                                                color: Theme.of(context)
+                                                    .shadowColor
+                                                    .withValues(alpha: 0.1),
                                                 // Shadow color
                                                 offset: Offset(0, 3),
                                                 // Shadow offset
@@ -199,7 +201,8 @@ class _CategoryFromState extends State<CategoryFrom> {
                                               ),
                                               Container(
                                                 //height: 65..h,
-                                                color: Colors.white,
+                                                color:
+                                                    Theme.of(context).cardColor,
                                                 child: Column(
                                                   children: [
                                                     SizedBox(
@@ -219,8 +222,11 @@ class _CategoryFromState extends State<CategoryFrom> {
                                                             fontSize: 17..sp,
                                                             fontWeight:
                                                                 FontWeight.w600,
-                                                            color:
-                                                                Colors.black),
+                                                            color: Theme.of(
+                                                                    context)
+                                                                .textTheme
+                                                                .bodyLarge
+                                                                ?.color),
                                                       ),
                                                     ),
                                                     SizedBox(
@@ -360,18 +366,20 @@ class _CategoryFromState extends State<CategoryFrom> {
                                               height: 43..h,
                                               width: 43..w,
                                               decoration: BoxDecoration(
-                                                  color: Colors.white,
+                                                  color: Theme.of(context)
+                                                      .cardColor,
                                                   borderRadius:
                                                       BorderRadius.circular(
                                                           21.5..r)),
                                               child: SvgPicture.asset(
                                                 'assets/icons/heart1.svg',
-                                                color:
+                                                colorFilter: ColorFilter.mode(
                                                     cont.listingModelList[index]
                                                                 .isFavorite ==
                                                             '0'
-                                                        ? Colors.grey
-                                                        : Colors.red,
+                                                        ? AppColors.k0xFF9F9F9F
+                                                        : AppColors.k0xFFFB0808,
+                                                    BlendMode.srcIn),
                                               ),
                                             ),
                                           ),

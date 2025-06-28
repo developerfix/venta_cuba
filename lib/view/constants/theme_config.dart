@@ -9,18 +9,18 @@ class ThemeConfig {
       brightness: Brightness.light,
       primarySwatch: Colors.blue,
       primaryColor: const Color(0xFF0254B8),
-      scaffoldBackgroundColor: Colors.white,
-      cardColor: Colors.white,
+      scaffoldBackgroundColor: const Color(0xFFFFFFFF),
+      cardColor: const Color(0xFFFFFFFF),
       dividerColor: const Color(0xFFE0E0E0),
 
       // AppBar Theme
       appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: Color(0xFFFFFFFF),
+        foregroundColor: Color(0xFF000000),
         elevation: 0,
-        iconTheme: IconThemeData(color: Colors.black),
+        iconTheme: IconThemeData(color: Color(0xFF000000)),
         titleTextStyle: TextStyle(
-          color: Colors.black,
+          color: Color(0xFF000000),
           fontSize: 18,
           fontWeight: FontWeight.w600,
         ),
@@ -69,8 +69,8 @@ class ThemeConfig {
 
       // Input Decoration Theme
       inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: const Color(0xFFF5F5F5),
+        filled: false,
+        fillColor: Colors.transparent,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
@@ -81,20 +81,20 @@ class ThemeConfig {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFF0254B8)),
+          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
         ),
       ),
 
       // Icon Theme
       iconTheme: const IconThemeData(
-        color: Colors.black54,
+        color: Color(0xFF6C6C6C),
       ),
 
       // Elevated Button Theme
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF0254B8),
-          foregroundColor: Colors.white,
+          foregroundColor: const Color(0xFFFFFFFF),
           elevation: 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
@@ -104,7 +104,7 @@ class ThemeConfig {
 
       // Dialog Theme
       dialogTheme: DialogTheme(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFFFFFFF),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -112,7 +112,7 @@ class ThemeConfig {
 
       // Bottom Sheet Theme
       bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: Colors.white,
+        backgroundColor: Color(0xFFFFFFFF),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
@@ -134,11 +134,11 @@ class ThemeConfig {
       // AppBar Theme
       appBarTheme: const AppBarTheme(
         backgroundColor: Color(0xFF1E1E1E),
-        foregroundColor: Colors.white,
+        foregroundColor: Color(0xFFFFFFFF),
         elevation: 0,
-        iconTheme: IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: Color(0xFFFFFFFF)),
         titleTextStyle: TextStyle(
-          color: Colors.white,
+          color: Color(0xFFFFFFFF),
           fontSize: 18,
           fontWeight: FontWeight.w600,
         ),
@@ -187,8 +187,8 @@ class ThemeConfig {
 
       // Input Decoration Theme
       inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: const Color(0xFF2C2C2C),
+        filled: false,
+        fillColor: Colors.transparent,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: Color(0xFF404040)),
@@ -199,20 +199,20 @@ class ThemeConfig {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFF0254B8)),
+          borderSide: const BorderSide(color: Color(0xFF404040)),
         ),
       ),
 
       // Icon Theme
       iconTheme: const IconThemeData(
-        color: Colors.white70,
+        color: Color(0xFFB3B3B3),
       ),
 
       // Elevated Button Theme
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF0254B8),
-          foregroundColor: Colors.white,
+          foregroundColor: const Color(0xFFFFFFFF),
           elevation: 4,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
