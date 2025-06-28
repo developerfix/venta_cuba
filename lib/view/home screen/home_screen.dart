@@ -306,7 +306,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                SvgPicture.asset('assets/icons/location.svg'),
+                                SvgPicture.asset('assets/icons/location.svg',
+                                    color: Theme.of(context).iconTheme.color),
                                 SizedBox(
                                   width: 5..w,
                                 ),

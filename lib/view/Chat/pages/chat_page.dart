@@ -16,6 +16,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
 import 'package:venta_cuba/Utils/funcations.dart';
 import 'package:venta_cuba/view/Navigation%20bar/post.dart';
+import 'package:venta_cuba/view/constants/Colors.dart';
 import '../../../Controllers/home_controller.dart';
 import '../../../Notification/firebase_messaging.dart';
 import '../../../Utils/global_variabel.dart';
@@ -276,7 +277,7 @@ class _ChatPageState extends State<ChatPage> {
             padding: const EdgeInsets.only(left: 10),
             child: Icon(
               Icons.arrow_back,
-              color: Color(0xFF373535),
+              color: Theme.of(context).iconTheme.color,
             ),
           ),
         ),
@@ -443,11 +444,10 @@ class _ChatPageState extends State<ChatPage> {
                               // Show title/name
                               if (_getListingTitle().isNotEmpty)
                                 CustomText(
-                                  text: _getListingTitle(),
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 13,
-                                  fontColor: Colors.black,
-                                ),
+                                    text: _getListingTitle(),
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 13,
+                                    fontColor: AppColors.textPrimary),
                               // Show location
                               if (_getListingLocation().isNotEmpty)
                                 CustomText(
@@ -588,8 +588,6 @@ class _ChatPageState extends State<ChatPage> {
                               ),
                             ),
                             Container(
-                              // height: 35..h,
-                              // width: 42..w,
                               decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(10)),
                               child: Center(
