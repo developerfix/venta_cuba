@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
 import 'package:venta_cuba/Controllers/home_controller.dart';
 import 'package:venta_cuba/Controllers/location_controller.dart';
+import 'package:venta_cuba/Controllers/theme_controller.dart';
 import 'package:venta_cuba/util/profile_list.dart';
 import 'package:venta_cuba/view/auth/vendor_screen.dart';
 import 'package:venta_cuba/view/constants/Colors.dart';
@@ -37,6 +38,7 @@ class _ProfileState extends State<Profile> {
   int _selectedStars = 4;
   final homeCont = Get.put(HomeController());
   final locationCont = Get.put(LocationController());
+  final themeController = Get.put(ThemeController());
 
   void _setRating(int rating) {
     setState(() {
@@ -66,7 +68,7 @@ class _ProfileState extends State<Profile> {
             topRight: Radius.circular(20.0),
           ),
           child: Container(
-            color: Colors.white,
+            color: Theme.of(context).dialogTheme.backgroundColor,
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -77,7 +79,7 @@ class _ProfileState extends State<Profile> {
                     style: TextStyle(
                         fontSize: 22..h,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.black),
+                        color: Theme.of(context).textTheme.titleLarge?.color),
                   ),
                   SizedBox(
                     height: 40..h,
@@ -161,7 +163,7 @@ class _ProfileState extends State<Profile> {
           style: TextStyle(
               fontSize: 18..sp,
               fontWeight: FontWeight.w600,
-              color: AppColors.black),
+              color: Theme.of(context).textTheme.titleLarge?.color),
           textAlign: TextAlign.center,
         ),
         SizedBox(
@@ -200,7 +202,7 @@ class _ProfileState extends State<Profile> {
                       style: TextStyle(
                           fontSize: 14..sp,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.white),
+                          color: Colors.white),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -278,7 +280,7 @@ class _ProfileState extends State<Profile> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: GetBuilder(
         init: AuthController(),
         builder: (cont) {
@@ -438,10 +440,12 @@ class _ProfileState extends State<Profile> {
                               width: 35..w,
                               decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: AppColors.white,
+                                  color: Theme.of(context).cardColor,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppColors.black.withOpacity(.05),
+                                      color: Theme.of(context)
+                                          .shadowColor
+                                          .withOpacity(.05),
                                       blurRadius: 10,
                                     )
                                   ]),
@@ -460,7 +464,8 @@ class _ProfileState extends State<Profile> {
                         style: TextStyle(
                             fontSize: 15..sp,
                             fontWeight: FontWeight.w500,
-                            color: AppColors.black),
+                            color:
+                                Theme.of(context).textTheme.titleMedium?.color),
                       ),
                     ),
                     SizedBox(
@@ -484,11 +489,13 @@ class _ProfileState extends State<Profile> {
                             borderRadius: BorderRadius.circular(5),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.black.withOpacity(.4),
+                                color: Theme.of(context)
+                                    .shadowColor
+                                    .withOpacity(.4),
                                 blurRadius: 5,
                               )
                             ],
-                            color: AppColors.white),
+                            color: Theme.of(context).cardColor),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -506,7 +513,10 @@ class _ProfileState extends State<Profile> {
                               style: TextStyle(
                                   fontSize: 15..sp,
                                   fontWeight: FontWeight.w500,
-                                  color: AppColors.black),
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.color),
                             ),
                           ],
                         ),
@@ -527,11 +537,13 @@ class _ProfileState extends State<Profile> {
                               borderRadius: BorderRadius.circular(5),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.black.withOpacity(.4),
+                                  color: Theme.of(context)
+                                      .shadowColor
+                                      .withOpacity(.4),
                                   blurRadius: 5,
                                 )
                               ],
-                              color: AppColors.white),
+                              color: Theme.of(context).cardColor),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -550,7 +562,10 @@ class _ProfileState extends State<Profile> {
                                   style: TextStyle(
                                       fontSize: 15..sp,
                                       fontWeight: FontWeight.w500,
-                                      color: AppColors.black),
+                                      color: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.color),
                                 ),
                               ),
                               Spacer(),
@@ -582,11 +597,13 @@ class _ProfileState extends State<Profile> {
                                   borderRadius: BorderRadius.circular(5),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppColors.black.withOpacity(.4),
+                                      color: Theme.of(context)
+                                          .shadowColor
+                                          .withOpacity(.4),
                                       blurRadius: 5,
                                     )
                                   ],
-                                  color: AppColors.white),
+                                  color: Theme.of(context).cardColor),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -607,7 +624,10 @@ class _ProfileState extends State<Profile> {
                                       style: TextStyle(
                                           fontSize: 15..sp,
                                           fontWeight: FontWeight.w500,
-                                          color: AppColors.black),
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium
+                                              ?.color),
                                     ),
                                   ),
                                 ],
@@ -630,11 +650,13 @@ class _ProfileState extends State<Profile> {
                                   borderRadius: BorderRadius.circular(5),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppColors.black.withOpacity(.4),
+                                      color: Theme.of(context)
+                                          .shadowColor
+                                          .withOpacity(.4),
                                       blurRadius: 5,
                                     )
                                   ],
-                                  color: AppColors.white),
+                                  color: Theme.of(context).cardColor),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -652,7 +674,10 @@ class _ProfileState extends State<Profile> {
                                     style: TextStyle(
                                         fontSize: 15..sp,
                                         fontWeight: FontWeight.w500,
-                                        color: AppColors.black),
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.color),
                                   ),
                                 ],
                               ),
@@ -667,7 +692,8 @@ class _ProfileState extends State<Profile> {
                       style: TextStyle(
                           fontSize: 15..sp,
                           fontWeight: FontWeight.w500,
-                          color: AppColors.black),
+                          color:
+                              Theme.of(context).textTheme.titleMedium?.color),
                     ),
                     SizedBox(
                       height: 25..h,
@@ -722,7 +748,8 @@ class _ProfileState extends State<Profile> {
                       style: TextStyle(
                           fontSize: 15..sp,
                           fontWeight: FontWeight.w500,
-                          color: AppColors.black),
+                          color:
+                              Theme.of(context).textTheme.titleMedium?.color),
                     ),
                     SizedBox(
                       height: 25..h,
@@ -751,6 +778,62 @@ class _ProfileState extends State<Profile> {
                         child:
                             ProfileList(text: 'Notifications Preferences'.tr)),
                     SizedBox(
+                      height: 15..h,
+                    ),
+                    // Dark Mode Toggle
+                    Obx(() => Container(
+                          height: 60..h,
+                          width: MediaQuery.of(context).size.width,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).cardColor,
+                            borderRadius: BorderRadius.circular(5),
+                            border: Border.all(
+                              color: Theme.of(context).dividerColor,
+                              width: 1,
+                            ),
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 15..w),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  themeController.isDarkMode.value
+                                      ? Icons.dark_mode
+                                      : Icons.light_mode,
+                                  color: Theme.of(context).iconTheme.color,
+                                  size: 20..sp,
+                                ),
+                                SizedBox(width: 15..w),
+                                Expanded(
+                                  child: Text(
+                                    'Dark Mode'.tr,
+                                    style: TextStyle(
+                                      fontSize: 15..sp,
+                                      fontWeight: FontWeight.w500,
+                                      color: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.color,
+                                    ),
+                                  ),
+                                ),
+                                Obx(() => Switch(
+                                      value: themeController.isDarkMode.value,
+                                      onChanged: (value) {
+                                        themeController.toggleTheme();
+                                      },
+                                      activeColor: AppColors.k0xFF0254B8,
+                                      inactiveThumbColor: Theme.of(context)
+                                          .unselectedWidgetColor,
+                                      inactiveTrackColor: Theme.of(context)
+                                          .unselectedWidgetColor
+                                          .withOpacity(0.3),
+                                    )),
+                              ],
+                            ),
+                          ),
+                        )),
+                    SizedBox(
                       height: 35..h,
                     ),
                     SelectionArea(
@@ -759,7 +842,8 @@ class _ProfileState extends State<Profile> {
                         style: TextStyle(
                             fontSize: 15..sp,
                             fontWeight: FontWeight.w500,
-                            color: AppColors.black),
+                            color:
+                                Theme.of(context).textTheme.titleMedium?.color),
                       ),
                     ),
                     SizedBox(

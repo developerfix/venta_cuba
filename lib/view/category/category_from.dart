@@ -30,7 +30,7 @@ class _CategoryFromState extends State<CategoryFrom> {
   Widget build(BuildContext context) {
     return SelectionArea(
       child: Scaffold(
-        backgroundColor: AppColors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: GetBuilder<HomeController>(
           builder: (cont) {
             return Padding(

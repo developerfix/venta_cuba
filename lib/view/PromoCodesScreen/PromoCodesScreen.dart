@@ -14,9 +14,9 @@ class PromoCodeScreen extends StatefulWidget {
 }
 
 class _PromoCodeScreenState extends State<PromoCodeScreen> {
-  final homeCont=Get.find<HomeController>();
+  final homeCont = Get.find<HomeController>();
 
-@override
+  @override
   void initState() {
     homeCont.isEnterPromoCode = false;
     super.initState();
@@ -47,11 +47,15 @@ class _PromoCodeScreenState extends State<PromoCodeScreen> {
                     Text(
                       'Promo Codes'.tr,
                       style: TextStyle(
-                          fontSize: 21..sp, fontWeight: FontWeight.w500, color: AppColors.black),
+                          fontSize: 21..sp,
+                          fontWeight: FontWeight.w500,
+                          color: Theme.of(context).textTheme.titleLarge?.color),
                     ),
                     GestureDetector(
                       onTap: () {
-                      Get.to(PaymentNext(fromCuba: false,));
+                        Get.to(PaymentNext(
+                          fromCuba: false,
+                        ));
                       },
                       child: Icon(
                         Icons.add,
@@ -62,7 +66,7 @@ class _PromoCodeScreenState extends State<PromoCodeScreen> {
                 ),
                 SizedBox(height: 16),
                 Visibility(
-                  visible: homeCont.checkUserPackageModel?.data !=null,
+                  visible: homeCont.checkUserPackageModel?.data != null,
                   child: SizedBox(
                     width: double.infinity,
                     child: Card(
@@ -85,22 +89,30 @@ class _PromoCodeScreenState extends State<PromoCodeScreen> {
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                Text(homeCont.checkUserPackageModel?.data?.status?.toLowerCase() == 'pending' ? 'Pending'.tr:'')
+                                Text(homeCont
+                                            .checkUserPackageModel?.data?.status
+                                            ?.toLowerCase() ==
+                                        'pending'
+                                    ? 'Pending'.tr
+                                    : '')
                               ],
                             ),
                             SizedBox(height: 10),
-                           
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
                                   'Start Date:'.tr,
-                                  style: TextStyle(fontSize: 16,
-                                  fontWeight: FontWeight.w500
-                                  ),
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500),
                                 ),
-                                Text(homeCont.checkUserPackageModel?.data?.status?.toLowerCase() == 'pending' ? '':
-                                  '${homeCont.checkUserPackageModel?.data?.startDate}',
+                                Text(
+                                  homeCont.checkUserPackageModel?.data?.status
+                                              ?.toLowerCase() ==
+                                          'pending'
+                                      ? ''
+                                      : '${homeCont.checkUserPackageModel?.data?.startDate}',
                                   style: TextStyle(fontSize: 16),
                                 ),
                               ],
@@ -110,12 +122,16 @@ class _PromoCodeScreenState extends State<PromoCodeScreen> {
                               children: [
                                 Text(
                                   'End Date:'.tr,
-                                  style: TextStyle(fontSize: 16,
-                                      fontWeight: FontWeight.w500
-                                  ),
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500),
                                 ),
-                                Text(homeCont.checkUserPackageModel?.data?.status?.toLowerCase() == 'pending' ? '':
-                                  '${homeCont.checkUserPackageModel?.data?.endDate}',
+                                Text(
+                                  homeCont.checkUserPackageModel?.data?.status
+                                              ?.toLowerCase() ==
+                                          'pending'
+                                      ? ''
+                                      : '${homeCont.checkUserPackageModel?.data?.endDate}',
                                   style: TextStyle(fontSize: 16),
                                 ),
                               ],
@@ -125,12 +141,16 @@ class _PromoCodeScreenState extends State<PromoCodeScreen> {
                               children: [
                                 Text(
                                   'Remaining Days:'.tr,
-                                  style: TextStyle(fontSize: 16,
-                                      fontWeight: FontWeight.w500
-                                  ),
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500),
                                 ),
-                                Text(homeCont.checkUserPackageModel?.data?.status?.toLowerCase() == 'pending' ? '':
-                                  '${homeCont.checkUserPackageModel?.data?.remainingDays}',
+                                Text(
+                                  homeCont.checkUserPackageModel?.data?.status
+                                              ?.toLowerCase() ==
+                                          'pending'
+                                      ? ''
+                                      : '${homeCont.checkUserPackageModel?.data?.remainingDays}',
                                   style: TextStyle(fontSize: 16),
                                 ),
                               ],
@@ -142,12 +162,13 @@ class _PromoCodeScreenState extends State<PromoCodeScreen> {
                   ),
                 ),
                 SizedBox(height: 16),
-
                 Expanded(
                   child: ListView.builder(
                     itemCount: homeCont.allPromoCodesModel?.message?.length,
                     itemBuilder: (context, index) {
-                      return PromoCodeCard(promoCode: homeCont.allPromoCodesModel?.message?[index]);
+                      return PromoCodeCard(
+                          promoCode:
+                              homeCont.allPromoCodesModel?.message?[index]);
                     },
                   ),
                 ),
@@ -159,8 +180,6 @@ class _PromoCodeScreenState extends State<PromoCodeScreen> {
     );
   }
 }
-
-
 
 class PromoCodeCard extends StatelessWidget {
   final PromoCode? promoCode;
@@ -175,7 +194,7 @@ class PromoCodeCard extends StatelessWidget {
       color: Colors.white,
       margin: EdgeInsets.symmetric(vertical: 8),
       child: ListTile(
-        title: Text(promoCode?.promoCode??""),
+        title: Text(promoCode?.promoCode ?? ""),
         subtitle: Text("${promoCode?.status}".tr),
         trailing: IconButton(
           icon: Icon(Icons.share),
@@ -189,8 +208,10 @@ class PromoCodeCard extends StatelessWidget {
   }
 
   void _sharePromoCode(PromoCode? promoCode) {
-    String message = '${"Check out this promo code:".tr} ${promoCode?.promoCode} - ${"${promoCode?.status}".tr}';
+    String message =
+        '${"Check out this promo code:".tr} ${promoCode?.promoCode} - ${"${promoCode?.status}".tr}';
 
-    Share.share(message, subject: '${"Promo Code:".tr} ${promoCode?.promoCode}');
+    Share.share(message,
+        subject: '${"Promo Code:".tr} ${promoCode?.promoCode}');
   }
 }

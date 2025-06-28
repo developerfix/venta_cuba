@@ -205,7 +205,8 @@ class _GroupTileState extends State<GroupTile> {
                                               color: Colors.green,
                                               shape: BoxShape.circle,
                                               border: Border.all(
-                                                color: Colors.white,
+                                                color: Theme.of(context)
+                                                    .scaffoldBackgroundColor,
                                                 width: 2,
                                               ),
                                             ),
@@ -239,7 +240,11 @@ class _GroupTileState extends State<GroupTile> {
                                           : FontWeight.w500,
                                       fontSize: 14,
                                       fontColor: widget.isUnread
-                                          ? Colors.black
+                                          ? Theme.of(context)
+                                                  .textTheme
+                                                  .bodyLarge
+                                                  ?.color ??
+                                              Colors.black
                                           : Color(0xFFA8AAAC),
                                     ),
                                     Row(
@@ -282,7 +287,11 @@ class _GroupTileState extends State<GroupTile> {
                                       ? FontWeight.bold
                                       : FontWeight.w500,
                                   fontColor: widget.isUnread
-                                      ? Colors.black
+                                      ? Theme.of(context)
+                                              .textTheme
+                                              .bodyLarge
+                                              ?.color ??
+                                          Colors.black
                                       : Colors.grey[600]!,
                                   fontSize: 13,
                                   textOverflow: TextOverflow.clip,

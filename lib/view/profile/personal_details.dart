@@ -73,7 +73,7 @@ class _PersonalDetailsState extends State<PersonalDetails> {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        backgroundColor: AppColors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: GetBuilder<AuthController>(
           builder: (cont) {
             return SingleChildScrollView(
@@ -100,7 +100,10 @@ class _PersonalDetailsState extends State<PersonalDetails> {
                             style: TextStyle(
                                 fontSize: 21..sp,
                                 fontWeight: FontWeight.w500,
-                                color: AppColors.black),
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.color),
                           ),
                           Container(
                             height: 24..h,
@@ -131,7 +134,8 @@ class _PersonalDetailsState extends State<PersonalDetails> {
                           },
                           controller: cont.businessNameCont,
                           textAlignVertical: TextAlignVertical.center,
-                          cursorColor: Colors.black,
+                          cursorColor:
+                              Theme.of(context).textTheme.bodyLarge?.color,
                           decoration: InputDecoration(
                             contentPadding: EdgeInsets.symmetric(
                                 vertical: 13, horizontal: 20),
@@ -171,7 +175,8 @@ class _PersonalDetailsState extends State<PersonalDetails> {
                               },
                               controller: cont.firstNameCont,
                               textAlignVertical: TextAlignVertical.center,
-                              cursorColor: Colors.black,
+                              cursorColor:
+                                  Theme.of(context).textTheme.bodyLarge?.color,
                               decoration: InputDecoration(
                                 contentPadding: EdgeInsets.symmetric(
                                     vertical: 13, horizontal: 20),
@@ -212,7 +217,8 @@ class _PersonalDetailsState extends State<PersonalDetails> {
                               },
                               controller: cont.lastNameCont,
                               textAlignVertical: TextAlignVertical.center,
-                              cursorColor: Colors.black,
+                              cursorColor:
+                                  Theme.of(context).textTheme.bodyLarge?.color,
                               decoration: InputDecoration(
                                 contentPadding: EdgeInsets.symmetric(
                                     vertical: 13, horizontal: 20),
@@ -296,7 +302,8 @@ class _PersonalDetailsState extends State<PersonalDetails> {
                         style: TextStyle(
                             fontSize: 21,
                             fontWeight: FontWeight.w500,
-                            color: AppColors.black),
+                            color:
+                                Theme.of(context).textTheme.titleLarge?.color),
                       ),
                       SizedBox(
                         height: 30..h,
@@ -317,7 +324,7 @@ class _PersonalDetailsState extends State<PersonalDetails> {
                                 _obscurePassword
                                     ? Icons.visibility_off
                                     : Icons.visibility,
-                                color: AppColors.black,
+                                color: Theme.of(context).iconTheme.color,
                               ),
                               onPressed: () {
                                 setState(() {
@@ -369,7 +376,7 @@ class _PersonalDetailsState extends State<PersonalDetails> {
                                 _obscurePassword
                                     ? Icons.visibility_off
                                     : Icons.visibility,
-                                color: AppColors.black,
+                                color: Theme.of(context).iconTheme.color,
                               ),
                               onPressed: () {
                                 setState(() {

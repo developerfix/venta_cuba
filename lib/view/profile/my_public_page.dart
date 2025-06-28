@@ -79,7 +79,7 @@ class _MyPublicPageState extends State<MyPublicPage> {
       child: GetBuilder<HomeController>(
         builder: (cont) {
           return Scaffold(
-            backgroundColor: AppColors.white,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             body: Padding(
               padding: const EdgeInsets.all(20),
               child: SafeArea(
@@ -102,7 +102,10 @@ class _MyPublicPageState extends State<MyPublicPage> {
                           style: TextStyle(
                               fontSize: 21..sp,
                               fontWeight: FontWeight.w500,
-                              color: AppColors.black),
+                              color: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge
+                                  ?.color),
                         ),
                         Icon(Icons.ios_share, size: 0)
                       ],

@@ -103,21 +103,25 @@ class _MessageTileState extends State<MessageTile> {
                                     fontSize: 17,
                                     color: widget.sentByMe
                                         ? Colors.white
-                                        : Colors.black)),
+                                        : Theme.of(context)
+                                                .textTheme
+                                                .bodyLarge
+                                                ?.color ??
+                                            Colors.black)),
                           ),
                         ),
                       )
               ],
             ),
           ),
-
           SizedBox(
             height: 2.h,
           ),
           SelectionArea(
             child: CustomText(
               text: widget.messageTime,
-              fontColor: Color(0xFF828284),
+              fontColor: Theme.of(context).textTheme.bodySmall?.color ??
+                  Color(0xFF828284),
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),

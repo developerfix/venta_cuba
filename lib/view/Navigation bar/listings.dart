@@ -50,7 +50,7 @@ class _ListingsState extends State<Listings> {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        backgroundColor: AppColors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Padding(
           padding: const EdgeInsets.all(20),
           child: SafeArea(

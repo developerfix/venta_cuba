@@ -43,7 +43,7 @@ class _LoginState extends State<Login> {
     return GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: Scaffold(
-            backgroundColor: Colors.white,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             body: GetBuilder(
                 init: AuthController(),
                 builder: (cont) {
@@ -88,7 +88,11 @@ class _LoginState extends State<Login> {
                                           controller: cont.emailCont,
                                           textAlignVertical:
                                               TextAlignVertical.center,
-                                          cursorColor: Colors.black,
+                                          cursorColor: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyLarge
+                                                  ?.color ??
+                                              Colors.black,
                                           decoration: InputDecoration(
                                             border: InputBorder.none,
                                             contentPadding: EdgeInsets.fromLTRB(
@@ -147,7 +151,11 @@ class _LoginState extends State<Login> {
                                               !cont.isPasswordVisible.value,
                                           textAlignVertical:
                                               TextAlignVertical.center,
-                                          cursorColor: Colors.black,
+                                          cursorColor: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyLarge
+                                                  ?.color ??
+                                              Colors.black,
                                           decoration: InputDecoration(
                                             border: InputBorder.none,
                                             suffixIcon: IconButton(

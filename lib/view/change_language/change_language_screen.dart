@@ -35,7 +35,7 @@ class _ChangeLanguageScreenState extends State<ChangeLanguageScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         elevation: 0,
         leading: GestureDetector(
@@ -84,9 +84,11 @@ class _ChangeLanguageScreenState extends State<ChangeLanguageScreen> {
                 decoration: BoxDecoration(
                   color: _selection == 1
                       ? Colors.green.shade300
-                      : Colors.grey.shade300,
+                      : Theme.of(context).cardColor,
                   border: Border.all(
-                      color: _selection == 1 ? Colors.green : Colors.grey),
+                      color: _selection == 1
+                          ? Colors.green
+                          : Theme.of(context).unselectedWidgetColor),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
@@ -102,7 +104,7 @@ class _ChangeLanguageScreenState extends State<ChangeLanguageScreen> {
                     ),
                     Spacer(),
                     Radio(
-                      focusColor: Colors.white,
+                      focusColor: Theme.of(context).cardColor,
                       groupValue: _selection,
                       onChanged: (va) async {
                         setState(() {

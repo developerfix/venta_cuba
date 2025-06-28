@@ -36,13 +36,13 @@ showLoading() {
         return Dialog(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.r)),
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).dialogTheme.backgroundColor,
           shadowColor: Colors.black,
           elevation: 5,
           child: Container(
             height: 60.h,
             width: double.infinity,
-            color: Colors.white,
+            color: Theme.of(context).dialogTheme.backgroundColor,
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 40.w),
               child: Row(
@@ -57,7 +57,8 @@ showLoading() {
                     style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
-                        color: Colors.black),
+                        color: Theme.of(context).textTheme.bodyLarge?.color ??
+                            Colors.black),
                   ),
                 ],
               ),
@@ -82,7 +83,8 @@ errorShowDialog({String? text}) {
             width: 150.w,
             height: 150.h,
             decoration: ShapeDecoration(
-              color: Colors.white,
+              color:
+                  Theme.of(context).dialogTheme.backgroundColor ?? Colors.white,
               shadows: [
                 BoxShadow(color: Colors.black45, spreadRadius: 1, blurRadius: 5)
               ],

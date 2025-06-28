@@ -121,7 +121,7 @@ class _FrameScreenState extends State<FrameScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: GetBuilder<HomeController>(
         builder: (cont) {
           final String day = cont.listingModel!.updatedAt != null
@@ -210,7 +210,10 @@ class _FrameScreenState extends State<FrameScreen> {
                                     style: TextStyle(
                                         fontSize: 16..sp,
                                         fontWeight: FontWeight.w400,
-                                        color: AppColors.black),
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.color),
                                   ),
                                 ],
                               ),
@@ -221,7 +224,10 @@ class _FrameScreenState extends State<FrameScreen> {
                               style: TextStyle(
                                   fontSize: 20..sp,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.black),
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .titleLarge
+                                      ?.color),
                             ),
                             Text(
                               cont.listingModel!.price == "0"
@@ -230,7 +236,10 @@ class _FrameScreenState extends State<FrameScreen> {
                               style: TextStyle(
                                   fontSize: 20..sp,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.black),
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .titleLarge
+                                      ?.color),
                             ),
                             Divider(),
                             Row(
@@ -243,7 +252,10 @@ class _FrameScreenState extends State<FrameScreen> {
                                     style: TextStyle(
                                         fontSize: 26..sp,
                                         fontWeight: FontWeight.w600,
-                                        color: AppColors.black),
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .titleLarge
+                                            ?.color),
                                   ),
                                 ),
                               ],
@@ -254,7 +266,10 @@ class _FrameScreenState extends State<FrameScreen> {
                               style: TextStyle(
                                   fontSize: 18..sp,
                                   fontWeight: FontWeight.w500,
-                                  color: AppColors.black),
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.color),
                             ),
                             SizedBox(height: 10..h),
                             Text(
@@ -262,7 +277,10 @@ class _FrameScreenState extends State<FrameScreen> {
                               style: TextStyle(
                                   fontSize: 15..sp,
                                   fontWeight: FontWeight.w400,
-                                  color: AppColors.black),
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodyLarge
+                                      ?.color),
                             ),
                             SizedBox(height: 10..h),
                             Visibility(
@@ -278,7 +296,10 @@ class _FrameScreenState extends State<FrameScreen> {
                                     style: TextStyle(
                                         fontSize: 18..sp,
                                         fontWeight: FontWeight.w500,
-                                        color: AppColors.black),
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.color),
                                   ),
                                   SizedBox(
                                     height: 20..h,
@@ -306,7 +327,10 @@ class _FrameScreenState extends State<FrameScreen> {
                                     style: TextStyle(
                                         fontSize: 18..sp,
                                         fontWeight: FontWeight.w500,
-                                        color: AppColors.black),
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.color),
                                   ),
                                   Text(
                                     '${cont.listingModel?.additionalFeatures?.listingDetails?.furnished}',
@@ -331,7 +355,10 @@ class _FrameScreenState extends State<FrameScreen> {
                                     style: TextStyle(
                                         fontSize: 18..sp,
                                         fontWeight: FontWeight.w500,
-                                        color: AppColors.black),
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.color),
                                   ),
                                   SizedBox(
                                     height: 20..h,
@@ -352,7 +379,10 @@ class _FrameScreenState extends State<FrameScreen> {
                               style: TextStyle(
                                   fontSize: 18..sp,
                                   fontWeight: FontWeight.w500,
-                                  color: AppColors.black),
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.color),
                             ),
                             SizedBox(height: 10..h),
                             SizedBox(
@@ -369,7 +399,8 @@ class _FrameScreenState extends State<FrameScreen> {
                                           borderRadius:
                                               BorderRadius.circular(15),
                                           border: Border.all(
-                                              color: Colors.black26)),
+                                              color: Theme.of(context)
+                                                  .dividerColor)),
                                       child: Padding(
                                         padding: const EdgeInsets.all(8.0),
                                         child: Center(
@@ -389,7 +420,10 @@ class _FrameScreenState extends State<FrameScreen> {
                               style: TextStyle(
                                   fontSize: 18..sp,
                                   fontWeight: FontWeight.w500,
-                                  color: AppColors.black),
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.color),
                             ),
                             SizedBox(height: 10..h),
                             Row(
@@ -400,7 +434,10 @@ class _FrameScreenState extends State<FrameScreen> {
                                   style: TextStyle(
                                       fontSize: 15..sp,
                                       fontWeight: FontWeight.w400,
-                                      color: Colors.black),
+                                      color: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.color),
                                 ),
                                 if (_isValidOptionalDetail(cont
                                     .listingModel
@@ -412,7 +449,10 @@ class _FrameScreenState extends State<FrameScreen> {
                                     style: TextStyle(
                                         fontSize: 15.sp,
                                         fontWeight: FontWeight.w400,
-                                        color: AppColors.black),
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.color),
                                   ),
                               ],
                             ),
@@ -424,7 +464,10 @@ class _FrameScreenState extends State<FrameScreen> {
                                   style: TextStyle(
                                       fontSize: 15..sp,
                                       fontWeight: FontWeight.w400,
-                                      color: Colors.black),
+                                      color: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.color),
                                 ),
                                 if (_isValidOptionalDetail(cont
                                     .listingModel
@@ -436,7 +479,10 @@ class _FrameScreenState extends State<FrameScreen> {
                                     style: TextStyle(
                                         fontSize: 15..sp,
                                         fontWeight: FontWeight.w400,
-                                        color: AppColors.black),
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.color),
                                   ),
                               ],
                             ),
@@ -448,7 +494,10 @@ class _FrameScreenState extends State<FrameScreen> {
                                   style: TextStyle(
                                       fontSize: 15..sp,
                                       fontWeight: FontWeight.w400,
-                                      color: Colors.black),
+                                      color: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.color),
                                 ),
                                 if (_isValidOptionalDetail(cont
                                     .listingModel
@@ -460,7 +509,10 @@ class _FrameScreenState extends State<FrameScreen> {
                                     style: TextStyle(
                                         fontSize: 15..sp,
                                         fontWeight: FontWeight.w400,
-                                        color: AppColors.black),
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.color),
                                   ),
                               ],
                             ),
@@ -472,7 +524,10 @@ class _FrameScreenState extends State<FrameScreen> {
                                   style: TextStyle(
                                       fontSize: 15..sp,
                                       fontWeight: FontWeight.w400,
-                                      color: Colors.black),
+                                      color: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.color),
                                 ),
                                 if (_isValidOptionalDetail(cont
                                     .listingModel
@@ -484,7 +539,10 @@ class _FrameScreenState extends State<FrameScreen> {
                                     style: TextStyle(
                                         fontSize: 15..sp,
                                         fontWeight: FontWeight.w400,
-                                        color: AppColors.black),
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.color),
                                   ),
                               ],
                             ),
@@ -496,7 +554,10 @@ class _FrameScreenState extends State<FrameScreen> {
                                   style: TextStyle(
                                       fontSize: 15..sp,
                                       fontWeight: FontWeight.w400,
-                                      color: Colors.black),
+                                      color: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.color),
                                 ),
                                 if (_isValidOptionalDetail(cont
                                     .listingModel
@@ -508,7 +569,10 @@ class _FrameScreenState extends State<FrameScreen> {
                                     style: TextStyle(
                                         fontSize: 15..sp,
                                         fontWeight: FontWeight.w400,
-                                        color: AppColors.black),
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.color),
                                   ),
                               ],
                             ),
@@ -519,7 +583,10 @@ class _FrameScreenState extends State<FrameScreen> {
                               style: TextStyle(
                                   fontSize: 15..sp,
                                   fontWeight: FontWeight.w400,
-                                  color: AppColors.black),
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodyLarge
+                                      ?.color),
                             ),
                             SizedBox(height: 9..h),
                             Row(
@@ -552,7 +619,10 @@ class _FrameScreenState extends State<FrameScreen> {
                               style: TextStyle(
                                   fontSize: 18..sp,
                                   fontWeight: FontWeight.w500,
-                                  color: AppColors.black),
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.color),
                             ),
                             SizedBox(height: 10..h),
                             InkWell(
@@ -564,7 +634,8 @@ class _FrameScreenState extends State<FrameScreen> {
                               child: Container(
                                 padding: EdgeInsets.all(5),
                                 decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.grey)),
+                                    border: Border.all(
+                                        color: Theme.of(context).dividerColor)),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -656,7 +727,10 @@ class _FrameScreenState extends State<FrameScreen> {
                                       style: TextStyle(
                                           fontSize: 15..sp,
                                           fontWeight: FontWeight.w400,
-                                          color: AppColors.black),
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .bodyLarge
+                                              ?.color),
                                     ),
                                   ],
                                 ),
@@ -671,7 +745,10 @@ class _FrameScreenState extends State<FrameScreen> {
                               style: TextStyle(
                                   fontSize: 18..sp,
                                   fontWeight: FontWeight.w500,
-                                  color: AppColors.black),
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.color),
                             ),
                             SizedBox(
                               height: 10..h,
@@ -906,7 +983,9 @@ class _FrameScreenState extends State<FrameScreen> {
                                         horizontal: 10, vertical: 10),
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(5),
-                                      border: Border.all(color: Colors.black45),
+                                      border: Border.all(
+                                          color:
+                                              Theme.of(context).dividerColor),
                                     ),
                                     child: Row(
                                       mainAxisAlignment:
@@ -937,7 +1016,9 @@ class _FrameScreenState extends State<FrameScreen> {
                                         horizontal: 10, vertical: 10),
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(5),
-                                      border: Border.all(color: Colors.black45),
+                                      border: Border.all(
+                                          color:
+                                              Theme.of(context).dividerColor),
                                     ),
                                     child: Row(
                                       mainAxisAlignment:
@@ -985,10 +1066,11 @@ class _FrameScreenState extends State<FrameScreen> {
                           width: 30,
                           padding: EdgeInsets.only(left: 7),
                           decoration: BoxDecoration(
-                              color: Colors.white, shape: BoxShape.circle),
+                              color: Theme.of(context).cardColor,
+                              shape: BoxShape.circle),
                           child: Icon(
                             Icons.arrow_back_ios,
-                            color: Colors.black,
+                            color: Theme.of(context).iconTheme.color,
                             size: 16,
                           ),
                         ),
@@ -1009,7 +1091,8 @@ class _FrameScreenState extends State<FrameScreen> {
                                         height: 7,
                                         width: 45,
                                         decoration: BoxDecoration(
-                                            color: Colors.black45,
+                                            color:
+                                                Theme.of(context).dividerColor,
                                             borderRadius:
                                                 BorderRadius.circular(100)),
                                       ),
@@ -1234,10 +1317,11 @@ class _FrameScreenState extends State<FrameScreen> {
                           width: 30,
                           padding: EdgeInsets.only(left: 0),
                           decoration: BoxDecoration(
-                              color: Colors.white, shape: BoxShape.circle),
+                              color: Theme.of(context).cardColor,
+                              shape: BoxShape.circle),
                           child: Icon(
                             Icons.more_vert,
-                            color: Colors.black,
+                            color: Theme.of(context).iconTheme.color,
                             size: 19,
                           ),
                         ),
@@ -1251,7 +1335,7 @@ class _FrameScreenState extends State<FrameScreen> {
                   right: 20,
                   child: Container(
                     // height: 150.h,
-                    color: Colors.white,
+                    color: Theme.of(context).cardColor,
                     child: Column(
                       children: [
                         Divider(),
@@ -1284,7 +1368,10 @@ class _FrameScreenState extends State<FrameScreen> {
                                           fontSize: 16..sp,
                                           overflow: TextOverflow.ellipsis,
                                           fontWeight: FontWeight.w700,
-                                          color: AppColors.black),
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .titleLarge
+                                              ?.color),
                                     )
                                   ],
                                 ),
@@ -1318,7 +1405,9 @@ class _FrameScreenState extends State<FrameScreen> {
                                                     overflow:
                                                         TextOverflow.ellipsis,
                                                     fontWeight: FontWeight.w500,
-                                                    color: AppColors.white),
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .onPrimary),
                                               ),
                                             ),
                                           ),
@@ -1394,7 +1483,9 @@ class _FrameScreenState extends State<FrameScreen> {
                                                             .ellipsis,
                                                         fontWeight:
                                                             FontWeight.w500,
-                                                        color: AppColors.white),
+                                                        color: Theme.of(context)
+                                                            .colorScheme
+                                                            .onPrimary),
                                                   ),
                                                 ),
                                               ),
@@ -1487,7 +1578,9 @@ class _FrameScreenState extends State<FrameScreen> {
                                 style: TextStyle(
                                     fontSize: 17..sp,
                                     fontWeight: FontWeight.w500,
-                                    color: AppColors.white),
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onPrimary),
                               ),
                             ),
                           ),
@@ -1563,7 +1656,7 @@ class _ImageViewerPageState extends State<ImageViewerPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
           // PageView to display images
@@ -1606,7 +1699,8 @@ class _ImageViewerPageState extends State<ImageViewerPage>
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 IconButton(
-                  icon: Icon(Icons.close, color: Colors.white, size: 28),
+                  icon: Icon(Icons.close,
+                      color: Theme.of(context).iconTheme.color, size: 28),
                   onPressed: () {
                     Navigator.pop(context); // Close the image viewer
                   },
@@ -1615,7 +1709,7 @@ class _ImageViewerPageState extends State<ImageViewerPage>
                 Text(
                   "${currentPage + 1}/${widget.imageUrls.length}",
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -1659,8 +1753,8 @@ class CustomImageWidgetProvider extends EasyImageProvider {
         ),
         Text(
           "${(value ?? 0) * 100}%",
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: Theme.of(context).textTheme.bodyLarge?.color,
             fontWeight: FontWeight.bold,
             fontSize: 20,
           ),

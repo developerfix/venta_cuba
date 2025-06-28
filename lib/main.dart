@@ -9,10 +9,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:venta_cuba/Controllers/location_controller.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
 import 'package:venta_cuba/Controllers/home_controller.dart';
+import 'package:venta_cuba/Controllers/theme_controller.dart';
 import 'package:venta_cuba/Services/Notfication/notficationservice.dart';
 import 'package:venta_cuba/languages/languages.dart';
 import 'package:venta_cuba/view/splash%20Screens/white_screen.dart';
 import 'package:venta_cuba/view/Chat/Controller/ChatController.dart';
+import 'package:venta_cuba/view/constants/theme_config.dart';
 import 'Notification/firebase_messaging.dart';
 
 // Background message handler - MUST be top-level function
@@ -122,18 +124,15 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   FCM firebaseMessaging = FCM();
   final locationCont = Get.put(LocationController());
+  late final ThemeController themeController;
   NotificationService notificationService = NotificationService();
 
   @override
   void initState() {
     super.initState();
 
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.white,
-        statusBarIconBrightness: Brightness.dark,
-      ),
-    );
+    // Initialize theme controller first
+    themeController = Get.put(ThemeController());
 
     notificationService.obtainCredentials();
     locationCheck();
@@ -207,27 +206,20 @@ class _MyAppState extends State<MyApp> {
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {
-        return GetMaterialApp(
-            theme: ThemeData(
-              appBarTheme: AppBarTheme(
-                backgroundColor: Colors.white,
-              ),
-              scaffoldBackgroundColor: Colors.white,
-              cardColor: Colors.white, // Set scaffold background color to white
-            ),
-            translations: Languages(),
-            locale: Locale(languageCode, countryCode),
-            //Locale(languageCode, countryCode),
-            fallbackLocale: Locale(languageCode, countryCode),
-            //Locale(languageCode, countryCode),
-            scaffoldMessengerKey: scaffoldMessengerKey,
-            navigatorKey: navigatorKey,
-            debugShowCheckedModeBanner: false,
-            //home: SubscriptionScreen()
-            home: WhiteScreen()
-            // home: PaymentNext(fromCuba: false,)
-
-            );
+        return Obx(() => GetMaterialApp(
+              theme: ThemeConfig.lightTheme,
+              darkTheme: ThemeConfig.darkTheme,
+              themeMode: themeController.isDarkMode.value
+                  ? ThemeMode.dark
+                  : ThemeMode.light,
+              translations: Languages(),
+              locale: Locale(languageCode, countryCode),
+              fallbackLocale: Locale(languageCode, countryCode),
+              scaffoldMessengerKey: scaffoldMessengerKey,
+              navigatorKey: navigatorKey,
+              debugShowCheckedModeBanner: false,
+              home: WhiteScreen(),
+            ));
       },
     );
   }

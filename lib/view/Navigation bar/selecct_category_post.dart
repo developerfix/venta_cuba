@@ -25,6 +25,7 @@ class _SelectCategoriesPostState extends State<SelectCategoriesPost> {
     // TODO: implement dispose
     super.dispose();
   }
+
   @override
   void initState() {
     // TODO: implement initState
@@ -35,7 +36,7 @@ class _SelectCategoriesPostState extends State<SelectCategoriesPost> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: AppColors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: GetBuilder(
           init: HomeController(),
           builder: (cont) {
@@ -51,7 +52,10 @@ class _SelectCategoriesPostState extends State<SelectCategoriesPost> {
                     SelectionArea(
                       child: Text(
                         'Select a Category'.tr,
-                        style: TextStyle(fontSize: 22.sp, color: AppColors.black),
+                        style: TextStyle(
+                            fontSize: 22.sp,
+                            color:
+                                Theme.of(context).textTheme.titleLarge?.color),
                       ),
                     ),
                     SizedBox(
@@ -63,24 +67,33 @@ class _SelectCategoriesPostState extends State<SelectCategoriesPost> {
                         itemBuilder: (context, index) {
                           return GestureDetector(
                             onTap: () {
-                              cont.selectedCategory = cont.categoriesModel?.data?[index];
+                              cont.selectedCategory =
+                                  cont.categoriesModel?.data?[index];
                               cont.isNavigate = true;
                               bool isShowSubCat = true;
                               if (cont.isType == 0) {
-                                cont.selectedCategory = cont.categoriesModel?.data?[index];
+                                cont.selectedCategory =
+                                    cont.categoriesModel?.data?[index];
 
-                                cont.selectedCategoryModel = SelectedCategoryModel(
-                                    id: cont.categoriesModel?.data?[index].id,
-                                    name: cont.categoriesModel?.data?[index].name,
-                                    icon: cont.categoriesModel?.data?[index].icon,
-                                    type: 0);
+                                cont.selectedCategoryModel =
+                                    SelectedCategoryModel(
+                                        id: cont
+                                            .categoriesModel?.data?[index].id,
+                                        name: cont
+                                            .categoriesModel?.data?[index].name,
+                                        icon: cont
+                                            .categoriesModel?.data?[index].icon,
+                                        type: 0);
 
                                 cont.getSubCategoriesBottom();
                               }
-                              },
+                            },
                             child: CategoryList(
-                                imagePath: cont.categoriesModel?.data?[index].icon ?? "",
-                                text: cont.categoriesModel?.data?[index].name ?? ""),
+                                imagePath:
+                                    cont.categoriesModel?.data?[index].icon ??
+                                        "",
+                                text: cont.categoriesModel?.data?[index].name ??
+                                    ""),
                           );
                         },
                         separatorBuilder: (BuildContext context, int index) {

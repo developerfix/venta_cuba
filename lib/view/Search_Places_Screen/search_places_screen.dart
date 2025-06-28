@@ -99,7 +99,8 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
                           width: 50,
                           padding: EdgeInsets.only(left: 10),
                           decoration: BoxDecoration(
-                              color: Colors.white, shape: BoxShape.circle),
+                              color: Theme.of(context).cardColor,
+                              shape: BoxShape.circle),
                           child: IconButton(
                             onPressed: () {
                               Get.back();
@@ -195,7 +196,7 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
                           height: 90.h,
                           // width: 300.w,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Theme.of(context).cardColor,
                             borderRadius: BorderRadius.only(
                               topLeft: Radius.circular(10),
                               topRight: Radius.circular(10),
@@ -239,8 +240,9 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
                                 ),
                                 SliderTheme(
                                     data: SliderTheme.of(context).copyWith(
-                                      activeTrackColor: Colors.white,
-                                      thumbColor: Colors.white,
+                                      activeTrackColor:
+                                          Theme.of(context).cardColor,
+                                      thumbColor: Theme.of(context).cardColor,
                                       overlayColor: Color(0x29eb1555),
                                       thumbShape: CircleThumbShape(),
                                       overlayShape: RoundSliderOverlayShape(
@@ -279,8 +281,8 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
                           if (homeCont.lat != null) {
                             if (widget.isShowRadius) {
                               cont.currentPage.value = 1;
-                                      cont.hasMore.value = true;
-                                      cont.listingModelList.clear();
+                              cont.hasMore.value = true;
+                              cont.listingModelList.clear();
                               await homeCont.getListing();
                               SharedPreferences sharedPreferences =
                                   await SharedPreferences.getInstance();
@@ -315,7 +317,8 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
                           child: Center(
                             child: CustomText(
                               text: "Set Location".tr,
-                              fontColor: Colors.white,
+                              fontColor:
+                                  Theme.of(context).colorScheme.onPrimary,
                             ),
                           ),
                         ),

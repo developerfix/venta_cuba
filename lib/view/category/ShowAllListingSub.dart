@@ -34,7 +34,7 @@ class _ShowAllListingSubState extends State<ShowAllListingSub> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: GetBuilder<HomeController>(
         builder: (cont) {
           return SelectionArea(
@@ -66,7 +66,7 @@ class _ShowAllListingSubState extends State<ShowAllListingSub> {
                       style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.black),
+                          color: Theme.of(context).textTheme.titleLarge?.color),
                     ),
                     SizedBox(
                       height: 45..h,

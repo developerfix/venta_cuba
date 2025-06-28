@@ -31,14 +31,15 @@ class _Navigation_BarState extends State<Navigation_Bar> {
     return GetBuilder<AuthController>(
       builder: (cont) {
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: _buildScreen(cont.currentIndexBottomAppBar),
           bottomNavigationBar: BottomNavigationBar(
             enableFeedback: false,
-            backgroundColor: Colors.white,
+            backgroundColor:
+                Theme.of(context).bottomNavigationBarTheme.backgroundColor,
             type: BottomNavigationBarType.fixed,
             selectedItemColor: AppColors.k0xFF0254B8,
-            unselectedItemColor: Colors.grey,
+            unselectedItemColor: Theme.of(context).unselectedWidgetColor,
             currentIndex: cont.currentIndexBottomAppBar,
             onTap: (index) {
               if (index == 2) {
@@ -75,7 +76,7 @@ class _Navigation_BarState extends State<Navigation_Bar> {
                   'assets/icons/home.svg',
                   color: cont.currentIndexBottomAppBar == 0
                       ? AppColors.k0xFF0254B8
-                      : Colors.grey,
+                      : Theme.of(context).unselectedWidgetColor,
                 ),
                 label: 'Home'.tr,
               ),
@@ -87,7 +88,7 @@ class _Navigation_BarState extends State<Navigation_Bar> {
                           'assets/icons/messenger.svg',
                           color: cont.currentIndexBottomAppBar == 1
                               ? AppColors.k0xFF0254B8
-                              : Colors.grey,
+                              : Theme.of(context).unselectedWidgetColor,
                         ),
                         if (cont.unreadMessageCount.value >
                             0) // Show badge with count if there are unread messages
@@ -103,8 +104,10 @@ class _Navigation_BarState extends State<Navigation_Bar> {
                               decoration: BoxDecoration(
                                 color: Colors.red,
                                 borderRadius: BorderRadius.circular(8),
-                                border:
-                                    Border.all(color: Colors.white, width: 1),
+                                border: Border.all(
+                                    color: Theme.of(context)
+                                        .scaffoldBackgroundColor,
+                                    width: 1),
                               ),
                               child: Center(
                                 child: Text(
@@ -131,7 +134,7 @@ class _Navigation_BarState extends State<Navigation_Bar> {
                   'assets/icons/camera.svg',
                   color: cont.currentIndexBottomAppBar == 2
                       ? AppColors.k0xFF0254B8
-                      : Colors.grey,
+                      : Theme.of(context).unselectedWidgetColor,
                 ),
                 label: 'Post'.tr,
               ),
@@ -140,7 +143,7 @@ class _Navigation_BarState extends State<Navigation_Bar> {
                   'assets/icons/tag.svg',
                   color: cont.currentIndexBottomAppBar == 3
                       ? AppColors.k0xFF0254B8
-                      : Colors.grey,
+                      : Theme.of(context).unselectedWidgetColor,
                 ),
                 label: 'Listings'.tr,
               ),
@@ -149,7 +152,7 @@ class _Navigation_BarState extends State<Navigation_Bar> {
                   'assets/icons/profile.svg',
                   color: cont.currentIndexBottomAppBar == 4
                       ? AppColors.k0xFF0254B8
-                      : Colors.grey,
+                      : Theme.of(context).unselectedWidgetColor,
                 ),
                 label: 'Profile'.tr,
               ),

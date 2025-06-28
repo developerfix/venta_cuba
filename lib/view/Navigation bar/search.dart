@@ -51,7 +51,7 @@ class _SearchState extends State<Search> {
       builder: (BuildContext context) {
         return Container(
           decoration: BoxDecoration(
-              color: AppColors.white,
+              color: Theme.of(context).bottomSheetTheme.backgroundColor,
               borderRadius: BorderRadius.only(
                   topRight: Radius.circular(40), topLeft: Radius.circular(40))),
           child: Padding(
@@ -70,7 +70,7 @@ class _SearchState extends State<Search> {
                   style: TextStyle(
                       fontSize: 17..sp,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.black),
+                      color: Theme.of(context).textTheme.titleLarge?.color),
                 ),
                 SizedBox(height: 20..h),
                 GetBuilder<HomeController>(builder: (cont) {
@@ -224,7 +224,7 @@ class _SearchState extends State<Search> {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        backgroundColor: AppColors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: GetBuilder<HomeController>(builder: (cont) {
           return Stack(
             children: [
@@ -272,7 +272,10 @@ class _SearchState extends State<Search> {
                                   cont.getListingSearch();
                                 },
                                 textAlignVertical: TextAlignVertical.center,
-                                cursorColor: Colors.black,
+                                cursorColor: Theme.of(context)
+                                    .textTheme
+                                    .bodyLarge
+                                    ?.color,
                                 decoration: InputDecoration(
                                     border: InputBorder.none,
                                     contentPadding:
@@ -374,7 +377,10 @@ class _SearchState extends State<Search> {
                                           style: TextStyle(
                                               fontSize: 13..sp,
                                               fontWeight: FontWeight.w500,
-                                              color: AppColors.black),
+                                              color: Theme.of(context)
+                                                  .textTheme
+                                                  .titleMedium
+                                                  ?.color),
                                           overflow: TextOverflow.ellipsis,
                                           maxLines: 1,
                                         ),
@@ -420,7 +426,10 @@ class _SearchState extends State<Search> {
                                               : '${cont.address}',
                                           overflow: TextOverflow.ellipsis,
                                           style: TextStyle(
-                                              color: AppColors.black,
+                                              color: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyLarge
+                                                  ?.color,
                                               fontSize: 16..sp,
                                               fontWeight: FontWeight.w700),
                                         ),
@@ -486,8 +495,13 @@ class _SearchState extends State<Search> {
                                                 child: SvgPicture.asset(
                                                   'assets/icons/category.svg',
                                                   color: isListView
-                                                      ? AppColors.black
-                                                      : AppColors.white,
+                                                      ? Theme.of(context)
+                                                          .textTheme
+                                                          .bodyLarge
+                                                          ?.color
+                                                      : Theme.of(context)
+                                                          .colorScheme
+                                                          .onPrimary,
                                                 ),
                                               ),
                                             ),
@@ -515,8 +529,13 @@ class _SearchState extends State<Search> {
                                                 child: SvgPicture.asset(
                                                   'assets/icons/list1.svg',
                                                   color: isListView
-                                                      ? AppColors.white
-                                                      : AppColors.black,
+                                                      ? Theme.of(context)
+                                                          .colorScheme
+                                                          .onPrimary
+                                                      : Theme.of(context)
+                                                          .textTheme
+                                                          .bodyLarge
+                                                          ?.color,
                                                 ),
                                               ),
                                             ),
@@ -549,7 +568,10 @@ class _SearchState extends State<Search> {
                                                 style: TextStyle(
                                                     fontSize: 16..sp,
                                                     fontWeight: FontWeight.w500,
-                                                    color: AppColors.black),
+                                                    color: Theme.of(context)
+                                                        .textTheme
+                                                        .titleMedium
+                                                        ?.color),
                                               )
                                             ],
                                           ),
@@ -632,10 +654,12 @@ class _SearchState extends State<Search> {
               // height: 280..h,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10..r),
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.grey.withOpacity(0.5), // Shadow color
+                    color: Theme.of(context)
+                        .shadowColor
+                        .withOpacity(0.5), // Shadow color
                     offset: Offset(0, 3), // Shadow offset
                     blurRadius: 6, // Shadow blur radius
                     spreadRadius: 0, // Shadow spread radius
@@ -681,7 +705,7 @@ class _SearchState extends State<Search> {
                   ),
                   Container(
                     // height: 65..h,
-                    color: Colors.white,
+                    color: Theme.of(context).cardColor,
                     child: Column(
                       children: [
                         SizedBox(
@@ -694,7 +718,10 @@ class _SearchState extends State<Search> {
                               style: TextStyle(
                                   fontSize: 17..sp,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.black),
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .titleLarge
+                                      ?.color),
                             ),
                           ),
                         ),
@@ -780,14 +807,14 @@ class _SearchState extends State<Search> {
                   height: 43..h,
                   width: 43..w,
                   decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).cardColor,
                       borderRadius: BorderRadius.circular(21.5..r)),
                   child: SvgPicture.asset(
                     'assets/icons/heart1.svg',
                     color: homeCont.listingModelSearchList.isNotEmpty &&
                             homeCont.listingModelSearchList[index].isFavorite ==
                                 '0'
-                        ? Colors.grey
+                        ? Theme.of(context).unselectedWidgetColor
                         : Colors.red,
                   ),
                 ),
@@ -827,10 +854,12 @@ class _SearchState extends State<Search> {
                     // height: 280..h,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10..r),
-                      color: Colors.white,
+                      color: Theme.of(context).cardColor,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.grey.withOpacity(0.5), // Shadow color
+                          color: Theme.of(context)
+                              .shadowColor
+                              .withOpacity(0.5), // Shadow color
                           offset: Offset(0, 3), // Shadow offset
                           blurRadius: 6, // Shadow blur radius
                           spreadRadius: 0, // Shadow spread radius
@@ -877,7 +906,7 @@ class _SearchState extends State<Search> {
                         ),
                         Container(
                           // height: 65..h,
-                          color: Colors.white,
+                          color: Theme.of(context).cardColor,
                           child: Column(
                             children: [
                               SizedBox(
@@ -890,7 +919,10 @@ class _SearchState extends State<Search> {
                                     style: TextStyle(
                                         fontSize: 17..sp,
                                         fontWeight: FontWeight.w600,
-                                        color: Colors.black),
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .titleLarge
+                                            ?.color),
                                   ),
                                 ),
                               ),
@@ -977,7 +1009,7 @@ class _SearchState extends State<Search> {
                         height: 43..h,
                         width: 43..w,
                         decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Theme.of(context).cardColor,
                             borderRadius: BorderRadius.circular(21.5..r)),
                         child: SvgPicture.asset(
                           'assets/icons/heart1.svg',
@@ -985,7 +1017,7 @@ class _SearchState extends State<Search> {
                                   homeCont.listingModelSearchList[index]
                                           .isFavorite ==
                                       '0'
-                              ? Colors.grey
+                              ? Theme.of(context).unselectedWidgetColor
                               : Colors.red,
                         ),
                       ),
@@ -1056,7 +1088,7 @@ class _SearchState extends State<Search> {
                 Container(
                   // height: 79..h,
                   width: MediaQuery.of(context).size.width * .37,
-                  color: Colors.white,
+                  color: Theme.of(context).cardColor,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1067,7 +1099,8 @@ class _SearchState extends State<Search> {
                         style: TextStyle(
                             fontSize: 17..sp,
                             fontWeight: FontWeight.w600,
-                            color: Colors.black),
+                            color:
+                                Theme.of(context).textTheme.titleLarge?.color),
                       ),
                       Text(
                         "${listing.address}",
@@ -1134,14 +1167,14 @@ class _SearchState extends State<Search> {
                 height: 43..h,
                 width: 43..w,
                 decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(21.5..r)),
                 child: SvgPicture.asset(
                   'assets/icons/heart1.svg',
                   color: homeCont.listingModelSearchList.isNotEmpty &&
                           homeCont.listingModelSearchList[index].isFavorite ==
                               '0'
-                      ? Colors.grey
+                      ? Theme.of(context).unselectedWidgetColor
                       : Colors.red,
                 ),
               ),
@@ -1219,7 +1252,7 @@ class _SearchState extends State<Search> {
                       Container(
                         // height: 79..h,
                         width: MediaQuery.of(context).size.width * .37,
-                        color: Colors.white,
+                        color: Theme.of(context).cardColor,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1230,7 +1263,10 @@ class _SearchState extends State<Search> {
                               style: TextStyle(
                                   fontSize: 17..sp,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.black),
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .titleLarge
+                                      ?.color),
                             ),
                             Text(
                               "${listingList[index].address}",
@@ -1298,7 +1334,7 @@ class _SearchState extends State<Search> {
                       height: 43..h,
                       width: 43..w,
                       decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Theme.of(context).cardColor,
                           borderRadius: BorderRadius.circular(21.5..r)),
                       child: SvgPicture.asset(
                         'assets/icons/heart1.svg',
@@ -1306,7 +1342,7 @@ class _SearchState extends State<Search> {
                                 homeCont.listingModelSearchList[index]
                                         .isFavorite ==
                                     '0'
-                            ? Colors.grey
+                            ? Theme.of(context).unselectedWidgetColor
                             : Colors.red,
                       ),
                     ),
@@ -1369,7 +1405,7 @@ class _PokeToDialBottomSheetContentState
         },
         child: Container(
           decoration: BoxDecoration(
-              color: AppColors.white,
+              color: Theme.of(context).scaffoldBackgroundColor,
               borderRadius: BorderRadius.only(
                   topRight: Radius.circular(40), topLeft: Radius.circular(40))),
           child: Padding(
@@ -1390,7 +1426,7 @@ class _PokeToDialBottomSheetContentState
                   style: TextStyle(
                       fontSize: 17..sp,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.black),
+                      color: Theme.of(context).textTheme.titleLarge?.color),
                 ),
                 SizedBox(
                   height: 20..h,
@@ -1403,7 +1439,7 @@ class _PokeToDialBottomSheetContentState
                       style: TextStyle(
                           fontSize: 16..sp,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.black),
+                          color: Theme.of(context).textTheme.titleLarge?.color),
                     ),
                     InkWell(
                       onTap: () {
@@ -1421,7 +1457,8 @@ class _PokeToDialBottomSheetContentState
                         style: TextStyle(
                             fontSize: 13..sp,
                             fontWeight: FontWeight.w600,
-                            color: Colors.black),
+                            color:
+                                Theme.of(context).textTheme.titleLarge?.color),
                       ),
                     ),
                   ],
@@ -1449,7 +1486,10 @@ class _PokeToDialBottomSheetContentState
                               hintStyle: TextStyle(
                                   fontSize: 13..sp,
                                   fontWeight: FontWeight.w500,
-                                  color: AppColors.black)),
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodyLarge
+                                      ?.color)),
                         ),
                       ),
                     ),
@@ -1470,7 +1510,10 @@ class _PokeToDialBottomSheetContentState
                             hintStyle: TextStyle(
                                 fontSize: 13..sp,
                                 fontWeight: FontWeight.w500,
-                                color: AppColors.black)),
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .bodyLarge
+                                    ?.color)),
                       )),
                     )
                   ],
@@ -1538,7 +1581,7 @@ class _PokeToDialBottomSheetContentState
                         style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w500,
-                            color: Colors.white),
+                            color: Theme.of(context).colorScheme.onPrimary),
                       ),
                     ),
                   ),
@@ -1581,7 +1624,7 @@ class _PokeToDialBottomSheetContent1State
       return SingleChildScrollView(
         child: Container(
           decoration: BoxDecoration(
-              color: AppColors.white,
+              color: Theme.of(context).scaffoldBackgroundColor,
               borderRadius: BorderRadius.only(
                   topRight: Radius.circular(40), topLeft: Radius.circular(40))),
           child: Padding(
@@ -1620,7 +1663,7 @@ class _PokeToDialBottomSheetContent1State
                       style: TextStyle(
                           fontSize: 19..sp,
                           fontWeight: FontWeight.w500,
-                          color: AppColors.black),
+                          color: Theme.of(context).textTheme.titleLarge?.color),
                     ),
                     Container(
                       width: 15..w,
@@ -1660,7 +1703,8 @@ class _PokeToDialBottomSheetContent1State
                         style: TextStyle(
                             fontSize: 17..sp,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.black),
+                            color:
+                                Theme.of(context).textTheme.titleLarge?.color),
                       ),
                       GestureDetector(
                         onTap: () {
@@ -1684,16 +1728,24 @@ class _PokeToDialBottomSheetContent1State
                           // Adjust the height as needed
                           decoration: BoxDecoration(
                             shape: BoxShape.circle, // Default color,
-                            color: AppColors.white,
-                            border:
-                                Border.all(color: AppColors.black, width: 2),
+                            color: Theme.of(context).cardColor,
+                            border: Border.all(
+                                color: Theme.of(context)
+                                        .textTheme
+                                        .bodyLarge
+                                        ?.color ??
+                                    Theme.of(context).unselectedWidgetColor,
+                                width: 2),
                           ),
                           child: Container(
                             decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: selectAllCategory
-                                    ? AppColors.black // Selected color
-                                    : AppColors.white),
+                                    ? Theme.of(context)
+                                        .textTheme
+                                        .bodyLarge
+                                        ?.color // Selected color
+                                    : Theme.of(context).cardColor),
                           ),
                         ),
                       ),
@@ -1711,7 +1763,8 @@ class _PokeToDialBottomSheetContent1State
                         style: TextStyle(
                             fontSize: 14..sp,
                             fontWeight: FontWeight.w500,
-                            color: AppColors.black),
+                            color:
+                                Theme.of(context).textTheme.bodyLarge?.color),
                       ),
                       GestureDetector(
                         onTap: () {
@@ -1731,16 +1784,24 @@ class _PokeToDialBottomSheetContent1State
                           // Adjust the height as needed
                           decoration: BoxDecoration(
                             shape: BoxShape.circle, // Default color,
-                            color: AppColors.white,
-                            border:
-                                Border.all(color: AppColors.black, width: 2),
+                            color: Theme.of(context).cardColor,
+                            border: Border.all(
+                                color: Theme.of(context)
+                                        .textTheme
+                                        .bodyLarge
+                                        ?.color ??
+                                    Theme.of(context).unselectedWidgetColor,
+                                width: 2),
                           ),
                           child: Container(
                             decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: buyAndSell
-                                    ? AppColors.black // Selected color
-                                    : AppColors.white),
+                                    ? Theme.of(context)
+                                        .textTheme
+                                        .bodyLarge
+                                        ?.color // Selected color
+                                    : Theme.of(context).cardColor),
                           ),
                         ),
                       ),
@@ -1758,7 +1819,8 @@ class _PokeToDialBottomSheetContent1State
                         style: TextStyle(
                             fontSize: 14..sp,
                             fontWeight: FontWeight.w500,
-                            color: AppColors.black),
+                            color:
+                                Theme.of(context).textTheme.bodyLarge?.color),
                       ),
                       GestureDetector(
                         onTap: () {
@@ -1782,16 +1844,20 @@ class _PokeToDialBottomSheetContent1State
                           // Adjust the height as needed
                           decoration: BoxDecoration(
                             shape: BoxShape.circle, // Default color,
-                            color: AppColors.white,
-                            border:
-                                Border.all(color: AppColors.black, width: 2),
+                            color: Theme.of(context).cardColor,
+                            border: Border.all(
+                                color: Theme.of(context).dividerColor,
+                                width: 2),
                           ),
                           child: Container(
                             decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: audioSelected
-                                    ? AppColors.black // Selected color
-                                    : AppColors.white),
+                                    ? Theme.of(context)
+                                        .textTheme
+                                        .bodyLarge
+                                        ?.color // Selected color
+                                    : Theme.of(context).cardColor),
                           ),
                         ),
                       ),
@@ -1838,16 +1904,20 @@ class _PokeToDialBottomSheetContent1State
                           // Adjust the height as needed
                           decoration: BoxDecoration(
                             shape: BoxShape.circle, // Default color,
-                            color: AppColors.white,
-                            border:
-                                Border.all(color: AppColors.black, width: 2),
+                            color: Theme.of(context).cardColor,
+                            border: Border.all(
+                                color: Theme.of(context).dividerColor,
+                                width: 2),
                           ),
                           child: Container(
                             decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: audioItems1
-                                    ? AppColors.black // Selected color
-                                    : AppColors.white),
+                                    ? Theme.of(context)
+                                        .textTheme
+                                        .bodyLarge
+                                        ?.color // Selected color
+                                    : Theme.of(context).cardColor),
                           ),
                         ),
                       ),
@@ -1894,16 +1964,20 @@ class _PokeToDialBottomSheetContent1State
                           // Adjust the height as needed
                           decoration: BoxDecoration(
                             shape: BoxShape.circle, // Default color,
-                            color: AppColors.white,
-                            border:
-                                Border.all(color: AppColors.black, width: 2),
+                            color: Theme.of(context).cardColor,
+                            border: Border.all(
+                                color: Theme.of(context).dividerColor,
+                                width: 2),
                           ),
                           child: Container(
                             decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: audioItems2
-                                    ? AppColors.black // Selected color
-                                    : AppColors.white),
+                                    ? Theme.of(context)
+                                        .textTheme
+                                        .bodyLarge
+                                        ?.color // Selected color
+                                    : Theme.of(context).cardColor),
                           ),
                         ),
                       ),
@@ -1950,16 +2024,20 @@ class _PokeToDialBottomSheetContent1State
                           // Adjust the height as needed
                           decoration: BoxDecoration(
                             shape: BoxShape.circle, // Default color,
-                            color: AppColors.white,
-                            border:
-                                Border.all(color: AppColors.black, width: 2),
+                            color: Theme.of(context).cardColor,
+                            border: Border.all(
+                                color: Theme.of(context).dividerColor,
+                                width: 2),
                           ),
                           child: Container(
                             decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: audioItems3
-                                    ? AppColors.black // Selected color
-                                    : AppColors.white),
+                                    ? Theme.of(context)
+                                        .textTheme
+                                        .bodyLarge
+                                        ?.color // Selected color
+                                    : Theme.of(context).cardColor),
                           ),
                         ),
                       ),
@@ -2006,16 +2084,20 @@ class _PokeToDialBottomSheetContent1State
                           // Adjust the height as needed
                           decoration: BoxDecoration(
                             shape: BoxShape.circle, // Default color,
-                            color: AppColors.white,
-                            border:
-                                Border.all(color: AppColors.black, width: 2),
+                            color: Theme.of(context).cardColor,
+                            border: Border.all(
+                                color: Theme.of(context).dividerColor,
+                                width: 2),
                           ),
                           child: Container(
                             decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: audioItems4
-                                    ? AppColors.black // Selected color
-                                    : AppColors.white),
+                                    ? Theme.of(context)
+                                        .textTheme
+                                        .bodyLarge
+                                        ?.color // Selected color
+                                    : Theme.of(context).cardColor),
                           ),
                         ),
                       ),
@@ -2062,16 +2144,20 @@ class _PokeToDialBottomSheetContent1State
                           // Adjust the height as needed
                           decoration: BoxDecoration(
                             shape: BoxShape.circle, // Default color,
-                            color: AppColors.white,
-                            border:
-                                Border.all(color: AppColors.black, width: 2),
+                            color: Theme.of(context).cardColor,
+                            border: Border.all(
+                                color: Theme.of(context).dividerColor,
+                                width: 2),
                           ),
                           child: Container(
                             decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: audioItems5
-                                    ? AppColors.black // Selected color
-                                    : AppColors.white),
+                                    ? Theme.of(context)
+                                        .textTheme
+                                        .bodyLarge
+                                        ?.color // Selected color
+                                    : Theme.of(context).cardColor),
                           ),
                         ),
                       ),
@@ -2179,7 +2265,9 @@ class _CategorySelectionDialogState extends State<CategorySelectionDialog> {
       return Center(
         child: Text(
           'No items available'.tr,
-          style: TextStyle(fontSize: 16.sp, color: Colors.grey),
+          style: TextStyle(
+              fontSize: 16.sp,
+              color: Theme.of(context).textTheme.bodyMedium?.color),
         ),
       );
     }

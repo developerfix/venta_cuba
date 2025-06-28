@@ -59,10 +59,10 @@ class ListingView extends StatelessWidget {
                   Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10.r),
-                      color: Colors.white,
+                      color: Theme.of(context).cardColor,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.grey.withOpacity(0.5),
+                          color: Theme.of(context).shadowColor.withOpacity(0.5),
                           offset: Offset(0, 3),
                           blurRadius: 6,
                           spreadRadius: 0,
@@ -198,12 +198,14 @@ class ListingView extends StatelessWidget {
                         height: 36.h,
                         width: 36.h,
                         decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Theme.of(context).cardColor,
                             borderRadius: BorderRadius.circular(100)),
                         child: SvgPicture.asset(
                           'assets/icons/heart1.svg',
                           colorFilter: ColorFilter.mode(
-                              item.isFavorite == '0' ? Colors.grey : Colors.red,
+                              item.isFavorite == '0'
+                                  ? Theme.of(context).unselectedWidgetColor
+                                  : Colors.red,
                               BlendMode.srcIn),
                         ),
                       ),

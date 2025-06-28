@@ -902,6 +902,7 @@ It is not allowed to use our member-to-member communication resources to send sp
           "updated": "Updated",
           "verified successfully": "Verified Successfully",
           "wrong email or password": "Wrong email or password",
+          "Dark Mode": "Dark Mode",
           "new pass cannot be same":
               "New password cannot be same as old password",
           "please enter new password": "Please enter new your new password",
@@ -980,6 +981,7 @@ It is not allowed to use our member-to-member communication resources to send sp
           "new pass cannot be same":
               "La nueva contraseña no puede ser la misma que la antigua",
           "please enter new password": "Por favor ingrese su nueva contraseña",
+          "Dark Mode": "Modo Oscuro",
           "general": "General",
           "Added Successfully": "Added Successfully",
           "Changed Successfully": "Cambiado exitosamente",

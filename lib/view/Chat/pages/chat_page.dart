@@ -265,7 +265,7 @@ class _ChatPageState extends State<ChatPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Color(0x19D9D9D9),
         elevation: 0,
@@ -327,7 +327,8 @@ class _ChatPageState extends State<ChatPage> {
                         : widget.userName ?? "No Name",
                     fontSize: 16..sp,
                     fontWeight: FontWeight.w600,
-                    fontColor: Colors.black,
+                    fontColor: Theme.of(context).textTheme.bodyLarge?.color ??
+                        Colors.black,
                   ),
 
                   SizedBox(height: 2.h),
@@ -384,12 +385,14 @@ class _ChatPageState extends State<ChatPage> {
               child: Container(
                 width: double.maxFinite,
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                decoration: BoxDecoration(color: Colors.white, boxShadow: [
-                  BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 5,
-                      offset: Offset(0, 5))
-                ]),
+                decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor,
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 5,
+                          offset: Offset(0, 5))
+                    ]),
                 child: GetBuilder<HomeController>(
                   builder: (controller) {
                     return Row(
@@ -529,7 +532,7 @@ class _ChatPageState extends State<ChatPage> {
                         height: 50..h,
                         padding: EdgeInsets.only(left: 10.w, bottom: 5),
                         decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Theme.of(context).cardColor,
                             borderRadius: BorderRadius.circular(30.r),
                             boxShadow: [
                               BoxShadow(
@@ -539,7 +542,8 @@ class _ChatPageState extends State<ChatPage> {
                                 spreadRadius: 0,
                               )
                             ],
-                            border: Border.all(color: Colors.black)),
+                            border: Border.all(
+                                color: Theme.of(context).dividerColor)),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -557,7 +561,11 @@ class _ChatPageState extends State<ChatPage> {
                                     hintText: 'Type Message'.tr,
                                     hintStyle: TextStyle(
                                       fontSize: 14,
-                                      color:
+                                      color: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.color
+                                              ?.withValues(alpha: 0.5) ??
                                           Colors.black.withValues(alpha: 0.5),
                                     )),
                                 onTap: () {
@@ -626,7 +634,7 @@ class _ChatPageState extends State<ChatPage> {
                     width: 40.w,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white,
+                      color: Theme.of(context).cardColor,
                       boxShadow: [
                         BoxShadow(
                           color: Colors.grey.withValues(alpha: 0.5),
@@ -639,7 +647,7 @@ class _ChatPageState extends State<ChatPage> {
                     ),
                     child: Icon(
                       Icons.arrow_downward_rounded,
-                      color: Colors.black,
+                      color: Theme.of(context).iconTheme.color ?? Colors.black,
                     ),
                   ),
                 ),

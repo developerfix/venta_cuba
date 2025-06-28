@@ -103,7 +103,7 @@ class _FavouriteSellerState extends State<FavouriteSeller> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: GetBuilder<HomeController>(
         builder: (cont) {
           return Padding(
@@ -128,7 +128,9 @@ class _FavouriteSellerState extends State<FavouriteSeller> {
                         style: TextStyle(
                             fontSize: 20..sp,
                             fontWeight: FontWeight.w500,
-                            color: Colors.black),
+                            color:
+                                Theme.of(context).textTheme.bodyLarge?.color ??
+                                    Colors.black),
                       ),
                       GestureDetector(
                         onTap:

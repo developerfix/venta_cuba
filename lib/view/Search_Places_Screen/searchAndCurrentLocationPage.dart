@@ -48,7 +48,7 @@ class _SearchAndCurrentLocationPageState
                     Container(
                       height: 60..h,
                       decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Theme.of(context).cardColor,
                           borderRadius: BorderRadius.circular(5),
                           border: Border.all(
                               color: AppColors.k0xFFA9ABAC.withOpacity(.33))),
@@ -88,7 +88,7 @@ class _SearchAndCurrentLocationPageState
                             children: [
                               Icon(
                                 Icons.location_searching,
-                                color: Colors.grey,
+                                color: Theme.of(context).unselectedWidgetColor,
                               ),
                               SizedBox(
                                 width: 10.w,
@@ -171,7 +171,7 @@ class _SearchAndCurrentLocationPageState
                                       jsonDecode(beforeData[index])['lng'];
                                   locationCont.address =
                                       "${jsonDecode(beforeData[index])['address']}";
-                                      Get.log(locationCont.address);
+                                  Get.log(locationCont.address);
                                   Get.to(
                                       SearchPlacesScreen(isShowRadius: true));
                                 },

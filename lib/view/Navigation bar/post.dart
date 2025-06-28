@@ -540,7 +540,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                     style: TextStyle(
                         fontSize: 22..h,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.black),
+                        color: Theme.of(context).textTheme.titleLarge?.color),
                   ),
                   SizedBox(
                     height: 40..h,
@@ -803,7 +803,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
       child: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: Scaffold(
-          backgroundColor: AppColors.white,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: Stack(
             children: [
               GetBuilder<HomeController>(
@@ -907,7 +907,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           style: TextStyle(
                                               fontSize: 16..sp,
                                               fontWeight: FontWeight.w500,
-                                              color: AppColors.black),
+                                              color: Theme.of(context)
+                                                  .textTheme
+                                                  .titleLarge
+                                                  ?.color),
                                         ),
                                       ),
                                     ),
@@ -963,7 +966,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                 style: TextStyle(
                                                     fontSize: 13..sp,
                                                     fontWeight: FontWeight.w500,
-                                                    color: AppColors.black),
+                                                    color: Theme.of(context)
+                                                        .textTheme
+                                                        .titleLarge
+                                                        ?.color),
                                               ),
                                               Text(
                                                 'Maximum 50mb Size'.tr,
@@ -1327,7 +1333,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                   CapitalizeFirstLetterFormatter(),
                                   LengthLimitingTextInputFormatter(60),
                                 ],
-                                cursorColor: AppColors.black,
+                                cursorColor: Theme.of(context)
+                                    .textTheme
+                                    .bodyLarge
+                                    ?.color,
                               ),
                             ),
                             SizedBox(height: 15..h),
@@ -1412,7 +1421,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                       inputFormatters: [
                                         FilteringTextInputFormatter.digitsOnly,
                                       ],
-                                      cursorColor: AppColors.black,
+                                      cursorColor: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.color,
                                     ),
                                   ),
                                   Expanded(
@@ -1478,7 +1490,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                             Icons.format_bold,
                                             size: 15,
                                             color: _isBold
-                                                ? AppColors.black
+                                                ? Theme.of(context)
+                                                    .textTheme
+                                                    .titleLarge
+                                                    ?.color
                                                 : AppColors.k0xFFA9ABAC,
                                           ),
                                           onPressed: _toggleBold,
@@ -1488,7 +1503,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                             Icons.format_italic,
                                             size: 15,
                                             color: _isItalic
-                                                ? AppColors.black
+                                                ? Theme.of(context)
+                                                    .textTheme
+                                                    .titleLarge
+                                                    ?.color
                                                 : AppColors.k0xFFA9ABAC,
                                           ),
                                           onPressed: _toggleItalic,
@@ -1498,7 +1516,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                             Icons.format_underline,
                                             size: 15,
                                             color: _isUnderlined
-                                                ? AppColors.black
+                                                ? Theme.of(context)
+                                                    .textTheme
+                                                    .titleLarge
+                                                    ?.color
                                                 : AppColors.k0xFFA9ABAC,
                                           ),
                                           onPressed: _toggleUnderline,
@@ -1509,7 +1530,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                             size: 15,
                                             color:
                                                 _textAlignment == TextAlign.left
-                                                    ? AppColors.black
+                                                    ? Theme.of(context)
+                                                        .textTheme
+                                                        .titleLarge
+                                                        ?.color
                                                     : AppColors.k0xFFA9ABAC,
                                           ),
                                           onPressed: () => _setAlignment(
@@ -1521,7 +1545,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                             size: 15,
                                             color: _textAlignment ==
                                                     TextAlign.center
-                                                ? AppColors.black
+                                                ? Theme.of(context)
+                                                    .textTheme
+                                                    .titleLarge
+                                                    ?.color
                                                 : AppColors.k0xFFA9ABAC,
                                           ),
                                           onPressed: () => _setAlignment(
@@ -1533,7 +1560,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                             size: 15,
                                             color: _textAlignment ==
                                                     TextAlign.right
-                                                ? AppColors.black
+                                                ? Theme.of(context)
+                                                    .textTheme
+                                                    .titleLarge
+                                                    ?.color
                                                 : AppColors.k0xFFA9ABAC,
                                           ),
                                           onPressed: () => _setAlignment(
@@ -1567,7 +1597,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                         border: InputBorder.none,
                                         contentPadding: EdgeInsets.symmetric(
                                             horizontal: 10, vertical: 10)),
-                                    cursorColor: AppColors.black,
+                                    cursorColor: Theme.of(context)
+                                        .textTheme
+                                        .bodyLarge
+                                        ?.color,
                                   ),
                                 ],
                               ),
@@ -1590,7 +1623,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                     style: TextStyle(
                                         fontSize: 18..sp,
                                         fontWeight: FontWeight.w500,
-                                        color: AppColors.black),
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .titleLarge
+                                            ?.color),
                                   ),
                                   InkWell(
                                       onTap: () {
@@ -1636,7 +1672,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                         vertical: 20,
                                                         horizontal: 20),
                                               ),
-                                              cursorColor: AppColors.black,
+                                              cursorColor: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyLarge
+                                                  ?.color,
                                             ),
                                           ),
                                           SizedBox(
@@ -1660,7 +1699,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                         vertical: 20,
                                                         horizontal: 20),
                                               ),
-                                              cursorColor: AppColors.black,
+                                              cursorColor: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyLarge
+                                                  ?.color,
                                             ),
                                           ),
                                         ],
@@ -1784,7 +1826,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                     style: TextStyle(
                                         fontSize: 18..sp,
                                         fontWeight: FontWeight.w500,
-                                        color: AppColors.black),
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .titleLarge
+                                            ?.color),
                                   ),
                                   cont.showBelowFields[0] == 1
                                       ? Icon(Icons.arrow_drop_up)
@@ -1818,7 +1863,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                       height: 15..h,
                                     ),
                                     TextField(
-                                      cursorColor: AppColors.black,
+                                      cursorColor: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.color,
                                       controller: cont.tagsController,
                                       decoration: InputDecoration(
                                         isDense: true,
@@ -1967,7 +2015,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                       style: TextStyle(
                                           fontSize: 18..sp,
                                           fontWeight: FontWeight.w500,
-                                          color: AppColors.black),
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .titleLarge
+                                              ?.color),
                                     ),
                                   ),
                                   cont.showBelowFields[1] == 2
@@ -2378,7 +2429,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                       style: TextStyle(
                                           fontSize: 18..sp,
                                           fontWeight: FontWeight.w500,
-                                          color: AppColors.black),
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .titleLarge
+                                              ?.color),
                                     ),
                                   ),
                                   cont.showBelowFields[2] == 2
@@ -2415,7 +2469,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           contentPadding: EdgeInsets.symmetric(
                                               vertical: 20, horizontal: 20),
                                         ),
-                                        cursorColor: AppColors.black,
+                                        cursorColor: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.color,
                                       ),
                                     ),
                                     SizedBox(
@@ -2439,7 +2496,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           contentPadding: EdgeInsets.symmetric(
                                               vertical: 20, horizontal: 20),
                                         ),
-                                        cursorColor: AppColors.black,
+                                        cursorColor: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.color,
                                       ),
                                     ),
                                     SizedBox(
@@ -2462,7 +2522,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           contentPadding: EdgeInsets.symmetric(
                                               vertical: 20, horizontal: 20),
                                         ),
-                                        cursorColor: AppColors.black,
+                                        cursorColor: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.color,
                                       ),
                                     ),
                                     SizedBox(
@@ -2485,7 +2548,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           contentPadding: EdgeInsets.symmetric(
                                               vertical: 20, horizontal: 20),
                                         ),
-                                        cursorColor: AppColors.black,
+                                        cursorColor: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.color,
                                       ),
                                     ),
                                     SizedBox(
@@ -2508,7 +2574,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           contentPadding: EdgeInsets.symmetric(
                                               vertical: 20, horizontal: 20),
                                         ),
-                                        cursorColor: AppColors.black,
+                                        cursorColor: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.color,
                                       ),
                                     ),
                                   ],
@@ -2541,7 +2610,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                     style: TextStyle(
                                         fontSize: 18..sp,
                                         fontWeight: FontWeight.w500,
-                                        color: AppColors.black),
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .titleLarge
+                                            ?.color),
                                   ),
                                   cont.showBelowFields[3] == 2
                                       ? Icon(Icons.arrow_drop_up)
@@ -2577,7 +2649,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           contentPadding: EdgeInsets.symmetric(
                                               vertical: 20, horizontal: 20),
                                         ),
-                                        cursorColor: AppColors.black,
+                                        cursorColor: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.color,
                                       ),
                                     ),
                                   ],
@@ -2608,7 +2683,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           style: TextStyle(
                                               fontSize: 18..sp,
                                               fontWeight: FontWeight.w500,
-                                              color: AppColors.black),
+                                              color: Theme.of(context)
+                                                  .textTheme
+                                                  .titleLarge
+                                                  ?.color),
                                         ),
                                       ),
                                     ),
@@ -2759,7 +2837,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w500,
-                                    color: AppColors.black,
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .titleLarge
+                                        ?.color,
                                   ),
                                 ),
                                 SizedBox(height: 8),
@@ -2812,7 +2893,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                           height: 8,
                           width: 50,
                           decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: Theme.of(context).cardColor,
                               borderRadius: BorderRadius.circular(100)),
                         ),
                       ),

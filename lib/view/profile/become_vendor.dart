@@ -18,7 +18,7 @@ class _BecomeVendorState extends State<BecomeVendor> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: AppColors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Padding(
           padding: const EdgeInsets.all(20),
           child: SafeArea(
@@ -41,7 +41,10 @@ class _BecomeVendorState extends State<BecomeVendor> {
                     ),
                     Text(
                       'Approvals'.tr,
-                      style: TextStyle(fontSize: 20..sp, fontWeight: FontWeight.w500, color: Colors.black),
+                      style: TextStyle(
+                          fontSize: 20..sp,
+                          fontWeight: FontWeight.w500,
+                          color: Theme.of(context).textTheme.titleLarge?.color),
                     ),
                     Container(
                       width: 10..w,

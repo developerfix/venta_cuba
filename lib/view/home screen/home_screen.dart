@@ -113,7 +113,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: GetBuilder<HomeController>(
         init: homeCont,
         builder: (cont) {
@@ -171,7 +171,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                         child: Center(
                                             child: SvgPicture.asset(
                                                 'assets/icons/heartadd.svg',
-                                                color: Colors.black)),
+                                                color: Theme.of(context)
+                                                    .iconTheme
+                                                    .color)),
                                       ),
                                     ),
                                     GestureDetector(
@@ -196,7 +198,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 child: Center(
                                                     child: SvgPicture.asset(
                                                         'assets/icons/notification.svg',
-                                                        color: Colors.black)),
+                                                        color: Theme.of(context)
+                                                            .iconTheme
+                                                            .color)),
                                               ),
                                             ),
                                             if (cont
@@ -344,7 +348,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                   style: TextStyle(
                                       fontSize: 16..sp,
                                       fontWeight: FontWeight.w600,
-                                      color: AppColors.black),
+                                      color: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge
+                                          ?.color),
                                 ),
                               ),
                               GestureDetector(
@@ -365,7 +372,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                   style: TextStyle(
                                       fontSize: 15..sp,
                                       fontWeight: FontWeight.w500,
-                                      color: AppColors.black),
+                                      color: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.color),
                                 ),
                               ),
                             ],

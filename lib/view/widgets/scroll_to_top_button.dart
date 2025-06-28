@@ -81,7 +81,8 @@ class _ScrollToTopButtonState extends State<ScrollToTopButton> {
                         widget.backgroundColor ?? AppColors.k0xFF0254B8,
                     child: Icon(
                       Icons.keyboard_arrow_up,
-                      color: widget.iconColor ?? Colors.white,
+                      color: widget.iconColor ??
+                          Theme.of(context).colorScheme.onPrimary,
                       size: widget.size ?? 24,
                     ),
                     mini: true,

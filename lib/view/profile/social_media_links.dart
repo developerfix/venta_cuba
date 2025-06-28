@@ -14,16 +14,15 @@ class SocialMediaLinks extends StatefulWidget {
 }
 
 class _SocialMediaLinksState extends State<SocialMediaLinks> {
-
   @override
   Widget build(BuildContext context) {
     return GetBuilder(
         init: AuthController(),
         builder: (cont) {
           return Scaffold(
-            backgroundColor: AppColors.white,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             body: InkWell(
-              onTap: (){
+              onTap: () {
                 FocusScope.of(context).requestFocus(FocusNode());
               },
               child: SingleChildScrollView(
@@ -47,7 +46,9 @@ class _SocialMediaLinksState extends State<SocialMediaLinks> {
                             Text(
                               'Social Media Links'.tr,
                               style: TextStyle(
-                                  fontSize: 21..sp, fontWeight: FontWeight.w500, color: AppColors.black),
+                                  fontSize: 21..sp,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.black),
                             ),
                             Container(
                               height: 24..h,
@@ -60,8 +61,10 @@ class _SocialMediaLinksState extends State<SocialMediaLinks> {
                         Text(
                           'Add your social media link - Buyers will be able to see it on your listing details page.'
                               .tr,
-                          style:
-                              TextStyle(fontSize: 16..sp, fontWeight: FontWeight.w400, color: AppColors.black),
+                          style: TextStyle(
+                              fontSize: 16..sp,
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.black),
                         ),
                         SizedBox(height: 20..h),
                         Container(
@@ -93,14 +96,16 @@ class _SocialMediaLinksState extends State<SocialMediaLinks> {
                                   textAlignVertical: TextAlignVertical.center,
                                   cursorColor: Colors.black,
                                   decoration: InputDecoration(
-                                      contentPadding: EdgeInsets.symmetric(vertical: 13),
+                                      contentPadding:
+                                          EdgeInsets.symmetric(vertical: 13),
                                       border: InputBorder.none,
                                       focusedBorder: InputBorder.none,
                                       // prefixIcon: Icon(Icons.mail_outline,
                                       //   color: Color(0xFFA9ABAC),
                                       // ),
                                       hintText: 'Instagram Link'.tr,
-                                      hintStyle: TextStyle(color: Color(0xFFA9ABAC))),
+                                      hintStyle:
+                                          TextStyle(color: Color(0xFFA9ABAC))),
                                 ),
                               )
                             ],
@@ -138,14 +143,16 @@ class _SocialMediaLinksState extends State<SocialMediaLinks> {
                                   textAlignVertical: TextAlignVertical.center,
                                   cursorColor: Colors.black,
                                   decoration: InputDecoration(
-                                      contentPadding: EdgeInsets.symmetric(vertical: 13),
+                                      contentPadding:
+                                          EdgeInsets.symmetric(vertical: 13),
                                       border: InputBorder.none,
                                       focusedBorder: InputBorder.none,
                                       // prefixIcon: Icon(Icons.mail_outline,
                                       //   color: Color(0xFFA9ABAC),
                                       // ),
                                       hintText: 'Facebook Link'.tr,
-                                      hintStyle: TextStyle(color: Color(0xFFA9ABAC))),
+                                      hintStyle:
+                                          TextStyle(color: Color(0xFFA9ABAC))),
                                 ),
                               )
                             ],
@@ -183,14 +190,16 @@ class _SocialMediaLinksState extends State<SocialMediaLinks> {
                                   textAlignVertical: TextAlignVertical.center,
                                   cursorColor: Colors.black,
                                   decoration: InputDecoration(
-                                      contentPadding: EdgeInsets.symmetric(vertical: 13),
+                                      contentPadding:
+                                          EdgeInsets.symmetric(vertical: 13),
                                       border: InputBorder.none,
                                       focusedBorder: InputBorder.none,
                                       // prefixIcon: Icon(Icons.mail_outline,
                                       //   color: Color(0xFFA9ABAC),
                                       // ),
                                       hintText: 'Tiktok Link'.tr,
-                                      hintStyle: TextStyle(color: Color(0xFFA9ABAC))),
+                                      hintStyle:
+                                          TextStyle(color: Color(0xFFA9ABAC))),
                                 ),
                               )
                             ],
@@ -231,14 +240,16 @@ class _SocialMediaLinksState extends State<SocialMediaLinks> {
                                   textAlignVertical: TextAlignVertical.center,
                                   cursorColor: Colors.black,
                                   decoration: InputDecoration(
-                                      contentPadding: EdgeInsets.symmetric(vertical: 13),
+                                      contentPadding:
+                                          EdgeInsets.symmetric(vertical: 13),
                                       border: InputBorder.none,
                                       focusedBorder: InputBorder.none,
                                       // prefixIcon: Icon(Icons.mail_outline,
                                       //   color: Color(0xFFA9ABAC),
                                       // ),
                                       hintText: 'Youtube Link'.tr,
-                                      hintStyle: TextStyle(color: Color(0xFFA9ABAC))),
+                                      hintStyle:
+                                          TextStyle(color: Color(0xFFA9ABAC))),
                                 ),
                               )
                             ],
@@ -276,14 +287,16 @@ class _SocialMediaLinksState extends State<SocialMediaLinks> {
                                   textAlignVertical: TextAlignVertical.center,
                                   cursorColor: Colors.black,
                                   decoration: InputDecoration(
-                                      contentPadding: EdgeInsets.symmetric(vertical: 13),
+                                      contentPadding:
+                                          EdgeInsets.symmetric(vertical: 13),
                                       border: InputBorder.none,
                                       focusedBorder: InputBorder.none,
                                       // prefixIcon: Icon(Icons.mail_outline,
                                       //   color: Color(0xFFA9ABAC),
                                       // ),
                                       hintText: 'Pinterest Link'.tr,
-                                      hintStyle: TextStyle(color: Color(0xFFA9ABAC))),
+                                      hintStyle:
+                                          TextStyle(color: Color(0xFFA9ABAC))),
                                 ),
                               )
                             ],
@@ -321,14 +334,16 @@ class _SocialMediaLinksState extends State<SocialMediaLinks> {
                                   textAlignVertical: TextAlignVertical.center,
                                   cursorColor: Colors.black,
                                   decoration: InputDecoration(
-                                      contentPadding: EdgeInsets.symmetric(vertical: 13),
+                                      contentPadding:
+                                          EdgeInsets.symmetric(vertical: 13),
                                       border: InputBorder.none,
                                       focusedBorder: InputBorder.none,
                                       // prefixIcon: Icon(Icons.mail_outline,
                                       //   color: Color(0xFFA9ABAC),
                                       // ),
                                       hintText: 'X Link'.tr,
-                                      hintStyle: TextStyle(color: Color(0xFFA9ABAC))),
+                                      hintStyle:
+                                          TextStyle(color: Color(0xFFA9ABAC))),
                                 ),
                               )
                             ],
@@ -366,14 +381,16 @@ class _SocialMediaLinksState extends State<SocialMediaLinks> {
                                   textAlignVertical: TextAlignVertical.center,
                                   cursorColor: Colors.black,
                                   decoration: InputDecoration(
-                                      contentPadding: EdgeInsets.symmetric(vertical: 13),
+                                      contentPadding:
+                                          EdgeInsets.symmetric(vertical: 13),
                                       border: InputBorder.none,
                                       focusedBorder: InputBorder.none,
                                       // prefixIcon: Icon(Icons.mail_outline,
                                       //   color: Color(0xFFA9ABAC),
                                       // ),
                                       hintText: 'Linkedin Link'.tr,
-                                      hintStyle: TextStyle(color: Color(0xFFA9ABAC))),
+                                      hintStyle:
+                                          TextStyle(color: Color(0xFFA9ABAC))),
                                 ),
                               )
                             ],
@@ -385,8 +402,8 @@ class _SocialMediaLinksState extends State<SocialMediaLinks> {
                               cont.user?.businessName == ""
                                   ? cont.saveSocialMediaLink()
                                   : cont.isBusinessAccount
-                                  ? cont.saveSocialMediaLinkBusiness()
-                                  : cont.saveSocialMediaLink();
+                                      ? cont.saveSocialMediaLinkBusiness()
+                                      : cont.saveSocialMediaLink();
                             },
                             child: MyButton(text: 'Save Changes'.tr)),
                       ],

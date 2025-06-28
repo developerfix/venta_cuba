@@ -71,7 +71,7 @@ class RattingScreen extends StatelessWidget {
                     maxLines: 5,
                     minLines: 5,
                     style: TextStyle(
-                      color: Colors.black,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                       fontSize: 14,
                       fontFamily: 'DM Sans',
                       fontWeight: FontWeight.w400,
@@ -111,7 +111,7 @@ class RattingScreen extends StatelessWidget {
                   child: Text(
                     'Skip'.tr,
                     style: TextStyle(
-                      color: Colors.black,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                       fontSize: 16,
                       fontFamily: 'Sk-Modernist',
                       fontWeight: FontWeight.w700,

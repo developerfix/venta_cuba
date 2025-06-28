@@ -30,7 +30,7 @@ class _CategoryFromBottomState extends State<CategoryFromBottom> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: GetBuilder<HomeController>(
         builder: (cont) {
           return Padding(
@@ -101,22 +101,27 @@ class _CategoryFromBottomState extends State<CategoryFromBottom> {
                               if (cont.isSubSubCategories) {
                                 cont.selectedSubSubCategory =
                                     cont.subSubCategoriesModel?.data?[index];
-                                cont.selectedCategoryModel = SelectedCategoryModel(
-                                    id: cont.subSubCategoriesModel?.data?[index].id,
-                                    name: cont.subSubCategoriesModel?.data?[index].name,
-                                    icon: "",
-                                    type: 2);
+                                cont.selectedCategoryModel =
+                                    SelectedCategoryModel(
+                                        id: cont.subSubCategoriesModel
+                                            ?.data?[index].id,
+                                        name: cont.subSubCategoriesModel
+                                            ?.data?[index].name,
+                                        icon: "",
+                                        type: 2);
                                 cont.isSubSubCategories = false;
                                 Get.to(Post(isUpdate: false));
                               } else {
-
                                 cont.selectedSubCategory =
                                     cont.subCategoriesModel?.data?[index];
-                                cont.selectedCategoryModel = SelectedCategoryModel(
-                                    id: cont.subCategoriesModel?.data?[index].id,
-                                    name: cont.subCategoriesModel?.data?[index].name,
-                                    icon: "",
-                                    type: 1);
+                                cont.selectedCategoryModel =
+                                    SelectedCategoryModel(
+                                        id: cont.subCategoriesModel
+                                            ?.data?[index].id,
+                                        name: cont.subCategoriesModel
+                                            ?.data?[index].name,
+                                        icon: "",
+                                        type: 1);
                                 cont.getSubSubCategoriesBottom();
                               }
                             },

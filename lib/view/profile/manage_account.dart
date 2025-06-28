@@ -38,9 +38,15 @@ class _ManageAccountState extends State<ManageAccount> {
         ),
         SelectionArea(
           child: Text(
-            authCont.user?.businessName == ""? 'Want to Switch to Business Account'.tr:authCont.isBusinessAccount?'Want to Switch to Personal Account'.tr:'Want to Switch to Business Account'.tr,
-          
-            style: TextStyle(fontSize: 18..sp, fontWeight: FontWeight.w600, color: AppColors.black),
+            authCont.user?.businessName == ""
+                ? 'Want to Switch to Business Account'.tr
+                : authCont.isBusinessAccount
+                    ? 'Want to Switch to Personal Account'.tr
+                    : 'Want to Switch to Business Account'.tr,
+            style: TextStyle(
+                fontSize: 18..sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.black),
             textAlign: TextAlign.center,
           ),
         ),
@@ -49,7 +55,10 @@ class _ManageAccountState extends State<ManageAccount> {
         ),
         Text(
           'Your account is switch to other one'.tr,
-          style: TextStyle(fontSize: 14..sp, fontWeight: FontWeight.w400, color: AppColors.k0xFF9F9F9F),
+          style: TextStyle(
+              fontSize: 14..sp,
+              fontWeight: FontWeight.w400,
+              color: AppColors.k0xFF9F9F9F),
           textAlign: TextAlign.center,
         ),
         SizedBox(
@@ -74,7 +83,10 @@ class _ManageAccountState extends State<ManageAccount> {
                   child: Center(
                     child: Text(
                       'Cancel'.tr,
-                      style: TextStyle(fontSize: 14..sp, fontWeight: FontWeight.w700, color: AppColors.white),
+                      style: TextStyle(
+                          fontSize: 14..sp,
+                          fontWeight: FontWeight.w700,
+                          color: Theme.of(context).colorScheme.onPrimary),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -82,11 +94,11 @@ class _ManageAccountState extends State<ManageAccount> {
               ),
               InkWell(
                 onTap: () {
-                  if(authCont.user?.businessName == ""){
+                  if (authCont.user?.businessName == "") {
                     Navigator.of(context).pop();
                     Get.to(VendorScreen());
-                  }else {
-                    authCont.isBusinessAccount= !authCont.isBusinessAccount;
+                  } else {
+                    authCont.isBusinessAccount = !authCont.isBusinessAccount;
                     authCont.update();
                     authCont.changeAccountType();
                     Get.close(2);
@@ -102,7 +114,9 @@ class _ManageAccountState extends State<ManageAccount> {
                     child: Text(
                       'Yes Switch'.tr,
                       style: TextStyle(
-                          fontSize: 14..sp, fontWeight: FontWeight.w700, color: AppColors.k0xFF0254B8),
+                          fontSize: 14..sp,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.k0xFF0254B8),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -118,7 +132,9 @@ class _ManageAccountState extends State<ManageAccount> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return Container(decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)), child: alert);
+        return Container(
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
+            child: alert);
       },
     );
   }
@@ -127,7 +143,7 @@ class _ManageAccountState extends State<ManageAccount> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: SafeArea(
@@ -147,7 +163,10 @@ class _ManageAccountState extends State<ManageAccount> {
                   ),
                   Text(
                     'Manage Account'.tr,
-                    style: TextStyle(fontSize: 21..sp, fontWeight: FontWeight.w500, color: AppColors.black),
+                    style: TextStyle(
+                        fontSize: 21..sp,
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).textTheme.titleLarge?.color),
                   ),
                   Container(
                     height: 24..h,
@@ -157,19 +176,24 @@ class _ManageAccountState extends State<ManageAccount> {
                 ],
               ),
               SizedBox(height: 40..h),
-              GetBuilder<AuthController>(builder: (cont) {
-                return Column(
-                  children: [
-                    GestureDetector(
-                        onTap: () {
-                          _showAlertDialog(context);
-                        },
-                        child: ProfileList(text: cont.user?.businessName == ""?'Switch to Business Account'.tr:cont.isBusinessAccount?'Switch to Personal Account'.tr:'Switch to Business Account'.tr)),
-                    SizedBox(height: 15..h),
-                  ],
-                );
-              },
-
+              GetBuilder<AuthController>(
+                builder: (cont) {
+                  return Column(
+                    children: [
+                      GestureDetector(
+                          onTap: () {
+                            _showAlertDialog(context);
+                          },
+                          child: ProfileList(
+                              text: cont.user?.businessName == ""
+                                  ? 'Switch to Business Account'.tr
+                                  : cont.isBusinessAccount
+                                      ? 'Switch to Personal Account'.tr
+                                      : 'Switch to Business Account'.tr)),
+                      SizedBox(height: 15..h),
+                    ],
+                  );
+                },
               ),
               GestureDetector(
                   onTap: () {

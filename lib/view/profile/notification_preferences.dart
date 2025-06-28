@@ -8,7 +8,8 @@ class NotificationPreferences extends StatefulWidget {
   const NotificationPreferences({super.key});
 
   @override
-  State<NotificationPreferences> createState() => _NotificationPreferencesState();
+  State<NotificationPreferences> createState() =>
+      _NotificationPreferencesState();
 }
 
 class _NotificationPreferencesState extends State<NotificationPreferences> {
@@ -51,7 +52,7 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -72,7 +73,10 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                     ),
                     Text(
                       'Notifications Preferences'.tr,
-                      style: TextStyle(fontSize: 21..sp, fontWeight: FontWeight.w500, color: AppColors.black),
+                      style: TextStyle(
+                          fontSize: 21..sp,
+                          fontWeight: FontWeight.w500,
+                          color: Theme.of(context).textTheme.titleLarge?.color),
                     ),
                     Container(
                       height: 24..h,
@@ -89,7 +93,8 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                   height: 74..h,
                   width: MediaQuery.of(context).size.width,
                   decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10), color: AppColors.k0xFFC4C4C4.withOpacity(.1)),
+                      borderRadius: BorderRadius.circular(10),
+                      color: AppColors.k0xFFC4C4C4.withOpacity(.1)),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -98,7 +103,12 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                         child: Text(
                           'Allow all in-app notifications'.tr,
                           style: TextStyle(
-                              fontSize: 17..sp, fontWeight: FontWeight.w500, color: AppColors.black),
+                              fontSize: 17..sp,
+                              fontWeight: FontWeight.w500,
+                              color: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge
+                                  ?.color),
                         ),
                       ),
                       Switch(
@@ -128,7 +138,8 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                   height: 74..h,
                   width: MediaQuery.of(context).size.width,
                   decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10), color: AppColors.k0xFFC4C4C4.withOpacity(.1)),
+                      borderRadius: BorderRadius.circular(10),
+                      color: AppColors.k0xFFC4C4C4.withOpacity(.1)),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -139,7 +150,12 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                           Text(
                             'Bump up'.tr,
                             style: TextStyle(
-                                fontSize: 17..sp, fontWeight: FontWeight.w500, color: AppColors.black),
+                                fontSize: 17..sp,
+                                fontWeight: FontWeight.w500,
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.color),
                           ),
                           SizedBox(
                             height: 5..h,
@@ -147,7 +163,9 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                           Text(
                             'If your listing loses visibility'.tr,
                             style: TextStyle(
-                                fontSize: 11..sp, fontWeight: FontWeight.w400, color: AppColors.k0xFFA9ABAC),
+                                fontSize: 11..sp,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.k0xFFA9ABAC),
                           ),
                         ],
                       ),
@@ -172,7 +190,8 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                   height: 74..h,
                   width: MediaQuery.of(context).size.width,
                   decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10), color: AppColors.k0xFFC4C4C4.withOpacity(.1)),
+                      borderRadius: BorderRadius.circular(10),
+                      color: AppColors.k0xFFC4C4C4.withOpacity(.1)),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -183,7 +202,12 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                           Text(
                             'Save Search'.tr,
                             style: TextStyle(
-                                fontSize: 17..sp, fontWeight: FontWeight.w500, color: AppColors.black),
+                                fontSize: 17..sp,
+                                fontWeight: FontWeight.w500,
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.color),
                           ),
                           SizedBox(
                             height: 5..h,
@@ -191,7 +215,9 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                           Text(
                             'If there are new saves search results'.tr,
                             style: TextStyle(
-                                fontSize: 11..sp, fontWeight: FontWeight.w400, color: AppColors.k0xFFA9ABAC),
+                                fontSize: 11..sp,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.k0xFFA9ABAC),
                           ),
                         ],
                       ),
@@ -218,7 +244,8 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                   height: 74..h,
                   width: MediaQuery.of(context).size.width,
                   decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10), color: AppColors.k0xFFC4C4C4.withOpacity(.1)),
+                      borderRadius: BorderRadius.circular(10),
+                      color: AppColors.k0xFFC4C4C4.withOpacity(.1)),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -229,7 +256,12 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                           Text(
                             'Messages'.tr,
                             style: TextStyle(
-                                fontSize: 17..sp, fontWeight: FontWeight.w500, color: AppColors.black),
+                                fontSize: 17..sp,
+                                fontWeight: FontWeight.w500,
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.color),
                           ),
                           SizedBox(
                             height: 5..h,
@@ -237,7 +269,9 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                           Text(
                             'Receive messages from seller and buyer'.tr,
                             style: TextStyle(
-                                fontSize: 11..sp, fontWeight: FontWeight.w400, color: AppColors.k0xFFA9ABAC),
+                                fontSize: 11..sp,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.k0xFFA9ABAC),
                           ),
                         ],
                       ),
@@ -264,7 +298,8 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                   height: 74..h,
                   width: MediaQuery.of(context).size.width,
                   decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10), color: AppColors.k0xFFC4C4C4.withOpacity(.1)),
+                      borderRadius: BorderRadius.circular(10),
+                      color: AppColors.k0xFFC4C4C4.withOpacity(.1)),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -275,7 +310,12 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                           Text(
                             'Marketing'.tr,
                             style: TextStyle(
-                                fontSize: 17..sp, fontWeight: FontWeight.w500, color: AppColors.black),
+                                fontSize: 17..sp,
+                                fontWeight: FontWeight.w500,
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.color),
                           ),
                           SizedBox(
                             height: 5..h,
@@ -283,7 +323,8 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                           SizedBox(
                             width: 250,
                             child: Text(
-                              'Keep up to date with promotions and products update from VentaCuba'.tr,
+                              'Keep up to date with promotions and products update from VentaCuba'
+                                  .tr,
                               style: TextStyle(
                                   fontSize: 11..sp,
                                   fontWeight: FontWeight.w400,
@@ -315,7 +356,8 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                   height: 74..h,
                   width: MediaQuery.of(context).size.width,
                   decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10), color: AppColors.k0xFFC4C4C4.withOpacity(.1)),
+                      borderRadius: BorderRadius.circular(10),
+                      color: AppColors.k0xFFC4C4C4.withOpacity(.1)),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -326,7 +368,12 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                           Text(
                             'Reviews'.tr,
                             style: TextStyle(
-                                fontSize: 17..sp, fontWeight: FontWeight.w500, color: AppColors.black),
+                                fontSize: 17..sp,
+                                fontWeight: FontWeight.w500,
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.color),
                           ),
                           SizedBox(
                             height: 5..h,
@@ -334,7 +381,9 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                           Text(
                             'If you have new or pending reviews'.tr,
                             style: TextStyle(
-                                fontSize: 11..sp, fontWeight: FontWeight.w400, color: AppColors.k0xFFA9ABAC),
+                                fontSize: 11..sp,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.k0xFFA9ABAC),
                           ),
                         ],
                       ),
@@ -370,8 +419,9 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                   child: Container(
                     height: 60..h,
                     width: MediaQuery.of(context).size.width,
-                    decoration:
-                        BoxDecoration(color: Color(0xFF0254B8), borderRadius: BorderRadius.circular(10.r)),
+                    decoration: BoxDecoration(
+                        color: Color(0xFF0254B8),
+                        borderRadius: BorderRadius.circular(10.r)),
                     child: Center(
                       child: SizedBox(
                         width: 240.w,
@@ -379,7 +429,10 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                           child: FittedBox(
                             child: Text(
                               'Save Notification Setting'.tr,
-                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500, color: Colors.white),
+                              style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white),
                             ),
                           ),
                         ),
@@ -494,7 +547,8 @@ class _GFToggleState extends State<GFToggle> with TickerProviderStateMixin {
             child: InkWell(
               borderRadius: widget.type == GFToggleType.square
                   ? const BorderRadius.all(Radius.circular(0))
-                  : widget.borderRadius ?? const BorderRadius.all(Radius.circular(20)),
+                  : widget.borderRadius ??
+                      const BorderRadius.all(Radius.circular(20)),
               onTap: onStatusChange,
               child: Container(
                 width: widget.type == GFToggleType.ios ? 54 : 46,
@@ -502,10 +556,12 @@ class _GFToggleState extends State<GFToggle> with TickerProviderStateMixin {
                 decoration: BoxDecoration(
                     color: isOn
                         ? widget.enabledTrackColor ?? Colors.lightGreen
-                        : widget.disabledTrackColor ?? Colors.grey,
+                        : widget.disabledTrackColor ??
+                            Theme.of(context).unselectedWidgetColor,
                     borderRadius: widget.type == GFToggleType.square
                         ? const BorderRadius.all(Radius.circular(0))
-                        : widget.borderRadius ?? const BorderRadius.all(Radius.circular(20))),
+                        : widget.borderRadius ??
+                            const BorderRadius.all(Radius.circular(20))),
                 padding: widget.type == GFToggleType.ios
                     ? const EdgeInsets.only(
                         left: 3.5,
@@ -519,26 +575,32 @@ class _GFToggleState extends State<GFToggle> with TickerProviderStateMixin {
                     ? Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          (widget.enabledText != null && widget.enabledText!.length > 4
+                          (widget.enabledText != null &&
+                                      widget.enabledText!.length > 4
                                   ? widget.enabledText?.substring(0, 4)
                                   : widget.enabledText) ??
                               (widget.type == GFToggleType.custom ? 'ON' : ''),
                           style: widget.enabledTextStyle ??
                               (widget.type == GFToggleType.ios
-                                  ? const TextStyle(color: Colors.white, fontSize: 12)
-                                  : const TextStyle(color: Colors.white, fontSize: 8)),
+                                  ? const TextStyle(
+                                      color: Colors.white, fontSize: 12)
+                                  : const TextStyle(
+                                      color: Colors.white, fontSize: 8)),
                         ))
                     : Align(
                         alignment: Alignment.centerRight,
                         child: Text(
-                          (widget.disabledText != null && widget.disabledText!.length > 4
+                          (widget.disabledText != null &&
+                                      widget.disabledText!.length > 4
                                   ? widget.disabledText?.substring(0, 4)
                                   : widget.disabledText) ??
                               (widget.type == GFToggleType.custom ? 'OFF' : ''),
                           style: widget.disabledTextStyle ??
                               (widget.type == GFToggleType.ios
-                                  ? const TextStyle(color: Colors.white, fontSize: 12)
-                                  : const TextStyle(color: Colors.white, fontSize: 8)),
+                                  ? const TextStyle(
+                                      color: Colors.white, fontSize: 12)
+                                  : const TextStyle(
+                                      color: Colors.white, fontSize: 8)),
                         )),
               ),
             ),

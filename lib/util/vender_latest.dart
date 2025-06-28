@@ -15,14 +15,14 @@ class VendorLatest extends StatelessWidget {
       width: MediaQuery.of(context).size.width,
       decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          color: AppColors.white,
+          color: AppColors.cardColor,
           border: Border.all(
-            color: AppColors.black.withOpacity(.1),
+            color: AppColors.textSecondary.withOpacity(.1),
           ),
           boxShadow: [
             BoxShadow(
               blurRadius: 3,
-              color: AppColors.black.withOpacity(.1),
+              color: AppColors.textSecondary.withOpacity(.1),
             )
           ]),
       child: Column(
@@ -33,7 +33,10 @@ class VendorLatest extends StatelessWidget {
             children: [
               Text(
                 'Customer Name'.tr,
-                style: TextStyle(fontSize: 13..sp, fontWeight: FontWeight.w400, color: AppColors.k0xFFA9ABAC),
+                style: TextStyle(
+                    fontSize: 13..sp,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.k0xFFA9ABAC),
               ),
               Container(
                 height: 30..h,
@@ -45,14 +48,20 @@ class VendorLatest extends StatelessWidget {
           ),
           Text(
             'Anton Demeron'.tr,
-            style: TextStyle(fontSize: 17..sp, fontWeight: FontWeight.w600, color: AppColors.black),
+            style: TextStyle(
+                fontSize: 17..sp,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).textTheme.titleLarge?.color),
           ),
           SizedBox(
             height: 7..h,
           ),
           Text(
             'Tracking ID: ASV23456777',
-            style: TextStyle(fontSize: 15..sp, fontWeight: FontWeight.w500, color: AppColors.k0xFFA9ABAC),
+            style: TextStyle(
+                fontSize: 15..sp,
+                fontWeight: FontWeight.w500,
+                color: AppColors.k0xFFA9ABAC),
           ),
           SizedBox(
             height: 40..h,
@@ -63,24 +72,32 @@ class VendorLatest extends StatelessWidget {
               Container(
                 height: 48..h,
                 width: MediaQuery.of(context).size.width * .35,
-                decoration:
-                    BoxDecoration(borderRadius: BorderRadius.circular(10), color: AppColors.k0xFFFB0808),
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    color: AppColors.k0xFFFB0808),
                 child: Center(
                   child: Text(
                     'Reject'.tr,
-                    style: TextStyle(fontSize: 15..sp, fontWeight: FontWeight.w500, color: AppColors.white),
+                    style: TextStyle(
+                        fontSize: 15..sp,
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).colorScheme.onPrimary),
                   ),
                 ),
               ),
               Container(
                 height: 48..h,
                 width: MediaQuery.of(context).size.width * .35,
-                decoration:
-                    BoxDecoration(borderRadius: BorderRadius.circular(10), color: AppColors.k0xFF0254B8),
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    color: AppColors.k0xFF0254B8),
                 child: Center(
                   child: Text(
                     'Approve'.tr,
-                    style: TextStyle(fontSize: 15..sp, fontWeight: FontWeight.w500, color: AppColors.white),
+                    style: TextStyle(
+                        fontSize: 15..sp,
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).colorScheme.onPrimary),
                   ),
                 ),
               ),

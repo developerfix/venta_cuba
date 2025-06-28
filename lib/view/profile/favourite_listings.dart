@@ -53,7 +53,9 @@ class _FavouriteListingsState extends State<FavouriteListings> {
                         child: Container(
                           padding: EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color:
+                                Theme.of(context).dialogTheme.backgroundColor ??
+                                    Colors.white,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Column(
@@ -104,7 +106,7 @@ class _FavouriteListingsState extends State<FavouriteListings> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: AppColors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: GetBuilder<HomeController>(
           init: homeCont,
           builder: (cont) {
@@ -130,7 +132,11 @@ class _FavouriteListingsState extends State<FavouriteListings> {
                           style: TextStyle(
                               fontSize: 21..sp,
                               fontWeight: FontWeight.w500,
-                              color: AppColors.black),
+                              color: Theme.of(context)
+                                      .textTheme
+                                      .bodyLarge
+                                      ?.color ??
+                                  Colors.black),
                         ),
                         GestureDetector(
                           onTap: cont.userFavouriteListingModelList
@@ -184,7 +190,7 @@ class _FavouriteListingsState extends State<FavouriteListings> {
                                         decoration: BoxDecoration(
                                           borderRadius:
                                               BorderRadius.circular(10..r),
-                                          color: Colors.white,
+                                          color: Theme.of(context).cardColor,
                                           boxShadow: [
                                             BoxShadow(
                                               color:
@@ -253,7 +259,8 @@ class _FavouriteListingsState extends State<FavouriteListings> {
                                               ),
                                             ),
                                             Container(
-                                              color: Colors.white,
+                                              color:
+                                                  Theme.of(context).cardColor,
                                               child: Padding(
                                                 padding:
                                                     const EdgeInsets.symmetric(
@@ -273,7 +280,12 @@ class _FavouriteListingsState extends State<FavouriteListings> {
                                                           fontSize: 17..sp,
                                                           fontWeight:
                                                               FontWeight.w600,
-                                                          color: Colors.black,
+                                                          color:
+                                                              Theme.of(context)
+                                                                      .textTheme
+                                                                      .bodyLarge
+                                                                      ?.color ??
+                                                                  Colors.black,
                                                         ),
                                                       ),
                                                     ),
@@ -409,7 +421,8 @@ class _FavouriteListingsState extends State<FavouriteListings> {
                                             height: 43..h,
                                             width: 43..w,
                                             decoration: BoxDecoration(
-                                              color: Colors.white,
+                                              color:
+                                                  Theme.of(context).cardColor,
                                               borderRadius:
                                                   BorderRadius.circular(
                                                       21.5..r),

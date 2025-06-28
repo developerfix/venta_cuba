@@ -38,7 +38,7 @@ class _VendorScreenState extends State<VendorScreen> {
             topRight: Radius.circular(20.0),
           ),
           child: Container(
-            color: Colors.white,
+            color: Theme.of(context).dialogTheme.backgroundColor,
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -46,7 +46,10 @@ class _VendorScreenState extends State<VendorScreen> {
                 children: [
                   Text(
                     'Pick Image From'.tr,
-                    style: TextStyle(fontSize: 22..h, fontWeight: FontWeight.w600, color: AppColors.black),
+                    style: TextStyle(
+                        fontSize: 22..h,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).textTheme.titleLarge?.color),
                   ),
                   SizedBox(
                     height: 40..h,
@@ -79,11 +82,15 @@ class _VendorScreenState extends State<VendorScreen> {
                       height: 60..h,
                       width: MediaQuery.of(context).size.width,
                       decoration: BoxDecoration(
-                          color: AppColors.k0xFFA9ABAC, borderRadius: BorderRadius.circular(10)),
+                          color: AppColors.k0xFFA9ABAC,
+                          borderRadius: BorderRadius.circular(10)),
                       child: Center(
                         child: Text(
                           'Cancel'.tr,
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500, color: Colors.white),
+                          style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white),
                         ),
                       ),
                     ),
@@ -133,7 +140,7 @@ class _VendorScreenState extends State<VendorScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: AppColors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: GetBuilder(
           init: AuthController(),
           builder: (cont) {
@@ -155,7 +162,12 @@ class _VendorScreenState extends State<VendorScreen> {
                           Text(
                             'Complete Your Details'.tr,
                             style: TextStyle(
-                                fontSize: 24..sp, fontWeight: FontWeight.w700, color: AppColors.black),
+                                fontSize: 24..sp,
+                                fontWeight: FontWeight.w700,
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.color),
                           ),
                           Opacity(
                             opacity: 0,
@@ -169,7 +181,9 @@ class _VendorScreenState extends State<VendorScreen> {
                       Text(
                         'Please Complete your details to proceed Further'.tr,
                         style: TextStyle(
-                            fontSize: 12..sp, fontWeight: FontWeight.w400, color: AppColors.k0xFFA9ABAC),
+                            fontSize: 12..sp,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.k0xFFA9ABAC),
                       ),
                       SizedBox(
                         height: 50..h,
@@ -179,7 +193,12 @@ class _VendorScreenState extends State<VendorScreen> {
                           Text(
                             'Business Name'.tr,
                             style: TextStyle(
-                                fontSize: 16..sp, fontWeight: FontWeight.w500, color: AppColors.black),
+                                fontSize: 16..sp,
+                                fontWeight: FontWeight.w500,
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.color),
                           ),
                         ],
                       ),
@@ -191,7 +210,8 @@ class _VendorScreenState extends State<VendorScreen> {
                         decoration: BoxDecoration(
                             color: Colors.transparent,
                             borderRadius: BorderRadius.circular(5),
-                            border: Border.all(color: AppColors.k0xFFA9ABAC.withOpacity(.33))),
+                            border: Border.all(
+                                color: AppColors.k0xFFA9ABAC.withOpacity(.33))),
                         child: TextField(
                           controller: cont.businessNameCont,
                           inputFormatters: [
@@ -202,9 +222,11 @@ class _VendorScreenState extends State<VendorScreen> {
                           decoration: InputDecoration(
                             hintText: "i.e NEWTECH".tr,
                             border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+                            contentPadding: EdgeInsets.symmetric(
+                                vertical: 20, horizontal: 20),
                           ),
-                          cursorColor: AppColors.black,
+                          cursorColor:
+                              Theme.of(context).textTheme.bodyLarge?.color,
                         ),
                       ),
                       // SizedBox(
@@ -354,7 +376,12 @@ class _VendorScreenState extends State<VendorScreen> {
                           Text(
                             'Business Province'.tr,
                             style: TextStyle(
-                                fontSize: 16..sp, fontWeight: FontWeight.w500, color: AppColors.black),
+                                fontSize: 16..sp,
+                                fontWeight: FontWeight.w500,
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.color),
                           ),
                         ],
                       ),
@@ -366,7 +393,9 @@ class _VendorScreenState extends State<VendorScreen> {
                           decoration: BoxDecoration(
                               color: Colors.transparent,
                               borderRadius: BorderRadius.circular(5),
-                              border: Border.all(color: AppColors.k0xFFA9ABAC.withOpacity(.33))),
+                              border: Border.all(
+                                  color:
+                                      AppColors.k0xFFA9ABAC.withOpacity(.33))),
                           child: Center(
                             child: DropdownButtonHideUnderline(
                               child: DropdownButton2<CustomProvinceNameList>(
@@ -400,7 +429,8 @@ class _VendorScreenState extends State<VendorScreen> {
                                       province = value;
                                     }
                                     // province?.provinceName = "${selectedValue!.provinceName}";
-                                    print(".............${province?.provinceName}");
+                                    print(
+                                        ".............${province?.provinceName}");
                                   });
                                 },
 
@@ -408,8 +438,8 @@ class _VendorScreenState extends State<VendorScreen> {
                                   padding: EdgeInsets.symmetric(horizontal: 10),
                                   height: 40,
                                 ),
-                                dropdownStyleData:
-                                    const DropdownStyleData(maxHeight: 600, useRootNavigator: true),
+                                dropdownStyleData: const DropdownStyleData(
+                                    maxHeight: 600, useRootNavigator: true),
                                 menuItemStyleData: const MenuItemStyleData(
                                   height: 40,
                                 ),
@@ -430,20 +460,25 @@ class _VendorScreenState extends State<VendorScreen> {
                                       controller: textEditingController,
                                       decoration: InputDecoration(
                                         // isDense: true,
-                                        contentPadding: const EdgeInsets.symmetric(
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
                                           horizontal: 10,
                                           vertical: 8,
                                         ),
                                         hintText: 'Search your province'.tr,
-                                        hintStyle: const TextStyle(fontSize: 16),
+                                        hintStyle:
+                                            const TextStyle(fontSize: 16),
                                         border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                         ),
                                       ),
                                     ),
                                   ),
                                   searchMatchFn: (item, searchValue) {
-                                    return item.value.toString().contains(searchValue);
+                                    return item.value
+                                        .toString()
+                                        .contains(searchValue);
                                   },
                                 ),
                                 //This to clear the search value when you close the menu
@@ -495,7 +530,12 @@ class _VendorScreenState extends State<VendorScreen> {
                           Text(
                             'Business City'.tr,
                             style: TextStyle(
-                                fontSize: 16..sp, fontWeight: FontWeight.w500, color: AppColors.black),
+                                fontSize: 16..sp,
+                                fontWeight: FontWeight.w500,
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.color),
                           ),
                         ],
                       ),
@@ -507,7 +547,9 @@ class _VendorScreenState extends State<VendorScreen> {
                           decoration: BoxDecoration(
                               color: Colors.transparent,
                               borderRadius: BorderRadius.circular(5),
-                              border: Border.all(color: AppColors.k0xFFA9ABAC.withOpacity(.33))),
+                              border: Border.all(
+                                  color:
+                                      AppColors.k0xFFA9ABAC.withOpacity(.33))),
                           child: Center(
                             child: DropdownButtonHideUnderline(
                               child: DropdownButton2<CustomCitiesList>(
@@ -522,8 +564,8 @@ class _VendorScreenState extends State<VendorScreen> {
                                 iconStyleData: IconStyleData(iconSize: 0),
                                 value: city,
                                 items: citiesList
-                                    .where((element) =>
-                                        element.provinceName.contains(province?.provinceName ?? ""))
+                                    .where((element) => element.provinceName
+                                        .contains(province?.provinceName ?? ""))
                                     .map((item) => DropdownMenuItem(
                                           value: item,
                                           child: Text(
@@ -549,8 +591,8 @@ class _VendorScreenState extends State<VendorScreen> {
                                   padding: EdgeInsets.symmetric(horizontal: 10),
                                   height: 40,
                                 ),
-                                dropdownStyleData:
-                                    const DropdownStyleData(maxHeight: 600, useRootNavigator: true),
+                                dropdownStyleData: const DropdownStyleData(
+                                    maxHeight: 600, useRootNavigator: true),
                                 menuItemStyleData: const MenuItemStyleData(
                                   height: 40,
                                 ),
@@ -569,20 +611,25 @@ class _VendorScreenState extends State<VendorScreen> {
                                       controller: textEditingController,
                                       decoration: InputDecoration(
                                         // isDense: true,
-                                        contentPadding: const EdgeInsets.symmetric(
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
                                           horizontal: 10,
                                           vertical: 8,
                                         ),
                                         hintText: 'Search your city'.tr,
-                                        hintStyle: const TextStyle(fontSize: 16),
+                                        hintStyle:
+                                            const TextStyle(fontSize: 16),
                                         border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                         ),
                                       ),
                                     ),
                                   ),
                                   searchMatchFn: (item, searchValue) {
-                                    return item.value.toString().contains(searchValue);
+                                    return item.value
+                                        .toString()
+                                        .contains(searchValue);
                                   },
                                 ),
                                 //This to clear the search value when you close the menu
@@ -639,7 +686,12 @@ class _VendorScreenState extends State<VendorScreen> {
                           Text(
                             'Business Logo'.tr,
                             style: TextStyle(
-                                fontSize: 16..sp, fontWeight: FontWeight.w500, color: AppColors.black),
+                                fontSize: 16..sp,
+                                fontWeight: FontWeight.w500,
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.color),
                           ),
                         ],
                       ),
@@ -663,22 +715,32 @@ class _VendorScreenState extends State<VendorScreen> {
                                 child: Center(
                                   child: cont.businessLogo != null
                                       ? Container(
-                                          width: MediaQuery.of(context).size.width,
+                                          width:
+                                              MediaQuery.of(context).size.width,
                                           child: ClipRRect(
-                                              borderRadius: BorderRadius.circular(10),
-                                              child: Image.file(File(cont.businessLogo ?? ""),)),
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              child: Image.file(
+                                                File(cont.businessLogo ?? ""),
+                                              )),
                                         )
                                       : Column(
-                                          crossAxisAlignment: CrossAxisAlignment.center,
-                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
                                           children: [
-                                            Image.asset('assets/images/upload.png'),
+                                            Image.asset(
+                                                'assets/images/upload.png'),
                                             Text(
                                               'Upload Your Image Here'.tr,
                                               style: TextStyle(
                                                   fontSize: 13..sp,
                                                   fontWeight: FontWeight.w500,
-                                                  color: AppColors.black),
+                                                  color: Theme.of(context)
+                                                      .textTheme
+                                                      .bodyLarge
+                                                      ?.color),
                                             ),
                                             Text(
                                               'Maximum 50mb Size'.tr,
@@ -703,9 +765,11 @@ class _VendorScreenState extends State<VendorScreen> {
                             } else if (city == null) {
                               errorAlertToast("Please Enter Business City".tr);
                             } else if (province == null) {
-                              errorAlertToast("Please Enter Business Province".tr);
+                              errorAlertToast(
+                                  "Please Enter Business Province".tr);
                             } else {
-                              cont.addBusiness(province!.provinceName, city!.cityName);
+                              cont.addBusiness(
+                                  province!.provinceName, city!.cityName);
                             }
                           },
                           child: MyButton(text: 'Add Business'.tr)),
@@ -714,7 +778,11 @@ class _VendorScreenState extends State<VendorScreen> {
                       ),
                       Text(
                         'Already have an account?'.tr,
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, color: Colors.black),
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                            color:
+                                Theme.of(context).textTheme.bodyLarge?.color),
                       ),
                       GestureDetector(
                         onTap: () {

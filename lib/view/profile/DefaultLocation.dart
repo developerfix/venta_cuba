@@ -26,35 +26,28 @@ class _DefaultLocationState extends State<DefaultLocation> {
     authCont.firstNameCont.text = authCont.user?.firstName ?? "";
     authCont.lastNameCont.text = authCont.user?.lastName ?? "";
     provinceName.forEach((element) {
-      if(element.provinceName==authCont.user?.province){
-        province=element;
+      if (element.provinceName == authCont.user?.province) {
+        province = element;
       }
     });
     citiesList.forEach((element) {
-      if(element.cityName==authCont.user?.city){
-        city=element;
+      if (element.cityName == authCont.user?.city) {
+        city = element;
       }
     });
     super.initState();
   }
 
-
-
-
-
-
-
   CustomCitiesList? city;
   CustomProvinceNameList? province;
   final TextEditingController textEditingController = TextEditingController();
-
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        backgroundColor: AppColors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: GetBuilder<AuthController>(
           builder: (cont) {
             return SingleChildScrollView(
@@ -118,10 +111,12 @@ class _DefaultLocationState extends State<DefaultLocation> {
                                 decoration: BoxDecoration(
                                     color: Colors.transparent,
                                     borderRadius: BorderRadius.circular(5),
-                                    border:
-                                    Border.all(color: AppColors.k0xFFA9ABAC.withOpacity(.33))),
+                                    border: Border.all(
+                                        color: AppColors.k0xFFA9ABAC
+                                            .withOpacity(.33))),
                                 child: DropdownButtonHideUnderline(
-                                  child: DropdownButton2<CustomProvinceNameList>(
+                                  child:
+                                      DropdownButton2<CustomProvinceNameList>(
                                     isExpanded: true,
                                     hint: Text(
                                       'Select province'.tr,
@@ -133,14 +128,14 @@ class _DefaultLocationState extends State<DefaultLocation> {
                                     iconStyleData: IconStyleData(iconSize: 0),
                                     items: provinceName
                                         .map((item) => DropdownMenuItem(
-                                      value: item,
-                                      child: Text(
-                                        "${item.provinceName}",
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ))
+                                              value: item,
+                                              child: Text(
+                                                "${item.provinceName}",
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                            ))
                                         .toList(),
                                     value: province,
                                     onChanged: (value) {
@@ -152,12 +147,14 @@ class _DefaultLocationState extends State<DefaultLocation> {
                                           province = value;
                                         }
                                         // province?.provinceName = "${selectedValue!.provinceName}";
-                                        print(".............${province?.provinceName}");
+                                        print(
+                                            ".............${province?.provinceName}");
                                       });
                                     },
 
                                     buttonStyleData: const ButtonStyleData(
-                                      padding: EdgeInsets.symmetric(horizontal: 10),
+                                      padding:
+                                          EdgeInsets.symmetric(horizontal: 10),
                                       height: 40,
                                     ),
                                     dropdownStyleData: const DropdownStyleData(
@@ -182,20 +179,25 @@ class _DefaultLocationState extends State<DefaultLocation> {
                                           controller: textEditingController,
                                           decoration: InputDecoration(
                                             // isDense: true,
-                                            contentPadding: const EdgeInsets.symmetric(
+                                            contentPadding:
+                                                const EdgeInsets.symmetric(
                                               horizontal: 10,
                                               vertical: 8,
                                             ),
                                             hintText: 'Search your province',
-                                            hintStyle: const TextStyle(fontSize: 16),
+                                            hintStyle:
+                                                const TextStyle(fontSize: 16),
                                             border: OutlineInputBorder(
-                                              borderRadius: BorderRadius.circular(8),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
                                             ),
                                           ),
                                         ),
                                       ),
                                       searchMatchFn: (item, searchValue) {
-                                        return item.value.toString().contains(searchValue);
+                                        return item.value
+                                            .toString()
+                                            .contains(searchValue);
                                       },
                                     ),
                                     //This to clear the search value when you close the menu
@@ -216,8 +218,9 @@ class _DefaultLocationState extends State<DefaultLocation> {
                                 decoration: BoxDecoration(
                                     color: Colors.transparent,
                                     borderRadius: BorderRadius.circular(5),
-                                    border:
-                                    Border.all(color: AppColors.k0xFFA9ABAC.withOpacity(.33))),
+                                    border: Border.all(
+                                        color: AppColors.k0xFFA9ABAC
+                                            .withOpacity(.33))),
                                 child: DropdownButtonHideUnderline(
                                   child: DropdownButton2<CustomCitiesList>(
                                     isExpanded: true,
@@ -232,16 +235,17 @@ class _DefaultLocationState extends State<DefaultLocation> {
                                     value: city,
                                     items: citiesList
                                         .where((element) => element.provinceName
-                                        .contains(province?.provinceName ?? ""))
+                                            .contains(
+                                                province?.provinceName ?? ""))
                                         .map((item) => DropdownMenuItem(
-                                      value: item,
-                                      child: Text(
-                                        "${item.cityName}",
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ))
+                                              value: item,
+                                              child: Text(
+                                                "${item.cityName}",
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                            ))
                                         .toList(),
 
                                     onChanged: (value) {
@@ -255,7 +259,8 @@ class _DefaultLocationState extends State<DefaultLocation> {
                                     },
 
                                     buttonStyleData: const ButtonStyleData(
-                                      padding: EdgeInsets.symmetric(horizontal: 10),
+                                      padding:
+                                          EdgeInsets.symmetric(horizontal: 10),
                                       height: 40,
                                     ),
                                     dropdownStyleData: const DropdownStyleData(
@@ -278,20 +283,25 @@ class _DefaultLocationState extends State<DefaultLocation> {
                                           controller: textEditingController,
                                           decoration: InputDecoration(
                                             // isDense: true,
-                                            contentPadding: const EdgeInsets.symmetric(
+                                            contentPadding:
+                                                const EdgeInsets.symmetric(
                                               horizontal: 10,
                                               vertical: 8,
                                             ),
                                             hintText: 'Search your city',
-                                            hintStyle: const TextStyle(fontSize: 16),
+                                            hintStyle:
+                                                const TextStyle(fontSize: 16),
                                             border: OutlineInputBorder(
-                                              borderRadius: BorderRadius.circular(8),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
                                             ),
                                           ),
                                         ),
                                       ),
                                       searchMatchFn: (item, searchValue) {
-                                        return item.value.toString().contains(searchValue);
+                                        return item.value
+                                            .toString()
+                                            .contains(searchValue);
                                       },
                                     ),
                                     //This to clear the search value when you close the menu
@@ -303,7 +313,6 @@ class _DefaultLocationState extends State<DefaultLocation> {
                                   ),
                                 ),
                               ),
-
                             ],
                           ),
                         ],
@@ -313,7 +322,9 @@ class _DefaultLocationState extends State<DefaultLocation> {
                       ),
                       InkWell(
                         onTap: () {
-                          cont.editProfile(true,city: city?.cityName,province: province?.provinceName);
+                          cont.editProfile(true,
+                              city: city?.cityName,
+                              province: province?.provinceName);
                         },
                         child: Container(
                           height: 60..h,
@@ -332,7 +343,6 @@ class _DefaultLocationState extends State<DefaultLocation> {
                           ),
                         ),
                       ),
-
                     ],
                   ),
                 ),
@@ -344,4 +354,3 @@ class _DefaultLocationState extends State<DefaultLocation> {
     );
   }
 }
-

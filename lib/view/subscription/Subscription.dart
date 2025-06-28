@@ -42,7 +42,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
       child: DefaultTabController(
         length: 3,
         child: Scaffold(
-            backgroundColor: Colors.white,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             body: GetBuilder<HomeController>(
               builder: (cont) {
                 return SelectionArea(
@@ -77,7 +77,11 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                                   style: TextStyle(
                                       fontSize: 20..sp,
                                       fontWeight: FontWeight.w500,
-                                      color: Colors.black),
+                                      color: Theme.of(context)
+                                              .textTheme
+                                              .bodyLarge
+                                              ?.color ??
+                                          Colors.black),
                                 ),
                                 Container(
                                   width: 10..w,
@@ -95,7 +99,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                                   style: TextStyle(
                                       fontSize: 16..sp,
                                       fontWeight: FontWeight.w400,
-                                      color: AppColors.black),
+                                      color: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge
+                                          ?.color),
                                   textAlign: TextAlign.center,
                                 ),
                                 SizedBox(height: 20.h),
@@ -104,7 +111,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                                   height: 40,
                                   decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(30),
-                                      color: Colors.grey.shade200,
+                                      color: Theme.of(context).cardColor,
                                       border: Border.all(
                                         color: AppColors.k0xFF0254B8
                                             .withOpacity(0.5),
@@ -281,7 +288,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                                               style: TextStyle(
                                                   fontSize: 11..sp,
                                                   fontWeight: FontWeight.w500,
-                                                  color: AppColors.white),
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .onPrimary),
                                             ),
                                           ),
                                         ),
@@ -329,19 +338,23 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                                         margin:
                                             EdgeInsets.symmetric(horizontal: 2),
                                         decoration: BoxDecoration(
-                                            color: AppColors.white,
+                                            color: Theme.of(context).cardColor,
                                             borderRadius:
                                                 BorderRadius.circular(10),
                                             boxShadow: [
                                               BoxShadow(
-                                                  color: AppColors.black
+                                                  color: Theme.of(context)
+                                                      .shadowColor
                                                       .withOpacity(.25),
                                                   blurRadius: 2)
                                             ]),
                                         child: Center(
                                           child: TextField(
                                             controller: cont.promoCode,
-                                            cursorColor: Colors.black,
+                                            cursorColor: Theme.of(context)
+                                                .textTheme
+                                                .bodyLarge
+                                                ?.color,
                                             textAlignVertical:
                                                 TextAlignVertical.top,
                                             decoration: InputDecoration(

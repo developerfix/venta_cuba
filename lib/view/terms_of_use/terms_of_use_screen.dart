@@ -9,10 +9,10 @@ class TermsOfUse extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        surfaceTintColor: Colors.white,
-        shadowColor: Colors.white,
-         backgroundColor: Colors.white, // Set it explicitly
-         scrolledUnderElevation: 0,
+        surfaceTintColor: Theme.of(context).cardColor,
+        shadowColor: Theme.of(context).cardColor,
+        backgroundColor: Theme.of(context).cardColor, // Set it explicitly
+        scrolledUnderElevation: 0,
         elevation: 0,
         leading: GestureDetector(
           onTap: () {
@@ -41,8 +41,7 @@ class TermsOfUse extends StatelessWidget {
                 ),
                 SizedBox(height: 10),
                 CustomText(
-                  text:
-                  "terms_of_use_privacy_policy".tr,
+                  text: "terms_of_use_privacy_policy".tr,
                 ),
                 CustomText(
                   text: "violate_any_laws".tr,
@@ -57,8 +56,7 @@ class TermsOfUse extends StatelessWidget {
                     // default text style
                     children: [
                       TextSpan(
-                          text:
-                          "abusing_ventaCuba_services".tr,
+                          text: "abusing_ventaCuba_services".tr,
                           style: TextStyle(
                               fontSize: 14, fontWeight: FontWeight.w400)),
                     ],
@@ -71,8 +69,7 @@ class TermsOfUse extends StatelessWidget {
                     // default text style
                     children: [
                       TextSpan(
-                          text:
-                          "global_marketplace".tr,
+                          text: "global_marketplace".tr,
                           style: TextStyle(
                               fontSize: 14, fontWeight: FontWeight.w400)),
                     ],
@@ -85,8 +82,7 @@ class TermsOfUse extends StatelessWidget {
                     // default text style
                     children: [
                       TextSpan(
-                          text:
-                          "fees_and_services".tr,
+                          text: "fees_and_services".tr,
                           style: TextStyle(
                               fontSize: 14, fontWeight: FontWeight.w400)),
                     ],
@@ -99,16 +95,12 @@ class TermsOfUse extends StatelessWidget {
                     // default text style
                     children: [
                       TextSpan(
-                          text:
-                          "content".tr,
+                          text: "content".tr,
                           style: TextStyle(
                               fontSize: 14, fontWeight: FontWeight.w400)),
                     ],
                   ),
                 ),
-
-
-
                 Text.rich(
                   TextSpan(
                     text:
@@ -118,8 +110,7 @@ class TermsOfUse extends StatelessWidget {
                     // default text style
                     children: [
                       TextSpan(
-                          text:
-                          "reporting_intellectual_property".tr,
+                          text: "reporting_intellectual_property".tr,
                           style: TextStyle(
                               fontSize: 14, fontWeight: FontWeight.w400)),
                     ],
@@ -132,8 +123,7 @@ class TermsOfUse extends StatelessWidget {
                     // default text style
                     children: [
                       TextSpan(
-                          text:
-                          "reviews_1".tr,
+                          text: "reviews_1".tr,
                           style: TextStyle(
                               fontSize: 14, fontWeight: FontWeight.w400)),
                     ],
@@ -146,8 +136,7 @@ class TermsOfUse extends StatelessWidget {
                     // default text style
                     children: [
                       TextSpan(
-                          text:
-                          "reviews_2".tr,
+                          text: "reviews_2".tr,
                           style: TextStyle(
                               fontSize: 14, fontWeight: FontWeight.w400)),
                     ],
@@ -160,18 +149,12 @@ class TermsOfUse extends StatelessWidget {
                     // default text style
                     children: [
                       TextSpan(
-                          text:
-                          "reviews_3".tr,
+                          text: "reviews_3".tr,
                           style: TextStyle(
                               fontSize: 14, fontWeight: FontWeight.w400)),
                     ],
                   ),
                 ),
-
-
-
-
-
                 Text.rich(
                   TextSpan(
                     text: 'Mobile Devices Terms'.tr,
@@ -179,20 +162,12 @@ class TermsOfUse extends StatelessWidget {
                     // default text style
                     children: [
                       TextSpan(
-                          text:
-                          "mobile_devices_terms".tr,
+                          text: "mobile_devices_terms".tr,
                           style: TextStyle(
                               fontSize: 14, fontWeight: FontWeight.w400)),
                     ],
                   ),
                 ),
-
-
-
-
-
-
-
                 Text.rich(
                   TextSpan(
                     text: 'Application Use. '.tr,
@@ -200,23 +175,12 @@ class TermsOfUse extends StatelessWidget {
                     // default text style
                     children: [
                       TextSpan(
-                          text:
-                          "application_use".tr,
+                          text: "application_use".tr,
                           style: TextStyle(
                               fontSize: 14, fontWeight: FontWeight.w400)),
                     ],
                   ),
                 ),
-
-
-
-
-
-
-
-
-
-
                 Text.rich(
                   TextSpan(
                     text: 'Intellectual Property – Applications. '.tr,
@@ -224,8 +188,7 @@ class TermsOfUse extends StatelessWidget {
                     // default text style
                     children: [
                       TextSpan(
-                          text:
-                          "intellectual_property_applications".tr,
+                          text: "intellectual_property_applications".tr,
                           style: TextStyle(
                               fontSize: 14, fontWeight: FontWeight.w400)),
                     ],
@@ -237,9 +200,7 @@ class TermsOfUse extends StatelessWidget {
                     style: TextStyle(fontSize: 16), // default text style
                     children: [
                       TextSpan(
-                          text:
-                          "iso_apple".tr,
-                          style: TextStyle(fontSize: 14)),
+                          text: "iso_apple".tr, style: TextStyle(fontSize: 14)),
                     ],
                   ),
                 ),
@@ -249,8 +210,7 @@ class TermsOfUse extends StatelessWidget {
                     style: TextStyle(fontSize: 16), // default text style
                     children: [
                       TextSpan(
-                          text:
-                          "android_google".tr,
+                          text: "android_google".tr,
                           style: TextStyle(fontSize: 14)),
                     ],
                   ),

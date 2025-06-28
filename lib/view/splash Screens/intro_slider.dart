@@ -10,17 +10,18 @@ class IntroSlider extends StatefulWidget {
   @override
   State<IntroSlider> createState() => _IntroSliderState();
 }
+
 class _IntroSliderState extends State<IntroSlider> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Padding(
         padding: const EdgeInsets.only(
           top: 120,
         ),
         child: IntroductionScreen(
-          globalBackgroundColor: AppColors.white,
+          globalBackgroundColor: Theme.of(context).scaffoldBackgroundColor,
           scrollPhysics: BouncingScrollPhysics(),
           pages: [
             PageViewModel(
@@ -28,7 +29,7 @@ class _IntroSliderState extends State<IntroSlider> {
               titleWidget: Text(
                 'Buy Products'.tr,
                 style: TextStyle(
-                  color: AppColors.black,
+                  color: Theme.of(context).textTheme.titleLarge?.color,
                   fontWeight: FontWeight.w800,
                   fontSize: 25,
                 ),
@@ -48,12 +49,13 @@ class _IntroSliderState extends State<IntroSlider> {
               titleWidget: Text(
                 'List Products'.tr,
                 style: TextStyle(
-                  color: AppColors.black,
+                  color: Theme.of(context).textTheme.titleLarge?.color,
                   fontWeight: FontWeight.w800,
                   fontSize: 25,
                 ),
               ),
-              body: 'Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint.'
+              body:
+                  'Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint.'
                   'Velit officia consequat duis enim velit mollit. Exercitation veniam '
                   'consequat sunt nostrud amet.',
               decoration: PageDecoration(
@@ -68,12 +70,13 @@ class _IntroSliderState extends State<IntroSlider> {
               titleWidget: Text(
                 'Sell Products'.tr,
                 style: TextStyle(
-                  color: AppColors.black,
+                  color: Theme.of(context).textTheme.titleLarge?.color,
                   fontWeight: FontWeight.w800,
                   fontSize: 25,
                 ),
               ),
-              body: 'Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint.'
+              body:
+                  'Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint.'
                   'Velit officia consequat duis enim velit mollit. Exercitation veniam '
                   'consequat sunt nostrud amet.',
               decoration: PageDecoration(
@@ -110,7 +113,8 @@ class _IntroSliderState extends State<IntroSlider> {
           dotsDecorator: DotsDecorator(
               size: Size.square(10),
               activeSize: Size(40, 10),
-              activeShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+              activeShape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25)),
               activeColor: AppColors.k0xFF0254B8),
         ),
       ),

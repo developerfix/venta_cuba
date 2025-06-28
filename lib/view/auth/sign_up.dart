@@ -52,7 +52,9 @@ class _SignUpState extends State<SignUp> {
   }
 
   Color getColor(int barIndex) {
-    return barIndex < strength ? Colors.green : Colors.grey;
+    return barIndex < strength
+        ? Colors.green
+        : Theme.of(context).unselectedWidgetColor;
   }
 
   Widget _buildStrengthBar(int barIndex) {
@@ -107,7 +109,7 @@ class _SignUpState extends State<SignUp> {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: GetBuilder(
             init: AuthController(),
             builder: (cont) {
@@ -141,7 +143,11 @@ class _SignUpState extends State<SignUp> {
                               controller: cont.firstNameCont,
                               textCapitalization: TextCapitalization.sentences,
                               textAlignVertical: TextAlignVertical.center,
-                              cursorColor: Colors.black,
+                              cursorColor: Theme.of(context)
+                                      .textTheme
+                                      .bodyLarge
+                                      ?.color ??
+                                  Colors.black,
                               decoration: InputDecoration(
                                 border: InputBorder.none,
                                 contentPadding:
@@ -191,7 +197,11 @@ class _SignUpState extends State<SignUp> {
                               controller: cont.lastNameCont,
                               textCapitalization: TextCapitalization.words,
                               textAlignVertical: TextAlignVertical.center,
-                              cursorColor: Colors.black,
+                              cursorColor: Theme.of(context)
+                                      .textTheme
+                                      .bodyLarge
+                                      ?.color ??
+                                  Colors.black,
                               decoration: InputDecoration(
                                 border: InputBorder.none,
                                 contentPadding:
@@ -1028,7 +1038,11 @@ class _SignUpState extends State<SignUp> {
                           style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w400,
-                              color: Colors.black),
+                              color: Theme.of(context)
+                                      .textTheme
+                                      .bodyLarge
+                                      ?.color ??
+                                  Colors.black),
                         ),
                         GestureDetector(
                           onTap: () {

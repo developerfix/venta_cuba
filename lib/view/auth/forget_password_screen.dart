@@ -56,7 +56,9 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                           child: TextField(
                             controller: con.forgetPasswordCont,
                             textAlignVertical: TextAlignVertical.center,
-                            cursorColor: Colors.black,
+                            cursorColor:
+                                Theme.of(context).textTheme.bodyLarge?.color ??
+                                    Colors.black,
                             decoration: InputDecoration(
                               border: InputBorder.none,
                               contentPadding: EdgeInsets.fromLTRB(0, 20, 0, 10),
@@ -86,7 +88,9 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                           ),
                         ),
                       ),
-                   SizedBox(height: 280.h,),
+                      SizedBox(
+                        height: 280.h,
+                      ),
                       GestureDetector(
                           onTap: () async {
                             loading = true;
@@ -109,7 +113,8 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                           CustomText(text: "Remember it?   ".tr),
                           GestureDetector(
                             onTap: () => Get.back(),
-                            child: CustomText(text: "Log in".tr, fontColor: Colors.green),
+                            child: CustomText(
+                                text: "Log in".tr, fontColor: Colors.green),
                           ),
                         ],
                       ),

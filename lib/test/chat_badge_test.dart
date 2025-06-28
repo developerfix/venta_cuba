@@ -30,88 +30,96 @@ class _ChatBadgeTestState extends State<ChatBadgeTest> {
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 20),
-            
+
             // Display current unread count
             Obx(() => Card(
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Current Status:',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    SizedBox(height: 8),
-                    Text('Unread Count: ${authCont.unreadMessageCount.value}'),
-                    Text('Has Unread: ${authCont.hasUnreadMessages.value}'),
-                    SizedBox(height: 16),
-                    
-                    // Badge preview
-                    Text('Badge Preview:', style: TextStyle(fontWeight: FontWeight.bold)),
-                    SizedBox(height: 8),
-                    Container(
-                      width: 50,
-                      height: 50,
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: Colors.blue,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(Icons.chat, color: Colors.white),
-                          ),
-                          if (authCont.unreadMessageCount.value > 0)
-                            Positioned(
-                              right: -6,
-                              top: -6,
-                              child: Container(
-                                constraints: BoxConstraints(
-                                  minWidth: 16,
-                                  minHeight: 16,
-                                ),
-                                padding: EdgeInsets.symmetric(horizontal: 4),
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Current Status:',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                            'Unread Count: ${authCont.unreadMessageCount.value}'),
+                        Text('Has Unread: ${authCont.hasUnreadMessages.value}'),
+                        SizedBox(height: 16),
+
+                        // Badge preview
+                        Text('Badge Preview:',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        SizedBox(height: 8),
+                        Container(
+                          width: 50,
+                          height: 50,
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
                                 decoration: BoxDecoration(
-                                  color: Colors.red,
+                                  color: Colors.blue,
                                   borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.white, width: 1),
                                 ),
-                                child: Center(
-                                  child: Text(
-                                    authCont.unreadMessageCount.value > 99
-                                        ? '99+'
-                                        : authCont.unreadMessageCount.value.toString(),
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
+                                child: Icon(Icons.chat,
+                                    color: Theme.of(context).iconTheme.color ??
+                                        Colors.white),
+                              ),
+                              if (authCont.unreadMessageCount.value > 0)
+                                Positioned(
+                                  right: -6,
+                                  top: -6,
+                                  child: Container(
+                                    constraints: BoxConstraints(
+                                      minWidth: 16,
+                                      minHeight: 16,
                                     ),
-                                    textAlign: TextAlign.center,
+                                    padding:
+                                        EdgeInsets.symmetric(horizontal: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                          color: Colors.white, width: 1),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        authCont.unreadMessageCount.value > 99
+                                            ? '99+'
+                                            : authCont.unreadMessageCount.value
+                                                .toString(),
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ),
-                        ],
-                      ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-            )),
-            
+                  ),
+                )),
+
             SizedBox(height: 20),
-            
+
             // Test buttons
             Text(
               'Test Actions:',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 10),
-            
+
             ElevatedButton(
               onPressed: () async {
                 await chatCont.updateUnreadMessageIndicators();
@@ -121,9 +129,9 @@ class _ChatBadgeTestState extends State<ChatBadgeTest> {
               },
               child: Text('Refresh Unread Count'),
             ),
-            
+
             SizedBox(height: 10),
-            
+
             ElevatedButton(
               onPressed: () async {
                 await chatCont.updateBadgeCountFromChats();
@@ -133,9 +141,9 @@ class _ChatBadgeTestState extends State<ChatBadgeTest> {
               },
               child: Text('Update Badge Count'),
             ),
-            
+
             SizedBox(height: 10),
-            
+
             ElevatedButton(
               onPressed: () {
                 chatCont.startListeningForChatUpdates();
@@ -145,16 +153,16 @@ class _ChatBadgeTestState extends State<ChatBadgeTest> {
               },
               child: Text('Start Chat Listener'),
             ),
-            
+
             SizedBox(height: 20),
-            
+
             // Manual test controls
             Text(
               'Manual Test Controls:',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 10),
-            
+
             Row(
               children: [
                 ElevatedButton(
@@ -169,7 +177,8 @@ class _ChatBadgeTestState extends State<ChatBadgeTest> {
                     if (authCont.unreadMessageCount.value > 0) {
                       authCont.unreadMessageCount.value--;
                     }
-                    authCont.hasUnreadMessages.value = authCont.unreadMessageCount.value > 0;
+                    authCont.hasUnreadMessages.value =
+                        authCont.unreadMessageCount.value > 0;
                   },
                   child: Text('- Count'),
                 ),

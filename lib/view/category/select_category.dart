@@ -27,7 +27,7 @@ class _SelectCategoriesState extends State<SelectCategories> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: AppColors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: GetBuilder(
           init: HomeController(),
           builder: (cont) {
@@ -57,7 +57,11 @@ class _SelectCategoriesState extends State<SelectCategories> {
                       ),
                       Text(
                         'Select a Category'.tr,
-                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.black),
+                        style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w600,
+                            color:
+                                Theme.of(context).textTheme.titleLarge?.color),
                       ),
                       SizedBox(
                         height: 45..h,
@@ -68,16 +72,21 @@ class _SelectCategoriesState extends State<SelectCategories> {
                           itemBuilder: (context, index) {
                             return GestureDetector(
                               onTap: () {
-                                cont.selectedCategory = cont.categoriesModel?.data?[index];
+                                cont.selectedCategory =
+                                    cont.categoriesModel?.data?[index];
                                 cont.isNavigate = true;
-                                 if(cont.loadingSubCategory.value == false && cont.loadingCategory.value == false){
+                                if (cont.loadingSubCategory.value == false &&
+                                    cont.loadingCategory.value == false) {
                                   cont.getSubCategories();
                                 }
-                                
                               },
                               child: CategoryList(
-                                  imagePath: cont.categoriesModel?.data?[index].icon ?? "",
-                                  text: cont.categoriesModel?.data?[index].name ?? ""),
+                                  imagePath:
+                                      cont.categoriesModel?.data?[index].icon ??
+                                          "",
+                                  text:
+                                      cont.categoriesModel?.data?[index].name ??
+                                          ""),
                             );
                           },
                           separatorBuilder: (BuildContext context, int index) {

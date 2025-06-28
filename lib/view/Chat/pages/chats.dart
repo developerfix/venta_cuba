@@ -58,7 +58,7 @@ class _ChatsState extends State<Chats> {
             text: "Message".tr,
             fontSize: 20..sp,
             fontWeight: FontWeight.w700,
-            fontColor: Colors.black,
+            fontColor: Theme.of(context).textTheme.titleLarge?.color,
           ),
         ),
         body: Column(

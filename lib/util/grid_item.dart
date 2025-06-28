@@ -6,9 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 class GridItem extends StatelessWidget {
   final String imagePath;
-  const GridItem({super.key,
-  required this.imagePath
-  });
+  const GridItem({super.key, required this.imagePath});
 
   @override
   Widget build(BuildContext context) {
@@ -16,45 +14,46 @@ class GridItem extends StatelessWidget {
       children: [
         Container(
           height: 280..h,
-          decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10..r)
-          ),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(10..r)),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
                 height: 180..h,
                 width: MediaQuery.of(context).size.width,
-                child: Image.asset(imagePath,
+                child: Image.asset(
+                  imagePath,
                   fit: BoxFit.fill,
                 ),
               ),
               Container(
                 height: 57..h,
-                color: Colors.white,
+                color: AppColors.cardColor,
                 child: Column(
                   children: [
-                    Text('Black Shirt',
+                    Text(
+                      'Black Shirt',
                       style: TextStyle(
                           fontSize: 17..sp,
                           fontWeight: FontWeight.w600,
-                          color: Colors.black
-                      ),
+                          color: AppColors.textPrimary),
                     ),
-                    Text('New Winter Wear',
+                    Text(
+                      'New Winter Wear',
                       style: TextStyle(
                           fontSize: 13..sp,
                           fontWeight: FontWeight.w400,
-                          color: AppColors.k0xFF403C3C
-                      ),
+                          color: AppColors.k0xFF403C3C),
                     ),
-                    SizedBox(height: 2..h,),
-                    Text('\$45.00',
+                    SizedBox(
+                      height: 2..h,
+                    ),
+                    Text(
+                      '\$45.00',
                       style: TextStyle(
                           fontSize: 16..sp,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.k0xFF0254B8
-                      ),
+                          color: AppColors.k0xFF0254B8),
                     ),
                   ],
                 ),
@@ -70,9 +69,8 @@ class GridItem extends StatelessWidget {
             height: 43..h,
             width: 43..w,
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(21.5..r)
-            ),
+                color: AppColors.cardColor,
+                borderRadius: BorderRadius.circular(21.5..r)),
             child: SvgPicture.asset('assets/icons/heart1.svg'),
           ),
         )
