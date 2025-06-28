@@ -281,6 +281,7 @@ class HomeController extends GetxController {
       errorAlertToast('Failed to load data. Please try again.'.tr);
     } finally {
       loadingHome = false.obs;
+      print('doneee');
       update();
     }
   }

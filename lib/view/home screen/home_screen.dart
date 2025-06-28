@@ -124,14 +124,14 @@ class _HomeScreenState extends State<HomeScreen> {
               // :
               RefreshIndicator(
                 onRefresh: () async {
-                  cont.shouldFetchData.value = true;
-                  cont.selectedCategory = null;
-                  cont.selectedSubCategory = null;
-                  cont.selectedSubSubCategory = null;
-                  cont.listingModelList.clear();
-                  cont.currentPage.value = 1;
-                  cont.hasMore.value = true;
-                  await cont.homeData();
+                  homeCont.shouldFetchData.value = true;
+                  homeCont.selectedCategory = null;
+                  homeCont.selectedSubCategory = null;
+                  homeCont.selectedSubSubCategory = null;
+                  homeCont.listingModelList.clear();
+                  homeCont.currentPage.value = 1;
+                  homeCont.hasMore.value = true;
+                  await homeCont.getListing();
                 },
                 child: SingleChildScrollView(
                   controller: cont.scrollsController,
