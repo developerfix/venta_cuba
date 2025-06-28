@@ -164,6 +164,9 @@ class _ChatPageState extends State<ChatPage> {
           widget.chatId!,
           authCont.user!.userId.toString(),
         );
+
+        // Update unread indicators after marking as read
+        await chatCont.updateUnreadMessageIndicators();
       }
     } catch (e) {
       print("🔥 ❌ Error updating device token on chat open: $e");

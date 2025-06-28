@@ -28,6 +28,7 @@ String deviceToken = '';
 class AuthController extends GetxController {
   int currentIndexBottomAppBar = 0;
   RxBool hasUnreadMessages = false.obs;
+  RxInt unreadMessageCount = 0.obs;
   late SharedPreferences prefs;
   TextEditingController firstNameCont = TextEditingController(text: "");
   TextEditingController lastNameCont = TextEditingController(text: "");
@@ -86,6 +87,10 @@ class AuthController extends GetxController {
     lastNameCont.clear();
     emailCont.clear();
     prefs = await SharedPreferences.getInstance();
+
+    // Initialize unread message count
+    unreadMessageCount.value = 0;
+    hasUnreadMessages.value = false;
   }
 
   void toggleCheckbox() {
@@ -106,6 +111,18 @@ class AuthController extends GetxController {
 
   void togglePasswordVisibility2() {
     isPasswordVisible2.value = !isPasswordVisible2.value;
+  }
+
+  // Method to manually refresh unread message count
+  Future<void> refreshUnreadMessageCount() async {
+    try {
+      final chatCont = Get.find<ChatController>();
+      await chatCont.updateUnreadMessageIndicators();
+      print(
+          '🔥 ✅ Manually refreshed unread message count: ${unreadMessageCount.value}');
+    } catch (e) {
+      print('🔥 ❌ Error refreshing unread message count: $e');
+    }
   }
 
   final TwilioFlutter twilioFlutter = TwilioFlutter(

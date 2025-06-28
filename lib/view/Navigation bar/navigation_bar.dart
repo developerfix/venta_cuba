@@ -51,14 +51,13 @@ class _Navigation_BarState extends State<Navigation_Bar> {
                 if (authCont.user?.email == "") {
                   Get.to(Login());
                 } else {
-                  // Clear unread message indicator when switching to chat tab
+                  // Update the actual badge count when switching to chat tab
                   if (index == 1) {
-                    cont.hasUnreadMessages.value = false;
-                    cont.update();
-                    // Also update the actual badge count based on real unread messages
+                    // Update unread count when entering chat screen
                     try {
                       final chatCont = Get.find<ChatController>();
                       chatCont.updateBadgeCountFromChats();
+                      chatCont.updateUnreadMessageIndicators();
                     } catch (e) {
                       print(
                           '🔥 ChatController not found when switching to chat tab');
@@ -81,30 +80,50 @@ class _Navigation_BarState extends State<Navigation_Bar> {
                 label: 'Home'.tr,
               ),
               BottomNavigationBarItem(
-                icon: Stack(
-                  children: [
-                    SvgPicture.asset(
-                      'assets/icons/messenger.svg',
-                      color: cont.currentIndexBottomAppBar == 1
-                          ? AppColors.k0xFF0254B8
-                          : Colors.grey,
-                    ),
-                    if (cont.hasUnreadMessages
-                        .value) // Show badge if there are unread messages
-                      Positioned(
-                        right: 0,
-                        top: 0,
-                        child: Container(
-                          width: 12,
-                          height: 12,
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                          ),
+                icon: Obx(() => Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        SvgPicture.asset(
+                          'assets/icons/messenger.svg',
+                          color: cont.currentIndexBottomAppBar == 1
+                              ? AppColors.k0xFF0254B8
+                              : Colors.grey,
                         ),
-                      ),
-                  ],
-                ),
+                        if (cont.unreadMessageCount.value >
+                            0) // Show badge with count if there are unread messages
+                          Positioned(
+                            right: -6,
+                            top: -6,
+                            child: Container(
+                              constraints: BoxConstraints(
+                                minWidth: 16,
+                                minHeight: 16,
+                              ),
+                              padding: EdgeInsets.symmetric(horizontal: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                borderRadius: BorderRadius.circular(8),
+                                border:
+                                    Border.all(color: Colors.white, width: 1),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  cont.unreadMessageCount.value > 99
+                                      ? '99+'
+                                      : cont.unreadMessageCount.value
+                                          .toString(),
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    )),
                 label: 'Chat'.tr,
               ),
               BottomNavigationBarItem(

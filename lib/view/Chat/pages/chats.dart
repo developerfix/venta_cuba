@@ -28,8 +28,6 @@ class _ChatsState extends State<Chats> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       gettingUserData();
-      authCont.hasUnreadMessages.value = false;
-      authCont.update();
       // Update badge count and unread indicators when chats page is loaded
       chatCont.updateBadgeCountFromChats();
       chatCont.updateUnreadMessageIndicators();

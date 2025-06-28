@@ -67,6 +67,11 @@ class ChatController extends GetxController {
       // Create if it doesn't exist
       await chatCollection.doc(userAndPostId).set(chatMessageData);
     }
+
+    // Update unread count after sending message
+    Future.delayed(Duration(milliseconds: 500), () {
+      updateUnreadMessageIndicators();
+    });
   }
 
   updateImage(String userAndPostId, Map<String, dynamic> imageData) async {
@@ -125,16 +130,28 @@ class ChatController extends GetxController {
         String? sendToId = chatData['sendToId']?.toString();
 
         if (senderId == currentUserId || sendToId == currentUserId) {
-          // Check if this chat has unread messages for this user
-          bool isUnread = hasUnreadMessages(chatData, currentUserId);
-          if (isUnread) {
-            unreadCount++;
+          // Only count chats that have actual messages
+          bool hasMessages = chatData['isMessaged'] == true ||
+              (chatData['message'] != null &&
+                  chatData['message'].toString().trim().isNotEmpty &&
+                  chatData['message'] != "");
+
+          if (hasMessages) {
+            // Check if this chat has unread messages for this user
+            bool isUnread = hasUnreadMessages(chatData, currentUserId);
+            if (isUnread) {
+              unreadCount++;
+            }
           }
         }
       }
 
-      // Update the app badge with the actual unread count
+      // Update both the app badge and UI state
       await FCM.setBadgeCount(unreadCount);
+      authCont.unreadMessageCount.value = unreadCount;
+      authCont.hasUnreadMessages.value = unreadCount > 0;
+      authCont.update();
+
       print("🔥 ✅ Badge count updated to: $unreadCount unread chats");
     } catch (e) {
       print("🔥 ❌ Error updating badge count from chats: $e");
@@ -218,7 +235,7 @@ class ChatController extends GetxController {
       if (authCont.user?.userId == null) return;
 
       String currentUserId = authCont.user!.userId.toString();
-      bool hasUnread = false;
+      int unreadCount = 0;
 
       // Get all chat documents where this user participates
       QuerySnapshot chatSnapshot = await chatCollection.get();
@@ -231,23 +248,56 @@ class ChatController extends GetxController {
         String? sendToId = chatData['sendToId']?.toString();
 
         if (senderId == currentUserId || sendToId == currentUserId) {
-          // Check if this chat has unread messages for this user
-          bool isUnread = hasUnreadMessages(chatData, currentUserId);
-          if (isUnread) {
-            hasUnread = true;
-            break; // Found at least one unread chat
+          // Only count chats that have actual messages
+          bool hasMessages = chatData['isMessaged'] == true ||
+              (chatData['message'] != null &&
+                  chatData['message'].toString().trim().isNotEmpty &&
+                  chatData['message'] != "");
+
+          if (hasMessages) {
+            // Check if this chat has unread messages for this user
+            bool isUnread = hasUnreadMessages(chatData, currentUserId);
+            if (isUnread) {
+              unreadCount++;
+            }
           }
         }
       }
 
-      // Update the UI indicator
-      authCont.hasUnreadMessages.value = hasUnread;
+      // Update both the count and boolean indicator
+      authCont.unreadMessageCount.value = unreadCount;
+      authCont.hasUnreadMessages.value = unreadCount > 0;
       authCont.update();
 
-      print("🔥 ✅ Unread message indicator updated: $hasUnread");
+      print("🔥 ✅ Unread message indicator updated: $unreadCount unread chats");
     } catch (e) {
       print("🔥 ❌ Error updating unread message indicators: $e");
     }
+  }
+
+  // Start listening for real-time chat updates
+  void startListeningForChatUpdates() {
+    try {
+      final authCont = Get.find<AuthController>();
+      if (authCont.user?.userId == null) return;
+
+      // Listen for changes in chat collection
+      chatCollection.snapshots().listen((QuerySnapshot snapshot) {
+        // Update unread count whenever chat data changes
+        updateUnreadMessageIndicators();
+      });
+
+      print(
+          "🔥 ✅ Started listening for chat updates for user: ${authCont.user!.userId}");
+    } catch (e) {
+      print("🔥 ❌ Error starting chat listener: $e");
+    }
+  }
+
+  // Stop listening for chat updates
+  void stopListeningForChatUpdates() {
+    // This would be implemented if we need to cancel the stream subscription
+    print("🔥 ✅ Stopped listening for chat updates");
   }
 
   // Format last active time for display
