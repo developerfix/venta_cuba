@@ -15,6 +15,7 @@ import '../../Models/SelectedCategoryModel.dart';
 import '../../cities_list/cites_list.dart';
 import '../auth/login.dart';
 import '../frame/frame.dart';
+import '../widgets/scroll_to_top_button.dart';
 
 class Search extends StatefulWidget {
   final int isSearchFrom;
@@ -225,320 +226,575 @@ class _SearchState extends State<Search> {
       child: Scaffold(
         backgroundColor: AppColors.white,
         body: GetBuilder<HomeController>(builder: (cont) {
-          return Padding(
-            padding: const EdgeInsets.all(20),
-            child: SafeArea(
-              child: Column(
-                children: [
-                  Container(
-                    height: 50..h,
-                    width: MediaQuery.of(context).size.width,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        GestureDetector(
-                            onTap: () {
-                              widget.isSearchFrom == 0
-                                  ? {cont.selectedCategory = null}
-                                  : null;
-                              cont.selectedSubCategory = null;
-                              cont.selectedSubSubCategory = null;
-                              cont.maxPriceController.clear();
-                              cont.searchController.clear();
-                              cont.minPriceController.clear();
-                              Navigator.of(context).pop();
-                            },
-                            child: Icon(Icons.arrow_back_ios)),
-                        Container(
-                          width: MediaQuery.of(context).size.width * .75,
-                          decoration: BoxDecoration(
-                            color: AppColors.k0xFFF0F1F1,
-                            borderRadius: BorderRadius.circular(35..r),
-                          ),
-                          child: TextField(
-                            controller: cont.searchController,
-                            onChanged: (value) {
-                              // Trigger rebuild to show/hide close icon
-                              cont.update();
-                            },
-                            onSubmitted: (value) {
-                              cont.currentSearchPage.value = 1;
-                              cont.listingModelSearchList.clear();
-                              cont.update();
-                              cont.getListingSearch();
-                            },
-                            textAlignVertical: TextAlignVertical.center,
-                            cursorColor: Colors.black,
-                            decoration: InputDecoration(
-                                border: InputBorder.none,
-                                contentPadding: EdgeInsets.fromLTRB(0, 0, 0, 0),
-                                focusedBorder: InputBorder.none,
-                                prefixIcon: InkWell(
-                                  onTap: () {
-                                    cont.currentSearchPage.value = 1;
-                                    cont.listingModelSearchList.clear();
-                                    cont.update();
-                                    cont.getListingSearch();
-                                  },
-                                  child: Container(
-                                    padding: EdgeInsets.all(12),
-                                    child: SvgPicture.asset(
-                                        'assets/icons/search.svg',
-                                        color: AppColors.k0xFFC4C4C4),
-                                  ),
-                                ),
-                                suffixIcon: cont
-                                        .searchController.text.isNotEmpty
-                                    ? InkWell(
-                                        onTap: () {
-                                          cont.searchController.clear();
-                                          cont.currentSearchPage.value = 1;
-                                          cont.listingModelSearchList.clear();
-                                          cont.update();
-                                          cont.getListingSearch();
-                                        },
-                                        child: Container(
-                                          padding: EdgeInsets.all(12),
-                                          child: Icon(
-                                            Icons.close,
-                                            color: AppColors.k0xFFC4C4C4,
-                                            size: 20,
-                                          ),
-                                        ),
-                                      )
-                                    : null,
-                                hintText: 'What are you looking for?'.tr,
-                                hintStyle: TextStyle(
-                                    color: Color(0xFFA9ABAC),
-                                    fontSize: 11..sp,
-                                    fontWeight: FontWeight.w500)),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(
-                    height: 26..h,
-                  ),
-                  SizedBox(
-                    height: 40..h,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            _showBottomSheet(context);
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 17),
-                            child: Container(
-                              padding: EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                  color: AppColors.k0xFF0254B8.withOpacity(.2),
-                                  borderRadius: BorderRadius.circular(60)),
-                              child: Center(
-                                child:
-                                    SvgPicture.asset('assets/icons/list.svg'),
-                              ),
-                            ),
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            showDialogDropDown(context);
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 17),
-                            child: Container(
-                              padding: EdgeInsets.symmetric(horizontal: 10),
-                              height: 40..h,
-                              // width: 98..w,
-                              decoration: BoxDecoration(
-                                  color: AppColors.k0xFFD9D9D9.withOpacity(.5),
-                                  borderRadius: BorderRadius.circular(60)),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  Center(
-                                    child: Text(
-                                      _getSelectedCategoryText(homeCont),
-                                      style: TextStyle(
-                                          fontSize: 13..sp,
-                                          fontWeight: FontWeight.w500,
-                                          color: AppColors.black),
-                                      overflow: TextOverflow.ellipsis,
-                                      maxLines: 1,
-                                    ),
-                                  ),
-                                  Container(
-                                    height: 27..h,
-                                    width: 27..w,
-                                    decoration:
-                                        BoxDecoration(shape: BoxShape.circle),
-                                    child: Center(
-                                      child: SvgPicture.asset(
-                                          'assets/icons/drop.svg'),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(
-                    height: 50..h,
-                  ),
-                  Row(
+          return Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: SafeArea(
+                  child: Column(
                     children: [
-                      Icon(Icons.location_on_outlined),
-                      SizedBox(
-                        width: 215.w,
-                        child: Text(
-                          add != '' ? "$add " : '${cont.address}',
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                              color: AppColors.black,
-                              fontSize: 16..sp,
-                              fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                      Spacer(),
-                      Row(
-                        children: [
-                          Text(
-                            '${cont.listingModelSearchList.length} ',
-                            style: TextStyle(
-                              color: AppColors.k1xFF403C3C,
-                              fontSize: 15..sp,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            'results'.tr,
-                            style: TextStyle(
-                              color: AppColors.k1xFF403C3C,
-                              fontSize: 15..sp,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  SizedBox(
-                    height: 33..h,
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
+                      // Fixed header section
                       Container(
-                        height: 49..h,
-                        width: 134..w,
-                        decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(60),
-                            border: Border.all()),
+                        height: 50..h,
+                        width: MediaQuery.of(context).size.width,
                         child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            GestureDetector(
+                                onTap: () {
+                                  widget.isSearchFrom == 0
+                                      ? {cont.selectedCategory = null}
+                                      : null;
+                                  cont.selectedSubCategory = null;
+                                  cont.selectedSubSubCategory = null;
+                                  cont.maxPriceController.clear();
+                                  cont.searchController.clear();
+                                  cont.minPriceController.clear();
+                                  Navigator.of(context).pop();
+                                },
+                                child: Icon(Icons.arrow_back_ios)),
+                            Container(
+                              width: MediaQuery.of(context).size.width * .75,
+                              decoration: BoxDecoration(
+                                color: AppColors.k0xFFF0F1F1,
+                                borderRadius: BorderRadius.circular(35..r),
+                              ),
+                              child: TextField(
+                                controller: cont.searchController,
+                                onChanged: (value) {
+                                  // Trigger rebuild to show/hide close icon
+                                  cont.update();
+                                },
+                                onSubmitted: (value) {
+                                  cont.currentSearchPage.value = 1;
+                                  cont.listingModelSearchList.clear();
+                                  cont.update();
+                                  cont.getListingSearch();
+                                },
+                                textAlignVertical: TextAlignVertical.center,
+                                cursorColor: Colors.black,
+                                decoration: InputDecoration(
+                                    border: InputBorder.none,
+                                    contentPadding:
+                                        EdgeInsets.fromLTRB(0, 0, 0, 0),
+                                    focusedBorder: InputBorder.none,
+                                    prefixIcon: InkWell(
+                                      onTap: () {
+                                        cont.currentSearchPage.value = 1;
+                                        cont.listingModelSearchList.clear();
+                                        cont.update();
+                                        cont.getListingSearch();
+                                      },
+                                      child: Container(
+                                        padding: EdgeInsets.all(12),
+                                        child: SvgPicture.asset(
+                                            'assets/icons/search.svg',
+                                            color: AppColors.k0xFFC4C4C4),
+                                      ),
+                                    ),
+                                    suffixIcon: cont
+                                            .searchController.text.isNotEmpty
+                                        ? InkWell(
+                                            onTap: () {
+                                              cont.searchController.clear();
+                                              cont.currentSearchPage.value = 1;
+                                              cont.listingModelSearchList
+                                                  .clear();
+                                              cont.update();
+                                              cont.getListingSearch();
+                                            },
+                                            child: Container(
+                                              padding: EdgeInsets.all(12),
+                                              child: Icon(
+                                                Icons.close,
+                                                color: AppColors.k0xFFC4C4C4,
+                                                size: 20,
+                                              ),
+                                            ),
+                                          )
+                                        : null,
+                                    hintText: 'What are you looking for?'.tr,
+                                    hintStyle: TextStyle(
+                                        color: Color(0xFFA9ABAC),
+                                        fontSize: 11..sp,
+                                        fontWeight: FontWeight.w500)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(
+                        height: 26..h,
+                      ),
+                      SizedBox(
+                        height: 40..h,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
                           children: [
                             GestureDetector(
                               onTap: () {
-                                toggleView(false);
+                                _showBottomSheet(context);
                               },
-                              child: Container(
-                                padding: EdgeInsets.all(10),
-                                height: 49..h,
-                                width: 66..w,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.only(
-                                      bottomLeft: Radius.circular(60),
-                                      topLeft: Radius.circular(60)),
-                                  color: isListView
-                                      ? Colors.transparent
-                                      : AppColors.k0xFF0254B8,
-                                ),
-                                child: SvgPicture.asset(
-                                  'assets/icons/category.svg',
-                                  color: isListView
-                                      ? AppColors.black
-                                      : AppColors.white,
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 17),
+                                child: Container(
+                                  padding: EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                      color:
+                                          AppColors.k0xFF0254B8.withOpacity(.2),
+                                      borderRadius: BorderRadius.circular(60)),
+                                  child: Center(
+                                    child: SvgPicture.asset(
+                                        'assets/icons/list.svg'),
+                                  ),
                                 ),
                               ),
                             ),
                             GestureDetector(
                               onTap: () {
-                                toggleView(true);
+                                showDialogDropDown(context);
                               },
-                              child: Container(
-                                padding: EdgeInsets.all(10),
-                                height: 49..h,
-                                width: 66..w,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.only(
-                                      bottomRight: Radius.circular(60),
-                                      topRight: Radius.circular(60)),
-                                  color: isListView
-                                      ? AppColors.k0xFF0254B8
-                                      : Colors.transparent,
-                                ),
-                                child: SvgPicture.asset(
-                                  'assets/icons/list1.svg',
-                                  color: isListView
-                                      ? AppColors.white
-                                      : AppColors.black,
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 17),
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 10),
+                                  height: 40..h,
+                                  // width: 98..w,
+                                  decoration: BoxDecoration(
+                                      color:
+                                          AppColors.k0xFFD9D9D9.withOpacity(.5),
+                                      borderRadius: BorderRadius.circular(60)),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      Center(
+                                        child: Text(
+                                          _getSelectedCategoryText(homeCont),
+                                          style: TextStyle(
+                                              fontSize: 13..sp,
+                                              fontWeight: FontWeight.w500,
+                                              color: AppColors.black),
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 1,
+                                        ),
+                                      ),
+                                      Container(
+                                        height: 27..h,
+                                        width: 27..w,
+                                        decoration: BoxDecoration(
+                                            shape: BoxShape.circle),
+                                        child: Center(
+                                          child: SvgPicture.asset(
+                                              'assets/icons/drop.svg'),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
                           ],
                         ),
                       ),
-                      GestureDetector(
-                        onTap: () {
-                          _showSortBottomSheet(context);
-                        },
-                        child: Container(
-                          padding: EdgeInsets.all(10),
-                          height: 49..h,
-                          decoration: BoxDecoration(
-                              border: Border.all(),
-                              borderRadius: BorderRadius.circular(60)),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              Container(
-                                height: 24..h,
-                                width: 24..w,
-                                child:
-                                    SvgPicture.asset('assets/icons/sort.svg'),
+                      SizedBox(
+                        height: 20..h,
+                      ),
+                      // Scrollable content section
+                      Expanded(
+                        child: CustomScrollView(
+                          controller: homeCont.searchScrollController,
+                          slivers: [
+                            // Location row
+                            SliverToBoxAdapter(
+                              child: Column(
+                                children: [
+                                  SizedBox(height: 30..h),
+                                  Row(
+                                    children: [
+                                      Icon(Icons.location_on_outlined),
+                                      Expanded(
+                                        child: Text(
+                                          add != ''
+                                              ? "$add "
+                                              : '${cont.address}',
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                              color: AppColors.black,
+                                              fontSize: 16..sp,
+                                              fontWeight: FontWeight.w700),
+                                        ),
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            '${cont.listingModelSearchList.length} ',
+                                            style: TextStyle(
+                                              color: AppColors.k1xFF403C3C,
+                                              fontSize: 15..sp,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          Text(
+                                            'results'.tr,
+                                            style: TextStyle(
+                                              color: AppColors.k1xFF403C3C,
+                                              fontSize: 15..sp,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 33..h),
+                                  // Sort button row
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Container(
+                                        height: 49..h,
+                                        width: 134..w,
+                                        decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(60),
+                                            border: Border.all()),
+                                        child: Row(
+                                          children: [
+                                            GestureDetector(
+                                              onTap: () {
+                                                toggleView(false);
+                                              },
+                                              child: Container(
+                                                padding: EdgeInsets.all(10),
+                                                height: 49..h,
+                                                width: 66..w,
+                                                decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.only(
+                                                          bottomLeft:
+                                                              Radius.circular(
+                                                                  60),
+                                                          topLeft:
+                                                              Radius.circular(
+                                                                  60)),
+                                                  color: isListView
+                                                      ? Colors.transparent
+                                                      : AppColors.k0xFF0254B8,
+                                                ),
+                                                child: SvgPicture.asset(
+                                                  'assets/icons/category.svg',
+                                                  color: isListView
+                                                      ? AppColors.black
+                                                      : AppColors.white,
+                                                ),
+                                              ),
+                                            ),
+                                            GestureDetector(
+                                              onTap: () {
+                                                toggleView(true);
+                                              },
+                                              child: Container(
+                                                padding: EdgeInsets.all(10),
+                                                height: 49..h,
+                                                width: 66..w,
+                                                decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.only(
+                                                          bottomRight:
+                                                              Radius.circular(
+                                                                  60),
+                                                          topRight:
+                                                              Radius.circular(
+                                                                  60)),
+                                                  color: isListView
+                                                      ? AppColors.k0xFF0254B8
+                                                      : Colors.transparent,
+                                                ),
+                                                child: SvgPicture.asset(
+                                                  'assets/icons/list1.svg',
+                                                  color: isListView
+                                                      ? AppColors.white
+                                                      : AppColors.black,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      GestureDetector(
+                                        onTap: () {
+                                          _showSortBottomSheet(context);
+                                        },
+                                        child: Container(
+                                          padding: EdgeInsets.all(10),
+                                          height: 49..h,
+                                          decoration: BoxDecoration(
+                                              border: Border.all(),
+                                              borderRadius:
+                                                  BorderRadius.circular(60)),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceAround,
+                                            children: [
+                                              Container(
+                                                height: 24..h,
+                                                width: 24..w,
+                                                child: SvgPicture.asset(
+                                                    'assets/icons/sort.svg'),
+                                              ),
+                                              Text(
+                                                'Sort'.tr,
+                                                style: TextStyle(
+                                                    fontSize: 16..sp,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: AppColors.black),
+                                              )
+                                            ],
+                                          ),
+                                        ),
+                                      )
+                                    ],
+                                  ),
+                                  SizedBox(height: 35..h),
+                                ],
                               ),
-                              Text(
-                                'Sort'.tr,
-                                style: TextStyle(
-                                    fontSize: 16..sp,
-                                    fontWeight: FontWeight.w500,
-                                    color: AppColors.black),
-                              )
-                            ],
-                          ),
+                            ),
+                            // Content
+                            isListView
+                                ? SliverList(
+                                    delegate: SliverChildBuilderDelegate(
+                                      (BuildContext context, int index) {
+                                        return Padding(
+                                          padding:
+                                              EdgeInsets.only(bottom: 20.h),
+                                          child: listItem(
+                                              cont.listingModelSearchList[
+                                                  index],
+                                              index),
+                                        );
+                                      },
+                                      childCount:
+                                          cont.listingModelSearchList.length,
+                                    ),
+                                  )
+                                : SliverGrid(
+                                    gridDelegate:
+                                        SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 2,
+                                      childAspectRatio: 0.50.r,
+                                      mainAxisSpacing: 26,
+                                      crossAxisSpacing: 34,
+                                    ),
+                                    delegate: SliverChildBuilderDelegate(
+                                      (BuildContext context, int index) {
+                                        return gridItem(
+                                            cont.listingModelSearchList[index],
+                                            index);
+                                      },
+                                      childCount:
+                                          cont.listingModelSearchList.length,
+                                    ),
+                                  ),
+                          ],
                         ),
                       )
                     ],
                   ),
-                  SizedBox(
-                    height: 35..h,
-                  ),
-                  isListView
-                      ? list(cont.listingModelSearchList)
-                      : grid(cont.listingModelSearchList)
-                ],
+                ),
               ),
-            ),
+              // Scroll to top button
+              ScrollToTopButton(
+                scrollController: homeCont.searchScrollController,
+              ),
+            ],
           );
         }),
       ),
     );
+  }
+
+  Widget gridItem(ListingModel listing, int index) {
+    return GestureDetector(
+        onTap: () {
+          homeCont.isListing = 0;
+          homeCont.listingModel = listing;
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const FrameScreen(),
+              ));
+        },
+        child: Stack(
+          children: [
+            Container(
+              // height: 280..h,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10..r),
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.5), // Shadow color
+                    offset: Offset(0, 3), // Shadow offset
+                    blurRadius: 6, // Shadow blur radius
+                    spreadRadius: 0, // Shadow spread radius
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(10.r),
+                          topRight: Radius.circular(10.r)),
+                      child: CachedNetworkImage(
+                        height: 180..h,
+                        width: MediaQuery.of(context).size.width,
+                        imageUrl: listing.gallery != null &&
+                                listing.gallery!.isNotEmpty
+                            ? "${listing.gallery?.first}"
+                            : "",
+                        imageBuilder: (context, imageProvider) => Container(
+                          height: 180..h,
+                          width: MediaQuery.of(context).size.width,
+                          decoration: BoxDecoration(
+                            image: DecorationImage(
+                              image: imageProvider,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        placeholder: (context, url) => SizedBox(
+                            height: 180..h,
+                            width: MediaQuery.of(context).size.width,
+                            child: Center(
+                                child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ))),
+                        errorWidget: (context, url, error) =>
+                            Center(child: Text("No Image".tr)),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    // height: 65..h,
+                    color: Colors.white,
+                    child: Column(
+                      children: [
+                        SizedBox(
+                          height: 20.h,
+                          child: Center(
+                            child: Text(
+                              listing.title ?? "",
+                              maxLines: 2,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  fontSize: 17..sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black),
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          height: 16.h,
+                          child: Text(
+                            '${listing.address ?? ""}',
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                                fontSize: 13..sp,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.k0xFF403C3C),
+                          ),
+                        ),
+                        SizedBox(
+                          height: 2..h,
+                        ),
+                        SizedBox(
+                          height: 16.h,
+                          child: Text(
+                            listing.price == "0"
+                                ? ""
+                                : "${PriceFormatter().formatNumber(int.parse(listing.price ?? '0'))}\$ ${PriceFormatter().getCurrency(listing.currency)}",
+                            textAlign: TextAlign.center,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                                fontSize: 14..sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.k0xFF0254B8),
+                          ),
+                        ),
+                        SizedBox(
+                          height: 5.h,
+                        )
+                      ],
+                    ).paddingSymmetric(horizontal: 10),
+                  )
+                ],
+              ),
+            ),
+            Positioned(
+              top: 10..h,
+              right: 10..w,
+              child: InkWell(
+                onTap: () async {
+                  if (authCont.user?.email == "") {
+                    Get.to(Login());
+                  } else {
+                    homeCont.listingModel =
+                        homeCont.listingModelSearchList[index];
+                    homeCont.listingModel?.isFavorite == "0"
+                        ? homeCont.listingModel?.isFavorite = "1"
+                        : homeCont.listingModel?.isFavorite = "0";
+                    homeCont.update();
+                    bool isAddedF = await homeCont.favouriteItem();
+                    if (isAddedF) {
+                      String itemId =
+                          homeCont.listingModelSearchList[index].itemId ?? "";
+                      String newFavoriteStatus =
+                          homeCont.listingModelSearchList[index].isFavorite ??
+                              "0";
+
+                      // Sync with home screen
+                      homeCont.syncFavoriteStatusInHomeScreen(
+                          itemId, newFavoriteStatus);
+
+                      // Sync with favorites list
+                      homeCont.syncFavoriteStatusInFavoritesList(
+                          itemId, newFavoriteStatus);
+
+                      errorAlertToast("Successfully".tr);
+                    } else {
+                      homeCont.listingModel?.isFavorite == "0"
+                          ? homeCont.listingModel?.isFavorite = "1"
+                          : homeCont.listingModel?.isFavorite = "0";
+                    }
+                  }
+                },
+                child: Container(
+                  padding: EdgeInsets.all(10),
+                  height: 43..h,
+                  width: 43..w,
+                  decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(21.5..r)),
+                  child: SvgPicture.asset(
+                    'assets/icons/heart1.svg',
+                    color: homeCont.listingModelSearchList.isNotEmpty &&
+                            homeCont.listingModelSearchList[index].isFavorite ==
+                                '0'
+                        ? Colors.grey
+                        : Colors.red,
+                  ),
+                ),
+              ),
+            )
+          ],
+        ));
   }
 
   Widget grid(List<ListingModel> listingList) {
@@ -738,6 +994,160 @@ class _SearchState extends State<Search> {
                 ],
               ));
         },
+      ),
+    );
+  }
+
+  Widget listItem(ListingModel listing, int index) {
+    return InkWell(
+      onTap: () {
+        homeCont.isListing = 0;
+        homeCont.listingModel = listing;
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const FrameScreen(),
+            ));
+      },
+      child: Stack(
+        children: [
+          Container(
+            // height: 170..h,
+            width: MediaQuery.of(context).size.width,
+            decoration:
+                BoxDecoration(borderRadius: BorderRadius.circular(10..r)),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  // height: 170..h,
+                  width: 170..w,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: CachedNetworkImage(
+                      height: 170..h,
+                      width: 170..w,
+                      imageUrl:
+                          listing.gallery != null && listing.gallery!.isNotEmpty
+                              ? "${listing.gallery?.first}"
+                              : "",
+                      imageBuilder: (context, imageProvider) => Container(
+                        height: 170..h,
+                        width: 170..w,
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                            image: imageProvider,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                      placeholder: (context, url) => SizedBox(
+                          height: 170..h,
+                          width: 170..w,
+                          child: Center(
+                              child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ))),
+                      errorWidget: (context, url, error) =>
+                          Center(child: Text("No Image".tr)),
+                    ),
+                  ),
+                ),
+                Container(
+                  // height: 79..h,
+                  width: MediaQuery.of(context).size.width * .37,
+                  color: Colors.white,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '${listing.title}',
+                        maxLines: 2,
+                        style: TextStyle(
+                            fontSize: 17..sp,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black),
+                      ),
+                      Text(
+                        "${listing.address}",
+                        style: TextStyle(
+                            fontSize: 13..sp,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.k0xFF403C3C),
+                      ),
+                      Text(
+                        listing.price == "0"
+                            ? ""
+                            : "${PriceFormatter().formatNumber(int.parse(listing.price ?? '0'))}\$ ${PriceFormatter().getCurrency(listing.currency)}",
+                        style: TextStyle(
+                            fontSize: 14..sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.k0xFF0254B8),
+                      ),
+                    ],
+                  ),
+                )
+              ],
+            ),
+          ),
+          Positioned(
+            top: 10..h,
+            left: 115..w,
+            child: InkWell(
+              onTap: () async {
+                if (authCont.user?.email == "") {
+                  Get.to(Login());
+                } else {
+                  homeCont.listingModel =
+                      homeCont.listingModelSearchList[index];
+                  homeCont.listingModel?.isFavorite == "0"
+                      ? homeCont.listingModel?.isFavorite = "1"
+                      : homeCont.listingModel?.isFavorite = "0";
+                  homeCont.update();
+                  bool isAddedF = await homeCont.favouriteItem();
+                  if (isAddedF) {
+                    String itemId =
+                        homeCont.listingModelSearchList[index].itemId ?? "";
+                    String newFavoriteStatus =
+                        homeCont.listingModelSearchList[index].isFavorite ??
+                            "0";
+
+                    // Sync with home screen
+                    homeCont.syncFavoriteStatusInHomeScreen(
+                        itemId, newFavoriteStatus);
+
+                    // Sync with favorites list
+                    homeCont.syncFavoriteStatusInFavoritesList(
+                        itemId, newFavoriteStatus);
+
+                    errorAlertToast("Successfully".tr);
+                  } else {
+                    homeCont.listingModel?.isFavorite == "0"
+                        ? homeCont.listingModel?.isFavorite = "1"
+                        : homeCont.listingModel?.isFavorite = "0";
+                  }
+                }
+              },
+              child: Container(
+                padding: EdgeInsets.all(10),
+                height: 43..h,
+                width: 43..w,
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(21.5..r)),
+                child: SvgPicture.asset(
+                  'assets/icons/heart1.svg',
+                  color: homeCont.listingModelSearchList.isNotEmpty &&
+                          homeCont.listingModelSearchList[index].isFavorite ==
+                              '0'
+                      ? Colors.grey
+                      : Colors.red,
+                ),
+              ),
+            ),
+          )
+        ],
       ),
     );
   }

@@ -204,6 +204,8 @@ class Languages extends Translations {
           "Chat": "Chat",
           "Post": "Post",
           "Select a Category": "Select a Category",
+          "Select Category": "Select Category",
+          "Select Subcategory": "Select Subcategory",
           "Successfully": "Successfully",
           "Select a Category From": "Select a Category From",
           "Sign in to an  existing account": "Sign in to an  existing account",
@@ -1800,6 +1802,8 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
           "You need to send \$100 CUP to this bank account number: 000-000-000-000 And write the transaction number on the next page that you receive via text message on your phone. See the image below for reference":
               "Debes enviar \$100 CUP a este número de cuenta bancaria: 000-000-000-000 Y escriba el número de transacción en la página siguiente que recibirá por mensaje de texto en su teléfono. Vea la imagen a continuación como referencia.",
           "Select a Category": "Seleccione una categoría",
+          "Select Category": "Seleccionar categoría",
+          "Select Subcategory": "Seleccionar subcategoría",
           "Successfully": "exitosamente",
           "Sign in to an existing account":
               "Iniciar sesión en una cuenta existente",
