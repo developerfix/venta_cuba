@@ -44,7 +44,12 @@ class _CategoryFromBottomState extends State<CategoryFromBottom> {
                     children: [
                       GestureDetector(
                         onTap: () {
-                          Navigator.of(context).pop();
+                          // Reset sub-subcategory selections when going back
+                          if (cont.isSubSubCategories) {
+                            cont.resetSubSubCategorySelections();
+                          } else {
+                            Get.back();
+                          }
                         },
                         child: Icon(
                           Icons.arrow_back_ios,

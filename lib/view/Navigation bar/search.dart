@@ -202,6 +202,14 @@ class _SearchState extends State<Search> {
     homeCont.isSearchScreen = true;
     homeCont.isNavigate = false;
 
+    // Ensure scroll listener is attached for search pagination
+    try {
+      homeCont.searchScrollController.removeListener(homeCont.onScrollSearch);
+    } catch (e) {
+      // Listener wasn't attached, which is fine
+    }
+    homeCont.searchScrollController.addListener(homeCont.onScrollSearch);
+
     // Perform initial search when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (homeCont.listingModelSearchList.isEmpty) {
@@ -682,6 +690,17 @@ class _SearchState extends State<Search> {
                                           cont.listingModelSearchList.length,
                                     ),
                                   ),
+                            // Loading indicator for pagination
+                            if (cont.isSearchLoading.value &&
+                                cont.listingModelSearchList.isNotEmpty)
+                              SliverToBoxAdapter(
+                                child: Padding(
+                                  padding: EdgeInsets.all(20.h),
+                                  child: Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
                       )

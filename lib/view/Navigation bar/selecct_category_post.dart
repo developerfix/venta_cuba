@@ -67,10 +67,12 @@ class _SelectCategoriesPostState extends State<SelectCategoriesPost> {
                         itemBuilder: (context, index) {
                           return GestureDetector(
                             onTap: () {
+                              // Reset all subcategory and sub-subcategory selections when selecting a new category
+                              cont.resetSubCategorySelections();
+
                               cont.selectedCategory =
                                   cont.categoriesModel?.data?[index];
                               cont.isNavigate = true;
-                              bool isShowSubCat = true;
                               if (cont.isType == 0) {
                                 cont.selectedCategory =
                                     cont.categoriesModel?.data?[index];

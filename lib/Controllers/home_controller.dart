@@ -1286,14 +1286,23 @@ class HomeController extends GetxController {
   }
 
   void onScrollSearch() async {
+    Get.log("=== SCROLL SEARCH DEBUG ===");
+    Get.log("Current pixels: ${searchScrollController.position.pixels}");
+    Get.log("Max extent: ${searchScrollController.position.maxScrollExtent}");
+    Get.log(
+        "Trigger point: ${searchScrollController.position.maxScrollExtent - 100}");
+    Get.log("Is search loading: ${isSearchLoading.value}");
+    Get.log("Has more search: ${hasMoreSearch.value}");
+    Get.log("Current search results count: ${listingModelSearchList.length}");
+
     if (searchScrollController.position.pixels >=
         searchScrollController.position.maxScrollExtent - 100) {
       if (!isSearchLoading.value && hasMoreSearch.value) {
-        isSearchLoading.value = true; // Lock API call
-        update();
-
-        Get.log("Fetching search results...");
+        Get.log("🚀 Triggering search pagination...");
         await getListingSearch(isLoadMore: true);
+      } else {
+        Get.log(
+            "❌ Pagination blocked - Loading: ${isSearchLoading.value}, HasMore: ${hasMoreSearch.value}");
       }
     }
   }
@@ -1616,6 +1625,13 @@ class HomeController extends GetxController {
           hasMoreSearch.value =
               dataListing.length == 15; // More pages available?
           listingModelList = listingModelSearchList;
+
+          Get.log("=== PAGINATION UPDATE ===");
+          Get.log("Added ${newListings.length} new items");
+          Get.log("Total search results: ${listingModelSearchList.length}");
+          Get.log("Next page will be: ${currentSearchPage.value}");
+          Get.log(
+              "Has more pages: ${hasMoreSearch.value} (based on API returning ${dataListing.length} items)");
 
           // Apply sorting after fetching data
           applySortingToSearchList();
@@ -2389,6 +2405,9 @@ class HomeController extends GetxController {
   }
 
   Future getSubCategoriesBottom() async {
+    // Reset sub-subcategory selections when loading new subcategories
+    resetSubSubCategorySelections();
+
     Response response = await api.postWithForm("api/getSubCategories",
         {'category_id': selectedCategory?.id.toString()},
         showdialog: true);
@@ -2408,7 +2427,28 @@ class HomeController extends GetxController {
 
   bool isSubSubCategories = false;
 
+  /// Reset subcategory and sub-subcategory selections
+  void resetSubCategorySelections() {
+    selectedSubCategory = null;
+    selectedSubSubCategory = null;
+    subCategoriesModel = null;
+    subSubCategoriesModel = null;
+    isSubSubCategories = false;
+    update();
+  }
+
+  /// Reset only sub-subcategory selections
+  void resetSubSubCategorySelections() {
+    selectedSubSubCategory = null;
+    subSubCategoriesModel = null;
+    isSubSubCategories = false;
+    update();
+  }
+
   Future getSubSubCategoriesBottom() async {
+    // Reset sub-subcategory selection when loading new sub-subcategories
+    selectedSubSubCategory = null;
+
     Response response = await api.postWithForm(
         "api/getSubSubCategories",
         {
