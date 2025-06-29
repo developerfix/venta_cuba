@@ -2501,7 +2501,68 @@ class _CategorySelectionDialogState extends State<CategorySelectionDialog> {
           );
         }
 
-        // For subcategories and sub-subcategories, use themed container with ListTile
+        // For subcategories, use themed container with separate title and arrow handlers
+        if (currentLevel == 1) {
+          return Container(
+            margin: EdgeInsets.symmetric(vertical: 4),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(5),
+              border: Theme.of(context).brightness == Brightness.dark
+                  ? Border.all(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      width: 1,
+                    )
+                  : Border.all(
+                      color: Colors.grey.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+              boxShadow: [
+                BoxShadow(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white.withValues(alpha: 0.1)
+                      : Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 2,
+                )
+              ],
+              color: Theme.of(context).cardColor,
+            ),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Expanded clickable area for title (select subcategory directly)
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => _selectSubCategoryTitle(item),
+                      child: Text(
+                        _getItemName(item),
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Separate clickable area for arrow (navigate to sub-subcategories)
+                  GestureDetector(
+                    onTap: () => _selectSubCategoryArrow(item),
+                    child: Container(
+                      padding: EdgeInsets.all(8),
+                      child: Icon(
+                        Icons.arrow_forward_ios,
+                        size: 16,
+                        color: Theme.of(context).iconTheme.color,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        // For sub-subcategories, use themed container with ListTile (no arrow needed)
         return Container(
           margin: EdgeInsets.symmetric(vertical: 4),
           decoration: BoxDecoration(
@@ -2533,14 +2594,7 @@ class _CategorySelectionDialogState extends State<CategorySelectionDialog> {
                 color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
-            onTap: () => _selectItem(item, index),
-            trailing: currentLevel < 2
-                ? Icon(
-                    Icons.arrow_forward_ios,
-                    size: 16,
-                    color: Theme.of(context).iconTheme.color,
-                  )
-                : null,
+            onTap: () => _selectSubSubCategory(item),
           ),
         );
       },
@@ -2564,37 +2618,30 @@ class _CategorySelectionDialogState extends State<CategorySelectionDialog> {
     return item?.name?.toString() ?? 'Unknown';
   }
 
-  void _selectItem(dynamic item, int index) async {
-    switch (currentLevel) {
-      case 0:
-        await _selectCategory(item);
-        break;
-      case 1:
-        await _selectSubCategory(item);
-        break;
-      case 2:
-        await _selectSubSubCategory(item);
-        break;
-    }
+  // When clicking on subcategory title - show all posts in that subcategory
+  Future<void> _selectSubCategoryTitle(dynamic subCategory) async {
+    homeCont.selectedSubCategory = subCategory;
+    homeCont.selectedSubSubCategory = null;
+
+    // Apply filter immediately without navigating to sub-subcategories
+    _applyFilterAndClose();
   }
 
-  Future<void> _selectCategory(dynamic category) async {
-    homeCont.selectedCategory = category;
-    homeCont.selectedSubCategory = null;
+  // When clicking on subcategory arrow - navigate to sub-subcategories
+  Future<void> _selectSubCategoryArrow(dynamic subCategory) async {
+    homeCont.selectedSubCategory = subCategory;
     homeCont.selectedSubSubCategory = null;
-    homeCont.isNavigate = false;
-    homeCont.isSearchScreen = true;
 
-    // Load subcategories
-    await homeCont.getSubCategories();
+    // Load sub-subcategories
+    await homeCont.getSubSubCategories();
 
-    // Check if subcategories exist
-    if (homeCont.subCategoriesModel?.data?.isNotEmpty ?? false) {
+    // Check if sub-subcategories exist
+    if (homeCont.subSubCategoriesModel?.data?.isNotEmpty ?? false) {
       setState(() {
-        currentLevel = 1;
+        currentLevel = 2;
       });
     } else {
-      // No subcategories, apply filter and close dialog
+      // No sub-subcategories, apply filter and close dialog
       _applyFilterAndClose();
     }
   }
@@ -2629,24 +2676,6 @@ class _CategorySelectionDialogState extends State<CategorySelectionDialog> {
       });
     } else {
       // No subcategories, apply filter and close dialog
-      _applyFilterAndClose();
-    }
-  }
-
-  Future<void> _selectSubCategory(dynamic subCategory) async {
-    homeCont.selectedSubCategory = subCategory;
-    homeCont.selectedSubSubCategory = null;
-
-    // Load sub-subcategories
-    await homeCont.getSubSubCategories();
-
-    // Check if sub-subcategories exist
-    if (homeCont.subSubCategoriesModel?.data?.isNotEmpty ?? false) {
-      setState(() {
-        currentLevel = 2;
-      });
-    } else {
-      // No sub-subcategories, apply filter and close dialog
       _applyFilterAndClose();
     }
   }
