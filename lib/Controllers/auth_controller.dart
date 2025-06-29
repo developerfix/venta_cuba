@@ -387,36 +387,91 @@ class AuthController extends GetxController {
   // }
 
   Future getuserDetail() async {
-    final SharedPreferences prefss = await SharedPreferences.getInstance();
-    tokenMain = prefss.getString('token');
-    token = prefss.getString('token');
-    api.updateHeader(token ?? "");
-    print(jsonDecode(prefss.getString("user_data")!));
     try {
-      user = UserData.fromJson(jsonDecode(prefss.getString("user_data")!));
+      print('🔥 AuthController: Getting user details...');
+
+      final SharedPreferences prefss = await SharedPreferences.getInstance();
+      tokenMain = prefss.getString('token');
+      token = prefss.getString('token');
+
+      print(
+          '🔥 AuthController: Token retrieved: ${token != null ? 'Yes' : 'No'}');
+
+      api.updateHeader(token ?? "");
+
+      String? userDataString = prefss.getString("user_data");
+      if (userDataString == null) {
+        print('🔥 AuthController: No user data found in preferences');
+        throw Exception('No user data found');
+      }
+
+      print('🔥 AuthController: User data found, parsing...');
+      Map<String, dynamic> userData = jsonDecode(userDataString);
+      print('🔥 AuthController: User data parsed successfully');
+
+      user = UserData.fromJson(userData);
+      print(
+          '🔥 AuthController: User object created: ${user?.firstName} ${user?.lastName}');
+
       // Sync device token with current Firebase token
       if (user != null && user!.deviceToken != deviceToken) {
         user!.deviceToken = deviceToken;
         await prefss.setString("user_data", jsonEncode(user!.toJson()));
+        print('🔥 AuthController: Device token synced');
       }
 
       // Set user as online when they log in
       await setUserOnline();
+      print('🔥 AuthController: User set as online');
+
+      // Start chat listener and update badge count after user is loaded (non-blocking)
+      _initializeChatServices().then((_) {
+        print('🔥 AuthController: Chat services initialized');
+      }).catchError((e) {
+        print('🔥 AuthController: Error initializing chat services: $e');
+      });
     } catch (e) {
-      Get.offAll(const Login());
-      print(e);
+      print('🔥 AuthController: Error in getuserDetail: $e');
+      Get.offAll(() => const Login());
+      rethrow; // Re-throw to let calling method handle the error
     }
     update();
   }
 
   Future checkUserLoggedIn() async {
-    final SharedPreferences prefss = await SharedPreferences.getInstance();
-    bool isLogin = (prefss.get("user_data") == null ? false : true);
-    if (isLogin) {
-      await getuserDetail();
-      Get.offAll(Navigation_Bar());
-    } else {
-      Get.offAll(Login());
+    try {
+      print('🔥 AuthController: Checking user login status...');
+
+      final SharedPreferences prefss = await SharedPreferences.getInstance();
+      bool isLogin = (prefss.get("user_data") == null ? false : true);
+
+      print('🔥 AuthController: User login status: $isLogin');
+
+      if (isLogin) {
+        print('🔥 AuthController: User is logged in, getting user details...');
+        await getuserDetail();
+        print('🔥 AuthController: Navigating to Navigation_Bar...');
+
+        // Use a small delay to ensure navigation works properly
+        await Future.delayed(const Duration(milliseconds: 100));
+        Get.offAll(() => Navigation_Bar());
+      } else {
+        print('🔥 AuthController: User not logged in, navigating to Login...');
+
+        // Use a small delay to ensure navigation works properly
+        await Future.delayed(const Duration(milliseconds: 100));
+        Get.offAll(() => const Login());
+      }
+    } catch (e) {
+      print('🔥 AuthController: Error in checkUserLoggedIn: $e');
+      // If there's an error, navigate to login as fallback
+      try {
+        await Future.delayed(const Duration(milliseconds: 100));
+        Get.offAll(() => const Login());
+      } catch (navError) {
+        print('🔥 AuthController: Navigation error: $navError');
+      }
+      rethrow; // Re-throw to let WhiteScreen handle the error
     }
   }
 
@@ -832,6 +887,42 @@ class AuthController extends GetxController {
     Get.offAll(Navigation_Bar());
   }
 
+  // Initialize chat services after user login
+  Future<void> _initializeChatServices() async {
+    try {
+      // Import ChatController here to avoid circular dependency
+      final chatCont = Get.find<ChatController>();
+
+      // Update unread message indicators immediately
+      await chatCont.updateUnreadMessageIndicators();
+      await chatCont.updateBadgeCountFromChats();
+
+      // Start listening for real-time chat updates
+      chatCont.startListeningForChatUpdates();
+
+      print(
+          '🔥 ✅ Chat services initialized successfully for user: ${user?.userId}');
+    } catch (e) {
+      // If ChatController is not found, try to initialize it
+      try {
+        Get.lazyPut(() => ChatController());
+        final chatCont = Get.find<ChatController>();
+
+        // Small delay to ensure controller is properly initialized
+        await Future.delayed(Duration(milliseconds: 500));
+
+        await chatCont.updateUnreadMessageIndicators();
+        await chatCont.updateBadgeCountFromChats();
+        chatCont.startListeningForChatUpdates();
+
+        print(
+            '🔥 ✅ Chat services initialized after lazy loading for user: ${user?.userId}');
+      } catch (e2) {
+        print('🔥 ❌ Error initializing chat services: $e2');
+      }
+    }
+  }
+
   void userMainProfileData(Map<String, dynamic> value) {}
   void onUpdateUserData(Map<String, dynamic> value) async {
     print("???????????????????????????");
@@ -844,6 +935,15 @@ class AuthController extends GetxController {
   Future<void> logout() async {
     // Set user as offline before logout
     await setUserOffline();
+
+    // Stop chat listener before logout
+    try {
+      final chatCont = Get.find<ChatController>();
+      chatCont.stopListeningForChatUpdates();
+      print('🔥 ✅ Chat listener stopped on logout');
+    } catch (e) {
+      print('🔥 ChatController not found on logout: $e');
+    }
 
     // Clear local device token
     deviceToken = "";
@@ -862,6 +962,10 @@ class AuthController extends GetxController {
       await prefs.remove('lastRadius');
       await prefs.remove('saveAddress');
       await prefs.remove('saveRadius');
+
+      // Reset unread message count
+      unreadMessageCount.value = 0;
+      hasUnreadMessages.value = false;
 
       Get.offAll(() => const Login());
     } else {

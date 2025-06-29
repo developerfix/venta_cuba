@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -117,7 +118,7 @@ class ChatController extends GetxController {
       if (authCont.user?.userId == null) return;
 
       String currentUserId = authCont.user!.userId.toString();
-      int unreadCount = 0;
+      int unreadMessageCount = 0;
 
       // Get all chat documents where this user participates
       QuerySnapshot chatSnapshot = await chatCollection.get();
@@ -137,24 +138,82 @@ class ChatController extends GetxController {
                   chatData['message'] != "");
 
           if (hasMessages) {
-            // Check if this chat has unread messages for this user
-            bool isUnread = hasUnreadMessages(chatData, currentUserId);
-            if (isUnread) {
-              unreadCount++;
-            }
+            // Count individual unread messages in this chat
+            int chatUnreadCount =
+                await countUnreadMessagesInChat(chatDoc.id, currentUserId);
+            unreadMessageCount += chatUnreadCount;
           }
         }
       }
 
       // Update both the app badge and UI state
-      await FCM.setBadgeCount(unreadCount);
-      authCont.unreadMessageCount.value = unreadCount;
-      authCont.hasUnreadMessages.value = unreadCount > 0;
+      await FCM.setBadgeCount(unreadMessageCount);
+      authCont.unreadMessageCount.value = unreadMessageCount;
+      authCont.hasUnreadMessages.value = unreadMessageCount > 0;
       authCont.update();
 
-      print("🔥 ✅ Badge count updated to: $unreadCount unread chats");
+      print("🔥 ✅ Badge count updated to: $unreadMessageCount unread messages");
     } catch (e) {
       print("🔥 ❌ Error updating badge count from chats: $e");
+    }
+  }
+
+  // Count individual unread messages in a specific chat
+  Future<int> countUnreadMessagesInChat(
+      String chatId, String currentUserId) async {
+    try {
+      // Get the chat document to determine last read time
+      DocumentSnapshot chatDoc = await chatCollection.doc(chatId).get();
+      if (!chatDoc.exists) return 0;
+
+      Map<String, dynamic> chatData = chatDoc.data() as Map<String, dynamic>;
+
+      // Determine which lastReadTime field to use based on user role
+      String? senderId = chatData['senderId']?.toString();
+      String? sendToId = chatData['sendToId']?.toString();
+
+      Timestamp? lastReadTime;
+      if (senderId == currentUserId) {
+        lastReadTime = chatData['senderLastReadTime'];
+      } else if (sendToId == currentUserId) {
+        lastReadTime = chatData['recipientLastReadTime'];
+      }
+
+      // Get all messages in this chat
+      QuerySnapshot messagesSnapshot = await chatCollection
+          .doc(chatId)
+          .collection("messages")
+          .orderBy("time")
+          .get();
+
+      int unreadCount = 0;
+
+      for (QueryDocumentSnapshot messageDoc in messagesSnapshot.docs) {
+        Map<String, dynamic> messageData =
+            messageDoc.data() as Map<String, dynamic>;
+
+        // Skip messages sent by current user (they don't count as unread for them)
+        String? messageSendBy = messageData['sendBy']?.toString();
+        if (messageSendBy == currentUserId) continue;
+
+        Timestamp? messageTime = messageData['time'];
+        if (messageTime == null) continue;
+
+        // If no lastReadTime exists, all messages from others are unread
+        if (lastReadTime == null) {
+          unreadCount++;
+        } else {
+          // Count messages that are newer than last read time
+          if (messageTime.compareTo(lastReadTime) > 0) {
+            unreadCount++;
+          }
+        }
+      }
+
+      return unreadCount;
+    } catch (e) {
+      print("🔥 ❌ Error counting unread messages in chat $chatId: $e");
+      return 0;
     }
   }
 
@@ -235,7 +294,7 @@ class ChatController extends GetxController {
       if (authCont.user?.userId == null) return;
 
       String currentUserId = authCont.user!.userId.toString();
-      int unreadCount = 0;
+      int unreadMessageCount = 0;
 
       // Get all chat documents where this user participates
       QuerySnapshot chatSnapshot = await chatCollection.get();
@@ -255,25 +314,27 @@ class ChatController extends GetxController {
                   chatData['message'] != "");
 
           if (hasMessages) {
-            // Check if this chat has unread messages for this user
-            bool isUnread = hasUnreadMessages(chatData, currentUserId);
-            if (isUnread) {
-              unreadCount++;
-            }
+            // Count individual unread messages in this chat
+            int chatUnreadCount =
+                await countUnreadMessagesInChat(chatDoc.id, currentUserId);
+            unreadMessageCount += chatUnreadCount;
           }
         }
       }
 
       // Update both the count and boolean indicator
-      authCont.unreadMessageCount.value = unreadCount;
-      authCont.hasUnreadMessages.value = unreadCount > 0;
+      authCont.unreadMessageCount.value = unreadMessageCount;
+      authCont.hasUnreadMessages.value = unreadMessageCount > 0;
       authCont.update();
 
-      print("🔥 ✅ Unread message indicator updated: $unreadCount unread chats");
+      print(
+          "🔥 ✅ Unread message indicator updated: $unreadMessageCount unread messages");
     } catch (e) {
       print("🔥 ❌ Error updating unread message indicators: $e");
     }
   }
+
+  StreamSubscription<QuerySnapshot>? _chatListener;
 
   // Start listening for real-time chat updates
   void startListeningForChatUpdates() {
@@ -281,9 +342,15 @@ class ChatController extends GetxController {
       final authCont = Get.find<AuthController>();
       if (authCont.user?.userId == null) return;
 
+      // Stop any existing listener first
+      stopListeningForChatUpdates();
+
       // Listen for changes in chat collection
-      chatCollection.snapshots().listen((QuerySnapshot snapshot) {
-        // Update unread count whenever chat data changes
+      _chatListener =
+          chatCollection.snapshots().listen((QuerySnapshot snapshot) {
+        print("🔥 📱 Chat collection changed - updating badge count");
+        // Update both badge count and unread indicators whenever chat data changes
+        updateBadgeCountFromChats();
         updateUnreadMessageIndicators();
       });
 
@@ -296,8 +363,11 @@ class ChatController extends GetxController {
 
   // Stop listening for chat updates
   void stopListeningForChatUpdates() {
-    // This would be implemented if we need to cancel the stream subscription
-    print("🔥 ✅ Stopped listening for chat updates");
+    if (_chatListener != null) {
+      _chatListener!.cancel();
+      _chatListener = null;
+      print("🔥 ✅ Stopped listening for chat updates");
+    }
   }
 
   // Format last active time for display
@@ -378,9 +448,13 @@ class ChatController extends GetxController {
     }
   }
 
-  Future<bool>? addChatRoom(chatRoom, chatRoomId) {
-    chatCollection.doc(chatRoomId).set(chatRoom).catchError((e) {
+  Future<bool> addChatRoom(chatRoom, chatRoomId) async {
+    try {
+      await chatCollection.doc(chatRoomId).set(chatRoom);
+      return true;
+    } catch (e) {
       print(e);
-    });
+      return false;
+    }
   }
 }

@@ -782,6 +782,10 @@ class HomeController extends GetxController {
       allNotificationModel = AllNotificationModel.fromJson(response.body);
       if (!silent) {
         print('notyyyyyy not silent');
+        // Clear red dot immediately when opening notification screen
+        hasUnreadNotifications.value = false;
+        update();
+
         Get.to(NotificationScreen());
         await saveLastNotificationViewTime(); // Save last viewed time
         // Update notification indicators after viewing notifications

@@ -89,13 +89,13 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
       // Set user as online when app becomes active
       authCont.setUserOnline();
 
-      // Update unread message indicators and start listening for updates
+      // Update unread message indicators and restart chat listener
       try {
         final chatCont = Get.find<ChatController>();
         await chatCont.updateUnreadMessageIndicators();
+        await chatCont.updateBadgeCountFromChats();
         chatCont.startListeningForChatUpdates();
-        print(
-            '🔥 Unread message indicators updated and chat listener started on app resume');
+        print('🔥 Chat services restarted on app resume');
       } catch (e) {
         print('🔥 ChatController not found on app resume: $e');
       }
@@ -156,17 +156,6 @@ class _MyAppState extends State<MyApp> {
       checkNotificationPermissions();
     });
     Get.lazyPut(() => ChatController());
-
-    // Start chat listener after a delay to ensure user is logged in
-    Future.delayed(Duration(seconds: 5), () {
-      try {
-        final chatCont = Get.find<ChatController>();
-        chatCont.startListeningForChatUpdates();
-        print('🔥 Chat listener started on app initialization');
-      } catch (e) {
-        print('🔥 Error starting chat listener on initialization: $e');
-      }
-    });
   }
 
   locationCheck() async {
