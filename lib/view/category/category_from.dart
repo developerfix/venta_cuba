@@ -74,7 +74,7 @@ class _CategoryFromState extends State<CategoryFrom> {
                         cont.listingModelSearchList.clear();
                         cont.update();
                         cont.getListingSearch(isLoadMore: false);
-                        Get.to(Search(isSearchFrom: 1));
+                        Get.off(Search(isSearchFrom: 1));
                       },
                       child: CustomText(
                         text: "View all".tr,

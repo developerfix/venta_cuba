@@ -18,7 +18,7 @@ class _BecomeVendorState extends State<BecomeVendor> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: AppColors.white,
         body: Padding(
           padding: const EdgeInsets.all(20),
           child: SafeArea(
@@ -44,7 +44,7 @@ class _BecomeVendorState extends State<BecomeVendor> {
                       style: TextStyle(
                           fontSize: 20..sp,
                           fontWeight: FontWeight.w500,
-                          color: Theme.of(context).textTheme.titleLarge?.color),
+                          color: Colors.black),
                     ),
                     Container(
                       width: 10..w,

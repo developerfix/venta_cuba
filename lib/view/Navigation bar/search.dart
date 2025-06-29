@@ -255,9 +255,11 @@ class _SearchState extends State<Search> {
                           children: [
                             GestureDetector(
                                 onTap: () {
-                                  widget.isSearchFrom == 0
-                                      ? {cont.selectedCategory = null}
-                                      : null;
+                                  // Only clear category when coming from home screen (isSearchFrom == 0)
+                                  // Preserve category when coming from category screen (isSearchFrom == 1)
+                                  if (widget.isSearchFrom == 0) {
+                                    cont.selectedCategory = null;
+                                  }
                                   cont.selectedSubCategory = null;
                                   cont.selectedSubSubCategory = null;
                                   cont.maxPriceController.clear();
