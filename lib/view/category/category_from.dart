@@ -93,8 +93,8 @@ class _CategoryFromState extends State<CategoryFrom> {
                                   SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 2,
                                 childAspectRatio: 0.50.r,
-                                mainAxisSpacing: 25,
-                                crossAxisSpacing: 25,
+                                mainAxisSpacing: 15,
+                                crossAxisSpacing: 20,
                               ),
                               itemBuilder: (BuildContext context, int index) {
                                 return GestureDetector(

@@ -35,7 +35,7 @@
     <application
         android:enableOnBackInvokedCallback="true"
         android:usesCleartextTraffic="true"
-        android:label="venta_cuba"
+        android:label="VentaCuba"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:largeHeap="true"

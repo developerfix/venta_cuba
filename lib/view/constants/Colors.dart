@@ -30,6 +30,10 @@ class AppColors {
       ? const Color(0xFFFFFFFF)
       : const Color(0xFF000000);
 
+  static Color get frameBG => _themeController.isDarkMode.value
+      ? const Color(0xFF000000)
+      : const Color(0xFFFFFFFF);
+
   static Color get textSecondary => _themeController.isDarkMode.value
       ? const Color(0xFFB3B3B3)
       : const Color(0xFF6C6C6C);

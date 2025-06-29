@@ -366,12 +366,11 @@ class _SearchState extends State<Search> {
                         ),
                       ),
                       SizedBox(
-                        height: 26..h,
+                        height: 8.h,
                       ),
                       SizedBox(
-                        height: 40..h,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
+                        // height: 40..h,
+                        child: Row(
                           children: [
                             GestureDetector(
                               onTap: () {
@@ -392,73 +391,107 @@ class _SearchState extends State<Search> {
                                 ),
                               ),
                             ),
-                            GestureDetector(
-                              onTap: () {
-                                showDialogDropDown(context);
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.only(right: 17),
-                                child: Container(
-                                  padding: EdgeInsets.symmetric(horizontal: 10),
-                                  height: 40..h,
-                                  // width: 98..w,
-                                  decoration: BoxDecoration(
-                                      color:
-                                          AppColors.k0xFFD9D9D9.withOpacity(.5),
-                                      borderRadius: BorderRadius.circular(60)),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceEvenly,
-                                    children: [
-                                      Center(
-                                        child: Text(
-                                          _getSelectedCategoryText(homeCont),
-                                          style: TextStyle(
-                                              fontSize: 13..sp,
-                                              fontWeight: FontWeight.w500,
-                                              color: Theme.of(context)
-                                                  .textTheme
-                                                  .titleMedium
-                                                  ?.color),
-                                          overflow: TextOverflow.ellipsis,
-                                          maxLines: 1,
-                                        ),
-                                      ),
-                                      Container(
-                                        height: 27..h,
-                                        width: 27..w,
-                                        decoration: BoxDecoration(
-                                            shape: BoxShape.circle),
-                                        child: Center(
-                                          child: SvgPicture.asset(
-                                            'assets/icons/drop.svg',
-                                            color: Theme.of(context)
-                                                .iconTheme
-                                                .color,
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () {
+                                  showDialogDropDown(context);
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.only(right: 17),
+                                  child: Container(
+                                    padding:
+                                        EdgeInsets.symmetric(horizontal: 10),
+                                    height: 40..h,
+                                    // width: 98..w,
+                                    decoration: BoxDecoration(
+                                        color: AppColors.k0xFFD9D9D9
+                                            .withOpacity(.5),
+                                        borderRadius:
+                                            BorderRadius.circular(60)),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Center(
+                                            child: Text(
+                                              _getSelectedCategoryText(
+                                                  homeCont),
+                                              style: TextStyle(
+                                                  fontSize: 13..sp,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: Theme.of(context)
+                                                      .textTheme
+                                                      .titleMedium
+                                                      ?.color),
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    ],
+                                        Container(
+                                          height: 27..h,
+                                          width: 27..w,
+                                          decoration: BoxDecoration(
+                                              shape: BoxShape.circle),
+                                          child: Center(
+                                            child: SvgPicture.asset(
+                                              'assets/icons/drop.svg',
+                                              color: Theme.of(context)
+                                                  .iconTheme
+                                                  .color,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                Text(
+                                  '${cont.listingModelSearchList.length} ',
+                                  style: TextStyle(
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.color
+                                        ?.withValues(alpha: 0.8),
+                                    fontSize: 15..sp,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                Text(
+                                  'results'.tr,
+                                  style: TextStyle(
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.color
+                                        ?.withValues(alpha: 0.8),
+                                    fontSize: 15..sp,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
                       ),
                       SizedBox(
-                        height: 20..h,
+                        height: 8.h,
                       ),
                       // Scrollable content section
                       Expanded(
                         child: CustomScrollView(
                           controller: homeCont.searchScrollController,
                           slivers: [
-                            // Location row
+                            // Location row (non-sticky)
                             SliverToBoxAdapter(
                               child: Column(
                                 children: [
-                                  SizedBox(height: 30..h),
+                                  SizedBox(height: 8..h),
                                   Row(
                                     children: [
                                       Icon(Icons.location_on_outlined),
@@ -477,154 +510,144 @@ class _SearchState extends State<Search> {
                                               fontWeight: FontWeight.w700),
                                         ),
                                       ),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            '${cont.listingModelSearchList.length} ',
-                                            style: TextStyle(
-                                              color: Theme.of(context)
-                                                  .textTheme
-                                                  .bodyMedium
-                                                  ?.color
-                                                  ?.withValues(alpha: 0.8),
-                                              fontSize: 15..sp,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                          Text(
-                                            'results'.tr,
-                                            style: TextStyle(
-                                              color: Theme.of(context)
-                                                  .textTheme
-                                                  .bodyMedium
-                                                  ?.color
-                                                  ?.withValues(alpha: 0.8),
-                                              fontSize: 15..sp,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
                                     ],
                                   ),
-                                  SizedBox(height: 33..h),
-                                  // Sort button row
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                  SizedBox(height: 8.h),
+                                ],
+                              ),
+                            ),
+                            // Sticky header with results count and sort buttons
+                            SliverPersistentHeader(
+                              pinned: true,
+                              delegate: _StickyHeaderDelegate(
+                                minHeight: 80..h,
+                                maxHeight: 80..h,
+                                child: Container(
+                                  color:
+                                      Theme.of(context).scaffoldBackgroundColor,
+                                  child: Column(
                                     children: [
-                                      Container(
-                                        height: 49..h,
-                                        width: 134..w,
-                                        decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(60),
-                                            border: Border.all(
-                                              color: Theme.of(context)
-                                                  .dividerColor,
-                                              width: 1,
-                                            )),
-                                        child: Row(
-                                          children: [
-                                            GestureDetector(
-                                              onTap: () {
-                                                toggleView(false);
-                                              },
-                                              child: Container(
-                                                padding: EdgeInsets.all(10),
-                                                height: 49..h,
-                                                width: 66..w,
-                                                decoration: BoxDecoration(
-                                                  borderRadius:
-                                                      BorderRadius.only(
-                                                          bottomLeft:
-                                                              Radius.circular(
-                                                                  60),
-                                                          topLeft:
-                                                              Radius.circular(
-                                                                  60)),
-                                                  color: isListView
-                                                      ? Colors.transparent
-                                                      : Theme.of(context)
-                                                          .primaryColor,
+                                      // Results count row
+
+                                      SizedBox(height: 8.h),
+                                      // Sort button row
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Container(
+                                            height: 49..h,
+                                            width: 134..w,
+                                            decoration: BoxDecoration(
+                                                borderRadius:
+                                                    BorderRadius.circular(60),
+                                                border: Border.all(
+                                                  color: Theme.of(context)
+                                                      .dividerColor,
+                                                  width: 1,
+                                                )),
+                                            child: Row(
+                                              children: [
+                                                GestureDetector(
+                                                  onTap: () {
+                                                    toggleView(false);
+                                                  },
+                                                  child: Container(
+                                                    padding: EdgeInsets.all(10),
+                                                    height: 49..h,
+                                                    width: 66..w,
+                                                    decoration: BoxDecoration(
+                                                      borderRadius:
+                                                          BorderRadius.only(
+                                                              bottomLeft: Radius
+                                                                  .circular(60),
+                                                              topLeft: Radius
+                                                                  .circular(
+                                                                      60)),
+                                                      color: isListView
+                                                          ? Colors.transparent
+                                                          : Theme.of(context)
+                                                              .primaryColor,
+                                                    ),
+                                                    child: SvgPicture.asset(
+                                                      'assets/icons/category.svg',
+                                                      color: isListView
+                                                          ? Theme.of(context)
+                                                              .textTheme
+                                                              .bodyLarge
+                                                              ?.color
+                                                          : Theme.of(context)
+                                                              .colorScheme
+                                                              .onPrimary,
+                                                    ),
+                                                  ),
                                                 ),
-                                                child: SvgPicture.asset(
-                                                  'assets/icons/category.svg',
-                                                  color: isListView
-                                                      ? Theme.of(context)
-                                                          .textTheme
-                                                          .bodyLarge
-                                                          ?.color
-                                                      : Theme.of(context)
-                                                          .colorScheme
-                                                          .onPrimary,
+                                                GestureDetector(
+                                                  onTap: () {
+                                                    toggleView(true);
+                                                  },
+                                                  child: Container(
+                                                    padding: EdgeInsets.all(10),
+                                                    height: 49..h,
+                                                    width: 66..w,
+                                                    decoration: BoxDecoration(
+                                                      borderRadius:
+                                                          BorderRadius.only(
+                                                              bottomRight:
+                                                                  Radius
+                                                                      .circular(
+                                                                          60),
+                                                              topRight: Radius
+                                                                  .circular(
+                                                                      60)),
+                                                      color: isListView
+                                                          ? Theme.of(context)
+                                                              .primaryColor
+                                                          : Colors.transparent,
+                                                    ),
+                                                    child: SvgPicture.asset(
+                                                      'assets/icons/list1.svg',
+                                                      color: isListView
+                                                          ? Theme.of(context)
+                                                              .colorScheme
+                                                              .onPrimary
+                                                          : Theme.of(context)
+                                                              .textTheme
+                                                              .bodyLarge
+                                                              ?.color,
+                                                    ),
+                                                  ),
                                                 ),
-                                              ),
+                                              ],
                                             ),
-                                            GestureDetector(
-                                              onTap: () {
-                                                toggleView(true);
-                                              },
-                                              child: Container(
-                                                padding: EdgeInsets.all(10),
-                                                height: 49..h,
-                                                width: 66..w,
-                                                decoration: BoxDecoration(
+                                          ),
+                                          GestureDetector(
+                                            onTap: () {
+                                              _showSortBottomSheet(context);
+                                            },
+                                            child: Container(
+                                              padding: EdgeInsets.all(10),
+                                              height: 49..h,
+                                              decoration: BoxDecoration(
+                                                  border: Border.all(
+                                                    color: Theme.of(context)
+                                                        .dividerColor,
+                                                    width: 1,
+                                                  ),
                                                   borderRadius:
-                                                      BorderRadius.only(
-                                                          bottomRight:
-                                                              Radius.circular(
-                                                                  60),
-                                                          topRight:
-                                                              Radius.circular(
-                                                                  60)),
-                                                  color: isListView
-                                                      ? Theme.of(context)
-                                                          .primaryColor
-                                                      : Colors.transparent,
-                                                ),
-                                                child: SvgPicture.asset(
-                                                  'assets/icons/list1.svg',
-                                                  color: isListView
-                                                      ? Theme.of(context)
-                                                          .colorScheme
-                                                          .onPrimary
-                                                      : Theme.of(context)
-                                                          .textTheme
-                                                          .bodyLarge
-                                                          ?.color,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      GestureDetector(
-                                        onTap: () {
-                                          _showSortBottomSheet(context);
-                                        },
-                                        child: Container(
-                                          padding: EdgeInsets.all(10),
-                                          height: 49..h,
-                                          decoration: BoxDecoration(
-                                              border: Border.all(
-                                                color: Theme.of(context)
-                                                    .dividerColor,
-                                                width: 1,
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(60)),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceAround,
-                                            children: [
-                                              Container(
-                                                height: 24..h,
-                                                width: 24..w,
-                                                child: SvgPicture.asset(
-                                                    'assets/icons/sort.svg',
-                                                    colorFilter:
-                                                        ColorFilter.mode(
+                                                      BorderRadius.circular(
+                                                          60)),
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceAround,
+                                                children: [
+                                                  Container(
+                                                    height: 24..h,
+                                                    width: 24..w,
+                                                    child: SvgPicture.asset(
+                                                        'assets/icons/sort.svg',
+                                                        colorFilter: ColorFilter.mode(
                                                             Theme.of(context)
                                                                     .iconTheme
                                                                     .color ??
@@ -635,25 +658,28 @@ class _SearchState extends State<Search> {
                                                                     ?.color ??
                                                                 Colors.black,
                                                             BlendMode.srcIn)),
+                                                  ),
+                                                  Text(
+                                                    'Sort'.tr,
+                                                    style: TextStyle(
+                                                        fontSize: 16..sp,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                        color: Theme.of(context)
+                                                            .textTheme
+                                                            .titleMedium
+                                                            ?.color),
+                                                  )
+                                                ],
                                               ),
-                                              Text(
-                                                'Sort'.tr,
-                                                style: TextStyle(
-                                                    fontSize: 16..sp,
-                                                    fontWeight: FontWeight.w500,
-                                                    color: Theme.of(context)
-                                                        .textTheme
-                                                        .titleMedium
-                                                        ?.color),
-                                              )
-                                            ],
-                                          ),
-                                        ),
-                                      )
+                                            ),
+                                          )
+                                        ],
+                                      ),
+                                      SizedBox(height: 8..h),
                                     ],
                                   ),
-                                  SizedBox(height: 35..h),
-                                ],
+                                ),
                               ),
                             ),
                             // Content
@@ -679,8 +705,8 @@ class _SearchState extends State<Search> {
                                         SliverGridDelegateWithFixedCrossAxisCount(
                                       crossAxisCount: 2,
                                       childAspectRatio: 0.50.r,
-                                      mainAxisSpacing: 26,
-                                      crossAxisSpacing: 34,
+                                      mainAxisSpacing: 15,
+                                      crossAxisSpacing: 10,
                                     ),
                                     delegate: SliverChildBuilderDelegate(
                                       (BuildContext context, int index) {
@@ -737,16 +763,22 @@ class _SearchState extends State<Search> {
             Container(
               // height: 280..h,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10..r),
+                borderRadius: BorderRadius.circular(10.r),
                 color: Theme.of(context).cardColor,
+                border: Theme.of(context).brightness == Brightness.dark
+                    ? Border.all(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        width: 1,
+                      )
+                    : null,
                 boxShadow: [
                   BoxShadow(
-                    color: Theme.of(context)
-                        .shadowColor
-                        .withOpacity(0.5), // Shadow color
-                    offset: Offset(0, 3), // Shadow offset
-                    blurRadius: 6, // Shadow blur radius
-                    spreadRadius: 0, // Shadow spread radius
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Theme.of(context).shadowColor.withValues(alpha: 0.5),
+                    offset: Offset(0, 3),
+                    blurRadius: 6,
+                    spreadRadius: 0,
                   ),
                 ],
               ),
@@ -788,8 +820,11 @@ class _SearchState extends State<Search> {
                     ),
                   ),
                   Container(
-                    // height: 65..h,
-                    color: Theme.of(context).cardColor,
+                    decoration: BoxDecoration(
+                        color: Theme.of(context).cardColor,
+                        borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(10.r),
+                            bottomRight: Radius.circular(10.r))),
                     child: Column(
                       children: [
                         SizedBox(
@@ -918,8 +953,8 @@ class _SearchState extends State<Search> {
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           childAspectRatio: 0.50.r,
-          mainAxisSpacing: 26,
-          crossAxisSpacing: 34,
+          mainAxisSpacing: 15,
+          crossAxisSpacing: 20,
         ),
         itemBuilder: (BuildContext context, int index) {
           return GestureDetector(
@@ -1142,8 +1177,26 @@ class _SearchState extends State<Search> {
           Container(
             // height: 170..h,
             width: MediaQuery.of(context).size.width,
-            decoration:
-                BoxDecoration(borderRadius: BorderRadius.circular(10..r)),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10..r),
+              color: Theme.of(context).cardColor,
+              border: Theme.of(context).brightness == Brightness.dark
+                  ? Border.all(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      width: 1,
+                    )
+                  : null,
+              boxShadow: [
+                BoxShadow(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white.withValues(alpha: 0.1)
+                      : Theme.of(context).shadowColor.withValues(alpha: 0.5),
+                  offset: Offset(0, 3),
+                  blurRadius: 6,
+                  spreadRadius: 0,
+                ),
+              ],
+            ),
             child: Row(
               children: [
                 Expanded(
@@ -2337,7 +2390,6 @@ class _CategorySelectionDialogState extends State<CategorySelectionDialog> {
             constraints: BoxConstraints(
               maxHeight: MediaQuery.of(context).size.height * 0.8,
               maxWidth: MediaQuery.of(context).size.width * 0.9,
-              minHeight: 300.h,
               minWidth: 280.w,
             ),
             padding: EdgeInsets.all(16),
@@ -2368,6 +2420,28 @@ class _CategorySelectionDialogState extends State<CategorySelectionDialog> {
                     ),
                   ],
                 ),
+                // Instructional text for main category level
+                if (currentLevel == 0) ...[
+                  SizedBox(height: 8),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8),
+                    child: Text(
+                      'Click the title of the category if you want to see all publications within that category. Click on the arrow if you want to see publications from a specific subcategory.'
+                          .tr,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.color
+                            ?.withValues(alpha: 0.7),
+                        fontStyle: FontStyle.italic,
+                      ),
+                      textAlign: TextAlign.justify,
+                    ),
+                  ),
+                  SizedBox(height: 12),
+                ],
                 // Content
                 Flexible(
                   child: _buildContent(),
@@ -2427,15 +2501,47 @@ class _CategorySelectionDialogState extends State<CategorySelectionDialog> {
           );
         }
 
-        // For subcategories and sub-subcategories, use ListTile
-        return ListTile(
-          title: Text(
-            _getItemName(item),
-            style: TextStyle(fontSize: 16.sp),
+        // For subcategories and sub-subcategories, use themed container with ListTile
+        return Container(
+          margin: EdgeInsets.symmetric(vertical: 4),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(5),
+            border: Theme.of(context).brightness == Brightness.dark
+                ? Border.all(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    width: 1,
+                  )
+                : Border.all(
+                    color: Colors.grey.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
+            boxShadow: [
+              BoxShadow(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : Colors.black.withValues(alpha: 0.1),
+                blurRadius: 2,
+              )
+            ],
+            color: Theme.of(context).cardColor,
           ),
-          onTap: () => _selectItem(item, index),
-          trailing:
-              currentLevel < 2 ? Icon(Icons.arrow_forward_ios, size: 16) : null,
+          child: ListTile(
+            title: Text(
+              _getItemName(item),
+              style: TextStyle(
+                fontSize: 16.sp,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+              ),
+            ),
+            onTap: () => _selectItem(item, index),
+            trailing: currentLevel < 2
+                ? Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: Theme.of(context).iconTheme.color,
+                  )
+                : null,
+          ),
         );
       },
     );
@@ -2605,5 +2711,36 @@ class _CategorySelectionDialogState extends State<CategorySelectionDialog> {
     // Trigger search with new filters
     Get.log("Triggering search with category filter...");
     homeCont.getListingSearch();
+  }
+}
+
+class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final double minHeight;
+  final double maxHeight;
+  final Widget child;
+
+  _StickyHeaderDelegate({
+    required this.minHeight,
+    required this.maxHeight,
+    required this.child,
+  });
+
+  @override
+  double get minExtent => minHeight;
+
+  @override
+  double get maxExtent => maxHeight;
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return SizedBox.expand(child: child);
+  }
+
+  @override
+  bool shouldRebuild(_StickyHeaderDelegate oldDelegate) {
+    return maxHeight != oldDelegate.maxHeight ||
+        minHeight != oldDelegate.minHeight ||
+        child != oldDelegate.child;
   }
 }

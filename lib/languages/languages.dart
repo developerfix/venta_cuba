@@ -9,6 +9,10 @@ class Languages extends Translations {
           'upload_video':
               'Record your screen while making the money transfer as we show you in the video. This will be your proof of payment if we do not receive your transaction number by SMS.',
           'please select category': 'please select category',
+          'please select subcategory': 'please select subcategory',
+          'please select sub-subcategory': 'please select sub-subcategory',
+          'Please wait for categories to load':
+              'Please wait for categories to load',
           'Select a category to post': 'Select a category to post',
           'Please select a category': 'Please select a category',
           'Please select a subcategory': 'Please select a subcategory',
@@ -206,6 +210,8 @@ class Languages extends Translations {
           "Select a Category": "Select a Category",
           "Select Category": "Select Category",
           "Select Subcategory": "Select Subcategory",
+          "Click the title of the category if you want to see all publications within that category. Click on the arrow if you want to see publications from a specific subcategory.":
+              "Click the title of the category if you want to see all publications within that category. Click on the arrow if you want to see publications from a specific subcategory.",
           "Successfully": "Successfully",
           "Select a Category From": "Select a Category From",
           "Sign in to an  existing account": "Sign in to an  existing account",
@@ -938,6 +944,11 @@ It is not allowed to use our member-to-member communication resources to send sp
           'upload_video':
               'Graba tu pantalla mientras realizas la transferencia de dinero tal como te mostramos en el video. Ese será tu comprobante de pago si no recibimos tu número de transacción por SMS.',
           'please select category': 'por favor seleccione categoría',
+          'please select subcategory': 'por favor seleccione subcategoría',
+          'please select sub-subcategory':
+              'por favor seleccione sub-subcategoría',
+          'Please wait for categories to load':
+              'Por favor espere a que se carguen las categorías',
           'Select a category to post': 'Seleccione una categoría para publicar',
           'Please select a category': 'Por favor seleccione una categoría',
           'Please select a subcategory':
@@ -1806,6 +1817,8 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
           "Select a Category": "Seleccione una categoría",
           "Select Category": "Seleccionar categoría",
           "Select Subcategory": "Seleccionar subcategoría",
+          "Click the title of the category if you want to see all publications within that category. Click on the arrow if you want to see publications from a specific subcategory.":
+              "Haz clic en el título de la categoría si quieres ver todas las publicaciones dentro de esa categoría. Haz clic en la flecha si quieres ver publicaciones de una subcategoría específica.",
           "Successfully": "exitosamente",
           "Sign in to an existing account":
               "Iniciar sesión en una cuenta existente",

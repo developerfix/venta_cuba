@@ -332,11 +332,31 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
     if (cont.selectedSubSubCategory != null) {
       return Text("${cont.selectedSubSubCategory?.name ?? 'Unknown'}");
     } else if (cont.selectedSubCategory != null) {
+      // Check if sub-subcategories are available and required
+      if (cont.subSubCategoriesModel?.data?.isNotEmpty == true) {
+        return Text('please select sub-subcategory'.tr,
+            style: TextStyle(color: Colors.grey));
+      }
       return Text("${cont.selectedSubCategory?.name ?? 'Unknown'}");
     } else if (cont.selectedCategory != null) {
-      return Text("${cont.selectedCategory?.name ?? 'Unknown'}");
+      // If category is selected but no subcategory, we need to check if subcategories should be available
+      // If we're loading subcategories OR if subcategories data is available and not empty, show hint
+      if (cont.loadingSubCategory.value == true ||
+          cont.loadingCategory.value == true ||
+          cont.subCategoriesModel?.data?.isNotEmpty == true) {
+        return Text('please select subcategory'.tr,
+            style: TextStyle(color: Colors.grey));
+      }
+      // Only show category name if subcategories are explicitly empty (not loading and empty)
+      if (cont.subCategoriesModel?.data?.isEmpty == true) {
+        return Text("${cont.selectedCategory?.name ?? 'Unknown'}");
+      }
+      // Default case: if we have a category but subcategories haven't been loaded yet, show hint
+      return Text('please select subcategory'.tr,
+          style: TextStyle(color: Colors.grey));
     } else {
-      return Text('please select category'.tr);
+      return Text('please select category'.tr,
+          style: TextStyle(color: Colors.grey));
     }
   }
 
@@ -347,18 +367,43 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
       return false;
     }
 
-    // Check if subcategories are available and required
-    if (cont.subCategoriesModel?.data?.isNotEmpty == true &&
-        cont.selectedSubCategory?.id == null) {
-      errorAlertToast("Please select a subcategory".tr);
-      return false;
+    // If category is selected, we need to ensure subcategories are loaded and validated
+    if (cont.selectedCategory != null) {
+      // If subcategories are still loading, don't allow submission
+      if (cont.loadingSubCategory.value == true ||
+          cont.loadingCategory.value == true) {
+        errorAlertToast("Please wait for categories to load".tr);
+        return false;
+      }
+
+      // If subcategories data is not loaded yet, don't allow submission
+      if (cont.subCategoriesModel == null) {
+        errorAlertToast("Please select a subcategory".tr);
+        return false;
+      }
+
+      // If subcategories exist and none is selected, require selection
+      if (cont.subCategoriesModel?.data?.isNotEmpty == true &&
+          cont.selectedSubCategory?.id == null) {
+        errorAlertToast("Please select a subcategory".tr);
+        return false;
+      }
     }
 
-    // Check if sub-subcategories are available and required
-    if (cont.subSubCategoriesModel?.data?.isNotEmpty == true &&
-        cont.selectedSubSubCategory?.id == null) {
-      errorAlertToast("Please select a sub-subcategory".tr);
-      return false;
+    // If subcategory is selected, validate sub-subcategories
+    if (cont.selectedSubCategory != null) {
+      // If sub-subcategories are still loading, don't allow submission
+      if (cont.loadingSubSubCategory.value == true) {
+        errorAlertToast("Please wait for categories to load".tr);
+        return false;
+      }
+
+      // If sub-subcategories exist and none is selected, require selection
+      if (cont.subSubCategoriesModel?.data?.isNotEmpty == true &&
+          cont.selectedSubSubCategory?.id == null) {
+        errorAlertToast("Please select a sub-subcategory".tr);
+        return false;
+      }
     }
 
     return true;
@@ -2747,6 +2792,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                               errorAlertToast(
                                                   "Please Enter Description"
                                                       .tr);
+                                            } else if (!_validateCategorySelection(
+                                                cont)) {
+                                              // Category validation with specific error messages
+                                              return;
                                             } else {
                                               cont.editListing(context);
                                             }

@@ -158,8 +158,8 @@ class _FavouriteSellerState extends State<FavouriteSeller> {
                                 SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 2,
                               childAspectRatio: 1.71 / 3,
-                              mainAxisSpacing: 26,
-                              crossAxisSpacing: 34,
+                              mainAxisSpacing: 15,
+                              crossAxisSpacing: 10,
                             ),
                             itemBuilder: (BuildContext context, int index) {
                               return GestureDetector(
@@ -212,52 +212,60 @@ class _FavouriteSellerState extends State<FavouriteSeller> {
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceBetween,
                                           children: [
-                                            Container(
-                                              height: 180..h,
-                                              width: MediaQuery.of(context)
-                                                  .size
-                                                  .width,
-                                              child: CachedNetworkImage(
+                                            ClipRRect(
+                                              borderRadius: BorderRadius.only(
+                                                  topLeft:
+                                                      Radius.circular(10.r),
+                                                  topRight:
+                                                      Radius.circular(10.r)),
+                                              child: Container(
                                                 height: 180..h,
                                                 width: MediaQuery.of(context)
                                                     .size
                                                     .width,
-                                                imageUrl: cont
-                                                            .favouriteSellerModel
-                                                            .data![index]
-                                                            .type ==
-                                                        "Personal"
-                                                    ? "${cont.favouriteSellerModel.data![index].profileImage}"
-                                                    : "${cont.favouriteSellerModel.data![index].businessLogo}",
-                                                imageBuilder:
-                                                    (context, imageProvider) =>
-                                                        Container(
+                                                child: CachedNetworkImage(
                                                   height: 180..h,
                                                   width: MediaQuery.of(context)
                                                       .size
                                                       .width,
-                                                  decoration: BoxDecoration(
-                                                    image: DecorationImage(
-                                                      image: imageProvider,
-                                                      fit: BoxFit.cover,
-                                                    ),
-                                                  ),
-                                                ),
-                                                placeholder: (context, url) =>
-                                                    SizedBox(
-                                                        height: 180..h,
-                                                        width: MediaQuery.of(
-                                                                context)
+                                                  imageUrl: cont
+                                                              .favouriteSellerModel
+                                                              .data![index]
+                                                              .type ==
+                                                          "Personal"
+                                                      ? "${cont.favouriteSellerModel.data![index].profileImage}"
+                                                      : "${cont.favouriteSellerModel.data![index].businessLogo}",
+                                                  imageBuilder: (context,
+                                                          imageProvider) =>
+                                                      Container(
+                                                    height: 180..h,
+                                                    width:
+                                                        MediaQuery.of(context)
                                                             .size
                                                             .width,
-                                                        child: Center(
-                                                            child:
-                                                                CircularProgressIndicator(
-                                                          strokeWidth: 2,
-                                                        ))),
-                                                errorWidget:
-                                                    (context, url, error) =>
-                                                        Icon(Icons.error),
+                                                    decoration: BoxDecoration(
+                                                      image: DecorationImage(
+                                                        image: imageProvider,
+                                                        fit: BoxFit.cover,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  placeholder: (context, url) =>
+                                                      SizedBox(
+                                                          height: 180..h,
+                                                          width: MediaQuery.of(
+                                                                  context)
+                                                              .size
+                                                              .width,
+                                                          child: Center(
+                                                              child:
+                                                                  CircularProgressIndicator(
+                                                            strokeWidth: 2,
+                                                          ))),
+                                                  errorWidget:
+                                                      (context, url, error) =>
+                                                          Icon(Icons.error),
+                                                ),
                                               ),
                                             ),
                                             Container(

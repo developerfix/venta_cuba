@@ -11,6 +11,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart' as map;
 
 import 'package:lottie/lottie.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:venta_cuba/Controllers/theme_controller.dart';
 import 'package:venta_cuba/view/Chat/Controller/ChatController.dart';
 import 'package:venta_cuba/view/Chat/custom_text.dart';
 import 'package:venta_cuba/view/Navigation%20bar/post.dart';
@@ -1335,7 +1336,7 @@ class _FrameScreenState extends State<FrameScreen> {
                   right: 20,
                   child: Container(
                     // height: 150.h,
-                    color: Theme.of(context).cardColor,
+                    color: Theme.of(context).scaffoldBackgroundColor,
                     child: Column(
                       children: [
                         Divider(),

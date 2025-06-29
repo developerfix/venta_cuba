@@ -35,8 +35,8 @@ class ListingView extends StatelessWidget {
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
             childAspectRatio: 0.50.r,
-            mainAxisSpacing: 25,
-            crossAxisSpacing: 25,
+            mainAxisSpacing: 15,
+            crossAxisSpacing: 10,
           ),
           itemBuilder: (BuildContext context, int index) {
             if (index == shuffledList.length) {
