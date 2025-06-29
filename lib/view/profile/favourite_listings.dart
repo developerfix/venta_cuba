@@ -191,10 +191,24 @@ class _FavouriteListingsState extends State<FavouriteListings> {
                                           borderRadius:
                                               BorderRadius.circular(10..r),
                                           color: Theme.of(context).cardColor,
+                                          border: Theme.of(context)
+                                                      .brightness ==
+                                                  Brightness.dark
+                                              ? Border.all(
+                                                  color: Colors.white
+                                                      .withValues(alpha: 0.2),
+                                                  width: 1,
+                                                )
+                                              : null,
                                           boxShadow: [
                                             BoxShadow(
-                                              color:
-                                                  Colors.grey.withOpacity(0.5),
+                                              color: Theme.of(context)
+                                                          .brightness ==
+                                                      Brightness.dark
+                                                  ? Colors.white
+                                                      .withValues(alpha: 0.1)
+                                                  : Colors.grey
+                                                      .withValues(alpha: 0.5),
                                               offset: Offset(0, 3),
                                               blurRadius: 6,
                                               spreadRadius: 0,

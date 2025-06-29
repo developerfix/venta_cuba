@@ -60,9 +60,19 @@ class ListingView extends StatelessWidget {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10.r),
                       color: Theme.of(context).cardColor,
+                      border: Theme.of(context).brightness == Brightness.dark
+                          ? Border.all(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              width: 1,
+                            )
+                          : null,
                       boxShadow: [
                         BoxShadow(
-                          color: Theme.of(context).shadowColor.withOpacity(0.5),
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white.withValues(alpha: 0.1)
+                              : Theme.of(context)
+                                  .shadowColor
+                                  .withValues(alpha: 0.5),
                           offset: Offset(0, 3),
                           blurRadius: 6,
                           spreadRadius: 0,

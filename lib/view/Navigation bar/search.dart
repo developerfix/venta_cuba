@@ -939,11 +939,19 @@ class _SearchState extends State<Search> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10..r),
                       color: Theme.of(context).cardColor,
+                      border: Theme.of(context).brightness == Brightness.dark
+                          ? Border.all(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              width: 1,
+                            )
+                          : null,
                       boxShadow: [
                         BoxShadow(
-                          color: Theme.of(context)
-                              .shadowColor
-                              .withOpacity(0.5), // Shadow color
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white.withValues(alpha: 0.1)
+                              : Theme.of(context)
+                                  .shadowColor
+                                  .withValues(alpha: 0.5), // Shadow color
                           offset: Offset(0, 3), // Shadow offset
                           blurRadius: 6, // Shadow blur radius
                           spreadRadius: 0, // Shadow spread radius
@@ -2326,10 +2334,15 @@ class _CategorySelectionDialogState extends State<CategorySelectionDialog> {
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Container(
-            height: 400.h,
-            width: 300.w,
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.8,
+              maxWidth: MediaQuery.of(context).size.width * 0.9,
+              minHeight: 300.h,
+              minWidth: 280.w,
+            ),
             padding: EdgeInsets.all(16),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 // Header with back button and title
                 Row(
@@ -2356,7 +2369,7 @@ class _CategorySelectionDialogState extends State<CategorySelectionDialog> {
                   ],
                 ),
                 // Content
-                Expanded(
+                Flexible(
                   child: _buildContent(),
                 ),
               ],

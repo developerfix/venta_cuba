@@ -15,9 +15,17 @@ class ProfileList extends StatelessWidget {
       width: MediaQuery.of(context).size.width,
       decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(5),
+          border: Theme.of(context).brightness == Brightness.dark
+              ? Border.all(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  width: 1,
+                )
+              : null,
           boxShadow: [
             BoxShadow(
-              color: AppColors.black.withOpacity(.4),
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : AppColors.black.withValues(alpha: 0.4),
               blurRadius: 5,
             )
           ],

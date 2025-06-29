@@ -382,7 +382,8 @@ class _ProfileState extends State<Profile> {
                                               style: TextStyle(
                                                   fontSize: 16..sp,
                                                   fontWeight: FontWeight.w500,
-                                                  color: AppColors.k1xFF403C3C),
+                                                  color:
+                                                      AppColors.textSecondary),
                                             ),
                                           );
                                         },

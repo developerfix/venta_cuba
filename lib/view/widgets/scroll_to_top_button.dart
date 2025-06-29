@@ -72,21 +72,17 @@ class _ScrollToTopButtonState extends State<ScrollToTopButton> {
           opacity: _showButton ? 1.0 : 0.0,
           duration: const Duration(milliseconds: 300),
           child: _showButton
-              ? Positioned(
-                  bottom: 20,
-                  right: 20,
-                  child: FloatingActionButton(
-                    onPressed: _scrollToTop,
-                    backgroundColor:
-                        widget.backgroundColor ?? AppColors.k0xFF0254B8,
-                    child: Icon(
-                      Icons.keyboard_arrow_up,
-                      color: Colors.white,
-                      size: widget.size ?? 24,
-                    ),
-                    mini: true,
-                    elevation: 4,
+              ? FloatingActionButton(
+                  onPressed: _scrollToTop,
+                  backgroundColor:
+                      widget.backgroundColor ?? AppColors.k0xFF0254B8,
+                  child: Icon(
+                    Icons.keyboard_arrow_up,
+                    color: Colors.white,
+                    size: widget.size ?? 24,
                   ),
+                  mini: true,
+                  elevation: 4,
                 )
               : const SizedBox.shrink(),
         ));

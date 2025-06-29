@@ -121,11 +121,25 @@ class _SubSubCategoriesState extends State<SubSubCategories> {
                                             borderRadius:
                                                 BorderRadius.circular(10..r),
                                             color: Theme.of(context).cardColor,
+                                            border: Theme.of(context)
+                                                        .brightness ==
+                                                    Brightness.dark
+                                                ? Border.all(
+                                                    color: Colors.white
+                                                        .withValues(alpha: 0.2),
+                                                    width: 1,
+                                                  )
+                                                : null,
                                             boxShadow: [
                                               BoxShadow(
                                                 color: Theme.of(context)
-                                                    .shadowColor
-                                                    .withValues(alpha: 0.1),
+                                                            .brightness ==
+                                                        Brightness.dark
+                                                    ? Colors.white
+                                                        .withValues(alpha: 0.1)
+                                                    : Theme.of(context)
+                                                        .shadowColor
+                                                        .withValues(alpha: 0.1),
                                                 // Shadow color
                                                 offset: Offset(0, 3),
                                                 // Shadow offset

@@ -1405,9 +1405,7 @@ class _FrameScreenState extends State<FrameScreen> {
                                                     overflow:
                                                         TextOverflow.ellipsis,
                                                     fontWeight: FontWeight.w500,
-                                                    color: Theme.of(context)
-                                                        .colorScheme
-                                                        .onPrimary),
+                                                    color: Colors.white),
                                               ),
                                             ),
                                           ),
@@ -1483,9 +1481,7 @@ class _FrameScreenState extends State<FrameScreen> {
                                                             .ellipsis,
                                                         fontWeight:
                                                             FontWeight.w500,
-                                                        color: Theme.of(context)
-                                                            .colorScheme
-                                                            .onPrimary),
+                                                        color: Colors.white),
                                                   ),
                                                 ),
                                               ),
@@ -1578,9 +1574,7 @@ class _FrameScreenState extends State<FrameScreen> {
                                 style: TextStyle(
                                     fontSize: 17..sp,
                                     fontWeight: FontWeight.w500,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onPrimary),
+                                    color: Colors.white),
                               ),
                             ),
                           ),

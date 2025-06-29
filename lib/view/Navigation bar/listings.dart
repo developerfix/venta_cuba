@@ -393,7 +393,7 @@ class _ListingsState extends State<Listings> {
                                                                               ..sp,
                                                                             fontWeight:
                                                                                 FontWeight.w600,
-                                                                            color: Colors.black),
+                                                                            color: AppColors.textPrimary),
                                                                       ),
                                                                     ),
                                                                     SelectionArea(
@@ -407,7 +407,7 @@ class _ListingsState extends State<Listings> {
                                                                               ..sp,
                                                                             fontWeight:
                                                                                 FontWeight.w400,
-                                                                            color: AppColors.k0xFF403C3C),
+                                                                            color: AppColors.textSecondary),
                                                                       ),
                                                                     ),
                                                                     SelectionArea(
@@ -426,7 +426,7 @@ class _ListingsState extends State<Listings> {
                                                                               ..sp,
                                                                             fontWeight:
                                                                                 FontWeight.w400,
-                                                                            color: AppColors.k0xFF403C3C),
+                                                                            color: AppColors.textSecondary),
                                                                       ),
                                                                     ),
                                                                     SelectionArea(
