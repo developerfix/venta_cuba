@@ -12,7 +12,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
 import 'package:venta_cuba/Controllers/location_controller.dart';
-import 'package:venta_cuba/Notification/firebase_messaging.dart';
+
 import 'package:venta_cuba/Models/AllPromoCodesModel.dart';
 import 'package:venta_cuba/Models/CheckUserPackageModle.dart';
 import 'package:venta_cuba/Models/ListingModel.dart';
@@ -24,7 +24,7 @@ import 'package:venta_cuba/view/Navigation%20bar/post.dart';
 import 'package:venta_cuba/view/Navigation%20bar/subCategory.dart';
 import 'package:venta_cuba/view/frame/frame.dart';
 import 'package:venta_cuba/view/payment/VideoPalyScreen.dart';
-import '../Models/AllNotificationModel.dart';
+
 import '../Models/AllPackagesModel.dart';
 import '../Models/CategoriesModel.dart';
 import '../Models/CategoriesModel.dart' as ctg;
@@ -41,7 +41,7 @@ import '../api/api_client.dart';
 import '../view/PromoCodesScreen/PromoCodesScreen.dart';
 import '../view/category/SubSubCategories.dart';
 import '../view/category/category_from.dart';
-import '../view/notification/notification.dart';
+
 import '../view/profile/favourite_listings.dart';
 import '../view/profile/favourite_seller.dart';
 import '../view/profile/my_public_page.dart';
@@ -88,8 +88,6 @@ class HomeController extends GetxController {
   double? userRatting = 3.0;
   final authCont = Get.put(AuthController());
   List<bool> isCheckedList = [false, false, false, false, false];
-  // Added for unread notifications
-  RxBool hasUnreadNotifications = false.obs;
   ApiClient api = ApiClient(appBaseUrl: baseUrl);
   CategoriesModel? categoriesModel;
   SubCategoriesModel? subCategoriesModel;
@@ -123,7 +121,6 @@ class HomeController extends GetxController {
   FavouriteSellerModel favouriteSellerModel = FavouriteSellerModel();
   AllPackagesModel? allPackagesModel;
   SellerDetailsModel? sellerDetailsModel;
-  int? notificationId;
   String? lat = "23.124792615936276";
   String? lng = '-82.38597269330762';
   String? lat1;
@@ -183,102 +180,6 @@ class HomeController extends GetxController {
     Get.log("Scroll controller reset");
   }
 
-  Future<void> saveLastNotificationViewTime() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    await prefs.setString(
-        'lastNotificationViewTime', DateTime.now().toString());
-
-    // Clear the notification indicator immediately
-    hasUnreadNotifications.value = false;
-    print('🔥 ✅ Notification indicator cleared after viewing notifications');
-
-    // Reset badge count when notifications are viewed
-    try {
-      await FCM.resetBadgeCount();
-      print('🔥 Badge count reset after viewing notifications');
-    } catch (e) {
-      print('🔥 Error resetting badge count: $e');
-    }
-
-    update();
-  }
-
-  // Update notification indicators for UI
-  Future<void> updateNotificationIndicators() async {
-    try {
-      // Check if user is logged in
-      if (authCont.user?.accessToken == null ||
-          authCont.user?.accessToken == "") {
-        hasUnreadNotifications.value = false;
-        update();
-        return;
-      }
-
-      // If no notifications data, set to false
-      if (allNotificationModel?.data == null ||
-          allNotificationModel!.data!.isEmpty) {
-        hasUnreadNotifications.value = false;
-        print('🔥 ✅ No notifications available, indicator set to false');
-        update();
-        return;
-      }
-
-      String? lastViewTimeStr = await getLastNotificationViewTime();
-
-      if (lastViewTimeStr != null) {
-        DateTime lastViewTime = DateTime.parse(lastViewTimeStr);
-        bool hasUnread = false;
-
-        for (var notification in allNotificationModel!.data!) {
-          if (notification.timestamp != null) {
-            try {
-              // Parse API timestamp as UTC (assuming server sends UTC) and convert to local
-              DateTime notificationTime;
-              if (notification.timestamp!.endsWith('Z')) {
-                notificationTime =
-                    DateTime.parse(notification.timestamp!).toLocal();
-              } else {
-                notificationTime =
-                    DateTime.parse(notification.timestamp! + 'Z').toLocal();
-              }
-
-              if (notificationTime.isAfter(lastViewTime)) {
-                hasUnread = true;
-                break;
-              }
-            } catch (e) {
-              print(
-                  '🔥 Error parsing notification timestamp: ${notification.timestamp}');
-              // If we can't parse the timestamp, consider it as unread to be safe
-              hasUnread = true;
-              break;
-            }
-          }
-        }
-
-        hasUnreadNotifications.value = hasUnread;
-        print('🔥 ✅ Notification indicator updated: $hasUnread');
-      } else {
-        // If no last view time, all notifications are considered unread
-        hasUnreadNotifications.value = true;
-        print(
-            '🔥 ✅ No last view time found, all notifications considered unread');
-      }
-
-      update();
-    } catch (e) {
-      print('🔥 ❌ Error updating notification indicators: $e');
-      hasUnreadNotifications.value = false;
-      update();
-    }
-  }
-
-  Future<String?> getLastNotificationViewTime() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString('lastNotificationViewTime');
-  }
-
   Future<void> homeData() async {
     try {
       await loadLastLocationAndRadius();
@@ -290,7 +191,6 @@ class HomeController extends GetxController {
         hasMore.value = true;
         await getCategories();
         await getListing();
-        await getAllNotifications(silent: true);
         // Load favorite sellers list silently to ensure it's available for checking
         await _loadFavoriteSellersSilently();
         saveLocationAndRadius();
@@ -795,148 +695,6 @@ class HomeController extends GetxController {
     }
   }
 
-  AllNotificationModel? allNotificationModel;
-
-  Future getAllNotifications({bool silent = false}) async {
-    Response response = await api.postWithForm("api/getAllNotifications", {},
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Accept': 'application/json',
-          'Access-Control-Allow-Origin': "*",
-          'Authorization': 'Bearer ${authCont.user?.accessToken}'
-        },
-        showdialog: !silent);
-    if (response.statusCode == 200) {
-      print('notyyyyyy response.body:${response.body}');
-      allNotificationModel = AllNotificationModel.fromJson(response.body);
-      if (!silent) {
-        print('notyyyyyy not silent');
-        // Navigate to notification screen first
-        Get.to(NotificationScreen());
-        // Save last viewed time and clear red dot
-        await saveLastNotificationViewTime();
-      } else {
-        print('notyyyyyy silent');
-
-        String? lastViewTimeStr = await getLastNotificationViewTime();
-
-        if (lastViewTimeStr != null) {
-          // Parse last view time as local time
-          DateTime lastViewLocal = DateTime.parse(lastViewTimeStr);
-          print('notyyyyyy getLastNotificationViewTime:${lastViewLocal}');
-
-          bool hasUnread = allNotificationModel?.data?.any((notif) {
-                if (notif.timestamp == null) return false;
-                try {
-                  // Parse API timestamp as UTC (assuming server sends UTC)
-                  DateTime notifTimeUtc =
-                      DateTime.parse(notif.timestamp! + 'Z');
-                  // Convert UTC to local time
-                  DateTime notifTimeLocal = notifTimeUtc.toLocal();
-                  // Compare with last view time (both now in local time)
-                  print('notyyyyyy notifTimeLocal:${notifTimeLocal}');
-                  return notifTimeLocal.isAfter(lastViewLocal);
-                } catch (e) {
-                  print('Error parsing timestamp: $e');
-                  return false;
-                }
-              }) ??
-              false;
-
-          hasUnreadNotifications.value = hasUnread;
-          print('notyyyyyy hasUnreadNotifications:${hasUnreadNotifications}');
-
-          // Update badge count based on actual unread notifications
-          await updateBadgeCountFromNotifications();
-        } else {
-          hasUnreadNotifications.value =
-              allNotificationModel?.data?.isNotEmpty ?? false;
-          // Update badge count based on actual unread notifications
-          await updateBadgeCountFromNotifications();
-        }
-        update();
-      }
-    } else {
-      if (!silent) {
-        errorAlertToast('Something went wrong\nPlease try again!'.tr);
-      }
-    }
-  }
-
-  // Update badge count based on actual unread notifications
-  Future<void> updateBadgeCountFromNotifications() async {
-    try {
-      int unreadCount = 0;
-
-      if (allNotificationModel?.data != null) {
-        String? lastViewTimeStr = await getLastNotificationViewTime();
-
-        if (lastViewTimeStr != null) {
-          DateTime lastViewLocal = DateTime.parse(lastViewTimeStr);
-
-          unreadCount = allNotificationModel!.data!.where((notif) {
-            if (notif.timestamp == null) return false;
-            try {
-              DateTime notifTimeUtc = DateTime.parse(notif.timestamp! + 'Z');
-              DateTime notifTimeLocal = notifTimeUtc.toLocal();
-              return notifTimeLocal.isAfter(lastViewLocal);
-            } catch (e) {
-              return false;
-            }
-          }).length;
-        } else {
-          unreadCount = allNotificationModel!.data!.length;
-        }
-      }
-
-      // Update badge count
-      await FCM.setBadgeCount(unreadCount);
-      print('🔥 Badge count updated to: $unreadCount unread notifications');
-    } catch (e) {
-      print('🔥 Error updating badge count from notifications: $e');
-    }
-  }
-
-  Future<bool> deleteNotification() async {
-    Response response = await api.postWithForm(
-        "api/deleteNotification",
-        {
-          'notification_id': notificationId,
-        },
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Accept': 'application/json',
-          'Access-Control-Allow-Origin': "*",
-          'Authorization': 'Bearer ${authCont.user?.accessToken}'
-        },
-        showdialog: false);
-    if (response.statusCode == 200) {
-      errorAlertToast('Notification Delete Successfully'.tr);
-      return true;
-    } else {
-      errorAlertToast('Something went wrong\nPlease try again!'.tr);
-      return false;
-    }
-  }
-
-  Future readNotification() async {
-    Response response = await api.postWithForm(
-        "api/readNotification", {'notification_id': notificationId},
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Accept': 'application/json',
-          'Access-Control-Allow-Origin': "*",
-          'Authorization': 'Bearer ${authCont.user?.accessToken}'
-        },
-        showdialog: true);
-    if (response.statusCode == 200) {
-      Get.back();
-      errorAlertToast('Notification Delete Successfully'.tr);
-    } else {
-      errorAlertToast('Something went wrong\nPlease try again!'.tr);
-    }
-  }
-
   Future<bool> deleteListing() async {
     Response response = await api.postWithForm(
         "api/deleteListing",
@@ -955,6 +713,89 @@ class HomeController extends GetxController {
       return true;
     } else {
       errorAlertToast('Something went wrong\nPlease try again!'.tr);
+      return false;
+    }
+  }
+
+  /// Delete all listings for current tab (active, inactive, or sold)
+  Future<bool> deleteAllListings() async {
+    try {
+      // Get current account type for filtering
+      String currentAccountType = authCont.isBusinessAccount ? "1" : "0";
+
+      // Filter listings based on current account type and current tab
+      List<ListingModel> listingsToDelete = userListingModelList
+          .where((listing) => listing.businessStatus == currentAccountType)
+          .toList();
+
+      if (listingsToDelete.isEmpty) {
+        return true; // Nothing to delete
+      }
+
+      print("Deleting ${listingsToDelete.length} listings concurrently...");
+
+      // Make ALL API calls concurrently for super fast deletion
+      List<Future<bool>> futures = listingsToDelete.map((listing) async {
+        try {
+          if (listing.id == null) {
+            print("Skipping listing with null id");
+            return false;
+          }
+
+          Response response = await api.postWithForm(
+              "api/deleteListing",
+              {
+                'listing_id': listing.id,
+              },
+              headers: {
+                'Content-Type': 'application/json; charset=UTF-8',
+                'Accept': 'application/json',
+                'Access-Control-Allow-Origin': "*",
+                'Authorization': 'Bearer ${authCont.user?.accessToken}'
+              },
+              showdialog: false);
+
+          if (response.statusCode == 200) {
+            print("Successfully deleted listing ${listing.id}");
+            return true;
+          } else {
+            print(
+                "Failed to delete listing ${listing.id}: ${response.statusCode}");
+            return false;
+          }
+        } catch (e) {
+          print("Error deleting listing ${listing.id}: $e");
+          return false;
+        }
+      }).toList();
+
+      // Wait for ALL requests to complete simultaneously
+      List<bool> results = await Future.wait(futures);
+      int successCount = results.where((success) => success).length;
+
+      // Remove successfully deleted listings from local list
+      if (successCount > 0) {
+        userListingModelList.removeWhere(
+            (listing) => listing.businessStatus == currentAccountType);
+
+        // Update the counters
+        if (authCont.isBusinessAccount) {
+          bussinessPostCount = userListingModelList
+              .where((listing) => listing.businessStatus == "1")
+              .length;
+        } else {
+          personalAcountPost = userListingModelList
+              .where((listing) => listing.businessStatus == "0")
+              .length;
+        }
+
+        update(); // Trigger UI rebuild
+      }
+
+      print("Deleted $successCount out of ${listingsToDelete.length} listings");
+      return successCount > 0; // Return true if at least one was deleted
+    } catch (e) {
+      print("Error deleting all listings: $e");
       return false;
     }
   }
@@ -1167,13 +1008,17 @@ class HomeController extends GetxController {
         selectedSubSubCategory = null;
         selectedCurrency = 'USD';
         authCont.currentIndexBottomAppBar = 3;
+
+        // Refresh listings data after successful post creation
+        status = "active";
+        soldStatus = null;
+
         Get.offAll(Navigation_Bar());
         errorAlertToast('Post Add Successfully'.tr);
       }
     } else {
       errorAlertToast('Something went wrong\nPlease try again!'.tr);
     }
-    getAllNotifications(silent: true);
   }
 
   Future editListing(BuildContext context) async {
@@ -1249,6 +1094,11 @@ class HomeController extends GetxController {
       selectedSubCategory = null;
       selectedCurrency = 'USD';
       selectedSubSubCategory = null;
+
+      // Refresh listings data after successful post edit
+      status = "active";
+      soldStatus = null;
+
       Get.offAll(Navigation_Bar());
       errorAlertToast('Post Add Successfully'.tr);
     } else {
@@ -1504,59 +1354,92 @@ class HomeController extends GetxController {
   int personalAcountPost = 0;
   int bussinessPostCount = 0;
 
+  // Add a flag to prevent concurrent calls
+  bool _isLoadingListings = false;
+
   Future getSellerListingByStatus() async {
-    personalAcountPost = 0;
-    bussinessPostCount = 0;
-
-    fetchAccountType();
-    Map<String, dynamic> data = {};
-    if (status != null) {
-      data.addAll({'status': status});
-    } else if (soldStatus != null) {
-      data.addAll({'sold_status': soldStatus});
+    // Prevent concurrent calls
+    if (_isLoadingListings) {
+      print('getSellerListingByStatus already in progress, skipping...');
+      return;
     }
-    Response response = await api.postWithForm(
-        "api/getSellerListingByStatus",
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Accept': 'application/json',
-          'Access-Control-Allow-Origin': "*",
-          'Authorization': 'Bearer ${authCont.user?.accessToken}'
-        },
-        data,
-        showdialog: false);
-    if (response.statusCode == 200) {
-      List<dynamic> dataListing = [];
-      dataListing.addAll(response.body['data']);
-      print('dataListing"${dataListing}');
-      userListingModelList.clear();
 
-      // Get current account type for filtering
-      String currentAccountType = authCont.isBusinessAccount ? "1" : "0";
+    _isLoadingListings = true;
 
-      dataListing.forEach((element) {
-        print('dataListing business_status${element["business_status"]}');
+    try {
+      // Reset counts before fetching new data
+      personalAcountPost = 0;
+      bussinessPostCount = 0;
 
-        // Add all listings to the list first
-        userListingModelList.add(ListingModel.fromJson(element));
+      fetchAccountType();
+      Map<String, dynamic> data = {};
+      if (status != null) {
+        data.addAll({'status': status});
+      } else if (soldStatus != null) {
+        data.addAll({'sold_status': soldStatus});
+      }
 
-        // Count only listings that match current account type
-        if (element["business_status"] == currentAccountType) {
+      print('🔥 Calling getSellerListingByStatus API with data: $data');
+
+      Response response = await api.postWithForm(
+          "api/getSellerListingByStatus",
+          headers: {
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Accept': 'application/json',
+            'Access-Control-Allow-Origin': "*",
+            'Authorization': 'Bearer ${authCont.user?.accessToken}'
+          },
+          data,
+          showdialog: false);
+
+      if (response.statusCode == 200) {
+        List<dynamic> dataListing = [];
+        dataListing.addAll(response.body['data']);
+        print('🔥 API Response: ${dataListing.length} listings received');
+
+        // Clear the list before adding new data
+        userListingModelList.clear();
+
+        // Reset counters again to ensure clean state
+        int tempBusinessCount = 0;
+        int tempPersonalCount = 0;
+
+        // Process each listing
+        dataListing.forEach((element) {
+          print('dataListing business_status${element["business_status"]}');
+
+          ListingModel listing = ListingModel.fromJson(element);
+          userListingModelList.add(listing);
+
+          // Count listings by business status
           if (element["business_status"] == "1") {
-            bussinessPostCount++;
-            print('dataListing bussinessPostCount ++"${bussinessPostCount}');
-          } else {
-            personalAcountPost++;
+            tempBusinessCount++;
+            print('dataListing bussinessPostCount ++"${tempBusinessCount}');
+          } else if (element["business_status"] == "0") {
+            tempPersonalCount++;
+            print('dataListing personalAcountPost ++"${tempPersonalCount}');
           }
-        }
-      });
-      print('dataListing"${userListingModelList}');
-      print('dataListing bussinessPostCount"${bussinessPostCount}');
-      print('dataListing personalAcountPost"${personalAcountPost}');
-      listingLoading = false;
-      update();
-    } else {
+        });
+
+        // Update the actual counters only after processing all listings
+        bussinessPostCount = tempBusinessCount;
+        personalAcountPost = tempPersonalCount;
+
+        print(
+            '🔥 Final counts - Total listings: ${userListingModelList.length}');
+        print('🔥 Final counts - Business: ${bussinessPostCount}');
+        print('🔥 Final counts - Personal: ${personalAcountPost}');
+
+        listingLoading = false;
+        update();
+      } else {
+        errorAlertToast('Something went wrong\nPlease try again!'.tr);
+      }
+    } catch (e) {
+      print('🔥 Error in getSellerListingByStatus: $e');
       errorAlertToast('Something went wrong\nPlease try again!'.tr);
+    } finally {
+      _isLoadingListings = false;
     }
   }
 

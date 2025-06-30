@@ -14,8 +14,8 @@ import 'package:flutter_svg/svg.dart';
 import 'package:venta_cuba/view/profile/become_vendor.dart';
 
 import '../../Controllers/auth_controller.dart';
+import '../../Utils/funcations.dart';
 import '../frame/frame.dart';
-import '../notification/notification.dart';
 
 class Listings extends StatefulWidget {
   const Listings({super.key});
@@ -30,8 +30,14 @@ class _ListingsState extends State<Listings> {
 
   @override
   void initState() {
-    homeCont.getSellerListingByStatus();
+    print('🔥 Listings initState() called');
     homeCont.listingLoading = true;
+
+    // Ensure we start with active tab
+    homeCont.status = "active";
+    homeCont.soldStatus = null;
+
+    homeCont.getSellerListingByStatus();
     // TODO: implement initState
     super.initState();
   }
@@ -72,49 +78,7 @@ class _ListingsState extends State<Listings> {
                     SizedBox(
                       width: 10.w,
                     ),
-                    GetBuilder<HomeController>(builder: (cont) {
-                      return GestureDetector(
-                        onTap: () {
-                          cont.getAllNotifications();
-                        },
-                        child: Container(
-                          width: 25,
-                          height: 25,
-                          child: Stack(
-                            children: [
-                              Align(
-                                alignment: Alignment.center,
-                                child: Container(
-                                  width: 20,
-                                  height: 20,
-                                  decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(20)),
-                                  child: Center(
-                                      child: SvgPicture.asset(
-                                          'assets/icons/notificationSimple.svg',
-                                          color: Theme.of(context)
-                                              .iconTheme
-                                              .color)),
-                                ),
-                              ),
-                              Obx(() => cont.hasUnreadNotifications.value
-                                  ? Positioned(
-                                      right: 5,
-                                      top: 5,
-                                      child: Container(
-                                        width: 8,
-                                        height: 8,
-                                        decoration: BoxDecoration(
-                                            color: Colors.red,
-                                            shape: BoxShape.circle),
-                                      ),
-                                    )
-                                  : SizedBox.shrink()),
-                            ],
-                          ),
-                        ),
-                      );
-                    })
+                    // Notification icon removed
                   ],
                 ),
                 SizedBox(
@@ -134,17 +98,21 @@ class _ListingsState extends State<Listings> {
                   tabAlignment: TabAlignment.center,
                   isScrollable: true,
                   onTap: (value) {
+                    print('🔥 Tab switched to index: $value');
                     homeCont.listingLoading = true;
                     homeCont.update();
                     if (value == 0) {
+                      print('🔥 Switching to Active tab');
                       homeCont.status = "active";
                       homeCont.soldStatus = null;
                       homeCont.getSellerListingByStatus();
                     } else if (value == 1) {
+                      print('🔥 Switching to Inactive tab');
                       homeCont.status = "inactive";
                       homeCont.soldStatus = null;
                       homeCont.getSellerListingByStatus();
                     } else {
+                      print('🔥 Switching to Sold tab');
                       homeCont.status = null;
                       homeCont.soldStatus = "1";
                       homeCont.getSellerListingByStatus();
@@ -224,19 +192,60 @@ class _ListingsState extends State<Listings> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      authCont.isBusinessAccount
-                                          ? CustomText(
-                                              text: cont.bussinessPostCount == 0
-                                                  ? "0 Listing".tr
-                                                  : "${cont.bussinessPostCount} ${"Listings".tr}",
-                                              fontSize: 16.sp,
-                                            )
-                                          : CustomText(
-                                              text: cont.personalAcountPost == 0
-                                                  ? "0 Listing".tr
-                                                  : "${cont.personalAcountPost} ${"Listings".tr}",
-                                              fontSize: 16.sp,
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          authCont.isBusinessAccount
+                                              ? CustomText(
+                                                  text: cont.bussinessPostCount ==
+                                                          0
+                                                      ? "0 Listing".tr
+                                                      : "${cont.bussinessPostCount} ${"Listings".tr}",
+                                                  fontSize: 16.sp,
+                                                )
+                                              : CustomText(
+                                                  text: cont.personalAcountPost ==
+                                                          0
+                                                      ? "0 Listing".tr
+                                                      : "${cont.personalAcountPost} ${"Listings".tr}",
+                                                  fontSize: 16.sp,
+                                                ),
+                                          if ((authCont.isBusinessAccount &&
+                                                  cont.bussinessPostCount >
+                                                      0) ||
+                                              (!authCont.isBusinessAccount &&
+                                                  cont.personalAcountPost > 0))
+                                            InkWell(
+                                              onTap: () {
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (context) =>
+                                                      deleteAllListingsDialog(),
+                                                );
+                                              },
+                                              child: Container(
+                                                padding: EdgeInsets.symmetric(
+                                                    horizontal: 12.w,
+                                                    vertical: 6.h),
+                                                decoration: BoxDecoration(
+                                                  border: Border.all(
+                                                      color: Colors.red),
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                                child: Text(
+                                                  'Delete All'.tr,
+                                                  style: TextStyle(
+                                                    fontSize: 14.sp,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Colors.red,
+                                                  ),
+                                                ),
+                                              ),
                                             ),
+                                        ],
+                                      ),
                                       SizedBox(height: 4),
                                       Expanded(
                                         child: ListView.separated(
@@ -385,7 +394,7 @@ class _ListingsState extends State<Listings> {
                                                                           Text(
                                                                         '${cont.userListingModelList[index].title}',
                                                                         maxLines:
-                                                                            2,
+                                                                            1,
                                                                         overflow:
                                                                             TextOverflow.ellipsis,
                                                                         style: TextStyle(
@@ -401,7 +410,7 @@ class _ListingsState extends State<Listings> {
                                                                           Text(
                                                                         "${cont.userListingModelList[index].address}",
                                                                         maxLines:
-                                                                            2,
+                                                                            1,
                                                                         overflow:
                                                                             TextOverflow.ellipsis,
                                                                         style: TextStyle(
@@ -422,7 +431,7 @@ class _ListingsState extends State<Listings> {
                                                                                 ? "${cont.userListingModelList[index].subCategory?.name}"
                                                                                 : "${cont.userListingModelList[index].category?.name}",
                                                                         maxLines:
-                                                                            2,
+                                                                            1,
                                                                         overflow:
                                                                             TextOverflow.ellipsis,
                                                                         style: TextStyle(
@@ -445,7 +454,7 @@ class _ListingsState extends State<Listings> {
                                                                         overflow:
                                                                             TextOverflow.ellipsis,
                                                                         style: TextStyle(
-                                                                            fontSize: 14
+                                                                            fontSize: 12
                                                                               ..sp,
                                                                             fontWeight:
                                                                                 FontWeight.w600,
@@ -498,6 +507,10 @@ class _ListingsState extends State<Listings> {
                                                                           child:
                                                                               Text(
                                                                             'Edit'.tr,
+                                                                            maxLines:
+                                                                                1,
+                                                                            overflow:
+                                                                                TextOverflow.ellipsis,
                                                                             style: TextStyle(
                                                                                 fontSize: 16..sp,
                                                                                 fontWeight: FontWeight.w600,
@@ -536,6 +549,10 @@ class _ListingsState extends State<Listings> {
                                                                           child:
                                                                               Text(
                                                                             'Delete'.tr,
+                                                                            maxLines:
+                                                                                1,
+                                                                            overflow:
+                                                                                TextOverflow.ellipsis,
                                                                             style: TextStyle(
                                                                                 fontSize: 16..sp,
                                                                                 fontWeight: FontWeight.w600,
@@ -595,6 +612,10 @@ class _ListingsState extends State<Listings> {
                                                                           Text(
                                                                         'View Details'
                                                                             .tr,
+                                                                        maxLines:
+                                                                            1,
+                                                                        overflow:
+                                                                            TextOverflow.ellipsis,
                                                                         style: TextStyle(
                                                                             fontSize: 16
                                                                               ..sp,
@@ -663,19 +684,60 @@ class _ListingsState extends State<Listings> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      authCont.isBusinessAccount
-                                          ? CustomText(
-                                              text: cont.bussinessPostCount == 0
-                                                  ? "0 Listing".tr
-                                                  : "${cont.bussinessPostCount} ${"Listings".tr}",
-                                              fontSize: 16.sp,
-                                            )
-                                          : CustomText(
-                                              text: cont.personalAcountPost == 0
-                                                  ? "0 Listing".tr
-                                                  : "${cont.personalAcountPost} ${"Listings".tr}",
-                                              fontSize: 16.sp,
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          authCont.isBusinessAccount
+                                              ? CustomText(
+                                                  text: cont.bussinessPostCount ==
+                                                          0
+                                                      ? "0 Listing".tr
+                                                      : "${cont.bussinessPostCount} ${"Listings".tr}",
+                                                  fontSize: 16.sp,
+                                                )
+                                              : CustomText(
+                                                  text: cont.personalAcountPost ==
+                                                          0
+                                                      ? "0 Listing".tr
+                                                      : "${cont.personalAcountPost} ${"Listings".tr}",
+                                                  fontSize: 16.sp,
+                                                ),
+                                          if ((authCont.isBusinessAccount &&
+                                                  cont.bussinessPostCount >
+                                                      0) ||
+                                              (!authCont.isBusinessAccount &&
+                                                  cont.personalAcountPost > 0))
+                                            InkWell(
+                                              onTap: () {
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (context) =>
+                                                      deleteAllListingsDialog(),
+                                                );
+                                              },
+                                              child: Container(
+                                                padding: EdgeInsets.symmetric(
+                                                    horizontal: 12.w,
+                                                    vertical: 6.h),
+                                                decoration: BoxDecoration(
+                                                  border: Border.all(
+                                                      color: Colors.red),
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                                child: Text(
+                                                  'Delete All'.tr,
+                                                  style: TextStyle(
+                                                    fontSize: 14.sp,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Colors.red,
+                                                  ),
+                                                ),
+                                              ),
                                             ),
+                                        ],
+                                      ),
                                       SizedBox(height: 4),
                                       Expanded(
                                         child: ListView.separated(
@@ -786,7 +848,7 @@ class _ListingsState extends State<Listings> {
                                                                           Text(
                                                                         '${cont.userListingModelList[index].title}',
                                                                         maxLines:
-                                                                            2,
+                                                                            1,
                                                                         overflow:
                                                                             TextOverflow.ellipsis,
                                                                         style: TextStyle(
@@ -846,7 +908,7 @@ class _ListingsState extends State<Listings> {
                                                                         overflow:
                                                                             TextOverflow.ellipsis,
                                                                         style: TextStyle(
-                                                                            fontSize: 14
+                                                                            fontSize: 12
                                                                               ..sp,
                                                                             fontWeight:
                                                                                 FontWeight.w600,
@@ -856,64 +918,118 @@ class _ListingsState extends State<Listings> {
                                                                   ],
                                                                 ),
                                                               ),
-                                                              GestureDetector(
-                                                                onTap: () {
-                                                                  Navigator.push(
-                                                                      context,
-                                                                      MaterialPageRoute(
+                                                              Column(
+                                                                children: [
+                                                                  GestureDetector(
+                                                                    onTap: () {
+                                                                      showDialog(
+                                                                        context:
+                                                                            context,
                                                                         builder:
                                                                             (context) =>
-                                                                                const BecomeVendor(),
-                                                                      ));
-                                                                },
-                                                                child:
-                                                                    Container(
-                                                                  height: 40..h,
-                                                                  width: MediaQuery.of(
-                                                                              context)
-                                                                          .size
-                                                                          .width *
-                                                                      .37,
-                                                                  decoration:
-                                                                      BoxDecoration(
-                                                                    border: Border.all(
-                                                                        color: AppColors
-                                                                            .k0xFF0254B8),
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                            10),
+                                                                                deleteListing(index),
+                                                                      );
+                                                                    },
+                                                                    child:
+                                                                        Container(
+                                                                      height: 35
+                                                                        ..h,
+                                                                      width: MediaQuery.of(context)
+                                                                              .size
+                                                                              .width *
+                                                                          .37,
+                                                                      decoration:
+                                                                          BoxDecoration(
+                                                                        border: Border.all(
+                                                                            color:
+                                                                                Colors.red),
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(10),
+                                                                      ),
+                                                                      child:
+                                                                          Center(
+                                                                        child:
+                                                                            Text(
+                                                                          'Delete'
+                                                                              .tr,
+                                                                          maxLines:
+                                                                              1,
+                                                                          overflow:
+                                                                              TextOverflow.ellipsis,
+                                                                          style:
+                                                                              TextStyle(
+                                                                            fontSize: 14
+                                                                              ..sp,
+                                                                            fontWeight:
+                                                                                FontWeight.w600,
+                                                                            color:
+                                                                                Colors.red,
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                    ),
                                                                   ),
-                                                                  child:
-                                                                      InkWell(
+                                                                  SizedBox(
+                                                                      height:
+                                                                          8.h),
+                                                                  GestureDetector(
                                                                     onTap: () {
-                                                                      cont.isListing =
-                                                                          11;
-                                                                      cont.listingModel =
-                                                                          cont.userListingModelList[
-                                                                              index];
                                                                       Navigator.push(
                                                                           context,
                                                                           MaterialPageRoute(
                                                                             builder: (context) =>
-                                                                                const FrameScreen(),
+                                                                                const BecomeVendor(),
                                                                           ));
                                                                     },
                                                                     child:
-                                                                        Center(
+                                                                        Container(
+                                                                      height: 35
+                                                                        ..h,
+                                                                      width: MediaQuery.of(context)
+                                                                              .size
+                                                                              .width *
+                                                                          .37,
+                                                                      decoration:
+                                                                          BoxDecoration(
+                                                                        border: Border.all(
+                                                                            color:
+                                                                                AppColors.k0xFF0254B8),
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(10),
+                                                                      ),
                                                                       child:
-                                                                          Text(
-                                                                        'View Details'
-                                                                            .tr,
-                                                                        style: TextStyle(
-                                                                            fontSize: 16
-                                                                              ..sp,
-                                                                            fontWeight:
-                                                                                FontWeight.w600,
-                                                                            color: AppColors.k0xFF0254B8),
+                                                                          InkWell(
+                                                                        onTap:
+                                                                            () {
+                                                                          cont.isListing =
+                                                                              11;
+                                                                          cont.listingModel =
+                                                                              cont.userListingModelList[index];
+                                                                          Navigator.push(
+                                                                              context,
+                                                                              MaterialPageRoute(
+                                                                                builder: (context) => const FrameScreen(),
+                                                                              ));
+                                                                        },
+                                                                        child:
+                                                                            Center(
+                                                                          child:
+                                                                              Text(
+                                                                            'View Details'.tr,
+                                                                            maxLines:
+                                                                                1,
+                                                                            overflow:
+                                                                                TextOverflow.ellipsis,
+                                                                            style: TextStyle(
+                                                                                fontSize: 14..sp,
+                                                                                fontWeight: FontWeight.w600,
+                                                                                color: AppColors.k0xFF0254B8),
+                                                                          ),
+                                                                        ),
                                                                       ),
                                                                     ),
                                                                   ),
-                                                                ),
+                                                                ],
                                                               )
                                                             ],
                                                           )
@@ -1011,19 +1127,60 @@ class _ListingsState extends State<Listings> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      authCont.isBusinessAccount
-                                          ? CustomText(
-                                              text: cont.bussinessPostCount == 0
-                                                  ? "0 Listing".tr
-                                                  : "${cont.bussinessPostCount} ${"Listings".tr}",
-                                              fontSize: 16.sp,
-                                            )
-                                          : CustomText(
-                                              text: cont.personalAcountPost == 0
-                                                  ? "0 Listing".tr
-                                                  : "${cont.personalAcountPost} ${"Listings".tr}",
-                                              fontSize: 16.sp,
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          authCont.isBusinessAccount
+                                              ? CustomText(
+                                                  text: cont.bussinessPostCount ==
+                                                          0
+                                                      ? "0 Listing".tr
+                                                      : "${cont.bussinessPostCount} ${"Listings".tr}",
+                                                  fontSize: 16.sp,
+                                                )
+                                              : CustomText(
+                                                  text: cont.personalAcountPost ==
+                                                          0
+                                                      ? "0 Listing".tr
+                                                      : "${cont.personalAcountPost} ${"Listings".tr}",
+                                                  fontSize: 16.sp,
+                                                ),
+                                          if ((authCont.isBusinessAccount &&
+                                                  cont.bussinessPostCount >
+                                                      0) ||
+                                              (!authCont.isBusinessAccount &&
+                                                  cont.personalAcountPost > 0))
+                                            InkWell(
+                                              onTap: () {
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (context) =>
+                                                      deleteAllListingsDialog(),
+                                                );
+                                              },
+                                              child: Container(
+                                                padding: EdgeInsets.symmetric(
+                                                    horizontal: 12.w,
+                                                    vertical: 6.h),
+                                                decoration: BoxDecoration(
+                                                  border: Border.all(
+                                                      color: Colors.red),
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                                child: Text(
+                                                  'Delete All'.tr,
+                                                  style: TextStyle(
+                                                    fontSize: 14.sp,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Colors.red,
+                                                  ),
+                                                ),
+                                              ),
                                             ),
+                                        ],
+                                      ),
                                       SizedBox(height: 4),
                                       Expanded(
                                         child: ListView.separated(
@@ -1133,7 +1290,7 @@ class _ListingsState extends State<Listings> {
                                                                           Text(
                                                                         '${cont.userListingModelList[index].title}',
                                                                         maxLines:
-                                                                            2,
+                                                                            1,
                                                                         overflow:
                                                                             TextOverflow.ellipsis,
                                                                         style: TextStyle(
@@ -1193,7 +1350,7 @@ class _ListingsState extends State<Listings> {
                                                                         overflow:
                                                                             TextOverflow.ellipsis,
                                                                         style: TextStyle(
-                                                                            fontSize: 14
+                                                                            fontSize: 12
                                                                               ..sp,
                                                                             fontWeight:
                                                                                 FontWeight.w600,
@@ -1203,64 +1360,118 @@ class _ListingsState extends State<Listings> {
                                                                   ],
                                                                 ),
                                                               ),
-                                                              GestureDetector(
-                                                                onTap: () {
-                                                                  Navigator.push(
-                                                                      context,
-                                                                      MaterialPageRoute(
+                                                              Column(
+                                                                children: [
+                                                                  GestureDetector(
+                                                                    onTap: () {
+                                                                      showDialog(
+                                                                        context:
+                                                                            context,
                                                                         builder:
                                                                             (context) =>
-                                                                                const BecomeVendor(),
-                                                                      ));
-                                                                },
-                                                                child:
-                                                                    Container(
-                                                                  height: 40..h,
-                                                                  width: MediaQuery.of(
-                                                                              context)
-                                                                          .size
-                                                                          .width *
-                                                                      .37,
-                                                                  decoration:
-                                                                      BoxDecoration(
-                                                                    border: Border.all(
-                                                                        color: AppColors
-                                                                            .k0xFF0254B8),
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                            10),
+                                                                                deleteListing(index),
+                                                                      );
+                                                                    },
+                                                                    child:
+                                                                        Container(
+                                                                      height: 35
+                                                                        ..h,
+                                                                      width: MediaQuery.of(context)
+                                                                              .size
+                                                                              .width *
+                                                                          .37,
+                                                                      decoration:
+                                                                          BoxDecoration(
+                                                                        border: Border.all(
+                                                                            color:
+                                                                                Colors.red),
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(10),
+                                                                      ),
+                                                                      child:
+                                                                          Center(
+                                                                        child:
+                                                                            Text(
+                                                                          'Delete'
+                                                                              .tr,
+                                                                          maxLines:
+                                                                              1,
+                                                                          overflow:
+                                                                              TextOverflow.ellipsis,
+                                                                          style:
+                                                                              TextStyle(
+                                                                            fontSize: 14
+                                                                              ..sp,
+                                                                            fontWeight:
+                                                                                FontWeight.w600,
+                                                                            color:
+                                                                                Colors.red,
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                    ),
                                                                   ),
-                                                                  child:
-                                                                      InkWell(
+                                                                  SizedBox(
+                                                                      height:
+                                                                          8.h),
+                                                                  GestureDetector(
                                                                     onTap: () {
-                                                                      cont.isListing =
-                                                                          11;
-                                                                      cont.listingModel =
-                                                                          cont.userListingModelList[
-                                                                              index];
                                                                       Navigator.push(
                                                                           context,
                                                                           MaterialPageRoute(
                                                                             builder: (context) =>
-                                                                                const FrameScreen(),
+                                                                                const BecomeVendor(),
                                                                           ));
                                                                     },
                                                                     child:
-                                                                        Center(
+                                                                        Container(
+                                                                      height: 35
+                                                                        ..h,
+                                                                      width: MediaQuery.of(context)
+                                                                              .size
+                                                                              .width *
+                                                                          .37,
+                                                                      decoration:
+                                                                          BoxDecoration(
+                                                                        border: Border.all(
+                                                                            color:
+                                                                                AppColors.k0xFF0254B8),
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(10),
+                                                                      ),
                                                                       child:
-                                                                          Text(
-                                                                        'View Details'
-                                                                            .tr,
-                                                                        style: TextStyle(
-                                                                            fontSize: 16
-                                                                              ..sp,
-                                                                            fontWeight:
-                                                                                FontWeight.w600,
-                                                                            color: AppColors.k0xFF0254B8),
+                                                                          InkWell(
+                                                                        onTap:
+                                                                            () {
+                                                                          cont.isListing =
+                                                                              11;
+                                                                          cont.listingModel =
+                                                                              cont.userListingModelList[index];
+                                                                          Navigator.push(
+                                                                              context,
+                                                                              MaterialPageRoute(
+                                                                                builder: (context) => const FrameScreen(),
+                                                                              ));
+                                                                        },
+                                                                        child:
+                                                                            Center(
+                                                                          child:
+                                                                              Text(
+                                                                            'View Details'.tr,
+                                                                            maxLines:
+                                                                                1,
+                                                                            overflow:
+                                                                                TextOverflow.ellipsis,
+                                                                            style: TextStyle(
+                                                                                fontSize: 14..sp,
+                                                                                fontWeight: FontWeight.w600,
+                                                                                color: AppColors.k0xFF0254B8),
+                                                                          ),
+                                                                        ),
                                                                       ),
                                                                     ),
                                                                   ),
-                                                                ),
+                                                                ],
                                                               )
                                                             ],
                                                           )
@@ -1360,6 +1571,58 @@ class _ListingsState extends State<Listings> {
             Navigator.of(context).pop();
           },
           child: Text('Delete'.tr),
+        ),
+      ],
+    );
+  }
+
+  Widget deleteAllListingsDialog() {
+    return AlertDialog(
+      title: Text('Delete All'.tr),
+      content: Text('Are you sure you want to delete all listings?'.tr),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop(); // Close the dialog
+          },
+          child: Text('Cancel'.tr),
+        ),
+        TextButton(
+          onPressed: () async {
+            Navigator.of(context).pop(); // Close the dialog first
+
+            // Show loading dialog
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => AlertDialog(
+                content: Row(
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(width: 16),
+                    Text(
+                      'Deleting all listings...'.tr,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12..h,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+
+            bool isDeleted = await homeCont.deleteAllListings();
+            Navigator.of(context).pop(); // Close loading dialog
+
+            if (isDeleted) {
+              errorAlertToast('All listings deleted successfully'.tr);
+            } else {
+              errorAlertToast(
+                  'Failed to delete some listings. Please try again.'.tr);
+            }
+          },
+          child: Text('Delete'.tr, style: TextStyle(color: Colors.red)),
         ),
       ],
     );

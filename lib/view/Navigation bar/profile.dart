@@ -15,7 +15,6 @@ import 'package:venta_cuba/util/profile_list.dart';
 import 'package:venta_cuba/view/auth/vendor_screen.dart';
 import 'package:venta_cuba/view/constants/Colors.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:venta_cuba/view/notification/notification.dart';
 
 import 'package:venta_cuba/view/profile/manage_account.dart';
 import 'package:venta_cuba/view/profile/notification_preferences.dart';
@@ -575,128 +574,61 @@ class _ProfileState extends State<Profile> {
                                           ?.color),
                                 ),
                               ),
-                              Spacer(),
-                              Icon(
-                                Icons.arrow_forward_ios_outlined,
-                                size: 15,
-                                color: AppColors.k1xFF403C3C,
-                              )
                             ],
                           ),
                         )),
-                    // ProfileList(text: 'Favorite Seller')),
                     SizedBox(
                       height: 15..h,
                     ),
-                    Container(
-                      height: 60..h,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              homeCont.getFavouriteItems();
-                            },
-                            child: Container(
-                              height: 60..h,
-                              width: MediaQuery.of(context).size.width * .43,
-                              decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(5),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Theme.of(context)
-                                          .shadowColor
-                                          .withOpacity(.4),
-                                      blurRadius: 5,
-                                    )
-                                  ],
-                                  color: Theme.of(context).cardColor),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  SizedBox(width: 5..w),
-                                  Container(
-                                    height: 20..h,
-                                    width: 20..w,
-                                    child: SvgPicture.asset(
-                                      'assets/icons/heartSimple.svg',
-                                      color: Theme.of(context).iconTheme.color,
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: 5..w,
-                                  ),
-                                  SizedBox(
-                                    width: 120,
-                                    child: Text(
-                                      'Favorite Listings'.tr,
-                                      style: TextStyle(
-                                          fontSize: 15..sp,
-                                          fontWeight: FontWeight.w500,
-                                          color: Theme.of(context)
-                                              .textTheme
-                                              .titleMedium
-                                              ?.color),
-                                    ),
-                                  ),
-                                ],
+                    GestureDetector(
+                        onTap: () {
+                          homeCont.getFavouriteItems();
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 20),
+                          height: 60..h,
+                          width: MediaQuery.of(context).size.width,
+                          decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(5),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Theme.of(context)
+                                      .shadowColor
+                                      .withOpacity(.4),
+                                  blurRadius: 5,
+                                )
+                              ],
+                              color: Theme.of(context).cardColor),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                height: 25..h,
+                                width: 25..w,
+                                child: SvgPicture.asset(
+                                  'assets/icons/heartSimple.svg',
+                                  color: Theme.of(context).iconTheme.color,
+                                ),
                               ),
-                            ),
-                          ),
-                          InkWell(
-                            onTap: () {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const NotificationScreen(),
-                                  ));
-                            },
-                            child: Container(
-                              height: 60..h,
-                              width: MediaQuery.of(context).size.width * .43,
-                              decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(5),
-                                  boxShadow: [
-                                    BoxShadow(
+                              SizedBox(width: 7..w),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 3.0),
+                                child: Text(
+                                  'Favorite Listings'.tr,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                      fontSize: 15..sp,
+                                      fontWeight: FontWeight.w500,
                                       color: Theme.of(context)
-                                          .shadowColor
-                                          .withOpacity(.4),
-                                      blurRadius: 5,
-                                    )
-                                  ],
-                                  color: Theme.of(context).cardColor),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Container(
-                                    height: 20..h,
-                                    width: 20..w,
-                                    child: SvgPicture.asset(
-                                      'assets/icons/notificationSimple.svg',
-                                      color: Theme.of(context).iconTheme.color,
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: 5..w,
-                                  ),
-                                  Text(
-                                    'Notifications'.tr,
-                                    style: TextStyle(
-                                        fontSize: 15..sp,
-                                        fontWeight: FontWeight.w500,
-                                        color: Theme.of(context)
-                                            .textTheme
-                                            .titleMedium
-                                            ?.color),
-                                  ),
-                                ],
+                                          .textTheme
+                                          .titleMedium
+                                          ?.color),
+                                ),
                               ),
-                            ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
+                        )),
+
                     SizedBox(height: 15..h),
                     Text(
                       'Profile Details'.tr,

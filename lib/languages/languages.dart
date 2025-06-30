@@ -941,6 +941,14 @@ It is not allowed to use our member-to-member communication resources to send sp
               "Failed to remove listings. Please try again.",
           "Failed to remove sellers. Please try again.":
               "Failed to remove sellers. Please try again.",
+          "Delete All": "Delete All",
+          "Are you sure you want to delete all listings?":
+              "Are you sure you want to delete all listings?",
+          "Deleting all listings...": "Deleting all listings...",
+          "All listings deleted successfully":
+              "All listings deleted successfully",
+          "Failed to delete some listings. Please try again.":
+              "Failed to delete some listings. Please try again.",
         },
         "es_ES": {
           'upload_video':
@@ -1900,6 +1908,14 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
               "Error al eliminar anuncios. Por favor, inténtalo de nuevo.",
           "Failed to remove sellers. Please try again.":
               "Error al eliminar vendedores. Por favor, inténtalo de nuevo.",
+          "Delete All": "Eliminar Todo",
+          "Are you sure you want to delete all listings?":
+              "¿Estás seguro de que quieres eliminar todos los anuncios?",
+          "Deleting all listings...": "Eliminando todos los anuncios...",
+          "All listings deleted successfully":
+              "Todos los anuncios eliminados exitosamente",
+          "Failed to delete some listings. Please try again.":
+              "Error al eliminar algunos anuncios. Por favor, inténtalo de nuevo.",
           "Please Enter 8 Character Confirm Password":
               "Por favor ingrese 8 caracteres. Confirme la contraseña",
           "Please Enter 8 Character Password":

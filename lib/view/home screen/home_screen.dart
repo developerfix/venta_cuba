@@ -141,92 +141,34 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Container(
-                                width: 50,
-                                height: 40,
-                              ),
-                              Container(
-                                height: 40,
-                                width: 80,
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    GestureDetector(
-                                      onTap: () {
-                                        cont.getFavouriteItems();
-                                        toggleView(false);
-                                      },
-                                      child: Container(
-                                        width: 40,
-                                        height: 40,
-                                        decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(20),
-                                          // color: isListView ? Colors.transparent : AppColors.k0xFF0254B8,
-                                        ),
-                                        child: Center(
-                                            child: SvgPicture.asset(
-                                                'assets/icons/heartadd.svg',
-                                                color: Theme.of(context)
-                                                    .iconTheme
-                                                    .color)),
-                                      ),
+                          Container(
+                            height: 40,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                GestureDetector(
+                                  onTap: () {
+                                    cont.getFavouriteItems();
+                                    toggleView(false);
+                                  },
+                                  child: Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(20),
+                                      // color: isListView ? Colors.transparent : AppColors.k0xFF0254B8,
                                     ),
-                                    GestureDetector(
-                                      onTap: () {
-                                        toggleView(true);
-                                        cont.getAllNotifications();
-                                      },
-                                      child: Container(
-                                        width: 35,
-                                        height: 35,
-                                        child: Stack(
-                                          children: [
-                                            Align(
-                                              alignment: Alignment.center,
-                                              child: Container(
-                                                width: 30,
-                                                height: 30,
-                                                decoration: BoxDecoration(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            20)),
-                                                child: Center(
-                                                    child: SvgPicture.asset(
-                                                        'assets/icons/notification.svg',
-                                                        color: Theme.of(context)
-                                                            .iconTheme
-                                                            .color)),
-                                              ),
-                                            ),
-                                            Obx(() => cont
-                                                    .hasUnreadNotifications
-                                                    .value
-                                                ? Positioned(
-                                                    right: 5,
-                                                    top: 5,
-                                                    child: Container(
-                                                      width: 10,
-                                                      height: 10,
-                                                      decoration: BoxDecoration(
-                                                          color: Colors.red,
-                                                          shape:
-                                                              BoxShape.circle),
-                                                    ),
-                                                  )
-                                                : SizedBox.shrink()),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                                    child: Center(
+                                        child: SvgPicture.asset(
+                                            'assets/icons/heartadd.svg',
+                                            color: Theme.of(context)
+                                                .iconTheme
+                                                .color)),
+                                  ),
                                 ),
-                              )
-                            ],
+                                // Notification icon removed
+                              ],
+                            ),
                           ),
                           SizedBox(
                             height: 30..h,

@@ -8,7 +8,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:venta_cuba/Controllers/location_controller.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
-import 'package:venta_cuba/Controllers/home_controller.dart';
+
 import 'package:venta_cuba/Controllers/theme_controller.dart';
 import 'package:venta_cuba/Services/Notfication/notficationservice.dart';
 import 'package:venta_cuba/languages/languages.dart';
@@ -100,14 +100,7 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
         print('🔥 ChatController not found on app resume: $e');
       }
 
-      // Update notification indicators
-      try {
-        final homeCont = Get.find<HomeController>();
-        await homeCont.updateNotificationIndicators();
-        print('🔥 Notification indicators updated on app resume');
-      } catch (e) {
-        print('🔥 HomeController not found on app resume: $e');
-      }
+      // Notification functionality removed
     } catch (e) {
       print('🔥 Error handling app resume: $e');
     }
