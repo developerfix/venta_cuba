@@ -189,7 +189,7 @@ class _FavouriteListingsState extends State<FavouriteListings> {
                                       Container(
                                         decoration: BoxDecoration(
                                           borderRadius:
-                                              BorderRadius.circular(10..r),
+                                              BorderRadius.circular(10.r),
                                           color: Theme.of(context).cardColor,
                                           border: Theme.of(context)
                                                       .brightness ==
@@ -273,8 +273,15 @@ class _FavouriteListingsState extends State<FavouriteListings> {
                                               ),
                                             ),
                                             Container(
-                                              color:
-                                                  Theme.of(context).cardColor,
+                                              decoration: BoxDecoration(
+                                                color:
+                                                    Theme.of(context).cardColor,
+                                                borderRadius: BorderRadius.only(
+                                                    bottomLeft:
+                                                        Radius.circular(10.r),
+                                                    bottomRight:
+                                                        Radius.circular(10.r)),
+                                              ),
                                               child: Padding(
                                                 padding:
                                                     const EdgeInsets.symmetric(

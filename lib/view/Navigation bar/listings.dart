@@ -72,36 +72,33 @@ class _ListingsState extends State<Listings> {
                     SizedBox(
                       width: 10.w,
                     ),
-                    GetBuilder(
-                        init: HomeController(),
-                        builder: (cont) {
-                          return GestureDetector(
-                            onTap: () {
-                              homeCont.getAllNotifications();
-                            },
-                            child: Container(
-                              width: 25,
-                              height: 25,
-                              child: Stack(
-                                children: [
-                                  Align(
-                                    alignment: Alignment.center,
-                                    child: Container(
-                                      width: 20,
-                                      height: 20,
-                                      decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(20)),
-                                      child: Center(
-                                          child: SvgPicture.asset(
-                                              'assets/icons/notificationSimple.svg',
-                                              color: Theme.of(context)
-                                                  .iconTheme
-                                                  .color)),
-                                    ),
-                                  ),
-                                  if (cont.hasUnreadNotifications.value)
-                                    Positioned(
+                    GetBuilder<HomeController>(builder: (cont) {
+                      return GestureDetector(
+                        onTap: () {
+                          cont.getAllNotifications();
+                        },
+                        child: Container(
+                          width: 25,
+                          height: 25,
+                          child: Stack(
+                            children: [
+                              Align(
+                                alignment: Alignment.center,
+                                child: Container(
+                                  width: 20,
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(20)),
+                                  child: Center(
+                                      child: SvgPicture.asset(
+                                          'assets/icons/notificationSimple.svg',
+                                          color: Theme.of(context)
+                                              .iconTheme
+                                              .color)),
+                                ),
+                              ),
+                              Obx(() => cont.hasUnreadNotifications.value
+                                  ? Positioned(
                                       right: 5,
                                       top: 5,
                                       child: Container(
@@ -111,12 +108,13 @@ class _ListingsState extends State<Listings> {
                                             color: Colors.red,
                                             shape: BoxShape.circle),
                                       ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                          );
-                        })
+                                    )
+                                  : SizedBox.shrink()),
+                            ],
+                          ),
+                        ),
+                      );
+                    })
                   ],
                 ),
                 SizedBox(
@@ -388,6 +386,8 @@ class _ListingsState extends State<Listings> {
                                                                         '${cont.userListingModelList[index].title}',
                                                                         maxLines:
                                                                             2,
+                                                                        overflow:
+                                                                            TextOverflow.ellipsis,
                                                                         style: TextStyle(
                                                                             fontSize: 17
                                                                               ..sp,
@@ -402,6 +402,8 @@ class _ListingsState extends State<Listings> {
                                                                         "${cont.userListingModelList[index].address}",
                                                                         maxLines:
                                                                             2,
+                                                                        overflow:
+                                                                            TextOverflow.ellipsis,
                                                                         style: TextStyle(
                                                                             fontSize: 12
                                                                               ..sp,
@@ -421,6 +423,8 @@ class _ListingsState extends State<Listings> {
                                                                                 : "${cont.userListingModelList[index].category?.name}",
                                                                         maxLines:
                                                                             2,
+                                                                        overflow:
+                                                                            TextOverflow.ellipsis,
                                                                         style: TextStyle(
                                                                             fontSize: 12
                                                                               ..sp,
@@ -438,6 +442,8 @@ class _ListingsState extends State<Listings> {
                                                                             : "${PriceFormatter().formatNumber(int.parse(cont.userListingModelList[index].price.toString()))}\$ ${PriceFormatter().getCurrency(cont.userListingModelList[index].currency)}",
                                                                         maxLines:
                                                                             1,
+                                                                        overflow:
+                                                                            TextOverflow.ellipsis,
                                                                         style: TextStyle(
                                                                             fontSize: 14
                                                                               ..sp,
@@ -657,14 +663,19 @@ class _ListingsState extends State<Listings> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      CustomText(
-                                        text: cont.userListingModelList
-                                                    .length ==
-                                                0
-                                            ? "0 Listing".tr
-                                            : "${cont.userListingModelList.length} ${"Listings".tr}",
-                                        fontSize: 16.sp,
-                                      ),
+                                      authCont.isBusinessAccount
+                                          ? CustomText(
+                                              text: cont.bussinessPostCount == 0
+                                                  ? "0 Listing".tr
+                                                  : "${cont.bussinessPostCount} ${"Listings".tr}",
+                                              fontSize: 16.sp,
+                                            )
+                                          : CustomText(
+                                              text: cont.personalAcountPost == 0
+                                                  ? "0 Listing".tr
+                                                  : "${cont.personalAcountPost} ${"Listings".tr}",
+                                              fontSize: 16.sp,
+                                            ),
                                       SizedBox(height: 4),
                                       Expanded(
                                         child: ListView.separated(
@@ -756,7 +767,7 @@ class _ListingsState extends State<Listings> {
                                                                     .spaceBetween,
                                                             children: [
                                                               Container(
-                                                                height: 85..h,
+                                                                // height: 85..h,
                                                                 width: MediaQuery.of(
                                                                             context)
                                                                         .size
@@ -776,26 +787,30 @@ class _ListingsState extends State<Listings> {
                                                                         '${cont.userListingModelList[index].title}',
                                                                         maxLines:
                                                                             2,
+                                                                        overflow:
+                                                                            TextOverflow.ellipsis,
                                                                         style: TextStyle(
                                                                             fontSize: 17
                                                                               ..sp,
                                                                             fontWeight:
                                                                                 FontWeight.w600,
-                                                                            color: Colors.black),
+                                                                            color: AppColors.textPrimary),
                                                                       ),
                                                                     ),
                                                                     SelectionArea(
                                                                       child:
                                                                           Text(
                                                                         "${cont.userListingModelList[index].address}",
+                                                                        overflow:
+                                                                            TextOverflow.ellipsis,
                                                                         maxLines:
                                                                             1,
                                                                         style: TextStyle(
-                                                                            fontSize: 13
+                                                                            fontSize: 12
                                                                               ..sp,
                                                                             fontWeight:
                                                                                 FontWeight.w400,
-                                                                            color: AppColors.k0xFF403C3C),
+                                                                            color: AppColors.textSecondary),
                                                                       ),
                                                                     ),
                                                                     SelectionArea(
@@ -809,12 +824,14 @@ class _ListingsState extends State<Listings> {
                                                                                 : "${cont.userListingModelList[index].category?.name}",
                                                                         maxLines:
                                                                             1,
+                                                                        overflow:
+                                                                            TextOverflow.ellipsis,
                                                                         style: TextStyle(
-                                                                            fontSize: 15
+                                                                            fontSize: 12
                                                                               ..sp,
                                                                             fontWeight:
                                                                                 FontWeight.w400,
-                                                                            color: AppColors.k0xFF403C3C),
+                                                                            color: AppColors.textSecondary),
                                                                       ),
                                                                     ),
                                                                     SelectionArea(
@@ -826,6 +843,8 @@ class _ListingsState extends State<Listings> {
                                                                             : "${PriceFormatter().formatNumber(int.parse(cont.userListingModelList[index].price.toString()))}\$ ${PriceFormatter().getCurrency(cont.userListingModelList[index].currency)}",
                                                                         maxLines:
                                                                             1,
+                                                                        overflow:
+                                                                            TextOverflow.ellipsis,
                                                                         style: TextStyle(
                                                                             fontSize: 14
                                                                               ..sp,
@@ -992,14 +1011,19 @@ class _ListingsState extends State<Listings> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      CustomText(
-                                        text: cont.userListingModelList
-                                                    .length ==
-                                                0
-                                            ? "0 Listing".tr
-                                            : "${cont.userListingModelList.length} ${"Listings".tr}",
-                                        fontSize: 16.sp,
-                                      ),
+                                      authCont.isBusinessAccount
+                                          ? CustomText(
+                                              text: cont.bussinessPostCount == 0
+                                                  ? "0 Listing".tr
+                                                  : "${cont.bussinessPostCount} ${"Listings".tr}",
+                                              fontSize: 16.sp,
+                                            )
+                                          : CustomText(
+                                              text: cont.personalAcountPost == 0
+                                                  ? "0 Listing".tr
+                                                  : "${cont.personalAcountPost} ${"Listings".tr}",
+                                              fontSize: 16.sp,
+                                            ),
                                       SizedBox(height: 4),
                                       Expanded(
                                         child: ListView.separated(
@@ -1091,7 +1115,6 @@ class _ListingsState extends State<Listings> {
                                                                     .spaceBetween,
                                                             children: [
                                                               Container(
-                                                                height: 85..h,
                                                                 width: MediaQuery.of(
                                                                             context)
                                                                         .size
@@ -1111,12 +1134,14 @@ class _ListingsState extends State<Listings> {
                                                                         '${cont.userListingModelList[index].title}',
                                                                         maxLines:
                                                                             2,
+                                                                        overflow:
+                                                                            TextOverflow.ellipsis,
                                                                         style: TextStyle(
                                                                             fontSize: 17
                                                                               ..sp,
                                                                             fontWeight:
                                                                                 FontWeight.w600,
-                                                                            color: Colors.black),
+                                                                            color: AppColors.textPrimary),
                                                                       ),
                                                                     ),
                                                                     SelectionArea(
@@ -1125,12 +1150,14 @@ class _ListingsState extends State<Listings> {
                                                                         "${cont.userListingModelList[index].address}",
                                                                         maxLines:
                                                                             1,
+                                                                        overflow:
+                                                                            TextOverflow.ellipsis,
                                                                         style: TextStyle(
-                                                                            fontSize: 13
+                                                                            fontSize: 12
                                                                               ..sp,
                                                                             fontWeight:
                                                                                 FontWeight.w400,
-                                                                            color: AppColors.k0xFF403C3C),
+                                                                            color: AppColors.textSecondary),
                                                                       ),
                                                                     ),
                                                                     SelectionArea(
@@ -1144,12 +1171,14 @@ class _ListingsState extends State<Listings> {
                                                                                 : "${cont.userListingModelList[index].category?.name}",
                                                                         maxLines:
                                                                             1,
+                                                                        overflow:
+                                                                            TextOverflow.ellipsis,
                                                                         style: TextStyle(
-                                                                            fontSize: 15
+                                                                            fontSize: 12
                                                                               ..sp,
                                                                             fontWeight:
                                                                                 FontWeight.w400,
-                                                                            color: AppColors.k0xFF403C3C),
+                                                                            color: AppColors.textSecondary),
                                                                       ),
                                                                     ),
                                                                     SelectionArea(
@@ -1161,6 +1190,8 @@ class _ListingsState extends State<Listings> {
                                                                             : "${PriceFormatter().formatNumber(int.parse(cont.userListingModelList[index].price ?? '0'))}\$ ${PriceFormatter().getCurrency(cont.userListingModelList[index].currency)}",
                                                                         maxLines:
                                                                             1,
+                                                                        overflow:
+                                                                            TextOverflow.ellipsis,
                                                                         style: TextStyle(
                                                                             fontSize: 14
                                                                               ..sp,

@@ -188,7 +188,10 @@ class HomeController extends GetxController {
 
     await prefs.setString(
         'lastNotificationViewTime', DateTime.now().toString());
+
+    // Clear the notification indicator immediately
     hasUnreadNotifications.value = false;
+    print('🔥 ✅ Notification indicator cleared after viewing notifications');
 
     // Reset badge count when notifications are viewed
     try {
@@ -212,17 +215,34 @@ class HomeController extends GetxController {
         return;
       }
 
+      // If no notifications data, set to false
+      if (allNotificationModel?.data == null ||
+          allNotificationModel!.data!.isEmpty) {
+        hasUnreadNotifications.value = false;
+        print('🔥 ✅ No notifications available, indicator set to false');
+        update();
+        return;
+      }
+
       String? lastViewTimeStr = await getLastNotificationViewTime();
 
-      if (lastViewTimeStr != null && allNotificationModel?.data != null) {
+      if (lastViewTimeStr != null) {
         DateTime lastViewTime = DateTime.parse(lastViewTimeStr);
         bool hasUnread = false;
 
         for (var notification in allNotificationModel!.data!) {
           if (notification.timestamp != null) {
             try {
-              DateTime notificationTime =
-                  DateTime.parse(notification.timestamp!);
+              // Parse API timestamp as UTC (assuming server sends UTC) and convert to local
+              DateTime notificationTime;
+              if (notification.timestamp!.endsWith('Z')) {
+                notificationTime =
+                    DateTime.parse(notification.timestamp!).toLocal();
+              } else {
+                notificationTime =
+                    DateTime.parse(notification.timestamp! + 'Z').toLocal();
+              }
+
               if (notificationTime.isAfter(lastViewTime)) {
                 hasUnread = true;
                 break;
@@ -240,11 +260,10 @@ class HomeController extends GetxController {
         hasUnreadNotifications.value = hasUnread;
         print('🔥 ✅ Notification indicator updated: $hasUnread');
       } else {
-        // If no last view time or no notifications, check if there are any notifications
-        hasUnreadNotifications.value =
-            allNotificationModel?.data?.isNotEmpty ?? false;
+        // If no last view time, all notifications are considered unread
+        hasUnreadNotifications.value = true;
         print(
-            '🔥 ✅ Notification indicator set based on notification count: ${hasUnreadNotifications.value}');
+            '🔥 ✅ No last view time found, all notifications considered unread');
       }
 
       update();
@@ -322,7 +341,11 @@ class HomeController extends GetxController {
         {
           'user_id': authCont.user?.userId ?? "",
           'category_id': selectedCategory?.id ?? "",
-          'sub_category_id': selectedSubCategory?.id ?? "",
+          // For subcategory filtering, don't send sub_category_id to server
+          // Let client-side filtering handle subcategory + sub-subcategory logic
+          'sub_category_id': selectedSubSubCategory != null
+              ? selectedSubCategory?.id ?? ""
+              : "",
           'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
           'latitude': lat ?? "23.124792615936276",
           'longitude': lng ?? "-82.38597269330762",
@@ -339,8 +362,14 @@ class HomeController extends GetxController {
         Get.log("HOME POST COUNT ${dataListing.length}");
 
         if (dataListing.isNotEmpty) {
-          listingModelList
-              .addAll(dataListing.map((e) => ListingModel.fromJson(e)));
+          List<ListingModel> newListings =
+              dataListing.map((e) => ListingModel.fromJson(e)).toList();
+
+          // Apply client-side category filtering for consistency with search
+          newListings = applyCategoryFilter(newListings);
+          Get.log("After category filtering: ${newListings.length} items");
+
+          listingModelList.addAll(newListings);
           currentPage.value++;
           hasMore.value = dataListing.length == 15;
         } else {
@@ -461,8 +490,8 @@ class HomeController extends GetxController {
   bool isBusinessAccount = false;
 
   fetchAccountType() async {
-    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    isBusinessAccount = sharedPreferences.getBool("accountType") ?? false;
+    await authCont.fetchAccountType();
+    isBusinessAccount = authCont.isBusinessAccount;
     update();
   }
 
@@ -782,14 +811,10 @@ class HomeController extends GetxController {
       allNotificationModel = AllNotificationModel.fromJson(response.body);
       if (!silent) {
         print('notyyyyyy not silent');
-        // Clear red dot immediately when opening notification screen
-        hasUnreadNotifications.value = false;
-        update();
-
+        // Navigate to notification screen first
         Get.to(NotificationScreen());
-        await saveLastNotificationViewTime(); // Save last viewed time
-        // Update notification indicators after viewing notifications
-        await updateNotificationIndicators();
+        // Save last viewed time and clear red dot
+        await saveLastNotificationViewTime();
       } else {
         print('notyyyyyy silent');
 
@@ -1093,10 +1118,7 @@ class HomeController extends GetxController {
       'video_link': youTubeController.text.trim(),
     });
 
-    bool isBusinessAccount = false;
-    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    isBusinessAccount = sharedPreferences.getBool("accountType") ?? false;
-    print('isBusinessAccount:$isBusinessAccount');
+    print('isBusinessAccount:${authCont.isBusinessAccount}');
     print('postImages:$postImages');
     Response response = await api.postWithForm(
         "api/addListing",
@@ -1106,7 +1128,7 @@ class HomeController extends GetxController {
           'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
           'price': price,
           'currency': selectedCurrency ?? 'USD',
-          'business_status': isBusinessAccount ? 1 : 0,
+          'business_status': authCont.isBusinessAccount ? 1 : 0,
           'title': titleCont.text.trim(),
           'latitude': lat ?? lat1,
           'longitude': lng ?? lng1,
@@ -1186,9 +1208,6 @@ class HomeController extends GetxController {
       },
       'video_link': youTubeController.text.trim(),
     });
-    bool isBusinessAccount = false;
-    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    isBusinessAccount = sharedPreferences.getBool("accountType") ?? false;
     print(selectedSubCategory?.id);
     print(selectedSubSubCategory?.id);
     // Remove spaces from price
@@ -1203,7 +1222,7 @@ class HomeController extends GetxController {
           'price': rawPrice,
           'currency': selectedCurrency ?? 'USD',
           'title': titleCont.text.trim(),
-          'business_status': isBusinessAccount ? 1 : 0,
+          'business_status': authCont.isBusinessAccount ? 1 : 0,
           'address': addressCont.text.trim(),
           'latitude': lat.toString(),
           'longitude': lng.toString(),
@@ -1511,18 +1530,29 @@ class HomeController extends GetxController {
       dataListing.addAll(response.body['data']);
       print('dataListing"${dataListing}');
       userListingModelList.clear();
+
+      // Get current account type for filtering
+      String currentAccountType = authCont.isBusinessAccount ? "1" : "0";
+
       dataListing.forEach((element) {
         print('dataListing business_status${element["business_status"]}');
-        if (element["business_status"] == "1") {
-          bussinessPostCount++;
-          print('dataListing bussinessPostCount ++"${bussinessPostCount}');
-        } else {
-          personalAcountPost++;
-        }
+
+        // Add all listings to the list first
         userListingModelList.add(ListingModel.fromJson(element));
+
+        // Count only listings that match current account type
+        if (element["business_status"] == currentAccountType) {
+          if (element["business_status"] == "1") {
+            bussinessPostCount++;
+            print('dataListing bussinessPostCount ++"${bussinessPostCount}');
+          } else {
+            personalAcountPost++;
+          }
+        }
       });
       print('dataListing"${userListingModelList}');
       print('dataListing bussinessPostCount"${bussinessPostCount}');
+      print('dataListing personalAcountPost"${personalAcountPost}');
       listingLoading = false;
       update();
     } else {
@@ -1562,10 +1592,15 @@ class HomeController extends GetxController {
           "Search Filters - Min: '${minPriceController.text.trim()}', Max: '${maxPriceController.text.trim()}', Search: '${searchController.text.trim()}'");
       Get.log("Location - Lat: '${lat}', Lng: '${lng}', Radius: '${radius}'");
 
+      // When subcategory is selected (but not sub-subcategory), we need to get all posts
+      // under the category so client-side filtering can include sub-subcategory posts
       Map<String, dynamic> requestData = {
         'user_id': authCont.user?.userId ?? "",
         'category_id': selectedCategory?.id ?? "",
-        'sub_category_id': selectedSubCategory?.id ?? "",
+        // For subcategory filtering, don't send sub_category_id to server
+        // Let client-side filtering handle subcategory + sub-subcategory logic
+        'sub_category_id':
+            selectedSubSubCategory != null ? selectedSubCategory?.id ?? "" : "",
         'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
         'latitude': lat ?? "23.124792615936276",
         'longitude': lng ?? "-82.38597269330762",
@@ -1771,11 +1806,29 @@ class HomeController extends GetxController {
         return matches;
       }
 
-      // Check subcategory
+      // Check subcategory - show posts from subcategory AND all its sub-subcategories
       if (selectedSubCategory != null) {
-        bool matches = listing.subCategory?.id == selectedSubCategory?.id;
+        // Check if post belongs directly to the subcategory
+        bool directSubCategoryMatch =
+            listing.subCategory?.id == selectedSubCategory?.id;
+
+        // Check if post belongs to a sub-subcategory under this subcategory
+        bool subSubCategoryMatch = false;
+        if (listing.subSubCategory != null) {
+          // Parse subCategoryId from the sub-subcategory to compare with selected subcategory
+          try {
+            int? subSubCategoryParentId =
+                int.tryParse(listing.subSubCategory?.subCategoryId ?? '');
+            subSubCategoryMatch =
+                subSubCategoryParentId == selectedSubCategory?.id;
+          } catch (e) {
+            Get.log("Error parsing subCategoryId: $e");
+          }
+        }
+
+        bool matches = directSubCategoryMatch || subSubCategoryMatch;
         Get.log(
-            "SubCategory filter: ${listing.title} - Expected: ${selectedSubCategory?.id}, Got: ${listing.subCategory?.id}, Match: $matches");
+            "SubCategory filter: ${listing.title} - Expected SubCategory: ${selectedSubCategory?.id}, Got SubCategory: ${listing.subCategory?.id}, Got SubSubCategory Parent: ${listing.subSubCategory?.subCategoryId}, Direct Match: $directSubCategoryMatch, SubSub Match: $subSubCategoryMatch, Final Match: $matches");
         return matches;
       }
 
@@ -2083,7 +2136,7 @@ class HomeController extends GetxController {
         "api/favouriteSeller",
         {
           'seller_id': sellerId,
-          'type': isBusinessAccount ? "Business" : "Personal"
+          'type': authCont.isBusinessAccount ? "Business" : "Personal"
         },
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
@@ -2184,7 +2237,7 @@ class HomeController extends GetxController {
               "api/favouriteSeller",
               {
                 'seller_id': sellerIdToRemove,
-                'type': isBusinessAccount ? "Business" : "Personal"
+                'type': authCont.isBusinessAccount ? "Business" : "Personal"
               },
               headers: {
                 'Content-Type': 'application/json; charset=UTF-8',

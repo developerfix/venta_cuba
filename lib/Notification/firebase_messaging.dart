@@ -88,9 +88,15 @@ class FCM {
       // Increment badge count for new messages
       if (messageData["type"] == "message") {
         await incrementBadgeCount();
+        if (Platform.isIOS) {
+          await updateIOSBadge(getBadgeCount());
+        }
       } else {
         // For other notifications (like favorite seller posts), also increment badge
         await incrementBadgeCount();
+        if (Platform.isIOS) {
+          await updateIOSBadge(getBadgeCount());
+        }
       }
 
       // Always show notifications in foreground (removed conditional check)
@@ -219,6 +225,8 @@ class FCM {
 
   Future<void> ios_permission() async {
     if (Platform.isIOS) {
+      print('🔥 Requesting iOS notification permissions...');
+
       // Request local notification permissions first
       final bool? result = await flutterLocalNotificationsPlugin
           .resolvePlatformSpecificImplementation<
@@ -246,6 +254,19 @@ class FCM {
       print('🔥 Firebase iOS Permissions - Sound: ${settings.sound}');
       print('🔥 Firebase iOS Permissions - Alert: ${settings.alert}');
       print('🔥 Firebase iOS Permissions - Badge: ${settings.badge}');
+      print(
+          '🔥 Firebase iOS Authorization Status: ${settings.authorizationStatus}');
+
+      // Check if permissions are properly granted
+      if (settings.authorizationStatus == AuthorizationStatus.denied) {
+        print(
+            '🔥 ❌ iOS Notifications are DENIED - user needs to enable in Settings');
+      } else if (settings.authorizationStatus ==
+          AuthorizationStatus.notDetermined) {
+        print('🔥 ⚠️ iOS Notifications are NOT DETERMINED - requesting again');
+      } else {
+        print('🔥 ✅ iOS Notifications are AUTHORIZED');
+      }
     } else if (Platform.isAndroid) {
       // Android notification permissions are handled automatically
       print('🔥 Android platform detected - permissions handled automatically');
@@ -261,7 +282,8 @@ class FCM {
     // Load badge count from storage
     await loadBadgeCount();
 
-    // Request notification permissions
+    // Request notification permissions (platform specific)
+    await ios_permission();
     await requestNotificationPermissions();
 
     // Check and log current permission status for debugging
@@ -270,10 +292,17 @@ class FCM {
     if (Platform.isIOS) {
       try {
         String? apnsToken = await _firebaseMessaging.getAPNSToken();
-        print('APNS Token: $apnsToken');
-        await Future.delayed(Duration(seconds: 2));
+        print('🔥 APNS Token: $apnsToken');
+        if (apnsToken == null) {
+          print(
+              '🔥 ⚠️ WARNING: APNS Token is null - iOS notifications may not work');
+          // Wait a bit and try again
+          await Future.delayed(Duration(seconds: 3));
+          apnsToken = await _firebaseMessaging.getAPNSToken();
+          print('🔥 APNS Token (retry): $apnsToken');
+        }
       } catch (e) {
-        print('error:$e');
+        print('🔥 Error getting APNS token: $e');
       }
     }
 
@@ -535,6 +564,62 @@ class FCM {
     // For iOS, ensure the badge is properly cleared
     if (Platform.isIOS) {
       await clearBadgeCount();
+      // Also clear from notification center
+      await flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin>()
+          ?.requestPermissions(
+            alert: true,
+            badge: true,
+            sound: true,
+          );
+    }
+  }
+
+  // iOS specific method to ensure proper badge handling
+  static Future<void> updateIOSBadge(int count) async {
+    if (Platform.isIOS) {
+      try {
+        // Use flutter_app_badge_control to update the badge
+        await FlutterAppBadgeControl.updateBadgeCount(count);
+        print('🔥 iOS badge updated to: $count');
+      } catch (e) {
+        print('🔥 Error updating iOS badge: $e');
+      }
+    }
+  }
+
+  // Test method specifically for iOS notifications
+  static Future<void> testIOSNotification() async {
+    if (Platform.isIOS) {
+      try {
+        print('🔥 Testing iOS notification...');
+
+        DarwinNotificationDetails iosNotificationDetails =
+            const DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+          sound: 'default',
+          badgeNumber: 1,
+          interruptionLevel: InterruptionLevel.active,
+        );
+
+        NotificationDetails notificationDetails = NotificationDetails(
+          iOS: iosNotificationDetails,
+        );
+
+        await flutterLocalNotificationsPlugin.show(
+          12345,
+          'iOS Test Notification',
+          'This is a test to verify iOS notifications work with sound and badge',
+          notificationDetails,
+        );
+
+        print('🔥 iOS test notification sent');
+      } catch (e) {
+        print('🔥 Error sending iOS test notification: $e');
+      }
     }
   }
 
@@ -592,12 +677,18 @@ class FCM {
     );
     NotificationData notification = NotificationData(title: title, body: body);
 
-    // Create APNS configuration with badge count
+    // Create APNS configuration with badge count and proper iOS settings
     ApnsConfig apnsConfig = ApnsConfig(
       payload: ApnsPayload(
         aps: Aps(
           badge: badgeCount,
           sound: 'default',
+          alert: {
+            'title': title,
+            'body': body,
+          },
+          contentAvailable: true,
+          mutableContent: true,
         ),
       ),
     );
@@ -703,6 +794,9 @@ class FCM {
       String body = message.notification?.body ??
           message.data['body'] ??
           'You have a new message';
+
+      print('🔥 Background notification - Title: $title, Body: $body');
+      print('🔥 Background notification - Data: ${message.data}');
 
       // Increment badge count for background notifications
       await incrementBadgeCount();

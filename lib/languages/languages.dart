@@ -114,7 +114,7 @@ class Languages extends Translations {
           "Your package is in pending, waiting for admin approval.":
               "Your package is in pending, waiting for admin approval.",
           "Post Add Successfully": "Post Add Successfully",
-          "Mark a Sold Successfully": "Mark a Sold Successfully",
+          "Mark a Sold Successfully": "Mark as Sold Successfully",
           "Listing Delete Successfully": "Listing Delete Successfully",
           "Notification Delete Successfully":
               "Notification Delete Successfully",
@@ -181,7 +181,7 @@ class Languages extends Translations {
           "Edit": "Edit",
           "Privacy Policy": "Privacy Policy",
           "Sold": "Sold",
-          "In Active": "In Active",
+          "In Active": "Inactive",
           "Active": "Active",
           "Check out this promo code:": "Check out this promo code:",
           "Listings": "Listings",
@@ -191,7 +191,7 @@ class Languages extends Translations {
           "Welcome Back": "Welcome Back",
           "Remove to Wishlist": "Remove to Wishlist",
           "Add to Wishlist": "Add to Wishlist",
-          "Mark a sold": "Mark a sold",
+          "Mark a sold": "Mark as sold",
           "Total Price": "Total Price",
           "Description": "Description",
           "PickUp Location": "PickUp Location",
@@ -210,6 +210,8 @@ class Languages extends Translations {
           "Select a Category": "Select a Category",
           "Select Category": "Select Category",
           "Select Subcategory": "Select Subcategory",
+          "Select Sub-subcategory": "Select Sub-subcategory",
+
           "Click the title of the category if you want to see all publications within that category. Click on the arrow if you want to see publications from a specific subcategory.":
               "Click the title of the category if you want to see all publications within that category. Click on the arrow if you want to see publications from a specific subcategory.",
           "Successfully": "Successfully",
@@ -1817,6 +1819,8 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
           "Select a Category": "Seleccione una categoría",
           "Select Category": "Seleccionar categoría",
           "Select Subcategory": "Seleccionar subcategoría",
+          "Select Sub-subcategory": "Seleccionar sub-subcategoría",
+
           "Click the title of the category if you want to see all publications within that category. Click on the arrow if you want to see publications from a specific subcategory.":
               "Haz clic en el título de la categoría si quieres ver todas las publicaciones dentro de esa categoría. Haz clic en la flecha si quieres ver publicaciones de una subcategoría específica.",
           "Successfully": "exitosamente",
@@ -1876,8 +1880,8 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
           "Please Enter Correct number": "Por favor ingrese el número correcto",
           "Password dose not match": "Las contraseñas no coinciden",
           // Remove all favourites translations
-          "Remove All Listings": "Eliminar Todos los Anuncios",
-          "Remove All Sellers": "Eliminar Todos los Vendedores",
+          "Remove All Listings": "Eliminar todos los Anuncios",
+          "Remove All Sellers": "Eliminar todos los Vendedores",
           "Remove All": "Eliminar todo",
           "Are you sure you want to remove all favourite listings?":
               "¿Estás seguro de que quieres eliminar todos los anuncios favoritos?",

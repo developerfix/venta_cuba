@@ -132,12 +132,23 @@ class ApnsPayload {
 class Aps {
   int? badge;
   String? sound;
+  dynamic alert;
+  bool? contentAvailable;
+  bool? mutableContent;
 
-  Aps({this.badge, this.sound});
+  Aps(
+      {this.badge,
+      this.sound,
+      this.alert,
+      this.contentAvailable,
+      this.mutableContent});
 
   Aps.fromJson(Map<String, dynamic> json) {
     badge = json['badge'];
     sound = json['sound'];
+    alert = json['alert'];
+    contentAvailable = json['content-available'];
+    mutableContent = json['mutable-content'];
   }
 
   Map<String, dynamic> toJson() {
@@ -147,6 +158,15 @@ class Aps {
     }
     if (sound != null) {
       data['sound'] = sound;
+    }
+    if (alert != null) {
+      data['alert'] = alert;
+    }
+    if (contentAvailable != null) {
+      data['content-available'] = contentAvailable! ? 1 : 0;
+    }
+    if (mutableContent != null) {
+      data['mutable-content'] = mutableContent! ? 1 : 0;
     }
     return data;
   }

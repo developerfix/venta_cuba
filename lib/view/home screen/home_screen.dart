@@ -203,19 +203,22 @@ class _HomeScreenState extends State<HomeScreen> {
                                                             .color)),
                                               ),
                                             ),
-                                            if (cont
-                                                .hasUnreadNotifications.value)
-                                              Positioned(
-                                                right: 5,
-                                                top: 5,
-                                                child: Container(
-                                                  width: 10,
-                                                  height: 10,
-                                                  decoration: BoxDecoration(
-                                                      color: Colors.red,
-                                                      shape: BoxShape.circle),
-                                                ),
-                                              ),
+                                            Obx(() => cont
+                                                    .hasUnreadNotifications
+                                                    .value
+                                                ? Positioned(
+                                                    right: 5,
+                                                    top: 5,
+                                                    child: Container(
+                                                      width: 10,
+                                                      height: 10,
+                                                      decoration: BoxDecoration(
+                                                          color: Colors.red,
+                                                          shape:
+                                                              BoxShape.circle),
+                                                    ),
+                                                  )
+                                                : SizedBox.shrink()),
                                           ],
                                         ),
                                       ),
