@@ -3015,8 +3015,8 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                   bottom: 5.h,
                                   left: 10.w,
                                   right: 20.w),
-                              child: InkWell(
-                                onTap: () {
+                              child: IconButton(
+                                onPressed: () {
                                   Get.log("type ${cont.isType}");
                                   if (cont.isType == 0) {
                                     // Only clear selections if user explicitly closes at category level
@@ -3033,9 +3033,14 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                     cont.update();
                                   }
                                 },
-                                child: Icon(
+                                icon: Icon(
                                   Icons.close,
                                   color: Theme.of(context).iconTheme.color,
+                                ),
+                                padding: EdgeInsets.all(12),
+                                constraints: BoxConstraints(
+                                  minWidth: 48,
+                                  minHeight: 48,
                                 ),
                               ),
                             ),

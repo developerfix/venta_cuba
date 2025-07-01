@@ -2435,7 +2435,6 @@ class _CategorySelectionDialogState extends State<CategorySelectionDialog> {
                             .bodyMedium
                             ?.color
                             ?.withValues(alpha: 0.7),
-                        fontStyle: FontStyle.italic,
                       ),
                       textAlign: TextAlign.justify,
                     ),
@@ -2544,16 +2543,18 @@ class _CategorySelectionDialogState extends State<CategorySelectionDialog> {
                       ),
                     ),
                   ),
-                  // Separate clickable area for arrow (navigate to sub-subcategories)
-                  GestureDetector(
-                    onTap: () => _selectSubCategoryArrow(item),
-                    child: Container(
-                      padding: EdgeInsets.all(8),
-                      child: Icon(
-                        Icons.arrow_forward_ios,
-                        size: 16,
-                        color: Theme.of(context).iconTheme.color,
-                      ),
+                  // Separate clickable area for arrow (navigate to sub-subcategories) with larger tap area
+                  IconButton(
+                    onPressed: () => _selectSubCategoryArrow(item),
+                    icon: Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16,
+                      color: Theme.of(context).iconTheme.color,
+                    ),
+                    padding: EdgeInsets.all(12),
+                    constraints: BoxConstraints(
+                      minWidth: 48,
+                      minHeight: 48,
                     ),
                   ),
                 ],

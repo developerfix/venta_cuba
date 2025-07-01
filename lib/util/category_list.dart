@@ -92,16 +92,18 @@ class CategoryList extends StatelessWidget {
               ),
             ),
           ),
-          // Separate clickable area for arrow
-          GestureDetector(
-            onTap: onArrowTap,
-            child: Container(
-              padding: EdgeInsets.all(8),
-              child: Icon(
-                Icons.arrow_forward_ios_outlined,
-                size: 15,
-                color: AppColors.k1xFF403C3C,
-              ),
+          // Separate clickable area for arrow with larger tap area
+          IconButton(
+            onPressed: onArrowTap,
+            icon: Icon(
+              Icons.arrow_forward_ios_outlined,
+              size: 15,
+              color: AppColors.k1xFF403C3C,
+            ),
+            padding: EdgeInsets.all(12),
+            constraints: BoxConstraints(
+              minWidth: 48,
+              minHeight: 48,
             ),
           ),
         ],

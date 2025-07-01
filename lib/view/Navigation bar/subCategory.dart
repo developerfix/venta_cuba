@@ -42,8 +42,8 @@ class _CategoryFromBottomState extends State<CategoryFromBottom> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      GestureDetector(
-                        onTap: () {
+                      IconButton(
+                        onPressed: () {
                           // Reset sub-subcategory selections when going back
                           if (cont.isSubSubCategories) {
                             cont.resetSubSubCategorySelections();
@@ -51,9 +51,14 @@ class _CategoryFromBottomState extends State<CategoryFromBottom> {
                             Get.back();
                           }
                         },
-                        child: Icon(
+                        icon: Icon(
                           Icons.arrow_back_ios,
                           size: 20,
+                        ),
+                        padding: EdgeInsets.all(12),
+                        constraints: BoxConstraints(
+                          minWidth: 48,
+                          minHeight: 48,
                         ),
                       ),
                       // Row(
