@@ -241,11 +241,7 @@ class HomeController extends GetxController {
         {
           'user_id': authCont.user?.userId ?? "",
           'category_id': selectedCategory?.id ?? "",
-          // For subcategory filtering, don't send sub_category_id to server
-          // Let client-side filtering handle subcategory + sub-subcategory logic
-          'sub_category_id': selectedSubSubCategory != null
-              ? selectedSubCategory?.id ?? ""
-              : "",
+          'sub_category_id': selectedSubCategory?.id ?? "",
           'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
           'latitude': lat ?? "23.124792615936276",
           'longitude': lng ?? "-82.38597269330762",
@@ -1475,15 +1471,11 @@ class HomeController extends GetxController {
           "Search Filters - Min: '${minPriceController.text.trim()}', Max: '${maxPriceController.text.trim()}', Search: '${searchController.text.trim()}'");
       Get.log("Location - Lat: '${lat}', Lng: '${lng}', Radius: '${radius}'");
 
-      // When subcategory is selected (but not sub-subcategory), we need to get all posts
-      // under the category so client-side filtering can include sub-subcategory posts
+      // Send appropriate category filters to backend
       Map<String, dynamic> requestData = {
         'user_id': authCont.user?.userId ?? "",
         'category_id': selectedCategory?.id ?? "",
-        // For subcategory filtering, don't send sub_category_id to server
-        // Let client-side filtering handle subcategory + sub-subcategory logic
-        'sub_category_id':
-            selectedSubSubCategory != null ? selectedSubCategory?.id ?? "" : "",
+        'sub_category_id': selectedSubCategory?.id ?? "",
         'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
         'latitude': lat ?? "23.124792615936276",
         'longitude': lng ?? "-82.38597269330762",
