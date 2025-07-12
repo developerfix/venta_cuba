@@ -545,10 +545,9 @@ class _ChatPageState extends State<ChatPage> {
                               )
                             ],
                             border: Border.all(
-                                color: Theme.of(context)
-                                    .dividerColor
-                                    .withValues(alpha: 0.3),
-                                width: 1)),
+                                color: AppColors.textPrimary
+                                    .withValues(alpha: 0.5),
+                                width: 1.5)),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           mainAxisAlignment: MainAxisAlignment.center,

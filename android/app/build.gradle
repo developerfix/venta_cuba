@@ -39,21 +39,24 @@ android {
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
     }
-
-    defaultConfig {
-        applicationId "com.ventacuba.highapp.venta_cuba"
-        minSdkVersion 23
-        targetSdkVersion 34
-        versionCode flutterVersionCode.toInteger()
-        versionName flutterVersionName
-        multiDexEnabled true
-    }
- splits {
+defaultConfig {
+    applicationId "com.ventacuba.highapp.venta_cuba"
+    minSdkVersion 24  // Consider raising from 23 to 24
+    targetSdkVersion 34
+    versionCode flutterVersionCode.toInteger()
+    versionName flutterVersionName
+    multiDexEnabled true
+    ndk {
+            abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86_64'
+        }
+        
+}
+  splits {
         abi {
             enable true
             reset()
-            include "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
-            universalApk true  // So Google Play generates universal APK as well
+            include "armeabi-v7a", "arm64-v8a", "x86_64"
+            universalApk true
         }
     }
     signingConfigs {

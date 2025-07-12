@@ -1,0 +1,2 @@
+C:/Users/DELL/Downloads/venta_cuba111/venta_cuba/android/app/.cxx/RelWithDebInfo/3t4b6z6s/x86_64/CMakeFiles/edit_cache.dir
+C:/Users/DELL/Downloads/venta_cuba111/venta_cuba/android/app/.cxx/RelWithDebInfo/3t4b6z6s/x86_64/CMakeFiles/rebuild_cache.dir
