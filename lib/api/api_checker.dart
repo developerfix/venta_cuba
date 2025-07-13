@@ -41,9 +41,22 @@ class ApiChecker {
       }
     } else if (response.statusCode! >= 500) {
       if (showSystemError) {
-        errorAlertToast(
-          'Server Error!\nPlease try again...'.tr,
-        );
+        // Check if it's an authentication-related server error
+        if (response.body != null &&
+            response.body is Map &&
+            response.body['message'] != null &&
+            response.body['message']
+                .toString()
+                .toLowerCase()
+                .contains('authenticate')) {
+          errorAlertToast('Authentication error. Please login again.'.tr);
+          // Navigate to login screen for authentication errors
+          Get.offAll(() => Login());
+        } else {
+          errorAlertToast(
+            'Server Error!\nPlease try again...'.tr,
+          );
+        }
       }
     } else if (response.statusCode! >= 400) {
       if (showUserError) {
@@ -55,7 +68,8 @@ class ApiChecker {
         }
       }
     }
-    return Response(statusCode: response.statusCode, statusText: response.body);
+    return Response(
+        statusCode: response.statusCode, statusText: response.body.toString());
   }
 
   void _showCustomAlertDialog() {
@@ -122,7 +136,7 @@ class ApiChecker {
         onPressed: onPressed,
         child: Text(
           text,
-          style: TextStyle(color: color ?? Colors.white),
+          style: TextStyle(color: color),
         ),
       ),
     );

@@ -106,6 +106,13 @@ class ApiClient extends GetxService {
       showLoading();
     }
     try {
+      // Ensure headers are updated with current token
+      _mainHeaders = {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Accept': 'application/json',
+        'Access-Control-Allow-Origin': "*",
+        'Authorization': 'Bearer $tokenMain'
+      };
       var header = headers ?? _mainHeaders;
       print(header);
       Get.log('url testing ${appBaseUrl + uri}');

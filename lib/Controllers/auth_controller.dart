@@ -933,26 +933,28 @@ class AuthController extends GetxController {
   }
 
   Future<void> logout() async {
-    // Set user as offline before logout
-    await setUserOffline();
-
-    // Stop chat listener before logout
     try {
-      final chatCont = Get.find<ChatController>();
-      chatCont.stopListeningForChatUpdates();
-      print('🔥 ✅ Chat listener stopped on logout');
-    } catch (e) {
-      print('🔥 ChatController not found on logout: $e');
-    }
+      // Set user as offline before logout
+      await setUserOffline();
 
-    // Clear local device token
-    deviceToken = "";
+      // Stop chat listener before logout
+      try {
+        final chatCont = Get.find<ChatController>();
+        chatCont.stopListeningForChatUpdates();
+        print('🔥 ✅ Chat listener stopped on logout');
+      } catch (e) {
+        print('🔥 ChatController not found on logout: $e');
+      }
 
-    Response response = await api.postWithForm(
-      "api/logout",
-      {},
-    );
-    if (response.statusCode == 200) {
+      // Clear local device token
+      deviceToken = "";
+
+      Response response = await api.postWithForm(
+        "api/logout",
+        {},
+      );
+
+      // Always clear local data regardless of server response
       SharedPreferences prefs = await SharedPreferences.getInstance();
       prefs.remove('token');
       prefs.remove('user_data');
@@ -967,9 +969,30 @@ class AuthController extends GetxController {
       unreadMessageCount.value = 0;
       hasUnreadMessages.value = false;
 
+      // Navigate to login regardless of server response
       Get.offAll(() => const Login());
-    } else {
-      errorAlertToast('Something went wrong\nPlease try again!'.tr);
+
+      if (response.statusCode != 200) {
+        print(
+            '🔥 Logout API failed but local data cleared: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('🔥 Error during logout: $e');
+      // Even if there's an error, clear local data and navigate to login
+      try {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        prefs.remove('token');
+        prefs.remove('user_data');
+
+        // Reset unread message count
+        unreadMessageCount.value = 0;
+        hasUnreadMessages.value = false;
+
+        Get.offAll(() => const Login());
+      } catch (clearError) {
+        print('🔥 Error clearing local data: $clearError');
+        Get.offAll(() => const Login());
+      }
     }
   }
 
