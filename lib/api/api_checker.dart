@@ -15,8 +15,21 @@ class ApiChecker {
       {required http.Response respons,
       bool showUserError = true,
       bool showSystemError = true}) async {
+    dynamic responseBody;
+    try {
+      // Try to parse as JSON first
+      responseBody = jsonDecode(respons.body);
+    } catch (e) {
+      // If JSON parsing fails, use the raw body
+      print("Response is not valid JSON, status code: ${respons.statusCode}");
+      print("Response headers: ${respons.headers}");
+      print(
+          "Response body (first 500 chars): ${respons.body.length > 500 ? respons.body.substring(0, 500) + '...' : respons.body}");
+      responseBody = respons.body;
+    }
+
     dynamic response = Response(
-      body: jsonDecode(respons.body) ?? respons.body,
+      body: responseBody,
       bodyString: respons.body.toString(),
       request: Request(
           headers: respons.request!.headers,
@@ -37,7 +50,12 @@ class ApiChecker {
     } else if (response.statusCode! == 401 || response.statusCode! == 403) {
       if (showUserError) {
         Get.offAll(() => Login());
-        errorAlertToast(response.body['message']);
+        // Handle cases where response.body might not be a Map (e.g., HTML error pages)
+        if (response.body is Map && response.body['message'] != null) {
+          errorAlertToast(response.body['message']);
+        } else {
+          errorAlertToast('Authentication failed. Please login again.'.tr);
+        }
       }
     } else if (response.statusCode! >= 500) {
       if (showSystemError) {
@@ -60,11 +78,17 @@ class ApiChecker {
       }
     } else if (response.statusCode! >= 400) {
       if (showUserError) {
-        if (response.body['message'] == "Unauthorized") {
-          _showCustomAlertDialog();
-          errorAlertToast("wrong email or password".tr);
+        // Handle cases where response.body might not be a Map (e.g., HTML error pages)
+        if (response.body is Map && response.body['message'] != null) {
+          if (response.body['message'] == "Unauthorized") {
+            _showCustomAlertDialog();
+            errorAlertToast("wrong email or password".tr);
+          } else {
+            errorAlertToast("${response.body['message']}".tr);
+          }
         } else {
-          errorAlertToast("${response.body['message']}".tr);
+          // If response body is not a Map or doesn't have a message, show generic error
+          errorAlertToast('Request failed. Please try again.'.tr);
         }
       }
     }

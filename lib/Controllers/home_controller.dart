@@ -236,7 +236,7 @@ class HomeController extends GetxController {
       }
 
       Get.log("Fetching Page: ${currentPage.value}");
-      Response response = await api.postWithForm(
+      Response response = await api.postData(
         "api/getListing?page=${currentPage.value}",
         {
           'user_id': authCont.user?.userId ?? "",
@@ -249,6 +249,11 @@ class HomeController extends GetxController {
           'min_price': '',
           'max_price': '',
           'search_by_title': ''
+        },
+        headers: {
+          'Accept': 'application/json',
+          'Access-Control-Allow-Origin': "*",
+          'Authorization': 'Bearer ${authCont.user?.accessToken}'
         },
         showdialog: false,
       );
@@ -550,7 +555,6 @@ class HomeController extends GetxController {
           'description': '',
         },
         headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
           'Accept': 'application/json',
           'Access-Control-Allow-Origin': "*",
           'Authorization': 'Bearer ${authCont.user?.accessToken}'
@@ -592,7 +596,6 @@ class HomeController extends GetxController {
           'comment': reviewController.text
         },
         headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
           'Accept': 'application/json',
           'Access-Control-Allow-Origin': "*",
           'Authorization': 'Bearer ${authCont.user?.accessToken}'
@@ -698,7 +701,6 @@ class HomeController extends GetxController {
           'listing_id': listingModel?.id,
         },
         headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
           'Accept': 'application/json',
           'Access-Control-Allow-Origin': "*",
           'Authorization': 'Bearer ${authCont.user?.accessToken}'
@@ -744,7 +746,6 @@ class HomeController extends GetxController {
                 'listing_id': listing.id,
               },
               headers: {
-                'Content-Type': 'application/json; charset=UTF-8',
                 'Accept': 'application/json',
                 'Access-Control-Allow-Origin': "*",
                 'Authorization': 'Bearer ${authCont.user?.accessToken}'
@@ -803,7 +804,6 @@ class HomeController extends GetxController {
           'listing_id': listingId,
         },
         headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
           'Accept': 'application/json',
           'Access-Control-Allow-Origin': "*",
           'Authorization': 'Bearer ${authCont.user?.accessToken}'
@@ -975,7 +975,6 @@ class HomeController extends GetxController {
           'tag': tagsData,
         },
         headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
           'Accept': 'application/json',
           'Access-Control-Allow-Origin': "*",
           'Authorization': 'Bearer ${authCont.user?.accessToken}'
@@ -1072,7 +1071,6 @@ class HomeController extends GetxController {
           'tag': tagsData
         },
         headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
           'Accept': 'application/json',
           'Access-Control-Allow-Origin': "*",
           'Authorization': 'Bearer ${authCont.user?.accessToken}'
@@ -1380,7 +1378,6 @@ class HomeController extends GetxController {
       Response response = await api.postWithForm(
           "api/getSellerListingByStatus",
           headers: {
-            'Content-Type': 'application/json; charset=UTF-8',
             'Accept': 'application/json',
             'Access-Control-Allow-Origin': "*",
             'Authorization': 'Bearer ${authCont.user?.accessToken}'
@@ -1500,9 +1497,14 @@ class HomeController extends GetxController {
       Get.log("Radius: ${radius}");
       Get.log("Full Request Data: $requestData");
 
-      Response response = await api.postWithForm(
+      Response response = await api.postData(
         "api/getListing?page=${currentSearchPage.value}",
         requestData,
+        headers: {
+          'Accept': 'application/json',
+          'Access-Control-Allow-Origin': "*",
+          'Authorization': 'Bearer ${authCont.user?.accessToken}'
+        },
         showdialog: false,
       );
 

@@ -526,6 +526,10 @@ class AuthController extends GetxController {
     if (response.statusCode == 200) {
       await prefs.setString("token", response.body["access_token"]);
 
+      // Update tokenMain immediately after login
+      tokenMain = response.body["access_token"];
+      api.updateHeader(tokenMain ?? "");
+
       onLoginSuccess(response.body);
       return response.statusCode;
     } else if (response.statusCode! >= 400) {

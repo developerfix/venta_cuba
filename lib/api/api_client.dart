@@ -5,7 +5,7 @@ import '../Utils/funcations.dart';
 import 'api_checker.dart';
 
 String? tokenMain;
-String baseUrl = "https://ventacuba.ventacuba21.workers.dev/";
+String baseUrl = "https://ventacuba.co/";
 
 class ApiClient extends GetxService {
   final String appBaseUrl;
@@ -69,19 +69,26 @@ class ApiClient extends GetxService {
       showLoading();
     }
     try {
-      _mainHeaders = {
+      // Start with default headers
+      Map<String, String> finalHeaders = {
         'Content-Type': 'application/json; charset=UTF-8',
         'Accept': 'application/json',
         'Access-Control-Allow-Origin': "*",
         'Authorization': 'Bearer $tokenMain'
       };
+
+      // If custom headers are provided, merge them and let them override defaults
+      if (headers != null) {
+        finalHeaders.addAll(headers);
+      }
+
       print(Uri.parse(appBaseUrl + uri));
       print("body : ${jsonEncode(body)}");
-      print("headers : ${jsonEncode(_mainHeaders)}");
+      print("Final headers : ${jsonEncode(finalHeaders)}");
       Http.Response _response = await Http.post(
         Uri.parse(appBaseUrl + uri),
         body: jsonEncode(body),
-        headers: headers ?? _mainHeaders,
+        headers: finalHeaders,
       ).timeout(Duration(seconds: timeoutInSeconds));
       if (showdialog) {
         Get.back();
@@ -106,22 +113,27 @@ class ApiClient extends GetxService {
       showLoading();
     }
     try {
-      // Ensure headers are updated with current token
-      _mainHeaders = {
-        'Content-Type': 'application/json; charset=UTF-8',
+      // Start with default headers for multipart form data
+      // Note: Content-Type will be automatically set by MultipartRequest
+      Map<String, String> finalHeaders = {
         'Accept': 'application/json',
         'Access-Control-Allow-Origin': "*",
         'Authorization': 'Bearer $tokenMain'
       };
-      var header = headers ?? _mainHeaders;
-      print(header);
+
+      // If custom headers are provided, merge them and let them override defaults
+      if (headers != null) {
+        finalHeaders.addAll(headers);
+      }
+
+      print("Final headers: $finalHeaders");
       Get.log('url testing ${appBaseUrl + uri}');
       var request = Http.MultipartRequest('POST', Uri.parse(appBaseUrl + uri));
       print("Sending body: $body");
       request.fields
           .addAll(body.map((key, value) => MapEntry(key, value.toString())));
 
-      request.headers.addAll(header);
+      request.headers.addAll(finalHeaders);
       image?.forEach((element) async {
         request.files.add(await Http.MultipartFile.fromPath(imageKey, element));
       });
