@@ -512,35 +512,80 @@ class AuthController extends GetxController {
   }
 
   Future login() async {
-    // Get fresh device token before login
-    await refreshDeviceToken();
+    try {
+      // Get fresh device token before login
+      await refreshDeviceToken();
 
-    Response response = await api.postData(
-      "api/login",
-      {
-        'email': emailCont.text.trim(),
-        'password': passCont.text.trim(),
-        'device_token': deviceToken
-      },
-    );
-    if (response.statusCode == 200) {
-      await prefs.setString("token", response.body["access_token"]);
+      Response response = await api.postData(
+        "api/login",
+        {
+          'email': emailCont.text.trim(),
+          'password': passCont.text.trim(),
+          'device_token': deviceToken
+        },
+      );
+      // Force show a dialog no matter what
+      await Get.dialog(
+        AlertDialog(
+          title: Text('Login Result'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Status: ${response.statusCode}'),
+              Text('Has Body: ${response.body != null}'),
+              if (response.statusCode == 200)
+                Text(
+                    'Token: ${response.body["access_token"] != null ? "Present" : "MISSING"}'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Get.back();
+                if (response.statusCode == 200 &&
+                    response.body["access_token"] != null) {
+                  prefs.setString("token", response.body["access_token"]);
+                  onLoginSuccess(response.body);
+                }
+              },
+              child: Text('Continue'),
+            ),
+          ],
+        ),
+        barrierDismissible: false,
+      );
+      // if (response.statusCode == 200) {
+      //   await prefs.setString("token", response.body["access_token"]);
 
-      // Update tokenMain immediately after login
-      tokenMain = response.body["access_token"];
-      api.updateHeader(tokenMain ?? "");
+      //   // Update tokenMain immediately after login
+      //   tokenMain = response.body["access_token"];
+      //   api.updateHeader(tokenMain ?? "");
 
-      onLoginSuccess(response.body);
-      return response.statusCode;
-    } else if (response.statusCode! >= 400) {
-      // errorAlertToast('Your Email or Password is incorrect');
-    } else if (response.statusCode == 500) {
-      // errorAlertToast('Your Email or Password is incorrect');
-    } else {
-      errorAlertToast('Something went wrong\nPlease try again!'.tr);
+      //   onLoginSuccess(response.body);
+      //   return response.statusCode;
+      // } else if (response.statusCode! >= 400) {
+      //   errorAlertToast('Your Email or Password is incorrect');
+      // } else if (response.statusCode == 500) {
+      //   errorAlertToast('Your Email or Password is incorrect');
+      // } else {
+      //   errorAlertToast('Something went wrong\nPlease try again!'.tr);
+      // }
+      print(
+          "........................................................${response.statusCode}");
+    } catch (e) {
+      Get.dialog(
+        AlertDialog(
+          title: Text('Login Error'),
+          content: Text(e.toString()),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: Text('OK'),
+            ),
+          ],
+        ),
+      );
     }
-    print(
-        "........................................................${response.statusCode}");
   }
 
   Future<void> refreshDeviceToken() async {
