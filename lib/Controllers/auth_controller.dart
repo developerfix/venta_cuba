@@ -91,8 +91,9 @@ class AuthController extends GetxController {
     // Initialize tokenMain early to prevent null token issues
     tokenMain = prefs.getString('token');
     token = prefs.getString('token');
-    print('🔥 AuthController onInit: tokenMain initialized as: ${tokenMain ?? "NULL"}');
-    
+    print(
+        '🔥 AuthController onInit: tokenMain initialized as: ${tokenMain ?? "NULL"}');
+
     // Update API client headers with the token if available
     if (tokenMain != null) {
       api.updateHeader(tokenMain!);
@@ -627,6 +628,11 @@ class AuthController extends GetxController {
           'business_province': province, //businessProvinceCont.text.trim(),
           'business_city': city //businessCityCont.text.trim()
         },
+        headers: {
+          'Accept': 'application/json',
+          'Access-Control-Allow-Origin': "*",
+          'Authorization': 'Bearer ${user?.accessToken}'
+        },
         imageKey: "business_logo",
         image: image);
     if (response.statusCode == 200) {
@@ -646,6 +652,11 @@ class AuthController extends GetxController {
       {
         'password': confirmPassCont.text.trim(),
         'password_confirmation': confirmPassCont.text.trim()
+      },
+      headers: {
+        'Accept': 'application/json',
+        'Access-Control-Allow-Origin': "*",
+        'Authorization': 'Bearer ${user?.accessToken}'
       },
     );
     if (response.statusCode == 200) {
@@ -669,6 +680,11 @@ class AuthController extends GetxController {
           'payment_id': '1',
           'business_name': businessNameCont.text.trim(),
         },
+        headers: {
+          'Accept': 'application/json',
+          'Access-Control-Allow-Origin': "*",
+          'Authorization': 'Bearer ${user?.accessToken}'
+        },
         imageKey: "business_logo",
         image: image);
     if (response.statusCode == 200) {
@@ -686,6 +702,11 @@ class AuthController extends GetxController {
         "api/addBusiness",
         {
           'payment_id': '1',
+        },
+        headers: {
+          'Accept': 'application/json',
+          'Access-Control-Allow-Origin': "*",
+          'Authorization': 'Bearer ${user?.accessToken}'
         },
         showdialog: false,
         imageKey: 'business_logo',
@@ -709,6 +730,11 @@ class AuthController extends GetxController {
           'city': city ?? user?.city,
           'province': province ?? user?.province,
           'last_name': lastNameCont.text
+        },
+        headers: {
+          'Accept': 'application/json',
+          'Access-Control-Allow-Origin': "*",
+          'Authorization': 'Bearer ${user?.accessToken}'
         },
         showdialog: isBack,
         imageKey: 'profile_picture',

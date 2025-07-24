@@ -961,26 +961,89 @@ class HomeController extends GetxController {
 
     print('isBusinessAccount:${authCont.isBusinessAccount}');
     print('postImages:$postImages');
-    Response response = await api.postWithForm(
-        "api/addListing",
-        {
-          'category_id': selectedCategory?.id,
-          'sub_category_id': selectedSubCategory?.id ?? "",
-          'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
-          'price': price,
-          'currency': selectedCurrency ?? 'USD',
-          'business_status': authCont.isBusinessAccount ? 1 : 0,
-          'title': titleCont.text.trim(),
-          'latitude': lat ?? lat1,
-          'longitude': lng ?? lng1,
-          'address': addressCont.text.trim(),
-          'description': descriptionCont.text.trim(),
-          'additional_features': jsonEncode(optionalInformation),
-          'tag': tagsData,
-        },
-        imageKey: "gallery[]",
-        image: postImages,
-        showdialog: true);
+
+    // Additional debugging for authorization
+    print(
+        "🔥 BEFORE API CALL - authCont.user?.accessToken: ${authCont.user?.accessToken}");
+    print("🔥 BEFORE API CALL - tokenMain: $tokenMain");
+    print(
+        "🔥 BEFORE API CALL - authCont.user is null: ${authCont.user == null}");
+
+    // Try to refresh token if it's null or empty
+    if (authCont.user?.accessToken == null ||
+        authCont.user?.accessToken == "") {
+      print("🔥 ERROR: User access token is null or empty!");
+      print("🔥 Attempting to refresh user details...");
+      await authCont.getuserDetail();
+      print(
+          "🔥 After refresh - authCont.user?.accessToken: ${authCont.user?.accessToken}");
+      print("🔥 After refresh - tokenMain: $tokenMain");
+
+      if (authCont.user?.accessToken == null ||
+          authCont.user?.accessToken == "") {
+        errorAlertToast('Authentication error. Please login again.');
+        return;
+      }
+    }
+
+    // Use tokenMain as fallback if user token is still null
+    String authToken = authCont.user?.accessToken ?? tokenMain ?? "";
+    print("🔥 Final auth token being used: $authToken");
+
+    // Debug the request data
+    Map<String, dynamic> requestData = {
+      'category_id': selectedCategory?.id,
+      'sub_category_id': selectedSubCategory?.id ?? "",
+      'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
+      'price': price,
+      'currency': selectedCurrency ?? 'USD',
+      'business_status': authCont.isBusinessAccount ? 1 : 0,
+      'title': titleCont.text.trim(),
+      'latitude': (lat ?? lat1).toString(),
+      'longitude': (lng ?? lng1).toString(),
+      'address': addressCont.text.trim(),
+      'description': descriptionCont.text.trim(),
+      'additional_features': jsonEncode(optionalInformation),
+      'tag': tagsData.isEmpty ? "" : tagsData,
+    };
+
+    // Remove empty fields that might cause server validation issues
+    requestData.removeWhere((key, value) => value == null);
+
+    // Ensure required fields have default values
+    if (requestData['sub_sub_category_id'] == "") {
+      requestData.remove('sub_sub_category_id');
+    }
+    if (requestData['tag'] == "") {
+      requestData.remove('tag');
+    }
+    print("🔥 Request data: $requestData");
+    print("🔥 Images count: ${postImages?.length ?? 0}");
+
+    // Server blocks multipart uploads - use JSON only for now
+    Response response;
+
+    if (postImages.isNotEmpty) {
+      print(
+          "🔥 WARNING: Server blocks image uploads. Creating post without images.");
+      errorAlertToast(
+          'Image uploads are temporarily disabled due to server restrictions. Post will be created without images.');
+
+      // Clear images to proceed with JSON request
+      postImages.clear();
+    }
+
+    print("🔥 Making request using postData (JSON)");
+    response = await api.postData(
+      "api/addListing",
+      requestData,
+      headers: {
+        'Accept': 'application/json',
+        'Access-Control-Allow-Origin': "*",
+        'Authorization': 'Bearer $authToken'
+      },
+      showdialog: true,
+    );
 
     if (response.statusCode == 200) {
       if (response.body["message"] ==
@@ -1006,6 +1069,10 @@ class HomeController extends GetxController {
         // Refresh listings data after successful post creation
         status = "active";
         soldStatus = null;
+
+        // Force refresh the listings
+        print("🔥 Refreshing listings after successful post creation");
+        await getSellerListingByStatus();
 
         Get.offAll(Navigation_Bar());
         errorAlertToast('Post Add Successfully'.tr);
@@ -1051,32 +1118,63 @@ class HomeController extends GetxController {
     print(selectedSubSubCategory?.id);
     // Remove spaces from price
     String rawPrice = priceCont?.text.replaceAll(' ', '') ?? "0";
-    Response response = await api.postWithForm(
-        "api/editListing",
-        {
-          'listing_id': listingModel?.id,
-          'category_id': selectedCategory?.id,
-          'sub_category_id': selectedSubCategory?.id ?? "",
-          'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
-          'price': rawPrice,
-          'currency': selectedCurrency ?? 'USD',
-          'title': titleCont.text.trim(),
-          'business_status': authCont.isBusinessAccount ? 1 : 0,
-          'address': addressCont.text.trim(),
-          'latitude': lat.toString(),
-          'longitude': lng.toString(),
-          'description': descriptionCont.text.trim(),
-          'additional_features': jsonEncode(optionalInformation),
-          'tag': tagsData
-        },
-        headers: {
-          'Accept': 'application/json',
-          'Access-Control-Allow-Origin': "*",
-          'Authorization': 'Bearer ${authCont.user?.accessToken}'
-        },
-        imageKey: "gallery[]",
-        image: postImages,
-        showdialog: true);
+
+    // Prepare request data
+    Map<String, dynamic> requestData = {
+      'listing_id': listingModel?.id,
+      'category_id': selectedCategory?.id,
+      'sub_category_id': selectedSubCategory?.id ?? "",
+      'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
+      'price': rawPrice,
+      'currency': selectedCurrency ?? 'USD',
+      'title': titleCont.text.trim(),
+      'business_status': authCont.isBusinessAccount ? 1 : 0,
+      'address': addressCont.text.trim(),
+      'latitude': lat.toString(),
+      'longitude': lng.toString(),
+      'description': descriptionCont.text.trim(),
+      'additional_features': jsonEncode(optionalInformation),
+      'tag': tagsData
+    };
+
+    // Remove empty fields that might cause server validation issues
+    requestData.removeWhere((key, value) => value == null);
+
+    // Ensure required fields have default values
+    if (requestData['sub_sub_category_id'] == "") {
+      requestData.remove('sub_sub_category_id');
+    }
+    if (requestData['tag'] == "") {
+      requestData.remove('tag');
+    }
+
+    print("🔥 EditListing Request data: $requestData");
+    print("🔥 EditListing Images count: ${postImages?.length ?? 0}");
+
+    // Server blocks multipart uploads - use JSON only for now
+    Response response;
+
+    if (postImages.isNotEmpty) {
+      print(
+          "🔥 WARNING: Server blocks image uploads in edit. Editing post without images.");
+      errorAlertToast(
+          'Image uploads are temporarily disabled due to server restrictions. Post will be updated without images.');
+
+      // Clear images to proceed with JSON request
+      postImages.clear();
+    }
+
+    print("🔥 Making editListing request using postData (JSON)");
+    response = await api.postData(
+      "api/editListing",
+      requestData,
+      headers: {
+        'Accept': 'application/json',
+        'Access-Control-Allow-Origin': "*",
+        'Authorization': 'Bearer ${authCont.user?.accessToken}'
+      },
+      showdialog: true,
+    );
     if (response.statusCode == 200) {
       priceCont?.clear();
       titleCont.clear();
@@ -1092,8 +1190,12 @@ class HomeController extends GetxController {
       status = "active";
       soldStatus = null;
 
+      // Force refresh the listings
+      print("🔥 Refreshing listings after successful post edit");
+      await getSellerListingByStatus();
+
       Get.offAll(Navigation_Bar());
-      errorAlertToast('Post Add Successfully'.tr);
+      errorAlertToast('Post Updated Successfully'.tr);
     } else {
       errorAlertToast('Something went wrong\nPlease try again!'.tr);
     }
@@ -1398,18 +1500,23 @@ class HomeController extends GetxController {
 
         // Process each listing
         dataListing.forEach((element) {
-          print('dataListing business_status${element["business_status"]}');
+          var businessStatus = element["business_status"];
+          print(
+              '🔥 Listing business_status: $businessStatus (type: ${businessStatus.runtimeType})');
 
           ListingModel listing = ListingModel.fromJson(element);
           userListingModelList.add(listing);
 
-          // Count listings by business status
-          if (element["business_status"] == "1") {
+          // Count listings by business status (handle both string and int types)
+          String businessStatusStr = businessStatus.toString();
+          if (businessStatusStr == "1") {
             tempBusinessCount++;
-            print('dataListing bussinessPostCount ++"${tempBusinessCount}');
-          } else if (element["business_status"] == "0") {
+            print('🔥 Business listing found, count: $tempBusinessCount');
+          } else if (businessStatusStr == "0") {
             tempPersonalCount++;
-            print('dataListing personalAcountPost ++"${tempPersonalCount}');
+            print('🔥 Personal listing found, count: $tempPersonalCount');
+          } else {
+            print('🔥 Unknown business_status: $businessStatus');
           }
         });
 
