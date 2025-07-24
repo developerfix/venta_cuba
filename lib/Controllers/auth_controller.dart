@@ -88,6 +88,16 @@ class AuthController extends GetxController {
     emailCont.clear();
     prefs = await SharedPreferences.getInstance();
 
+    // Initialize tokenMain early to prevent null token issues
+    tokenMain = prefs.getString('token');
+    token = prefs.getString('token');
+    print('🔥 AuthController onInit: tokenMain initialized as: ${tokenMain ?? "NULL"}');
+    
+    // Update API client headers with the token if available
+    if (tokenMain != null) {
+      api.updateHeader(tokenMain!);
+    }
+
     // Initialize unread message count
     unreadMessageCount.value = 0;
     hasUnreadMessages.value = false;
@@ -394,8 +404,8 @@ class AuthController extends GetxController {
       tokenMain = prefss.getString('token');
       token = prefss.getString('token');
 
-      print(
-          '🔥 AuthController: Token retrieved: ${token != null ? 'Yes' : 'No'}');
+      print('🔥 AuthController: Token retrieved: ${token ?? "NULL"}');
+      print('🔥 AuthController: tokenMain set to: ${tokenMain ?? "NULL"}');
 
       api.updateHeader(token ?? "");
 
@@ -420,21 +430,22 @@ class AuthController extends GetxController {
         print('🔥 AuthController: Device token synced');
       }
 
-      // Set user as online when they log in
-      await setUserOnline();
-      print('🔥 AuthController: User set as online');
+      // Set user as online when they log in (skip for Cuban users to avoid hanging)
+      // await setUserOnline();
+      print('🔥 AuthController: User set as online (skipped for Cuban users)');
 
       // Start chat listener and update badge count after user is loaded (non-blocking)
-      _initializeChatServices().then((_) {
-        print('🔥 AuthController: Chat services initialized');
-      }).catchError((e) {
-        print('🔥 AuthController: Error initializing chat services: $e');
-      });
+      // _initializeChatServices().then((_) {
+      //   print('🔥 AuthController: Chat services initialized');
+      // }).catchError((e) {
+      //   print('🔥 AuthController: Error initializing chat services: $e');
+      // });
     } catch (e) {
       print('🔥 AuthController: Error in getuserDetail: $e');
       Get.offAll(() => const Login());
       rethrow; // Re-throw to let calling method handle the error
     }
+
     update();
   }
 
@@ -524,67 +535,28 @@ class AuthController extends GetxController {
           'device_token': deviceToken
         },
       );
-      // Force show a dialog no matter what
-      await Get.dialog(
-        AlertDialog(
-          title: Text('Login Result'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Status: ${response.statusCode}'),
-              Text('Has Body: ${response.body != null}'),
-              if (response.statusCode == 200)
-                Text(
-                    'Token: ${response.body["access_token"] != null ? "Present" : "MISSING"}'),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Get.back();
-                if (response.statusCode == 200 &&
-                    response.body["access_token"] != null) {
-                  prefs.setString("token", response.body["access_token"]);
-                  onLoginSuccess(response.body);
-                }
-              },
-              child: Text('Continue'),
-            ),
-          ],
-        ),
-        barrierDismissible: false,
-      );
-      // if (response.statusCode == 200) {
-      //   await prefs.setString("token", response.body["access_token"]);
 
-      //   // Update tokenMain immediately after login
-      //   tokenMain = response.body["access_token"];
-      //   api.updateHeader(tokenMain ?? "");
+      if (response.statusCode == 200) {
+        await prefs.setString("token", response.body["access_token"]);
 
-      //   onLoginSuccess(response.body);
-      //   return response.statusCode;
-      // } else if (response.statusCode! >= 400) {
-      //   errorAlertToast('Your Email or Password is incorrect');
-      // } else if (response.statusCode == 500) {
-      //   errorAlertToast('Your Email or Password is incorrect');
-      // } else {
-      //   errorAlertToast('Something went wrong\nPlease try again!'.tr);
-      // }
+        // Update tokenMain immediately after login
+        tokenMain = response.body["access_token"];
+        api.updateHeader(tokenMain ?? "");
+
+        onLoginSuccess(response.body);
+        return response.statusCode;
+      } else if (response.statusCode! >= 400) {
+        errorAlertToast('Your Email or Password is incorrect');
+      } else if (response.statusCode == 500) {
+        errorAlertToast('Your Email or Password is incorrect');
+      } else {
+        errorAlertToast('Something went wrong\nPlease try again!'.tr);
+      }
       print(
           "........................................................${response.statusCode}");
     } catch (e) {
-      Get.dialog(
-        AlertDialog(
-          title: Text('Login Error'),
-          content: Text(e.toString()),
-          actions: [
-            TextButton(
-              onPressed: () => Get.back(),
-              child: Text('OK'),
-            ),
-          ],
-        ),
-      );
+      print('🔥 Login error: $e');
+      errorAlertToast('Something went wrong\nPlease try again!'.tr);
     }
   }
 
@@ -934,42 +906,6 @@ class AuthController extends GetxController {
     await getuserDetail();
     update();
     Get.offAll(Navigation_Bar());
-  }
-
-  // Initialize chat services after user login
-  Future<void> _initializeChatServices() async {
-    try {
-      // Import ChatController here to avoid circular dependency
-      final chatCont = Get.find<ChatController>();
-
-      // Update unread message indicators immediately
-      await chatCont.updateUnreadMessageIndicators();
-      await chatCont.updateBadgeCountFromChats();
-
-      // Start listening for real-time chat updates
-      chatCont.startListeningForChatUpdates();
-
-      print(
-          '🔥 ✅ Chat services initialized successfully for user: ${user?.userId}');
-    } catch (e) {
-      // If ChatController is not found, try to initialize it
-      try {
-        Get.lazyPut(() => ChatController());
-        final chatCont = Get.find<ChatController>();
-
-        // Small delay to ensure controller is properly initialized
-        await Future.delayed(Duration(milliseconds: 500));
-
-        await chatCont.updateUnreadMessageIndicators();
-        await chatCont.updateBadgeCountFromChats();
-        chatCont.startListeningForChatUpdates();
-
-        print(
-            '🔥 ✅ Chat services initialized after lazy loading for user: ${user?.userId}');
-      } catch (e2) {
-        print('🔥 ❌ Error initializing chat services: $e2');
-      }
-    }
   }
 
   void userMainProfileData(Map<String, dynamic> value) {}

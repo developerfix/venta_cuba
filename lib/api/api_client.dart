@@ -30,7 +30,7 @@ class ApiClient extends GetxService {
   void updateHeader(
     String token,
   ) {
-    token = tokenMain!;
+    tokenMain = token;
     _mainHeaders = {
       'Content-Type': 'application/json; charset=UTF-8',
       'Accept': 'application/json',
@@ -63,8 +63,7 @@ class ApiClient extends GetxService {
 
   Future<Response> postData(String uri, dynamic body,
       {Map<String, String>? headers, bool showdialog = true}) async {
-    print("???????????????");
-    print(tokenMain);
+    print("🔥 postData tokenMain: $tokenMain");
     if (showdialog) {
       showLoading();
     }
@@ -74,7 +73,7 @@ class ApiClient extends GetxService {
         'Content-Type': 'application/json; charset=UTF-8',
         'Accept': 'application/json',
         'Access-Control-Allow-Origin': "*",
-        'Authorization': 'Bearer $tokenMain'
+        'Authorization': 'Bearer ${tokenMain ?? ""}'
       };
 
       // If custom headers are provided, merge them and let them override defaults
@@ -109,6 +108,7 @@ class ApiClient extends GetxService {
       List<String>? image,
       String imageKey = ''}) async {
     print(body);
+    print("🔥 postWithForm tokenMain: $tokenMain");
     if (showdialog) {
       showLoading();
     }
@@ -118,7 +118,7 @@ class ApiClient extends GetxService {
       Map<String, String> finalHeaders = {
         'Accept': 'application/json',
         'Access-Control-Allow-Origin': "*",
-        'Authorization': 'Bearer $tokenMain'
+        'Authorization': 'Bearer ${tokenMain ?? ""}'
       };
 
       // If custom headers are provided, merge them and let them override defaults
@@ -126,7 +126,8 @@ class ApiClient extends GetxService {
         finalHeaders.addAll(headers);
       }
 
-      print("Final headers: $finalHeaders");
+      print("🔥 Final headers being sent: $finalHeaders");
+      print("🔥 Authorization header: ${finalHeaders['Authorization']}");
       Get.log('url testing ${appBaseUrl + uri}');
       var request = Http.MultipartRequest('POST', Uri.parse(appBaseUrl + uri));
       print("Sending body: $body");

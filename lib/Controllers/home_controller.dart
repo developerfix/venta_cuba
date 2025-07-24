@@ -915,6 +915,10 @@ class HomeController extends GetxController {
   }
 
   Future addListing(BuildContext context) async {
+    print("🔥 addListing - user.accessToken: ${authCont.user?.accessToken}");
+    print("🔥 addListing - tokenMain: $tokenMain");
+    print("🔥 addListing - selectedCategory: ${selectedCategory?.id}");
+    print("🔥 addListing - postImages length: ${postImages?.length}");
     String tagsData = "";
     String price = "0";
     String rawPrice = priceCont?.text.replaceAll(' ', '') ?? "0";
@@ -973,11 +977,6 @@ class HomeController extends GetxController {
           'description': descriptionCont.text.trim(),
           'additional_features': jsonEncode(optionalInformation),
           'tag': tagsData,
-        },
-        headers: {
-          'Accept': 'application/json',
-          'Access-Control-Allow-Origin': "*",
-          'Authorization': 'Bearer ${authCont.user?.accessToken}'
         },
         imageKey: "gallery[]",
         image: postImages,

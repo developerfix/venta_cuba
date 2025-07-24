@@ -17,6 +17,7 @@ class ApiChecker {
       bool showSystemError = true}) async {
     dynamic responseBody;
     try {
+      print(respons.body);
       // Try to parse as JSON first
       responseBody = jsonDecode(respons.body);
     } catch (e) {
@@ -49,12 +50,11 @@ class ApiChecker {
       return response;
     } else if (response.statusCode! == 401 || response.statusCode! == 403) {
       if (showUserError) {
-        Get.offAll(() => Login());
         // Handle cases where response.body might not be a Map (e.g., HTML error pages)
         if (response.body is Map && response.body['message'] != null) {
           errorAlertToast(response.body['message']);
         } else {
-          errorAlertToast('Authentication failed. Please login again.'.tr);
+          errorAlertToast('Authentication failed. Please try again.'.tr);
         }
       }
     } else if (response.statusCode! >= 500) {
@@ -67,9 +67,7 @@ class ApiChecker {
                 .toString()
                 .toLowerCase()
                 .contains('authenticate')) {
-          errorAlertToast('Authentication error. Please login again.'.tr);
-          // Navigate to login screen for authentication errors
-          Get.offAll(() => Login());
+          errorAlertToast('Server authentication error. Please try again.'.tr);
         } else {
           errorAlertToast(
             'Server Error!\nPlease try again...'.tr,
