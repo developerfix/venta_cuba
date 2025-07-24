@@ -313,7 +313,22 @@ class _ChatPageState extends State<ChatPage> {
                         child: CircularProgressIndicator(
                       strokeWidth: 2,
                     ))),
-                errorWidget: (context, url, error) => Icon(Icons.error),
+                errorWidget: (context, url, error) {
+                  print("🔥 Profile image load error: $error for URL: $url");
+                  return Container(
+                    height: 50..h,
+                    width: 50.w,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.grey[300],
+                    ),
+                    child: Icon(
+                      Icons.person,
+                      size: 30,
+                      color: Colors.grey[600],
+                    ),
+                  );
+                },
               ),
               SizedBox(
                 width: 16.w,
@@ -424,8 +439,35 @@ class _ChatPageState extends State<ChatPage> {
                                   ),
                                 ),
                               ),
-                              errorWidget: (context, url, error) =>
-                                  Center(child: Text("No Image".tr)),
+                              errorWidget: (context, url, error) {
+                                print(
+                                    "🔥 Listing image load error: $error for URL: $url");
+                                return Container(
+                                  height: 50,
+                                  width: 50,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(7),
+                                    color: Colors.grey[300],
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.image_not_supported,
+                                        size: 20,
+                                        color: Colors.grey[600],
+                                      ),
+                                      Text(
+                                        "No Image".tr,
+                                        style: TextStyle(
+                                          fontSize: 8,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
                             )),
                         SizedBox(width: 10),
                         Expanded(
@@ -978,10 +1020,18 @@ class _ChatPageState extends State<ChatPage> {
     // Prefer the fetched listing model data over widget data
     if (homeCont.listingModel?.gallery != null &&
         homeCont.listingModel!.gallery!.isNotEmpty) {
-      return homeCont.listingModel!.gallery!.first;
+      String imageUrl = homeCont.listingModel!.gallery!.first;
+      if (imageUrl.isNotEmpty && imageUrl != "null") {
+        return imageUrl;
+      }
     }
     // Fallback to widget data
-    return widget.listingImage ?? "";
+    String fallbackUrl = widget.listingImage ?? "";
+    if (fallbackUrl.isNotEmpty && fallbackUrl != "null") {
+      return fallbackUrl;
+    }
+    // Return empty string if no valid image URL found
+    return "";
   }
 
   // Helper method to get listing title

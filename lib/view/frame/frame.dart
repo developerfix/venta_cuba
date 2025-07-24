@@ -125,6 +125,25 @@ class _FrameScreenState extends State<FrameScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: GetBuilder<HomeController>(
         builder: (cont) {
+          // Check if listingModel is null and show loading or error state
+          if (cont.listingModel == null) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 20),
+                  Text('Loading listing details...'),
+                  SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('Go Back'),
+                  ),
+                ],
+              ),
+            );
+          }
+
           final String day = cont.listingModel!.updatedAt != null
               ? cont.format(DateTime.parse(cont.listingModel!.updatedAt!))
               : cont.format(DateTime.now());

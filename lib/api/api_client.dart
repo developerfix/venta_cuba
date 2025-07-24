@@ -92,7 +92,7 @@ class ApiClient extends GetxService {
       if (showdialog) {
         Get.back();
       }
-      return apichecker.checkApi(respons: _response);
+      return apichecker.checkApi(respons: _response, showUserError: showdialog);
     } catch (e) {
       if (showdialog) {
         Get.back();
@@ -146,7 +146,7 @@ class ApiClient extends GetxService {
       var response = await Http.Response.fromStream(streamedResponse);
       print("object......${response.statusCode}");
       print("object......${response.body}");
-      return apichecker.checkApi(respons: response);
+      return apichecker.checkApi(respons: response, showUserError: showdialog);
     } catch (e) {
       if (showdialog) {
         Get.back();

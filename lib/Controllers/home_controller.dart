@@ -1861,26 +1861,105 @@ class HomeController extends GetxController {
   // }
 
   Future getListingDetails(String listingId, {bool showDialog = true}) async {
-    Response response = await api.postWithForm(
-        "api/getListingDetails",
-        {
-          'listing_id': listingId,
-          'user_id': authCont.user?.userId,
-        },
-        showdialog: showDialog);
-    if (response.statusCode == 200) {
-      isListing = 0;
-      listingModel = ListingModel.fromJson(response.body["data"]);
+    try {
+      print("🔥 Getting listing details for ID: $listingId");
 
-      // Cross-check and update isSellerFavorite with local favorite sellers list
-      _updateSellerFavoriteStatus();
-
-      update(); // Ensure UI updates when listing details are fetched
-      if (showDialog) {
-        Get.to(FrameScreen());
+      // Validate listingId
+      if (listingId.isEmpty || listingId == "null") {
+        print("🔥 Invalid listing ID: $listingId");
+        if (showDialog) {
+          errorAlertToast('Invalid listing ID'.tr);
+        }
+        return;
       }
-    } else {
-      errorAlertToast('Something went wrong\nPlease try again!'.tr);
+
+      // Try multipart first (original approach), then fallback to JSON
+      Response response;
+      try {
+        print("🔥 Trying multipart request for getListingDetails");
+        response = await api.postWithForm(
+          "api/getListingDetails",
+          {
+            'listing_id': listingId,
+            'user_id': authCont.user?.userId ?? "",
+          },
+          headers: {
+            'Accept': 'application/json',
+            'Access-Control-Allow-Origin': "*",
+            'Authorization': 'Bearer ${authCont.user?.accessToken}'
+          },
+          showdialog: false,
+        );
+      } catch (e) {
+        print("🔥 Multipart failed, trying JSON request: $e");
+        response = await api.postData(
+          "api/getListingDetails",
+          {
+            'listing_id': listingId,
+            'user_id': authCont.user?.userId ?? "",
+          },
+          headers: {
+            'Accept': 'application/json',
+            'Access-Control-Allow-Origin': "*",
+            'Authorization': 'Bearer ${authCont.user?.accessToken}'
+          },
+          showdialog: false,
+        );
+      }
+
+      print("🔥 getListingDetails response status: ${response.statusCode}");
+      print("🔥 getListingDetails response body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        if (response.body != null && response.body["data"] != null) {
+          isListing = 0;
+          listingModel = ListingModel.fromJson(response.body["data"]);
+
+          // Cross-check and update isSellerFavorite with local favorite sellers list
+          _updateSellerFavoriteStatus();
+
+          update(); // Ensure UI updates when listing details are fetched
+          if (showDialog) {
+            Get.to(FrameScreen());
+          }
+          print("🔥 Listing details loaded successfully");
+        } else {
+          print("🔥 Empty or null response data");
+          print("🔥 Response body structure: ${response.body?.keys}");
+          // Don't show toast for chat screen (showDialog = false) to avoid annoying users
+          if (showDialog) {
+            errorAlertToast('No listing data found'.tr);
+          }
+        }
+      } else {
+        print(
+            "🔥 getListingDetails error: ${response.statusCode} - ${response.body}");
+
+        // Set listingModel to null to trigger the loading/error state in UI
+        listingModel = null;
+        update();
+
+        // Don't show toast for chat screen (showDialog = false) to avoid annoying users
+        if (showDialog) {
+          if (response.statusCode == 500) {
+            errorAlertToast('Listing not found or has been removed.'.tr);
+            // Go back if this was opened from a direct action
+            Get.back();
+          } else {
+            errorAlertToast('Something went wrong\nPlease try again!'.tr);
+          }
+        }
+      }
+    } catch (e) {
+      print("🔥 Exception in getListingDetails: $e");
+      // Set listingModel to null to trigger the loading/error state in UI
+      listingModel = null;
+      update();
+      if (showDialog) {
+        errorAlertToast('Listing not found or has been removed.'.tr);
+        // Go back if this was opened from a direct action
+        Get.back();
+      }
     }
   }
 
