@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:geocoding/geocoding.dart' as geocoding;
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 // import 'package:google_maps_webservice/places.dart';
@@ -42,7 +41,6 @@ class LocationController extends GetxController {
   Rx<String>? _sessingToken = "12".obs;
   List placeList = [];
   var location = "".obs;
-  List<geocoding.Location>? locations;
   double? lat;
   double? lng;
   String address = "";
@@ -76,17 +74,40 @@ class LocationController extends GetxController {
       );
 
       print(
-          "DEBUG: Starting geocoding for: ${placeList[index]["description"]}");
+          "🔥 📍 STARTING GEOCODING for: ${placeList[index]["description"]}");
 
-      locations =
-          await geocoding.locationFromAddress(placeList[index]["description"]);
+      // Use Google Geocoding Web API instead of native geocoding
+      String addressToGeocode = placeList[index]["description"];
+      String encodedAddress = Uri.encodeComponent(addressToGeocode);
+      String geocodingUrl = 'https://maps.googleapis.com/maps/api/geocode/json?address=$encodedAddress&key=AIzaSyBx95Bvl9O-US2sQpqZ41GdsHIprnXvJv8';
+      
+      print("🔥 📡 Making Geocoding API request to: $geocodingUrl");
+      
+      var response = await http.get(Uri.parse(geocodingUrl)).timeout(Duration(seconds: 15));
+      
+      print("🔥 📊 Geocoding API response status: ${response.statusCode}");
+      print("🔥 📋 Geocoding API response: ${response.body}");
+      
+      if (response.statusCode == 200) {
+        var data = jsonDecode(response.body);
+        String status = data['status'] ?? 'UNKNOWN';
+        
+        print("🔥 📍 Geocoding API status: $status");
+        
+        if (status == 'OK' && data['results'] != null && data['results'].isNotEmpty) {
+          lat = data['results'][0]['geometry']['location']['lat'];
+          lng = data['results'][0]['geometry']['location']['lng'];
+          
+          print("🔥 ✅ GEOCODING SUCCESSFUL!");
+          print("🔥 📍 Latitude: $lat");
+          print("🔥 📍 Longitude: $lng");
+        } else {
+          throw Exception('Geocoding failed: $status - ${data['error_message'] ?? 'No coordinates found'}');
+        }
+      } else {
+        throw Exception('HTTP ${response.statusCode}: Geocoding API request failed');
+      }
 
-      print("DEBUG: Geocoding successful!");
-      print("DEBUG: Latitude: ${locations![0].latitude}");
-      print("DEBUG: Longitude: ${locations![0].longitude}");
-
-      lat = locations![0].latitude;
-      lng = locations![0].longitude;
       address = placeList[index]["description"];
 
       userPreferences.setSaveHistory(
@@ -124,8 +145,8 @@ class LocationController extends GetxController {
       // Close loading dialog if open
       if (Get.isDialogOpen ?? false) Get.back();
 
-      print("DEBUG: Geocoding failed with error: $e");
-      print("DEBUG: Stack trace: $stackTrace");
+      print("🔥 ❌ GEOCODING FAILED with error: $e");
+      print("🔥 🔍 Stack trace: $stackTrace");
 
       // Show detailed error dialog
       Get.dialog(
@@ -172,28 +193,52 @@ class LocationController extends GetxController {
   }
 
   void getSuggestion(String input) async {
+    // Don't search if input is empty or too short
+    if (input.trim().isEmpty || input.trim().length < 2) {
+      placeList = [];
+      update();
+      return;
+    }
+    
     try {
+      print("🔥 🔍 STARTING PLACES API SEARCH for: '$input'");
       String apiKey = "AIzaSyBx95Bvl9O-US2sQpqZ41GdsHIprnXvJv8";
       String baseURL =
           'https://maps.googleapis.com/maps/api/place/autocomplete/json';
       String request =
           '$baseURL?input=$input&key=$apiKey&sessiontoken=$_sessingToken';
 
-      print("DEBUG: Making Places API request to: $request");
+      print("🔥 📡 Making Places API request to: $request");
 
-      var response = await http.get(Uri.parse(request));
+      var response = await http.get(Uri.parse(request)).timeout(Duration(seconds: 10));
 
-      print("DEBUG: Places API response status: ${response.statusCode}");
-      print("DEBUG: Places API response: ${response.body}");
+      print("🔥 📊 Places API response status: ${response.statusCode}");
+      print("🔥 📋 Places API response: ${response.body}");
 
       if (response.statusCode == 200) {
         var jsonResponse = jsonDecode(response.body.toString());
+        String status = jsonResponse["status"] ?? "UNKNOWN";
+        
+        print("🔥 📍 Places API status: $status");
 
-        if (jsonResponse["status"] == "OK" ||
-            jsonResponse["status"] == "ZERO_RESULTS") {
+        if (status == "OK" || status == "ZERO_RESULTS") {
           placeList = jsonResponse["predictions"] ?? [];
-          print("DEBUG: Found ${placeList.length} place suggestions");
+          print("🔥 ✅ Found ${placeList.length} place suggestions");
+          if (placeList.isEmpty && status == "ZERO_RESULTS") {
+            print("🔥 ⚠️ Google Places returned ZERO_RESULTS for: '$input'");
+          }
           update();
+        } else if (status == "REQUEST_DENIED") {
+          print("🔥 ❌ Google Places API: REQUEST_DENIED - API key issue or service blocked");
+          placeList = [];
+          update();
+          // Show user-visible error
+          _showLocationError("Google Places API blocked or invalid API key");
+        } else if (status == "OVER_QUERY_LIMIT") {
+          print("🔥 ❌ Google Places API: OVER_QUERY_LIMIT - rate limit exceeded");
+          placeList = [];
+          update();
+          _showLocationError("Too many location requests, try again later");
         } else {
           print("DEBUG: Places API error status: ${jsonResponse["status"]}");
           print(
@@ -239,6 +284,22 @@ class LocationController extends GetxController {
 
       placeList = [];
       update();
+    }
+  }
+
+  // Show user-visible location error  
+  void _showLocationError(String message) {
+    try {
+      Get.snackbar(
+        "🔥 Location Error",
+        message,
+        backgroundColor: Get.theme.colorScheme.error,
+        colorText: Get.theme.colorScheme.onError,
+        duration: Duration(seconds: 5),
+        snackPosition: SnackPosition.TOP,
+      );
+    } catch (e) {
+      print("🔥 ❌ Could not show snackbar: $e");
     }
   }
 

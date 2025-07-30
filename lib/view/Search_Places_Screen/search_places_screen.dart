@@ -45,6 +45,178 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
 
   bool isOnMap = false;
 
+  // Debug banner for location/maps functionality
+  Widget _buildLocationDebugBanner() {
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      child: Container(
+        color: Colors.purple.withOpacity(0.9),
+        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Column(
+          children: [
+            Text(
+              "🔥 LOCATION & MAPS DEBUG 🔥",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+            SizedBox(height: 3),
+            GetBuilder<LocationController>(builder: (cont) {
+              return Column(
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        cont.lat != null && cont.lng != null ? Icons.location_on : Icons.location_off,
+                        color: cont.lat != null && cont.lng != null ? Colors.green : Colors.red,
+                        size: 16,
+                      ),
+                      SizedBox(width: 5),
+                      Expanded(
+                        child: Text(
+                          cont.lat != null && cont.lng != null 
+                            ? "✅ Location: ${cont.lat!.toStringAsFixed(4)}, ${cont.lng!.toStringAsFixed(4)}"
+                            : "❌ No location coordinates",
+                          style: TextStyle(color: Colors.white, fontSize: 11),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Icon(
+                        cont.address.isNotEmpty ? Icons.place : Icons.place_outlined,
+                        color: cont.address.isNotEmpty ? Colors.green : Colors.orange,
+                        size: 16,
+                      ),
+                      SizedBox(width: 5),
+                      Expanded(
+                        child: Text(
+                          cont.address.isNotEmpty 
+                            ? "✅ Address: ${cont.address}"
+                            : "⚠️ No address loaded",
+                          style: TextStyle(color: Colors.white, fontSize: 11),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            }),
+            _buildGoogleServicesStatus(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGoogleServicesStatus() {
+    return FutureBuilder<Map<String, bool>>(
+      future: _testGoogleServices(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return Row(
+            children: [
+              SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
+              SizedBox(width: 5),
+              Text("🔄 Testing Google services...", style: TextStyle(color: Colors.white, fontSize: 11)),
+            ],
+          );
+        }
+        
+        Map<String, bool> results = snapshot.data!;
+        return Column(
+          children: [
+            SizedBox(height: 2),
+            Row(
+              children: [
+                Icon(
+                  results['places'] == true ? Icons.search : Icons.search_off,
+                  color: results['places'] == true ? Colors.green : Colors.red,
+                  size: 16,
+                ),
+                SizedBox(width: 5),
+                Expanded(
+                  child: Text(
+                    results['places'] == true 
+                      ? "✅ Google Places API: WORKING"
+                      : "❌ Google Places API: BLOCKED",
+                    style: TextStyle(color: Colors.white, fontSize: 11),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 2),
+            Row(
+              children: [
+                Icon(
+                  results['geocoding'] == true ? Icons.pin_drop : Icons.pin_drop_outlined,
+                  color: results['geocoding'] == true ? Colors.green : Colors.red,
+                  size: 16,
+                ),
+                SizedBox(width: 5),
+                Expanded(
+                  child: Text(
+                    results['geocoding'] == true 
+                      ? "✅ Google Geocoding: WORKING"
+                      : "❌ Google Geocoding: BLOCKED",
+                    style: TextStyle(color: Colors.white, fontSize: 11),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<Map<String, bool>> _testGoogleServices() async {
+    Map<String, bool> results = {'places': false, 'geocoding': false};
+    
+    try {
+      // Test Google Places API
+      print("🔥 🧪 Testing Google Places API...");
+      String placesUrl = 'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=havana&key=$kGoogleApiKey';
+      var placesResponse = await http.get(Uri.parse(placesUrl)).timeout(Duration(seconds: 10));
+      
+      if (placesResponse.statusCode == 200) {
+        var placesJson = jsonDecode(placesResponse.body);
+        results['places'] = placesJson['status'] == 'OK' || placesJson['status'] == 'ZERO_RESULTS';
+        print("🔥 ✅ Google Places API test result: ${results['places']}");
+      } else {
+        print("🔥 ❌ Google Places API returned status: ${placesResponse.statusCode}");
+      }
+    } catch (e) {
+      print("🔥 ❌ Google Places API test failed: $e");
+    }
+
+    try {
+      // Test Google Geocoding API  
+      print("🔥 🧪 Testing Google Geocoding API...");
+      String geocodingUrl = 'https://maps.googleapis.com/maps/api/geocode/json?address=Havana,Cuba&key=$kGoogleApiKey';
+      var geocodingResponse = await http.get(Uri.parse(geocodingUrl)).timeout(Duration(seconds: 10));
+      
+      if (geocodingResponse.statusCode == 200) {
+        var geocodingJson = jsonDecode(geocodingResponse.body);
+        results['geocoding'] = geocodingJson['status'] == 'OK' || geocodingJson['status'] == 'ZERO_RESULTS';
+        print("🔥 ✅ Google Geocoding API test result: ${results['geocoding']}");
+      } else {
+        print("🔥 ❌ Google Geocoding API returned status: ${geocodingResponse.statusCode}");
+      }
+    } catch (e) {
+      print("🔥 ❌ Google Geocoding API test failed: $e");
+    }
+
+    return results;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -53,6 +225,8 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
         child: Stack(
           alignment: Alignment.bottomCenter,
           children: [
+            // Debug banner for maps/location
+            _buildLocationDebugBanner(),
             GetBuilder<LocationController>(builder: (cont) {
               return GoogleMap(
                 myLocationButtonEnabled: false,

@@ -5,7 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'package:geocoding/geocoding.dart' as geo;
+// import 'package:geocoding/geocoding.dart' as geo;
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -82,7 +82,7 @@ class HomeController extends GetxController {
   TextEditingController tagsController = TextEditingController();
   List<String> tags = [];
   PackageData? packageData;
-  final geocoding = geo.GeocodingPlatform.instance;
+  // Removed geocoding - using API calls instead
   String? packageImage;
   String selectedType = "Oldest First";
   double? userRatting = 3.0;
@@ -1216,12 +1216,11 @@ class HomeController extends GetxController {
       } else if (authCont.user?.city != null) {
         latestAddress = '${authCont.user?.city}, Cuba';
       }
-      List<geo.Location> locations =
-          await geocoding!.locationFromAddress(latestAddress);
-      if (locations.isNotEmpty) {
-        geo.Location location = locations[0];
-        lat = location.latitude.toString();
-        lng = location.longitude.toString();
+      // Get coordinates from address using Google Geocoding API
+      Map<String, double>? coordinates = await _getCoordinatesFromAddress(latestAddress);
+      if (coordinates != null) {
+        lat = coordinates['lat'].toString();
+        lng = coordinates['lng'].toString();
         Get.log("Geocoded coordinates: $lat, $lng, radius: $radius");
       } else {
         Get.log("No coordinates found for address: $latestAddress",
@@ -2661,20 +2660,43 @@ class HomeController extends GetxController {
   Future<void> getLatLong(String city, String province) async {
     try {
       String address = '$city, $province';
-      List<geo.Location> locations = await geo.locationFromAddress(address);
+      Map<String, double>? coordinates = await _getCoordinatesFromAddress(address);
 
-      if (locations.isNotEmpty) {
-        geo.Location location = locations.first;
+      if (coordinates != null) {
         Get.log(
-            'Latitude: ${location.latitude}, Longitude: ${location.longitude}');
-        lat1 = "${location.latitude}";
-        lng1 = "${location.longitude}";
-        lat = "${location.latitude}";
-        lng = "${location.longitude}";
+            'Latitude: ${coordinates['lat']}, Longitude: ${coordinates['lng']}');
+        lat1 = "${coordinates['lat']}";
+        lng1 = "${coordinates['lng']}";
+        lat = "${coordinates['lat']}";
+        lng = "${coordinates['lng']}";
       }
     } catch (e) {
       print('Error occurred: $e');
     }
+  }
+
+  // API-based geocoding replacement function
+  Future<Map<String, double>?> _getCoordinatesFromAddress(String address) async {
+    const apiKey = 'AIzaSyBx95Bvl9O-US2sQpqZ41GdsHIprnXvJv8';
+    final encodedAddress = Uri.encodeComponent(address);
+    final url = 'https://maps.googleapis.com/maps/api/geocode/json?address=$encodedAddress&key=$apiKey';
+    
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['status'] == 'OK' && data['results'].isNotEmpty) {
+          final location = data['results'][0]['geometry']['location'];
+          return {
+            'lat': location['lat'].toDouble(),
+            'lng': location['lng'].toDouble(),
+          };
+        }
+      }
+    } catch (e) {
+      print('Geocoding API error: $e');
+    }
+    return null;
   }
 }
 

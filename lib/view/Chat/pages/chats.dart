@@ -40,12 +40,128 @@ class _ChatsState extends State<Chats> {
 
   gettingUserData() async {
     try {
+      print("🔥 📋 LOADING CHATS LIST FROM FIREBASE...");
       await chatCont.getAllUser().then((snapshot) {
+        print("🔥 ✅ CHATS LIST LOADED SUCCESSFULLY!");
         setState(() {
           chats = snapshot;
         });
       });
-    } catch (e) {}
+    } catch (e) {
+      print("🔥 ❌ ERROR LOADING CHATS LIST: $e");
+    }
+  }
+
+  // Debug banner for chats list screen
+  Widget _buildChatsDebugBanner() {
+    return Container(
+      width: double.infinity,
+      color: Colors.orange.withOpacity(0.8),
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      child: Column(
+        children: [
+          Text(
+            "🔥 CHATS LIST DEBUG INFO 🔥",
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
+          SizedBox(height: 3),
+          StreamBuilder(
+            stream: chats,
+            builder: (context, snapshot) {
+              String status = "❌ Loading chats...";
+              if (snapshot.hasError) {
+                status = "❌ Firebase Error: ${snapshot.error}";
+              } else if (snapshot.hasData) {
+                int totalDocs = snapshot.data?.docs?.length ?? 0;
+                
+                // Count visible chats (same filtering logic as ListView)
+                int visibleChats = 0;
+                if (snapshot.data?.docs != null) {
+                  for (var doc in snapshot.data.docs) {
+                    if (doc['senderId'] == "${authCont.user?.userId}" ||
+                        doc['sendToId'] == "${authCont.user?.userId}") {
+                      // Only count chats that have actual messages
+                      bool hasMessages = doc['isMessaged'] == true ||
+                          (doc['message'] != null &&
+                              doc['message'].toString().trim().isNotEmpty &&
+                              doc['message'] != "");
+                      if (hasMessages) {
+                        visibleChats++;
+                      }
+                    }
+                  }
+                }
+                
+                status = "✅ Firebase: $totalDocs docs → $visibleChats visible chats";
+              }
+              
+              return Row(
+                children: [
+                  Icon(
+                    snapshot.hasData ? Icons.check_circle : Icons.error_outline,
+                    color: snapshot.hasData ? Colors.green : Colors.red,
+                    size: 16,
+                  ),
+                  SizedBox(width: 5),
+                  Expanded(
+                    child: Text(
+                      status,
+                      style: TextStyle(color: Colors.white, fontSize: 11),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          _buildFirebaseConnectionForChats(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFirebaseConnectionForChats() {
+    return FutureBuilder<bool>(
+      future: _testFirebaseConnection(),
+      builder: (context, snapshot) {
+        bool isConnected = snapshot.data ?? false;
+        return Row(
+          children: [
+            Icon(
+              isConnected ? Icons.cloud_done : Icons.cloud_off,
+              color: isConnected ? Colors.green : Colors.red,
+              size: 16,
+            ),
+            SizedBox(width: 5),
+            Expanded(
+              child: Text(
+                isConnected 
+                  ? "✅ Firebase: CAN READ CHATS" 
+                  : "❌ Firebase: CONNECTION FAILED",
+                style: TextStyle(color: Colors.white, fontSize: 11),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<bool> _testFirebaseConnection() async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('chat')
+          .limit(1)
+          .get()
+          .timeout(Duration(seconds: 5));
+      return true;
+    } catch (e) {
+      print("🔥 ❌ Firebase connection test failed: $e");
+      return false;
+    }
   }
 
   @override
@@ -63,6 +179,8 @@ class _ChatsState extends State<Chats> {
         ),
         body: Column(
           children: [
+            // Debug banner for chats list
+            _buildChatsDebugBanner(),
             SizedBox(height: 2.h, child: Divider()),
             Expanded(child: groupList()),
           ],
@@ -73,6 +191,34 @@ class _ChatsState extends State<Chats> {
     return StreamBuilder(
       stream: chats,
       builder: (context, AsyncSnapshot snapshot) {
+        print("🔥 📋 StreamBuilder state: hasData=${snapshot.hasData}, hasError=${snapshot.hasError}");
+        
+        if (snapshot.hasError) {
+          print("🔥 ❌ StreamBuilder error: ${snapshot.error}");
+          return Center(
+            child: Container(
+              padding: EdgeInsets.all(20),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, color: Colors.red, size: 48),
+                  SizedBox(height: 16),
+                  Text(
+                    "🔥 Firebase Error",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    "${snapshot.error}",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        
         // make some checks
         if (snapshot.hasData) {
           if (snapshot.data != null) {

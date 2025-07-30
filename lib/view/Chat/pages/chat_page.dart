@@ -387,6 +387,8 @@ class _ChatPageState extends State<ChatPage> {
       ),
       body: Stack(
         children: <Widget>[
+          // Debug status banner
+          _buildDebugStatusBanner(),
           // chat messages here
           chatMessages(),
           Positioned(
@@ -705,6 +707,152 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
+  // Debug status banner to show connection info
+  Widget _buildDebugStatusBanner() {
+    return Positioned(
+      top: 80.h, // Below the listing info
+      left: 0,
+      right: 0,
+      child: Container(
+        color: Colors.red.withOpacity(0.8),
+        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        child: Column(
+          children: [
+            Text(
+              "🔥 DEBUG INFO FOR CUBAN TESTING 🔥",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+            SizedBox(height: 3),
+            _buildFirebaseConnectionStatus(),
+            _buildLastMessageStatus(),
+            _buildNetworkStatus(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFirebaseConnectionStatus() {
+    return StreamBuilder<bool>(
+      stream: _getFirebaseConnectionStream(),
+      builder: (context, snapshot) {
+        bool isConnected = snapshot.data ?? false;
+        return Row(
+          children: [
+            Icon(
+              isConnected ? Icons.check_circle : Icons.error_outline,
+              color: isConnected ? Colors.green : Colors.red,
+              size: 16,
+            ),
+            SizedBox(width: 5),
+            Expanded(
+              child: Text(
+                isConnected 
+                  ? "✅ Firebase: CONNECTED" 
+                  : "❌ Firebase: DISCONNECTED",
+                style: TextStyle(color: Colors.white, fontSize: 11),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildLastMessageStatus() {
+    return StreamBuilder(
+      stream: chatCont.chats,
+      builder: (context, snapshot) {
+        String status = "❌ No messages yet";
+        if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
+          var lastDoc = snapshot.data!.docs.last;
+          Timestamp? timestamp = lastDoc.get('time');
+          if (timestamp != null) {
+            DateTime lastTime = timestamp.toDate();
+            String timeAgo = _formatTimeAgo(lastTime);
+            status = "✅ Last msg: $timeAgo";
+          }
+        }
+        return Row(
+          children: [
+            Icon(Icons.message, color: Colors.white, size: 16),
+            SizedBox(width: 5),
+            Expanded(
+              child: Text(
+                status,
+                style: TextStyle(color: Colors.white, fontSize: 11),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildNetworkStatus() {
+    return FutureBuilder<bool>(
+      future: _checkInternetConnection(),
+      builder: (context, snapshot) {
+        bool hasInternet = snapshot.data ?? false;
+        return Row(
+          children: [
+            Icon(
+              hasInternet ? Icons.wifi : Icons.wifi_off,
+              color: hasInternet ? Colors.green : Colors.red,
+              size: 16,
+            ),
+            SizedBox(width: 5),
+            Expanded(
+              child: Text(
+                hasInternet 
+                  ? "✅ Internet: CONNECTED" 
+                  : "❌ Internet: NO CONNECTION",
+                style: TextStyle(color: Colors.white, fontSize: 11),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Stream<bool> _getFirebaseConnectionStream() {
+    return FirebaseFirestore.instance
+        .collection('debug')
+        .doc('connection')
+        .snapshots()
+        .map((snapshot) => true)
+        .handleError((error) => false);
+  }
+
+  Future<bool> _checkInternetConnection() async {
+    try {
+      final response = await http.get(Uri.parse('https://www.google.com')).timeout(Duration(seconds: 5));
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  String _formatTimeAgo(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+    
+    if (difference.inSeconds < 60) {
+      return "${difference.inSeconds}s ago";
+    } else if (difference.inMinutes < 60) {
+      return "${difference.inMinutes}m ago";
+    } else if (difference.inHours < 24) {
+      return "${difference.inHours}h ago";
+    } else {
+      return "${difference.inDays}d ago";
+    }
+  }
+
   // Future<void> saveImageToGallery(String imageUrl) async {
   //   try {
   //     // Download the image from the URL
@@ -850,6 +998,9 @@ class _ChatPageState extends State<ChatPage> {
   Future sendMessage(String messageType) async {
     try {
       if (chatCont.messageController.text.isNotEmpty) {
+        print("🔥 💬 TRYING TO SEND MESSAGE: ${chatCont.messageController.text}");
+        print("🔥 💬 Chat ID: ${widget.chatId ?? widget.createChatid}");
+        
         Map<String, dynamic> chatMessageMap = {
           "message": chatCont.messageController.text,
           "isMessaged": true,
@@ -860,7 +1011,11 @@ class _ChatPageState extends State<ChatPage> {
           "sendBy": "${authCont.user?.userId}",
         };
         String? id = widget.chatId ?? widget.createChatid;
+        
+        print("🔥 💬 Sending to Firebase...");
         await chatCont.sendMessage(id ?? "", chatMessageMap);
+        print("🔥 ✅ Message sent to Firebase successfully!");
+        
         String message = chatCont.messageController.text;
 
         // Clear the message controller first
@@ -872,10 +1027,19 @@ class _ChatPageState extends State<ChatPage> {
         });
 
         // Send notification with improved error handling
+        print("🔥 📤 Sending notification...");
         await sendNotificationToRecipient(message, messageType);
       }
     } catch (e) {
-      print("Error sending message: $e");
+      print("🔥 ❌ ERROR SENDING MESSAGE: $e");
+      print("🔥 ❌ Error details: ${e.toString()}");
+      // Show error to user
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("❌ Failed to send message: ${e.toString()}"),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
