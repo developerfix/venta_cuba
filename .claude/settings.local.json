@@ -2,7 +2,17 @@
   "permissions": {
     "allow": [
       "mcp__ide__getDiagnostics",
-      "Bash(flutter analyze:*)"
+      "Bash(flutter analyze:*)",
+      "Bash(flutter run:*)",
+      "Bash(flutter:*)",
+      "WebFetch(domain:documentation.onesignal.com)",
+      "Bash(rm:*)",
+      "Bash(mkdir:*)",
+      "Bash(./gradlew:*)",
+      "WebFetch(domain:nativenotify.com)",
+      "Bash(find:*)",
+      "Bash(del \"C:\\Users\\DELL\\Downloads\\venta_cuba111\\venta_cuba\\test_push_notifications.bat\")",
+      "Bash(del \"C:\\Users\\DELL\\Downloads\\venta_cuba111\\venta_cuba\\test_push_notifications.sh\")"
     ],
     "deny": []
   }

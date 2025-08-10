@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as Http;
 import 'package:pinput/pinput.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:twilio_flutter/twilio_flutter.dart';
 
 import '../Models/user_data.dart';
@@ -16,12 +17,13 @@ import '../api/api_checker.dart';
 import '../api/api_client.dart';
 import '../view/Navigation bar/navigation_bar.dart';
 import '../view/auth/login.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import '../view/auth/otp_verification2.dart';
 import 'package:http/http.dart' as http;
-import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../view/Chat/Controller/ChatController.dart';
+import '../view/Chat/Controller/SupabaseChatController.dart';
+// Firebase removed for Cuba compatibility 
+// import '../Services/Firebase/firebase_messaging_service.dart';
+import '../Services/RealPush/supabase_push_service.dart';
+import '../Services/RealPush/real_push_service.dart';
+import '../config/app_config.dart';
 
 String deviceToken = '';
 
@@ -59,7 +61,6 @@ class AuthController extends GetxController {
 
   String? businessLogo;
   String? profileImage;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
   String? token;
   String verificationId = '';
   CountryCode? countryCode;
@@ -77,6 +78,9 @@ class AuthController extends GetxController {
   final isPasswordVisible2 = false.obs;
   final isChecked = false.obs;
   final isChecked1 = false.obs;
+
+  // Firebase removed for Cuba compatibility
+  // final FirebaseMessagingService _firebaseMessagingService = FirebaseMessagingService();
 
   @override
   Future<void> onInit() async {
@@ -127,7 +131,7 @@ class AuthController extends GetxController {
   // Method to manually refresh unread message count
   Future<void> refreshUnreadMessageCount() async {
     try {
-      final chatCont = Get.find<ChatController>();
+      final chatCont = Get.find<SupabaseChatController>();
       await chatCont.updateUnreadMessageIndicators();
       print(
           '🔥 ✅ Manually refreshed unread message count: ${unreadMessageCount.value}');
@@ -143,11 +147,7 @@ class AuthController extends GetxController {
       twilioNumber:
           '+14349938118' // replace with Twilio Number(With country code)
       );
-  // final TwilioFlutter twilioFlutter = TwilioFlutter(
-  //     accountSid: 'ACfd0eee698f4eafe2dccf34de565dff74', // replace with Account SID
-  //     authToken: '2042b4d20e5c70fe137b121fc694f9d7', // replace with Auth Token
-  //     twilioNumber: '+16505499819' // replace with Twilio Number(With country code)
-  // );
+
   Future getSmsCode() async {
     final res = await SmartAuth()
         .getSmsCode(useUserConsentApi: true, senderPhoneNumber: 'Secure');
@@ -197,64 +197,6 @@ class AuthController extends GetxController {
     }
   }
 
-  // Future<void> verifyPhoneNumber(String province, String city) async {
-  //   print("${countryCode?.dialCode ?? "+53"}${phoneCont.text.trim()}");
-
-  //   showLoading();
-
-  //   var headers = {'Accept': 'application/json'};
-  //   var request = http.MultipartRequest(
-  //       'POST', Uri.parse('https://ventacuba.ca/api/verify'));
-  //   request.fields.addAll({
-  //     'email': emailCreateCont.text.trim(),
-  //   });
-  //   request.headers.addAll(headers);
-  //   http.StreamedResponse response = await request.send();
-  //   // Get.log(response.stream.)
-  //   if (response.statusCode == 200) {
-  //     Get.back();
-  //     errorAlertToast(
-  //         "Email address already exists!. Please enter another one.".tr);
-  //   } else {
-  //     var headers = {'Accept': 'application/json'};
-  //     var request = http.MultipartRequest(
-  //         'POST', Uri.parse('https://ventacuba.ca/api/verify'));
-  //     request.fields.addAll({
-  //       'phone': "${countryCode?.dialCode ?? "+53"}${phoneCont.text.trim()}",
-  //     });
-  //     request.headers.addAll(headers);
-  //   final response = await request.send();
-  //     if (response.statusCode == 200) {
-  //       Get.back();
-  //       errorAlertToast("phone exists".tr);
-  //     } else {
-  //       try {
-  //         final signature = await SmartAuth().getAppSignature();
-  //         debugPrint('App Signature: $signature');
-  //         otpCodeSaved = generateOtpCode();
-  //         final statusCode = await twilioFlutter.sendSMS(
-  //             toNumber:
-  //                 "${countryCode?.dialCode ?? "+53"}${phoneCont.text.trim()}",
-  //             messageBody:
-  //                 '${"Your VentaCuba Otp code is".tr} ${otpCodeSaved}');
-  //         if (statusCode.responseCode == 201) {
-  //           Get.back();
-  //           Get.to(OTPScreen(
-  //             province: province,
-  //             city: city,
-  //           ));
-  //         } else {
-  //           errorAlertToast('Something went wrong\nPlease try again!'.tr);
-  //           Get.back();
-  //         }
-  //       } catch (e) {
-  //         Get.back();
-  //         showSnackBar(title: 'enter valid phone'.tr);
-  //       }
-  //     }
-  //   }
-  // }
-
   Future<void> verifyOTP(String province, String city) async {
     try {
       showLoading();
@@ -276,126 +218,6 @@ class AuthController extends GetxController {
       showSnackBar(title: e.toString());
     }
   }
-
-  // Future<void> verifyPhoneNumber(String province, String city) async {
-  //   print("${countryCode?.dialCode ?? "+53"}${phoneCont.text.trim()}");
-  //
-  //   showLoading();
-  //
-  //   var headers = {
-  //     'Accept': 'application/json'
-  //   };
-  //   var request = http.MultipartRequest('POST', Uri.parse('https://ventacuba.ca/api/verify'));
-  //   request.fields.addAll({
-  //     'email': emailCont.text.trim(),
-  //   });
-  //   request.headers.addAll(headers);
-  //   http.StreamedResponse response = await request.send();
-  //   if (response.statusCode == 200) {
-  //     Get.back();
-  //     errorAlertToast(
-  //         "Email address already exists!. Please enter another one.");
-  //   }
-  //   else {
-  //     var headers = {
-  //       'Accept': 'application/json'
-  //     };
-  //     var request = http.MultipartRequest('POST', Uri.parse('https://ventacuba.ca/api/verify'));
-  //     request.fields.addAll({
-  //       'phone':"${countryCode?.dialCode ?? "+53"}${phoneCont.text.trim()}",
-  //     });
-  //     request.headers.addAll(headers);
-  //     http.StreamedResponse response = await request.send();
-  //     if (response.statusCode == 200) {
-  //       Get.back();
-  //       errorAlertToast(
-  //           "Phone address already exists!. Please enter another one.");
-  //     }
-  //     else {
-  //       await _auth.setSettings(
-  //           appVerificationDisabledForTesting: false,
-  //           forceRecaptchaFlow: false,
-  //           phoneNumber:
-  //           "${countryCode?.dialCode ?? "+53"}${phoneCont.text.trim()}",
-  //           smsCode: "112233");
-  //       try {
-  //         await _auth.verifyPhoneNumber(
-  //             phoneNumber:
-  //             "${countryCode?.dialCode ?? "+53"}${phoneCont.text.trim()}",
-  //             timeout: const Duration(seconds: 59),
-  //             verificationCompleted: (_) {},
-  //             verificationFailed: (e) {
-  //               Get.back();
-  //               String errorMessage = 'Phone verification failed: ';
-  //               switch (e.code) {
-  //                 case 'invalid-phone-number':
-  //                   errorMessage += 'The provided phone number is not valid.';
-  //                   break;
-  //                 case 'quota-exceeded':
-  //                   errorMessage += 'SMS quota exceeded. Please try again later.';
-  //                   break;
-  //                 case 'user-disabled':
-  //                   errorMessage += 'Your account has been disabled.';
-  //                   break;
-  //                 case 'user-not-found':
-  //                   errorMessage +=
-  //                   'This phone number is not associated with any account.';
-  //                   break;
-  //                 default:
-  //                   errorMessage += 'An unknown error occurred: ${e.code}';
-  //               }
-  //               showSnackBar(title: errorMessage);
-  //             },
-  //             codeSent: (String verificationI, int? code) {
-  //               Get.back();
-  //               verificationId = verificationI;
-  //               const timeout = Duration(minutes: 5);
-  //
-  //               Timer(timeout, () {
-  //                 verificationId = '';
-  //                 print('OTP expired.');
-  //                 update();
-  //               });
-  //               Get.to(OTPScreen(
-  //                 province: province,
-  //                 city: city,
-  //               ));
-  //             },
-  //             codeAutoRetrievalTimeout: (e) {});
-  //       } catch (e) {
-  //         Get.back();
-  //         showSnackBar(title: 'An error occurred: $e');
-  //       }
-  //     }
-  //   }
-  // }
-  //
-  // Future<void> verifyOTP(String province, String city) async {
-  //   try {
-  //     showLoading();
-  //     PhoneAuthCredential phoneAuthCredential = PhoneAuthProvider.credential(
-  //       verificationId: verificationId,
-  //       smsCode: otpCode.text,
-  //     );
-  //
-  //     UserCredential userCredential =
-  //         await FirebaseAuth.instance.signInWithCredential(phoneAuthCredential);
-  //     User? user = userCredential.user;
-  //     if (user != null) {
-  //       Get.back();
-  //       signUp(province, city);
-  //     } else {
-  //       Get.back();
-  //       errorShowDialog(
-  //           text:
-  //               "The Phone number or \nentered otp is invalid. \nPlease try again."
-  //                   .tr);
-  //     }
-  //   } catch (e) {
-  //     Get.back();
-  //     //  errorShowDialog(text: "The Phone number or \nentered otp is invalid. \nPlease try again.".tr);
-  //   }
-  // }
 
   Future getuserDetail() async {
     try {
@@ -424,23 +246,68 @@ class AuthController extends GetxController {
       print(
           '🔥 AuthController: User object created: ${user?.firstName} ${user?.lastName}');
 
-      // Sync device token with current Firebase token
-      if (user != null && user!.deviceToken != deviceToken) {
-        user!.deviceToken = deviceToken;
+      // Sync device token with current Firebase FCM token
+      // Firebase removed for Cuba compatibility
+      // final fcmToken = await _firebaseMessagingService.getToken();
+      final fcmToken = 'cuba-friendly-token';
+      if (fcmToken != null && user != null && user!.deviceToken != fcmToken) {
+        user!.deviceToken = fcmToken;
         await prefss.setString("user_data", jsonEncode(user!.toJson()));
-        print('🔥 AuthController: Device token synced');
+        print('🔥 AuthController: Device token synced with Firebase');
       }
 
-      // Set user as online when they log in (skip for Cuban users to avoid hanging)
-      // await setUserOnline();
-      print('🔥 AuthController: User set as online (skipped for Cuban users)');
+      // Set user as online when they log in (with timeout to prevent hanging)
+      if (user?.userId != null) {
+        try {
+          print('🔥 AuthController: Setting user online...');
+          final chatCont = Get.put(SupabaseChatController());
+          
+          // Add timeout to prevent hanging
+          await chatCont.setUserOnline(user!.userId.toString()).timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              print('🔥 AuthController: setUserOnline timed out, continuing...');
+            },
+          );
 
-      // Start chat listener and update badge count after user is loaded (non-blocking)
-      // _initializeChatServices().then((_) {
-      //   print('🔥 AuthController: Chat services initialized');
-      // }).catchError((e) {
-      //   print('🔥 AuthController: Error initializing chat services: $e');
-      // });
+          // Initialize Supabase Push Service for this user
+          await SupabasePushService.initialize(user!.userId.toString());
+          print('🔥 AuthController: Supabase Push Service initialized for user: ${user!.userId}');
+
+          // Device token is now handled by Firebase messaging service
+          Future.delayed(Duration(seconds: 2), () async {
+            try {
+              print('🔥 Firebase messaging user association completed');
+            } catch (e) {
+              print('🔥 AuthController: Error with Firebase messaging setup: $e');
+            }
+          });
+        } catch (e) {
+          print('🔥 AuthController: Error setting user online: $e');
+          // Don't let this block the login process
+        }
+      }
+
+      print('🔥 AuthController: User initialization completed');
+
+      // Start chat listener (with timeout and error handling)
+      try {
+        print('🔥 AuthController: Starting chat services...');
+        final chatCont = Get.put(SupabaseChatController());
+        chatCont.startListeningForChatUpdates();
+        
+        // Add timeout for unread message indicators
+        await chatCont.updateUnreadMessageIndicators().timeout(
+          const Duration(seconds: 5),
+          onTimeout: () {
+            print('🔥 AuthController: updateUnreadMessageIndicators timed out');
+          },
+        );
+        print('🔥 AuthController: Chat services initialized');
+      } catch (e) {
+        print('🔥 AuthController: Error initializing chat services: $e');
+        // Don't let this block the login process
+      }
     } catch (e) {
       print('🔥 AuthController: Error in getuserDetail: $e');
       Get.offAll(() => const Login());
@@ -464,31 +331,40 @@ class AuthController extends GetxController {
         await getuserDetail();
         print('🔥 AuthController: Navigating to Navigation_Bar...');
 
-        // Use a small delay to ensure navigation works properly
-        await Future.delayed(const Duration(milliseconds: 100));
-        Get.offAll(() => Navigation_Bar());
+        // Use a small delay to ensure navigation works properly and avoid double navigation
+        await Future.delayed(const Duration(milliseconds: 300));
+        if (Get.currentRoute != '/Navigation_Bar') {
+          Get.offAll(() => Navigation_Bar());
+        }
       } else {
         print('🔥 AuthController: User not logged in, navigating to Login...');
 
-        // Use a small delay to ensure navigation works properly
-        await Future.delayed(const Duration(milliseconds: 100));
-        Get.offAll(() => const Login());
+        // Use a small delay to ensure navigation works properly and avoid double navigation
+        await Future.delayed(const Duration(milliseconds: 300));
+        if (Get.currentRoute != '/Login') {
+          Get.offAll(() => const Login());
+        }
       }
     } catch (e) {
       print('🔥 AuthController: Error in checkUserLoggedIn: $e');
       // If there's an error, navigate to login as fallback
       try {
-        await Future.delayed(const Duration(milliseconds: 100));
-        Get.offAll(() => const Login());
+        await Future.delayed(const Duration(milliseconds: 300));
+        if (Get.currentRoute != '/Login') {
+          Get.offAll(() => const Login());
+        }
       } catch (navError) {
         print('🔥 AuthController: Navigation error: $navError');
       }
-      rethrow; // Re-throw to let WhiteScreen handle the error
+      // Don't rethrow - we've handled the navigation, let the splash screen know we're done
     }
   }
 
   Future<void> signUp(String province, String city) async {
     try {
+      // Get Firebase FCM token before signup
+      await refreshDeviceToken();
+
       Response response = await api.postData(
         "api/signUp",
         {
@@ -563,10 +439,13 @@ class AuthController extends GetxController {
 
   Future<void> refreshDeviceToken() async {
     try {
-      String? token = await FirebaseMessaging.instance.getToken();
-      if (token != null) {
-        deviceToken = token;
-        print('Refreshed device token: $token');
+      // Get Firebase FCM token as device token
+      // Firebase removed for Cuba compatibility
+      // String? fcmToken = await _firebaseMessagingService.getToken();
+      String? fcmToken = 'cuba-friendly-token';
+      if (fcmToken != null) {
+        deviceToken = fcmToken;
+        print('Refreshed device token (Firebase FCM Token): $fcmToken');
       }
     } catch (e) {
       print('Error refreshing device token: $e');
@@ -595,24 +474,6 @@ class AuthController extends GetxController {
       print(response.reasonPhrase);
     }
   }
-
-  // Future forgetPassword() async {
-  //   Response response = await api.postData(
-  //     "api/forget-password",
-  //     {'email': forgetPasswordCont.text.trim()},
-  //   );
-  //   if (response == null) {
-  //     errorAlertToast('Check your internet connection.');
-  //   } else if (response.statusCode == 200) {
-  //     errorAlertToast('Password reset link sent to your email');
-  //   } else if (response.statusCode! >= 400) {
-  //     errorAlertToast('Your Email or Password is incorrect');
-  //   } else if (response.statusCode == 500) {
-  //     errorAlertToast('Unable to send password reset link');
-  //   } else {
-  //     errorAlertToast('Something went wrong\nPlease try again!');
-  //   }
-  // }
 
   Future addBusiness(String province, String city) async {
     List<String>? image = [];
@@ -800,7 +661,7 @@ class AuthController extends GetxController {
   Future<void> setUserOnline() async {
     try {
       if (user?.userId != null) {
-        final chatController = Get.find<ChatController>();
+        final chatController = Get.find<SupabaseChatController>();
         await chatController.setUserOnline(user!.userId.toString());
       }
     } catch (e) {
@@ -812,8 +673,12 @@ class AuthController extends GetxController {
   Future<void> setUserOffline() async {
     try {
       if (user?.userId != null) {
-        final chatController = Get.find<ChatController>();
+        final chatController = Get.find<SupabaseChatController>();
         await chatController.setUserOffline(user!.userId.toString());
+        
+        // Stop push notification service
+        SupabasePushService.stopListening();
+        print('🔥 AuthController: Supabase Push service stopped for offline user');
       }
     } catch (e) {
       print('🔥 Error setting user offline: $e');
@@ -827,36 +692,26 @@ class AuthController extends GetxController {
 
       print('🔥 Updating device token in all chat documents...');
 
-      final chatCollection = FirebaseFirestore.instance.collection("chat");
+      final chatController = Get.find<SupabaseChatController>();
+      final supabase = chatController.getSupabaseClient();
       String currentUserId = user!.userId.toString();
 
-      // Query all chat documents where this user is either sender or recipient
-      QuerySnapshot senderChats = await chatCollection
-          .where('senderId', isEqualTo: currentUserId)
-          .get();
+      // Get all chats where this user is either sender or recipient
+      final chats = await supabase
+          .from('chats')
+          .select('id, sender_id, send_to_id')
+          .or('sender_id.eq.$currentUserId,send_to_id.eq.$currentUserId');
 
-      QuerySnapshot recipientChats = await chatCollection
-          .where('sendToId', isEqualTo: currentUserId)
-          .get();
-
-      // Update device token in chats where user is the sender
-      for (QueryDocumentSnapshot doc in senderChats.docs) {
-        await chatCollection.doc(doc.id).update({
-          'userDeviceToken': newToken,
-        });
-        print('🔥 Updated userDeviceToken in chat ${doc.id}');
+      // Update device token in each chat
+      for (var chat in chats) {
+        await chatController.updateDeviceTokenInChat(
+          chat['id'],
+          currentUserId,
+          newToken,
+        );
       }
 
-      // Update device token in chats where user is the recipient
-      for (QueryDocumentSnapshot doc in recipientChats.docs) {
-        await chatCollection.doc(doc.id).update({
-          'sendToDeviceToken': newToken,
-        });
-        print('🔥 Updated sendToDeviceToken in chat ${doc.id}');
-      }
-
-      print(
-          '🔥 ✅ Device token updated in ${senderChats.docs.length + recipientChats.docs.length} chat documents');
+      print('🔥 ✅ Device token updated in ${chats.length} chat documents');
     } catch (e) {
       print('🔥 Error updating device token in chats: $e');
     }
@@ -930,6 +785,26 @@ class AuthController extends GetxController {
     changeAccountType();
     fetchAccountType();
     await getuserDetail();
+    
+    // Initialize ntfy push notifications for Cuba
+    try {
+      if (user?.userId != null) {
+        final userId = user!.userId.toString();
+        print('🚀 Initializing push notifications for user: $userId');
+        
+        // Initialize push notifications with user ID
+        await RealPushService.initialize(
+          userId: userId,
+          customServerUrl: AppConfig.ntfyServerUrl,
+        );
+        
+        print('✅ Push notifications initialized successfully for Cuba');
+      }
+    } catch (e) {
+      print('❌ Error initializing push notifications: $e');
+      // Don't block login if push fails
+    }
+    
     update();
     Get.offAll(Navigation_Bar());
   }
@@ -950,12 +825,18 @@ class AuthController extends GetxController {
 
       // Stop chat listener before logout
       try {
-        final chatCont = Get.find<ChatController>();
+        final chatCont = Get.find<SupabaseChatController>();
         chatCont.stopListeningForChatUpdates();
         print('🔥 ✅ Chat listener stopped on logout');
       } catch (e) {
-        print('🔥 ChatController not found on logout: $e');
+        print('🔥 SupabaseChatController not found on logout: $e');
       }
+
+      // Remove Firebase messaging user ID
+      // Firebase removed for Cuba compatibility
+      // await _firebaseMessagingService.removeUserId();
+      SupabasePushService.stopListening();
+      print('🔥 AuthController: Supabase Push service stopped on logout');
 
       // Clear local device token
       deviceToken = "";
@@ -1040,9 +921,7 @@ class AuthController extends GetxController {
   }
 }
 
-
-
-// flutter: https://ventacuba.ca/api/login
-// flutter: body : {"email":"test1@test.com","password":"Abc@1234","device_token":""}
-// flutter: headers : {"Content-Type":"application/json; charset=UTF-8","Accept":"application/json","Access-Control-Allow-Origin":"*","Authorization":"Bearer null"}
-// flutter: {status: true, access_token: 689|gKxwGGprSCALNnd0mjiLtJ6KQ4rSxfj2wBISkWoqcd456217, token_type: Bearer, user_id: 123, first_name: Test, last_name: One, phone_no: +923094354985, province: Camagüey, city: Jimaguayú, email: test1@test.com, profile_image: , role: Normal User, device_token: , business_logo: , business_name: , business_address: , business_province: , business_city: , instagram_link: , facebook_link: , pinterest_link: , twitter_link: , linkedin_link: , youtube_link: , tiktok_link: , business_instagram_link: , business_facebook_link: , business_pinterest_link: , business_twitter_link: , business_linkedin_link: , business_youtube_link: , business_tiktok_link: , average_rating: 0, all_notifications: 0, bump_up_notification: 1, save_search_notification: 1, message_notification: 1, marketing_notification: 1, reviews_notification: 1, created_at: 2024-12-23T11:03:12.000000Z}
+// Extension to add getSupabaseClient method to SupabaseChatController
+extension SupabaseChatControllerExtension on SupabaseChatController {
+  SupabaseClient getSupabaseClient() => Supabase.instance.client;
+}

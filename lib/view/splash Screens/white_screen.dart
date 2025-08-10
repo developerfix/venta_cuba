@@ -1,8 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
+// Firebase removed for Cuba compatibility
+// import '../../Services/Firebase/firebase_messaging_service.dart';
 import '../../Controllers/auth_controller.dart';
-import '../auth/login.dart';
 
 class WhiteScreen extends StatefulWidget {
   const WhiteScreen({super.key});
@@ -12,13 +13,24 @@ class WhiteScreen extends StatefulWidget {
 }
 
 class _WhiteScreenState extends State<WhiteScreen> {
-  final authCont = Get.put(AuthController());
+  late final AuthController authCont;
   bool isLoading = true;
   String? errorMessage;
 
   @override
   void initState() {
     super.initState();
+    print('🔥 WhiteScreen: initState() called');
+
+    // Initialize AuthController safely
+    try {
+      print('🔥 WhiteScreen: Initializing AuthController...');
+      authCont = Get.put(AuthController());
+      print('🔥 WhiteScreen: AuthController initialized successfully');
+    } catch (e) {
+      print('🔥 WhiteScreen: Error initializing AuthController: $e');
+    }
+
     _initializeApp();
   }
 
@@ -27,64 +39,62 @@ class _WhiteScreenState extends State<WhiteScreen> {
       print('🔥 WhiteScreen: Starting app initialization...');
 
       // Add a small delay to ensure all services are ready
-      await Future.delayed(const Duration(milliseconds: 500));
+      await Future.delayed(const Duration(milliseconds: 800));
 
-      // Initialize Firebase messaging token if not already done
-      await _initializeFirebaseToken();
+      // Initialize notification service if not already done
+      await _initializeNotificationService();
 
-      // Check user login status with error handling and timeout
-      await authCont.checkUserLoggedIn().timeout(
-        const Duration(seconds: 20),
-        onTimeout: () {
-          print('🔥 WhiteScreen: Login check timed out, navigating to login');
-          Get.offAll(() => const Login());
-        },
-      );
+      print('🔥 WhiteScreen: About to check user login status...');
+
+      // Check user login status - let AuthController handle all navigation
+      // Don't catch errors here, let AuthController handle everything
+      await authCont.checkUserLoggedIn();
 
       print('🔥 WhiteScreen: App initialization completed');
     } catch (e) {
       print('🔥 WhiteScreen: Error during initialization: $e');
+      // AuthController should have handled navigation, so just update loading state
       setState(() {
         isLoading = false;
-        errorMessage = 'Failed to initialize app. Please try again.';
-      });
-
-      // Retry after 3 seconds
-      Future.delayed(const Duration(seconds: 3), () {
-        setState(() {
-          isLoading = true;
-          errorMessage = null;
-        });
-        _initializeApp();
+        errorMessage = 'Initialization failed. Redirecting...';
       });
     }
   }
 
-  Future<void> _initializeFirebaseToken() async {
+  Future<void> _initializeNotificationService() async {
     try {
-      print('🔥 WhiteScreen: Initializing Firebase token...');
-      String? token = await FirebaseMessaging.instance.getToken();
-      if (token != null) {
-        // Update the global device token
-        deviceToken = token;
-        print('🔥 WhiteScreen: Firebase token initialized: $token');
-      } else {
-        print('🔥 WhiteScreen: Failed to get Firebase token');
-      }
+      print('🔥 WhiteScreen: Push notification service ready');
+      // Firebase removed for Cuba compatibility
+      // Real Push Service will be initialized after user login
+      print('🔥 WhiteScreen: RealPushService will be initialized after login');
     } catch (e) {
-      print('🔥 WhiteScreen: Error initializing Firebase token: $e');
+      print('🔥 WhiteScreen: Error with notification service: $e');
       // Don't throw error here, just log it as it's not critical for login check
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    print(
+        '🔥 WhiteScreen: build() called - isLoading: $isLoading, errorMessage: $errorMessage');
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // App Logo or Title
+            Text(
+              'Venta Cuba',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).primaryColor,
+              ),
+            ),
+            const SizedBox(height: 40),
+
             if (isLoading) ...[
               const CircularProgressIndicator(),
             ] else if (errorMessage != null) ...[

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'package:easy_image_viewer/easy_image_viewer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -12,7 +12,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart' as map;
 import 'package:lottie/lottie.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:venta_cuba/Controllers/theme_controller.dart';
-import 'package:venta_cuba/view/Chat/Controller/ChatController.dart';
+import 'package:venta_cuba/view/Chat/Controller/SupabaseChatController.dart';
 import 'package:venta_cuba/view/Chat/custom_text.dart';
 import 'package:venta_cuba/view/Navigation%20bar/post.dart';
 
@@ -752,15 +752,18 @@ class _FrameScreenState extends State<FrameScreen> {
                                             top: 5,
                                             left: 5,
                                             child: Container(
-                                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              padding: EdgeInsets.symmetric(
+                                                  horizontal: 8, vertical: 4),
                                               decoration: BoxDecoration(
-                                                color: Colors.red.withOpacity(0.8),
-                                                borderRadius: BorderRadius.circular(4),
+                                                color:
+                                                    Colors.red.withOpacity(0.8),
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
                                               ),
                                               child: Text(
-                                                _isMapLoading 
-                                                  ? "🔥 Maps: LOADING..." 
-                                                  : "🔥 Maps: LOADED ✅",
+                                                _isMapLoading
+                                                    ? "🔥 Maps: LOADING..."
+                                                    : "🔥 Maps: LOADED ✅",
                                                 style: TextStyle(
                                                   color: Colors.white,
                                                   fontSize: 10,
@@ -1550,41 +1553,16 @@ class _FrameScreenState extends State<FrameScreen> {
                             } else {
                               String? id =
                                   "${authCont.user?.userId}_${cont.listingModel?.userId}";
-                              Get.put(ChatController()).addChatRoom({
-                                "created": FieldValue.serverTimestamp(),
-                                "messageType": "text",
-                                "isMessaged": false,
-                                "sendTime": "${DateTime.now()}",
-                                "sendToId": "${cont.listingModel?.userId}",
-                                "sendToDeviceToken":
-                                    "${cont.listingModel?.user?.deviceToken}",
-                                "sendToName":
-                                    "${cont.listingModel?.user?.firstName} ${cont.listingModel?.user?.lastName}",
-                                "message": "",
-                                "time": FieldValue.serverTimestamp(),
-                                "messageTime": "",
-                                "sender": "",
-                                "senderImage": cont
-                                            .listingModel?.businessStatus ==
-                                        "0"
-                                    ? "${cont.listingModel?.user?.profileImage}"
-                                    : "${cont.listingModel?.user?.businessLogo}",
-                                "senderToImage":
-                                    "${cont.listingModel?.user?.profileImage}",
-                                "senderId": "${authCont.user?.userId}",
-                                "userDeviceToken": deviceToken,
-                                "userName":
-                                    "${authCont.user?.firstName} ${authCont.user?.lastName}",
-                                "listingImage": cont.listingModel?.gallery !=
-                                            null &&
-                                        cont.listingModel!.gallery!.isNotEmpty
-                                    ? cont.listingModel?.gallery?.first
-                                    : "",
-                                "listingName": cont.listingModel?.title,
-                                "listingPrice": cont.listingModel?.price,
-                                "listingLocation": cont.listingModel?.address,
-                                "listingId": "${cont.listingModel?.id}",
-                              }, id);
+                              // Navigate to chat with the listing owner
+                              try {
+                                final chatController =
+                                    Get.find<SupabaseChatController>();
+                                // For now, just navigate to chat page directly
+                                print(
+                                    'Starting chat with user: ${cont.listingModel?.userId}');
+                              } catch (e) {
+                                print('Error starting chat: $e');
+                              }
                               Get.to(
                                 ChatPage(
                                   createChatid: id.trim(),

@@ -1,14 +1,10 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:get/get.dart';
-// import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
@@ -18,13 +14,12 @@ import 'package:venta_cuba/Utils/funcations.dart';
 import 'package:venta_cuba/view/Navigation%20bar/post.dart';
 import 'package:venta_cuba/view/constants/Colors.dart';
 import '../../../Controllers/home_controller.dart';
-import '../../../Notification/firebase_messaging.dart';
+// Firebase removed for Cuba compatibility
+// import '../../../Services/Firebase/firebase_messaging_service.dart';
 import '../../../Utils/global_variabel.dart';
-import '../../frame/frame.dart';
-import '../Controller/ChatController.dart';
+import '../Controller/SupabaseChatController.dart';
 import '../custom_text.dart';
 import '../widgets/message_tile.dart';
-import 'package:http/http.dart' as http;
 
 class ChatPage extends StatefulWidget {
   final bool? isLast;
@@ -63,20 +58,32 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
-  FCM firebaseMessaging = FCM();
-
-  final chatCont = Get.put(ChatController());
+  // Firebase removed for Cuba compatibility
+  // final firebaseMessagingService = FirebaseMessagingService();
+  final chatCont = Get.put(SupabaseChatController());
   final homeCont = Get.put(HomeController());
   final authCont = Get.put(AuthController());
   bool isKeyBoardOpen = true;
-  late FocusNode focusNode; // Add the missing FocusNode declaration
+  late FocusNode focusNode;
+
+  Stream<List<Map<String, dynamic>>>? messagesStream;
 
   @override
   void dispose() {
     chatCont.isShow = false;
     isONImageScreen = false;
     isKeyBoardOpen = true;
-    focusNode.dispose(); // Dispose the FocusNode
+    focusNode.dispose();
+
+    // Mark chat as read when user leaves the chat page
+    if (widget.chatId != null && authCont.user?.userId != null) {
+      print('💬 🚪 User leaving chat page, marking as read...');
+      chatCont.markChatAsRead(
+        widget.chatId!,
+        authCont.user!.userId.toString(),
+      );
+    }
+
     super.dispose();
   }
 
@@ -87,7 +94,6 @@ class _ChatPageState extends State<ChatPage> {
       isKeyBoardOpen = false;
     }
     super.didChangeDependencies();
-    // Call dependOnInheritedWidgetOfExactType here.
   }
 
   @override
@@ -96,11 +102,18 @@ class _ChatPageState extends State<ChatPage> {
 
     print("🔥 === CHAT PAGE INIT STATE ===");
     print("🔥 Chat ID: ${widget.chatId}");
+    print("🔥 Create Chat ID: ${widget.createChatid}");
     print("🔥 User Name: ${widget.userName}");
     print("🔥 Listing ID: ${widget.listingId}");
     print("🔥 Remote UID: ${widget.remoteUid}");
+    print("🔥 Sender ID: ${widget.senderId}");
+    print("🔥 Current User ID: ${authCont.user?.userId}");
 
     focusNode = FocusNode();
+
+    // Test Supabase connection before setting up chat
+    _testSupabaseBeforeChat();
+
     getChat();
     saveFile();
 
@@ -131,13 +144,10 @@ class _ChatPageState extends State<ChatPage> {
 
   // Initialize listing data for this specific chat
   void _initializeListingData() {
-    // Use addPostFrameCallback to ensure this runs after the build is complete
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Clear any cached listing data first to prevent showing wrong data
       homeCont.listingModel = null;
       homeCont.update();
 
-      // Fetch the correct listing details if listingId is available
       if (widget.listingId != null &&
           widget.listingId!.isNotEmpty &&
           widget.listingId != "null") {
@@ -188,7 +198,6 @@ class _ChatPageState extends State<ChatPage> {
         chatCont.scrollController.jumpTo(maxScrollExtent);
       }
     } else {
-      // Retry after a short delay if scroll controller is not ready
       Timer(Duration(milliseconds: 100),
           () => _scrollToBottom(animated: animated));
     }
@@ -196,6 +205,24 @@ class _ChatPageState extends State<ChatPage> {
 
   void _requestFocus() {
     FocusScope.of(context).requestFocus(focusNode);
+  }
+
+  // Test Supabase connection before initializing chat
+  void _testSupabaseBeforeChat() async {
+    try {
+      print("🔥 🧪 Testing Supabase connection before chat...");
+      final connectionOk = await chatCont.testSupabaseConnection();
+      print("🔥 🧪 Supabase connection test result: $connectionOk");
+
+      if (!connectionOk) {
+        print("🔥 ❌ Supabase connection failed - chat may not work properly");
+      } else {
+        print(
+            "🔥 ✅ Supabase connection successful - proceeding with chat setup");
+      }
+    } catch (e) {
+      print("🔥 ❌ Error testing Supabase connection: $e");
+    }
   }
 
   Future<bool> saveFile() async {
@@ -253,13 +280,51 @@ class _ChatPageState extends State<ChatPage> {
   getChat() {
     try {
       String? id = widget.chatId ?? widget.createChatid;
-      chatCont.getChats(id ?? "").then((val) {
+      print(
+          "💬 🔥 getChat() called with chatId: '${widget.chatId}', createChatid: '${widget.createChatid}'");
+      print("💬 🔥 Final id to use: '$id'");
+
+      if (id != null && id.isNotEmpty && id != 'null') {
+        print("💬 🔥 Setting up message stream for chat: $id");
+
+        // Force clear any existing stream to ensure fresh data
+        chatCont.clearChatStream(id);
+
         setState(() {
-          chatCont.chats = val;
+          messagesStream = chatCont.getChatMessages(id);
         });
+        print("💬 ✅ Message stream initialized for chat: $id");
+
+        // Test the stream immediately
+        messagesStream!.listen(
+          (data) {
+            print("💬 🔥 Stream received data: ${data.length} messages");
+            if (data.isNotEmpty) {
+              print(
+                  "💬 🔥 First message: ${data.first['message']} by ${data.first['send_by']}");
+            }
+          },
+          onError: (error) {
+            print("💬 ❌ Stream error: $error");
+          },
+          onDone: () {
+            print("💬 ❌ Stream done/closed unexpectedly");
+          },
+        );
+      } else {
+        print("💬 ❌ Invalid chat ID: '$id' - cannot load messages");
+        // Set an empty stream to prevent null issues
+        setState(() {
+          messagesStream = Stream.value(<Map<String, dynamic>>[]);
+        });
+      }
+    } catch (e, stackTrace) {
+      print("❌ CRITICAL ERROR in getChat: $e");
+      print("❌ Stack trace: $stackTrace");
+      // Set an error stream
+      setState(() {
+        messagesStream = Stream.error(e);
       });
-    } catch (e) {
-      print(e);
     }
   }
 
@@ -350,16 +415,18 @@ class _ChatPageState extends State<ChatPage> {
                   SizedBox(height: 2.h),
                   // Show last active time or online status
                   if (widget.remoteUid != null)
-                    StreamBuilder<DocumentSnapshot>(
+                    StreamBuilder<Map<String, dynamic>?>(
                       stream: chatCont.getUserPresence(widget.remoteUid!),
                       builder: (context, snapshot) {
-                        if (snapshot.hasData && snapshot.data!.exists) {
-                          Map<String, dynamic> presenceData =
-                              snapshot.data!.data() as Map<String, dynamic>;
+                        if (snapshot.hasData && snapshot.data != null) {
+                          Map<String, dynamic> presenceData = snapshot.data!;
 
                           bool isOnline = chatCont.isUserOnline(presenceData);
-                          Timestamp? lastActiveTime =
-                              presenceData['lastActiveTime'];
+                          DateTime? lastActiveTime =
+                              presenceData['last_active_time'] != null
+                                  ? DateTime.parse(
+                                      presenceData['last_active_time'])
+                                  : null;
 
                           return CustomText(
                             text: isOnline
@@ -387,8 +454,6 @@ class _ChatPageState extends State<ChatPage> {
       ),
       body: Stack(
         children: <Widget>[
-          // Debug status banner
-          _buildDebugStatusBanner(),
           // chat messages here
           chatMessages(),
           Positioned(
@@ -417,60 +482,76 @@ class _ChatPageState extends State<ChatPage> {
                       children: [
                         ClipRRect(
                             borderRadius: BorderRadius.circular(7),
-                            child: CachedNetworkImage(
-                              height: 50,
-                              width: 50,
-                              imageUrl: _getListingImage(),
-                              imageBuilder: (context, imageProvider) =>
-                                  Container(
-                                height: 50,
-                                width: 50,
-                                decoration: BoxDecoration(
-                                  image: DecorationImage(
-                                    image: imageProvider,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              ),
-                              placeholder: (context, url) => SizedBox(
-                                height: 50,
-                                width: 50,
-                                child: Center(
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                ),
-                              ),
-                              errorWidget: (context, url, error) {
-                                print(
-                                    "🔥 Listing image load error: $error for URL: $url");
-                                return Container(
-                                  height: 50,
-                                  width: 50,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(7),
-                                    color: Colors.grey[300],
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.image_not_supported,
-                                        size: 20,
-                                        color: Colors.grey[600],
-                                      ),
-                                      Text(
-                                        "No Image".tr,
-                                        style: TextStyle(
-                                          fontSize: 8,
-                                          color: Colors.grey[600],
+                            child: _getListingImage().isEmpty
+                                ? Container(
+                                    height: 50,
+                                    width: 50,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(7),
+                                      color: Colors.grey[300],
+                                    ),
+                                    child: Icon(
+                                      Icons.image_not_supported,
+                                      color: Colors.grey[600],
+                                      size: 20,
+                                    ),
+                                  )
+                                : CachedNetworkImage(
+                                    height: 50,
+                                    width: 50,
+                                    imageUrl: _getListingImage(),
+                                    imageBuilder: (context, imageProvider) =>
+                                        Container(
+                                      height: 50,
+                                      width: 50,
+                                      decoration: BoxDecoration(
+                                        image: DecorationImage(
+                                          image: imageProvider,
+                                          fit: BoxFit.cover,
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            )),
+                                    ),
+                                    placeholder: (context, url) => SizedBox(
+                                      height: 50,
+                                      width: 50,
+                                      child: Center(
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      ),
+                                    ),
+                                    errorWidget: (context, url, error) {
+                                      print(
+                                          "🔥 Listing image load error: $error for URL: $url");
+                                      return Container(
+                                        height: 50,
+                                        width: 50,
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(7),
+                                          color: Colors.grey[300],
+                                        ),
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.image_not_supported,
+                                              size: 20,
+                                              color: Colors.grey[600],
+                                            ),
+                                            Text(
+                                              "No Image".tr,
+                                              style: TextStyle(
+                                                fontSize: 8,
+                                                color: Colors.grey[600],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  )),
                         SizedBox(width: 10),
                         Expanded(
                           child: Column(
@@ -510,7 +591,7 @@ class _ChatPageState extends State<ChatPage> {
               ),
             ),
           ),
-          GetBuilder<ChatController>(builder: (cont) {
+          GetBuilder<SupabaseChatController>(builder: (cont) {
             return Container(
               alignment: Alignment.bottomCenter,
               padding: EdgeInsets.only(bottom: 10.h),
@@ -607,7 +688,10 @@ class _ChatPageState extends State<ChatPage> {
                                 textInputAction: TextInputAction.newline,
                                 decoration: InputDecoration(
                                     border: InputBorder.none,
+                                    enabledBorder: InputBorder.none,
                                     focusedBorder: InputBorder.none,
+                                    errorBorder: InputBorder.none,
+                                    focusedErrorBorder: InputBorder.none,
                                     hintText: 'Type Message'.tr,
                                     hintStyle: TextStyle(
                                       fontSize: 14,
@@ -619,7 +703,6 @@ class _ChatPageState extends State<ChatPage> {
                                           Colors.black.withValues(alpha: 0.5),
                                     )),
                                 onTap: () {
-                                  // Scroll to bottom when text field is tapped (keyboard appears)
                                   Future.delayed(Duration(milliseconds: 300),
                                       () {
                                     _scrollToBottom(animated: true);
@@ -651,7 +734,6 @@ class _ChatPageState extends State<ChatPage> {
                                   ),
                                   onPressed: () async {
                                     await sendMessage('text');
-
                                     cont.update();
                                   },
                                 ),
@@ -667,7 +749,7 @@ class _ChatPageState extends State<ChatPage> {
               ),
             );
           }),
-          GetBuilder<ChatController>(builder: (cont) {
+          GetBuilder<SupabaseChatController>(builder: (cont) {
             return Positioned(
               bottom: 80.h,
               left: 170.w,
@@ -707,222 +789,189 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  // Debug status banner to show connection info
-  Widget _buildDebugStatusBanner() {
-    return Positioned(
-      top: 80.h, // Below the listing info
-      left: 0,
-      right: 0,
-      child: Container(
-        color: Colors.red.withOpacity(0.8),
-        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+  chatMessages() {
+    print(
+        '💬 🔥 chatMessages() called - messagesStream: ${messagesStream != null ? 'NOT NULL' : 'NULL'}');
+
+    if (messagesStream == null) {
+      print('💬 ❌ messagesStream is null, returning loading state');
+      return Center(
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              "🔥 DEBUG INFO FOR CUBAN TESTING 🔥",
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
-            ),
-            SizedBox(height: 3),
-            _buildFirebaseConnectionStatus(),
-            _buildLastMessageStatus(),
-            _buildNetworkStatus(),
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Initializing chat...'),
           ],
         ),
-      ),
-    );
-  }
+      );
+    }
 
-  Widget _buildFirebaseConnectionStatus() {
-    return StreamBuilder<bool>(
-      stream: _getFirebaseConnectionStream(),
-      builder: (context, snapshot) {
-        bool isConnected = snapshot.data ?? false;
-        return Row(
-          children: [
-            Icon(
-              isConnected ? Icons.check_circle : Icons.error_outline,
-              color: isConnected ? Colors.green : Colors.red,
-              size: 16,
-            ),
-            SizedBox(width: 5),
-            Expanded(
-              child: Text(
-                isConnected 
-                  ? "✅ Firebase: CONNECTED" 
-                  : "❌ Firebase: DISCONNECTED",
-                style: TextStyle(color: Colors.white, fontSize: 11),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: messagesStream,
+      builder: (context, AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
+        print('💬 🔥 StreamBuilder called:');
+        print('💬   - connectionState: ${snapshot.connectionState}');
+        print('💬   - hasData: ${snapshot.hasData}');
+        print('💬   - hasError: ${snapshot.hasError}');
+        print('💬   - data length: ${snapshot.data?.length ?? 'null'}');
+        print('💬   - error: ${snapshot.error}');
 
-  Widget _buildLastMessageStatus() {
-    return StreamBuilder(
-      stream: chatCont.chats,
-      builder: (context, snapshot) {
-        String status = "❌ No messages yet";
-        if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
-          var lastDoc = snapshot.data!.docs.last;
-          Timestamp? timestamp = lastDoc.get('time');
-          if (timestamp != null) {
-            DateTime lastTime = timestamp.toDate();
-            String timeAgo = _formatTimeAgo(lastTime);
-            status = "✅ Last msg: $timeAgo";
-          }
+        if (snapshot.hasError) {
+          print('💬 ❌ StreamBuilder error: ${snapshot.error}');
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error, color: Colors.red, size: 64),
+                SizedBox(height: 16),
+                Text('Error loading messages',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                SizedBox(height: 8),
+                Text('${snapshot.error}', style: TextStyle(color: Colors.red)),
+                SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    print('💬 🔄 User requested chat reload');
+                    getChat(); // Retry loading
+                  },
+                  child: Text('Retry'),
+                ),
+              ],
+            ),
+          );
         }
-        return Row(
-          children: [
-            Icon(Icons.message, color: Colors.white, size: 16),
-            SizedBox(width: 5),
-            Expanded(
-              child: Text(
-                status,
-                style: TextStyle(color: Colors.white, fontSize: 11),
+
+        // Handle different connection states with timeout
+        switch (snapshot.connectionState) {
+          case ConnectionState.none:
+            print('💬 ⏳ StreamBuilder: Connection state NONE');
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.warning, color: Colors.orange, size: 64),
+                  SizedBox(height: 16),
+                  Text('No connection to messages'),
+                  SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      print('💬 🔄 User requested manual refresh');
+                      getChat();
+                    },
+                    child: Text('Try Again'),
+                  ),
+                ],
               ),
-            ),
-          ],
-        );
-      },
-    );
-  }
+            );
+          case ConnectionState.waiting:
+            print('💬 ⏳ StreamBuilder: Connection state WAITING');
 
-  Widget _buildNetworkStatus() {
-    return FutureBuilder<bool>(
-      future: _checkInternetConnection(),
-      builder: (context, snapshot) {
-        bool hasInternet = snapshot.data ?? false;
-        return Row(
-          children: [
-            Icon(
-              hasInternet ? Icons.wifi : Icons.wifi_off,
-              color: hasInternet ? Colors.green : Colors.red,
-              size: 16,
-            ),
-            SizedBox(width: 5),
-            Expanded(
-              child: Text(
-                hasInternet 
-                  ? "✅ Internet: CONNECTED" 
-                  : "❌ Internet: NO CONNECTION",
-                style: TextStyle(color: Colors.white, fontSize: 11),
+            // Add timeout for loading state to prevent infinite loading
+            Future.delayed(Duration(seconds: 10), () {
+              if (mounted &&
+                  snapshot.connectionState == ConnectionState.waiting) {
+                print('💬 ⏰ Loading timeout reached, forcing refresh');
+                getChat();
+              }
+            });
+
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Loading messages...'),
+                  SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      print(
+                          '💬 🔄 User requested manual refresh during loading');
+                      getChat();
+                    },
+                    child: Text('Refresh'),
+                  ),
+                ],
               ),
-            ),
-          ],
-        );
-      },
-    );
-  }
+            );
+          case ConnectionState.active:
+          case ConnectionState.done:
+            print(
+                '💬 ✅ StreamBuilder: Connection state ${snapshot.connectionState}');
+            break;
+        }
 
-  Stream<bool> _getFirebaseConnectionStream() {
-    return FirebaseFirestore.instance
-        .collection('debug')
-        .doc('connection')
-        .snapshots()
-        .map((snapshot) => true)
-        .handleError((error) => false);
-  }
-
-  Future<bool> _checkInternetConnection() async {
-    try {
-      final response = await http.get(Uri.parse('https://www.google.com')).timeout(Duration(seconds: 5));
-      return response.statusCode == 200;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  String _formatTimeAgo(DateTime dateTime) {
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
-    
-    if (difference.inSeconds < 60) {
-      return "${difference.inSeconds}s ago";
-    } else if (difference.inMinutes < 60) {
-      return "${difference.inMinutes}m ago";
-    } else if (difference.inHours < 24) {
-      return "${difference.inHours}h ago";
-    } else {
-      return "${difference.inDays}d ago";
-    }
-  }
-
-  // Future<void> saveImageToGallery(String imageUrl) async {
-  //   try {
-  //     // Download the image from the URL
-  //     var response = await http.get(Uri.parse(imageUrl));
-
-  //     if (response.statusCode == 200) {
-  //       Uint8List bytes = response.bodyBytes;
-
-  //       // Get the application documents directory
-  //       final appDir = await getApplicationDocumentsDirectory();
-
-  //       // Generate a unique filename
-  //       String fileName =
-  //           DateTime.now().millisecondsSinceEpoch.toString() + '.png';
-
-  //       // Create a new file with the generated filename
-  //       final file = File('${appDir.path}/$fileName');
-
-  //       // Write the image bytes to the file
-  //       await file.writeAsBytes(bytes);
-
-  //       print('Image saved locally: ${file.path}');
-
-  //       // Save the image to the gallery
-  //       final result = await ImageGallerySaverPlus.saveFile(file.path,
-  //           isReturnPathOfIOS: true);
-
-  //       if (result != null && result.isNotEmpty) {
-  //         errorAlertToast("Saved".tr);
-  //         print('Image saved to gallery: $result');
-  //       } else {
-  //         print('Failed to save image to gallery. File path is null or empty.');
-  //       }
-  //     } else {
-  //       print('Failed to download image: ${response.statusCode}');
-  //     }
-  //   } catch (e) {
-  //     print('Error saving image to gallery: $e');
-  //   }
-  // }
-
-  chatMessages() {
-    return StreamBuilder(
-      stream: chatCont.chats,
-      builder: (context, AsyncSnapshot snapshot) {
         if (!snapshot.hasData) {
-          return Container();
+          print('💬 ⏳ StreamBuilder: No data yet, but connection is active');
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Loading messages...'),
+              ],
+            ),
+          );
         }
+
+        final messages = snapshot.data!;
+        if (messages.isEmpty) {
+          print('💬 📭 StreamBuilder: Data is empty, showing empty state');
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.chat_bubble_outline, size: 64, color: Colors.grey),
+                SizedBox(height: 16),
+                Text('No messages yet',
+                    style: TextStyle(fontSize: 16, color: Colors.grey)),
+                SizedBox(height: 8),
+                Text('Start the conversation!',
+                    style: TextStyle(color: Colors.grey)),
+              ],
+            ),
+          );
+        }
+
+        print(
+            '💬 ✅ StreamBuilder: Displaying ${snapshot.data!.length} messages');
 
         // Schedule scroll to bottom after the widget tree is built
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _scrollToBottom();
+
+          // Mark chat as read when messages are displayed and user scrolls to bottom
+          if (widget.chatId != null && authCont.user?.userId != null) {
+            Future.delayed(Duration(milliseconds: 1000), () {
+              print('💬 👀 Messages displayed, marking chat as read...');
+              chatCont.markChatAsRead(
+                widget.chatId!,
+                authCont.user!.userId.toString(),
+              );
+            });
+          }
         });
 
         return Column(
           children: [
-            GetBuilder<ChatController>(builder: (cont) {
+            GetBuilder<SupabaseChatController>(builder: (cont) {
               return Expanded(
                 child: ListView.builder(
                   padding: EdgeInsets.only(bottom: 20.h, top: 80.h),
                   controller: cont.scrollController,
-                  itemCount: snapshot.data.docs.length,
+                  itemCount: snapshot.data!.length,
                   itemBuilder: (context, index) {
-                    var sendBy = snapshot.data.docs[index].get('sendBy');
-                    print(sendBy);
-                    Timestamp? timestamp =
-                        snapshot.data.docs[index].get('time');
-                    String formattedTime = timestamp != null
-                        ? DateFormat('h:mm a')
-                            .format(timestamp.toDate().toLocal())
+                    var message = snapshot.data![index];
+                    var sendBy = message['send_by'];
+
+                    DateTime? messageTime = message['time'] != null
+                        ? DateTime.tryParse(message['time'])
+                        : null;
+                    String formattedTime = messageTime != null
+                        ? DateFormat('h:mm a').format(messageTime.toLocal())
                         : "";
 
                     return "${authCont.user?.userId}" == sendBy
@@ -936,21 +985,17 @@ class _ChatPageState extends State<ChatPage> {
                                   label: "Save",
                                   backgroundColor: Colors.blue,
                                   onPressed: (context) {
-                                    if (snapshot.data.docs[index]
-                                            ['messageType'] ==
-                                        'image') {
-                                      // saveImageToGallery(snapshot
-                                      //     .data.docs[index]['message']);
+                                    if (message['message_type'] == 'image') {
+                                      // saveImageToGallery(message['message']);
                                     }
                                   },
                                 ),
                               ],
                             ),
                             child: MessageTile(
-                                message: snapshot.data.docs[index]['message'],
-                                sender: snapshot.data.docs[index]['sender'],
-                                messageType: snapshot.data.docs[index]
-                                    ['messageType'],
+                                message: message['message'] ?? '',
+                                sender: message['sender_name'] ?? '',
+                                messageType: message['message_type'] ?? 'text',
                                 messageTime: formattedTime,
                                 sentByMe: "${authCont.user?.userId}" == sendBy),
                           )
@@ -964,21 +1009,17 @@ class _ChatPageState extends State<ChatPage> {
                                   label: "Save",
                                   backgroundColor: Colors.blue,
                                   onPressed: (context) {
-                                    if (snapshot.data.docs[index]
-                                            ['messageType'] ==
-                                        'image') {
-                                      // saveImageToGallery(snapshot
-                                      //     .data.docs[index]['message']);
+                                    if (message['message_type'] == 'image') {
+                                      // saveImageToGallery(message['message']);
                                     }
                                   },
                                 ),
                               ],
                             ),
                             child: MessageTile(
-                                message: snapshot.data.docs[index]['message'],
-                                sender: snapshot.data.docs[index]['sender'],
-                                messageType: snapshot.data.docs[index]
-                                    ['messageType'],
+                                message: message['message'] ?? '',
+                                sender: message['sender_name'] ?? '',
+                                messageType: message['message_type'] ?? 'text',
                                 messageTime: formattedTime,
                                 sentByMe: "${authCont.user?.userId}" == sendBy),
                           );
@@ -998,37 +1039,43 @@ class _ChatPageState extends State<ChatPage> {
   Future sendMessage(String messageType) async {
     try {
       if (chatCont.messageController.text.isNotEmpty) {
-        print("🔥 💬 TRYING TO SEND MESSAGE: ${chatCont.messageController.text}");
+        print(
+            "🔥 💬 TRYING TO SEND MESSAGE: ${chatCont.messageController.text}");
         print("🔥 💬 Chat ID: ${widget.chatId ?? widget.createChatid}");
-        
-        Map<String, dynamic> chatMessageMap = {
-          "message": chatCont.messageController.text,
-          "isMessaged": true,
-          "messageType": messageType,
-          "sender": "${authCont.user?.firstName} ${authCont.user?.lastName}",
-          "time": FieldValue.serverTimestamp(),
-          // "messageTime": DateFormat('h:mm a').format(DateTime.now()).toString(),
-          "sendBy": "${authCont.user?.userId}",
-        };
-        String? id = widget.chatId ?? widget.createChatid;
-        
-        print("🔥 💬 Sending to Firebase...");
-        await chatCont.sendMessage(id ?? "", chatMessageMap);
-        print("🔥 ✅ Message sent to Firebase successfully!");
-        
+
         String message = chatCont.messageController.text;
+        String? id = widget.chatId ?? widget.createChatid;
+
+        Map<String, dynamic> chatMessageData = {
+          "message": message,
+          "messageType": messageType,
+          "senderName":
+              "${authCont.user?.firstName} ${authCont.user?.lastName}",
+          "sendBy": "${authCont.user?.userId}",
+          "senderId": "${authCont.user?.userId}",
+          "sendToId": widget.remoteUid,
+          "sendToName": widget.userName,
+          "senderImage": authCont.user?.profileImage,
+          "sendToImage": widget.userImage,
+          "userDeviceToken": deviceToken,
+          "sendToDeviceToken": widget.deviceToken,
+          "image": messageType == "image" ? message : null,
+        };
+
+        print("🔥 💬 Sending to Supabase...");
+        await chatCont.sendMessage(id ?? "", chatMessageData);
+        print("🔥 ✅ Message sent to Supabase successfully!");
 
         // Clear the message controller first
         chatCont.messageController.clear();
 
         // Scroll to bottom with a slight delay to ensure message is added
-        Future.delayed(Duration(milliseconds: 100), () {
+        Future.delayed(Duration(milliseconds: 500), () {
           _scrollToBottom(animated: true);
         });
 
-        // Send notification with improved error handling
-        print("🔥 📤 Sending notification...");
-        await sendNotificationToRecipient(message, messageType);
+        // Notifications are sent automatically by SupabaseChatController
+        // No need for additional notification calls
       }
     } catch (e) {
       print("🔥 ❌ ERROR SENDING MESSAGE: $e");
@@ -1113,29 +1160,12 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  // Get recipient's device token from chat document
+  // Get recipient's device token - now handled by Supabase
   Future<String?> getRecipientDeviceToken() async {
     try {
-      if (widget.chatId == null) return widget.deviceToken;
-
-      DocumentSnapshot chatDoc = await FirebaseFirestore.instance
-          .collection("chat")
-          .doc(widget.chatId!)
-          .get();
-
-      if (!chatDoc.exists) return widget.deviceToken;
-
-      String currentUserId = authCont.user!.userId.toString();
-      String? senderId = chatDoc.get('senderId');
-
-      // Get the recipient's device token (not your own)
-      if (senderId == currentUserId) {
-        // You are the sender, get recipient's token
-        return chatDoc.get('sendToDeviceToken');
-      } else {
-        // You are the recipient, get sender's token
-        return chatDoc.get('userDeviceToken');
-      }
+      // Device tokens are now managed by Supabase automatically
+      // This method is kept for compatibility but returns the fallback token
+      return widget.deviceToken;
     } catch (e) {
       print("🔥 ❌ Error getting recipient device token: $e");
       return widget.deviceToken; // Fallback to original token
@@ -1145,43 +1175,19 @@ class _ChatPageState extends State<ChatPage> {
   Future<bool> sendNotificationWithRetry(
       String deviceToken, String messageType, String message) async {
     try {
-      // First attempt with the provided device token
-      bool success = await firebaseMessaging.sendNotificationFCM(
-          title: "${authCont.user?.firstName} ${authCont.user?.lastName}",
-          name: "${authCont.user?.firstName} ${authCont.user?.lastName}",
-          body: messageType == "voice"
-              ? "Voice Message"
-              : messageType == "image"
-                  ? "Image"
-                  : message,
-          deviceToken: deviceToken,
-          userId: authCont.user?.userId.toString(),
-          remoteId: widget.remoteUid,
-          profileImage: authCont.user?.profileImage ?? "",
-          type: "message");
-
-      if (!success) {
-        print(
-            "🔥 ❌ Notification failed - device token is likely expired/invalid");
-        print("🔥 💡 Device token for user ${widget.remoteUid}: $deviceToken");
-        print("🔥 💡 This token needs to be refreshed in the chat document");
-        print("🔥 💡 Possible solutions:");
-        print(
-            "🔥 💡 1. Ask the other user to open the app to refresh their token");
-        print("🔥 💡 2. Implement backend API to get fresh device tokens");
-        print("🔥 💡 3. Update chat documents when users refresh their tokens");
-      }
-
-      return success;
+      // Notifications are now handled automatically by SupabaseChatController
+      // This method is kept for compatibility but notifications are sent elsewhere
+      print(
+          "🔔 Notification will be sent by SupabaseChatController automatically");
+      return true; // Always return true since notifications are handled elsewhere
     } catch (e) {
       print("🔥 ❌ Error in notification retry: $e");
       return false;
     }
   }
 
-  // Helper method to get listing image URL
+  // Helper methods for listing data
   String _getListingImage() {
-    // Prefer the fetched listing model data over widget data
     if (homeCont.listingModel?.gallery != null &&
         homeCont.listingModel!.gallery!.isNotEmpty) {
       String imageUrl = homeCont.listingModel!.gallery!.first;
@@ -1189,24 +1195,19 @@ class _ChatPageState extends State<ChatPage> {
         return imageUrl;
       }
     }
-    // Fallback to widget data
     String fallbackUrl = widget.listingImage ?? "";
     if (fallbackUrl.isNotEmpty && fallbackUrl != "null") {
       return fallbackUrl;
     }
-    // Return empty string if no valid image URL found
     return "";
   }
 
-  // Helper method to get listing title
   String _getListingTitle() {
-    // Prefer the fetched listing model data over widget data
     if (homeCont.listingModel?.title != null &&
         homeCont.listingModel!.title!.isNotEmpty &&
         homeCont.listingModel!.title != "null") {
       return homeCont.listingModel!.title!;
     }
-    // Fallback to widget data
     if (widget.listingName != null &&
         widget.listingName!.isNotEmpty &&
         widget.listingName != "null") {
@@ -1215,15 +1216,12 @@ class _ChatPageState extends State<ChatPage> {
     return "Listing";
   }
 
-  // Helper method to get listing location
   String _getListingLocation() {
-    // Prefer the fetched listing model data over widget data
     if (homeCont.listingModel?.address != null &&
         homeCont.listingModel!.address!.isNotEmpty &&
         homeCont.listingModel!.address != "null") {
       return homeCont.listingModel!.address!;
     }
-    // Fallback to widget data
     if (widget.listingLocation != null &&
         widget.listingLocation!.isNotEmpty &&
         widget.listingLocation != "null") {
@@ -1232,12 +1230,10 @@ class _ChatPageState extends State<ChatPage> {
     return "";
   }
 
-  // Helper method to get formatted price
   String _getFormattedPrice() {
     String price = "0";
     String currency = "USD";
 
-    // Try to get price from listing model first
     if (homeCont.listingModel?.price != null &&
         homeCont.listingModel!.price!.isNotEmpty &&
         homeCont.listingModel!.price != "null") {
@@ -1246,11 +1242,9 @@ class _ChatPageState extends State<ChatPage> {
     } else if (widget.listingPrice != null &&
         widget.listingPrice!.isNotEmpty &&
         widget.listingPrice != "null") {
-      // Fallback to widget data
       price = widget.listingPrice!;
     }
 
-    // Ensure currency is not empty or null, fallback to 'USD'
     if (currency.isEmpty || currency == "null") {
       currency = "USD";
     }
@@ -1263,9 +1257,7 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  // Helper method to check if price should be shown
   bool _shouldShowPrice() {
-    // Check homeCont.listingModel?.price first
     var modelPrice = homeCont.listingModel?.price;
     if (modelPrice != null && modelPrice.isNotEmpty && modelPrice != "null") {
       String priceStr = modelPrice.toString().trim();
@@ -1277,7 +1269,6 @@ class _ChatPageState extends State<ChatPage> {
       }
     }
 
-    // Check widget.listingPrice as fallback
     var widgetPrice = widget.listingPrice;
     if (widgetPrice != null &&
         widgetPrice.isNotEmpty &&
@@ -1294,21 +1285,24 @@ class _ChatPageState extends State<ChatPage> {
     return false;
   }
 
-  updateImage() {
-    Map<String, dynamic> chatMessageMap =
-        "${widget.senderId}" == "${authCont.user?.userId}"
-            ? {
-                "senderImage": "${authCont.user?.profileImage}",
-              }
-            : {
-                "senderToImage": "${authCont.user?.profileImage}",
-              };
-    print("Good>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>$chatMessageMap}");
-    String? id = widget.chatId ?? widget.createChatid;
-    print("?????????????$id");
-    print("here2");
+  updateImage() async {
+    Map<String, dynamic> chatUpdateData = {
+      "${widget.senderId}" == "${authCont.user?.userId}"
+          ? "sender_image"
+          : "send_to_image": "${authCont.user?.profileImage}",
+    };
 
-    chatCont.updateImage(id ?? "", chatMessageMap);
+    String? id = widget.chatId ?? widget.createChatid;
+    if (id != null) {
+      try {
+        await chatCont.supabaseClient
+            .from('chats')
+            .update(chatUpdateData)
+            .eq('id', id);
+      } catch (e) {
+        print("❌ Error updating image: $e");
+      }
+    }
   }
 
   void _openCamera(BuildContext context) async {
@@ -1316,10 +1310,7 @@ class _ChatPageState extends State<ChatPage> {
       source: ImageSource.camera,
     );
     if (pickedFile != null) {
-      // Add a temporary message with local image path
-      _addTemporaryImageMessage(pickedFile.path);
-      // Start upload in background
-      uploadImage(pickedFile, localPath: pickedFile.path);
+      uploadImage(pickedFile);
     }
   }
 
@@ -1328,64 +1319,77 @@ class _ChatPageState extends State<ChatPage> {
       source: ImageSource.gallery,
     );
     if (pickedFile != null) {
-      // Add a temporary message with local image path
-      _addTemporaryImageMessage(pickedFile.path);
-      // Start upload in background
-      uploadImage(pickedFile, localPath: pickedFile.path);
+      uploadImage(pickedFile);
     }
   }
 
-  void _addTemporaryImageMessage(String localPath) {
-    // Add a temporary message to the chat with a local file path and a 'pending' flag
-    Map<String, dynamic> chatMessageMap = {
-      "message": localPath,
-      "isMessaged": true,
-      "messageType": "image",
-      "sender": "${authCont.user?.firstName} ${authCont.user?.lastName}",
-      "time": FieldValue.serverTimestamp(),
-      "sendBy": "${authCont.user?.userId}",
-      "pending": true, // Custom flag to indicate this is a local/pending image
-    };
-    String? id = widget.chatId ?? widget.createChatid;
-    chatCont.sendMessage(id ?? "", chatMessageMap);
-
-    // Scroll to bottom after adding temporary image message
-    Future.delayed(Duration(milliseconds: 100), () {
-      _scrollToBottom(animated: true);
-    });
-  }
-
-  Future uploadImage(var pickedFile, {required String localPath}) async {
-    final storageRef = FirebaseStorage.instance
-        .ref()
-        .child('images/${DateTime.now().millisecondsSinceEpoch}.jpg');
+  Future uploadImage(var pickedFile) async {
     try {
-      await storageRef.putFile(File(pickedFile.path)).then((p) async {
-        final url = await storageRef.getDownloadURL();
-        // Update the previously sent temporary message with the real image URL
-        _replaceTemporaryImageMessage(localPath, url);
-      }).timeout(Duration(seconds: 50));
+      showLoading();
+
+      String fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+      String? imageUrl = await chatCont.uploadImage(pickedFile.path, fileName);
+
+      Get.back(); // Hide loading
+
+      if (imageUrl != null) {
+        // Send image message
+        await sendImageMessage(imageUrl);
+      } else {
+        print("❌ Image upload failed - no URL returned");
+        errorAlertToast(
+            "Image upload failed. Storage bucket may not be configured.");
+      }
     } catch (error) {
-      print(error);
+      Get.back(); // Hide loading
+      print("❌ Error uploading image: $error");
+
+      String errorMessage = "Failed to upload image";
+      if (error.toString().contains('Bucket not found')) {
+        errorMessage = "Image storage not configured. Contact support.";
+      } else if (error.toString().contains('row-level security policy') ||
+          error.toString().contains('Unauthorized') ||
+          error.toString().contains('403')) {
+        errorMessage =
+            "Image upload not authorized. Storage policies need configuration.";
+      } else if (error.toString().contains('permission')) {
+        errorMessage = "Permission denied for image upload";
+      }
+
+      errorAlertToast(errorMessage);
     }
   }
 
-  void _replaceTemporaryImageMessage(String localPath, String imageUrl) async {
-    // Find and update the message in Firestore where message == localPath and pending == true
-    String? id = widget.chatId ?? widget.createChatid;
-    var chatCollection = FirebaseFirestore.instance
-        .collection("chat")
-        .doc(id)
-        .collection("messages");
-    var query = await chatCollection
-        .where("message", isEqualTo: localPath)
-        .where("pending", isEqualTo: true)
-        .get();
-    for (var doc in query.docs) {
-      await doc.reference.update({
+  Future sendImageMessage(String imageUrl) async {
+    try {
+      String? id = widget.chatId ?? widget.createChatid;
+
+      Map<String, dynamic> chatMessageData = {
         "message": imageUrl,
-        "pending": FieldValue.delete(), // Remove the pending flag
+        "messageType": "image",
+        "senderName": "${authCont.user?.firstName} ${authCont.user?.lastName}",
+        "sendBy": "${authCont.user?.userId}",
+        "senderId": "${authCont.user?.userId}",
+        "sendToId": widget.remoteUid,
+        "sendToName": widget.userName,
+        "senderImage": authCont.user?.profileImage,
+        "sendToImage": widget.userImage,
+        "userDeviceToken": deviceToken,
+        "sendToDeviceToken": widget.deviceToken,
+        "image": imageUrl,
+      };
+
+      await chatCont.sendMessage(id ?? "", chatMessageData);
+
+      // Scroll to bottom
+      Future.delayed(Duration(milliseconds: 100), () {
+        _scrollToBottom(animated: true);
       });
+
+      // Firebase notifications are sent automatically by SupabaseChatController
+    } catch (e) {
+      print("❌ Error sending image message: $e");
+      errorAlertToast("Failed to send image");
     }
   }
 }

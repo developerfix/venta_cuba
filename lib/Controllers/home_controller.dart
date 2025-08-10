@@ -35,7 +35,6 @@ import '../Models/SubCategoriesModel.dart';
 import '../Models/SubCategoriesModel.dart' as sub;
 import '../Models/SubSubCategoriesModel.dart';
 import '../Models/SubSubCategoriesModel.dart' as subSub;
-import '../Models/user_data.dart';
 import '../Utils/funcations.dart';
 import '../api/api_client.dart';
 import '../view/PromoCodesScreen/PromoCodesScreen.dart';
@@ -46,7 +45,6 @@ import '../view/profile/favourite_listings.dart';
 import '../view/profile/favourite_seller.dart';
 import '../view/profile/my_public_page.dart';
 import '../view/subscription/Subscription.dart';
-import 'package:venta_cuba/Models/CategoriesModel.dart' as cta;
 
 List<String> beforeData = [];
 

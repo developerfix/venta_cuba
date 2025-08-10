@@ -5,17 +5,15 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
-import '../Controller/ChatController.dart';
+import '../Controller/SupabaseChatController.dart';
 import '../custom_text.dart';
 import '../pages/chat_page.dart';
-import 'package:cloud_firestore/cloud_firestore.dart' as firestoree;
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class GroupTile extends StatefulWidget {
   final String userName;
   final String? lastMessage;
   final String? messageType;
-  final firestoree.Timestamp? messageTime;
+  final DateTime? messageTime;
   final String senderId;
   final String? remoteUid;
   final String? userChatId;
@@ -26,8 +24,8 @@ class GroupTile extends StatefulWidget {
   final String? listingPrice;
   final String? listingLocation;
   final String? listingId;
-  final bool isUnread; // New parameter for unread status
-  final String? remoteUserId; // Add remote user ID for presence tracking
+  final bool isUnread;
+  final String? remoteUserId;
 
   const GroupTile({
     Key? key,
@@ -45,8 +43,8 @@ class GroupTile extends StatefulWidget {
     this.listingId,
     this.listingLocation,
     this.deviceToken,
-    this.isUnread = false, // Default to false
-    this.remoteUserId, // Add remote user ID parameter
+    this.isUnread = false,
+    this.remoteUserId,
   }) : super(key: key);
 
   @override
@@ -55,30 +53,23 @@ class GroupTile extends StatefulWidget {
 
 class _GroupTileState extends State<GroupTile> {
   final authCont = Get.find<AuthController>();
-  final chatCont = Get.find<ChatController>();
-  String _formatMessageTime(firestoree.Timestamp? messageTime) {
-    // Debug: Log the type of messageTime
-    print('messageTime type: ${messageTime.runtimeType}');
-
+  final chatCont = Get.find<SupabaseChatController>();
+  
+  String _formatMessageTime(DateTime? messageTime) {
     if (messageTime != null) {
       try {
-        // Convert Firestore Timestamp to local DateTime and format
-        return DateFormat('h:mm a').format(messageTime.toDate().toLocal());
+        return DateFormat('h:mm a').format(messageTime.toLocal());
       } catch (e) {
-        print('Error formatting Timestamp: $e');
+        print('Error formatting DateTime: $e');
         return '';
       }
     } else {
-      // Fallback for null Timestamp
-      print('Invalid messageTime: $messageTime');
       return '';
     }
   }
 
   // Navigation function to handle chat page navigation
   Future<void> _navigateToChat() async {
-    // Mark chat as read when user taps on it
-
     // Navigate to ChatPage
     Get.to(() => ChatPage(
           isLast: true,
@@ -94,6 +85,8 @@ class _GroupTileState extends State<GroupTile> {
           userImage: widget.userImage,
           deviceToken: widget.deviceToken,
         ));
+        
+    // Mark chat as read after navigation
     if (widget.userChatId != null && authCont.user?.userId != null) {
       await chatCont.markChatAsRead(
           widget.userChatId!, "${authCont.user?.userId}");
@@ -173,23 +166,25 @@ class _GroupTileState extends State<GroupTile> {
                                   height: 50.h,
                                   width: 50.w,
                                   decoration: BoxDecoration(
-                                      image: DecorationImage(
-                                          image: AssetImage(
-                                              "assets/images/notImage.jpg")),
+                                      color: Colors.grey[300],
                                       shape: BoxShape.circle),
+                                  child: Icon(
+                                    Icons.person,
+                                    size: 30,
+                                    color: Colors.grey[600],
+                                  ),
                                 ),
                               ),
                               // Online status indicator
                               if (widget.remoteUserId != null)
-                                StreamBuilder<DocumentSnapshot>(
+                                StreamBuilder<Map<String, dynamic>?>(
                                   stream: chatCont
                                       .getUserPresence(widget.remoteUserId!),
                                   builder: (context, snapshot) {
                                     if (snapshot.hasData &&
-                                        snapshot.data!.exists) {
+                                        snapshot.data != null) {
                                       Map<String, dynamic> presenceData =
-                                          snapshot.data!.data()
-                                              as Map<String, dynamic>;
+                                          snapshot.data!;
 
                                       bool isOnline =
                                           chatCont.isUserOnline(presenceData);
