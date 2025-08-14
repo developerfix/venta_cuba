@@ -23,6 +23,7 @@ import '../view/Chat/Controller/SupabaseChatController.dart';
 // import '../Services/Firebase/firebase_messaging_service.dart';
 import '../Services/RealPush/supabase_push_service.dart';
 import '../Services/RealPush/real_push_service.dart';
+import '../Services/Supabase/rls_helper.dart';
 import '../config/app_config.dart';
 
 String deviceToken = '';
@@ -269,6 +270,10 @@ class AuthController extends GetxController {
               print('🔥 AuthController: setUserOnline timed out, continuing...');
             },
           );
+
+          // Set RLS user context for secure Supabase access
+          await RLSHelper.setUserContext(user!.userId.toString());
+          print('🔥 AuthController: RLS user context set for user: ${user!.userId}');
 
           // Initialize Supabase Push Service for this user
           await SupabasePushService.initialize(user!.userId.toString());
@@ -786,11 +791,15 @@ class AuthController extends GetxController {
     fetchAccountType();
     await getuserDetail();
     
-    // Initialize ntfy push notifications for Cuba
+    // Initialize services for Cuba
     try {
       if (user?.userId != null) {
         final userId = user!.userId.toString();
-        print('🚀 Initializing push notifications for user: $userId');
+        print('🚀 Initializing services for user: $userId');
+        
+        // Set RLS user context for secure Supabase access
+        await RLSHelper.setUserContext(userId);
+        print('✅ RLS user context set for secure chat access');
         
         // Initialize push notifications with user ID
         await RealPushService.initialize(
@@ -798,11 +807,11 @@ class AuthController extends GetxController {
           customServerUrl: AppConfig.ntfyServerUrl,
         );
         
-        print('✅ Push notifications initialized successfully for Cuba');
+        print('✅ All services initialized successfully for Cuba');
       }
     } catch (e) {
-      print('❌ Error initializing push notifications: $e');
-      // Don't block login if push fails
+      print('❌ Error initializing services: $e');
+      // Don't block login if services fail
     }
     
     update();
@@ -861,6 +870,14 @@ class AuthController extends GetxController {
       unreadMessageCount.value = 0;
       hasUnreadMessages.value = false;
 
+      // Clear RLS user context for security
+      try {
+        await RLSHelper.clearUserContext();
+        print('✅ RLS user context cleared on logout');
+      } catch (e) {
+        print('⚠️ Error clearing RLS context: $e');
+      }
+
       // Navigate to login regardless of server response
       Get.offAll(() => const Login());
 
@@ -879,6 +896,14 @@ class AuthController extends GetxController {
         // Reset unread message count
         unreadMessageCount.value = 0;
         hasUnreadMessages.value = false;
+
+        // Clear RLS user context for security
+        try {
+          await RLSHelper.clearUserContext();
+          print('✅ RLS user context cleared on logout (error path)');
+        } catch (e) {
+          print('⚠️ Error clearing RLS context (error path): $e');
+        }
 
         Get.offAll(() => const Login());
       } catch (clearError) {
@@ -901,6 +926,15 @@ class AuthController extends GetxController {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       prefs.remove('token');
       prefs.remove('user_data');
+      
+      // Clear RLS user context for security
+      try {
+        await RLSHelper.clearUserContext();
+        print('✅ RLS user context cleared on account deletion');
+      } catch (e) {
+        print('⚠️ Error clearing RLS context on deletion: $e');
+      }
+      
       Get.offAll(() => const Login());
     } else {
       errorAlertToast('Something went wrong\nPlease try again!'.tr);

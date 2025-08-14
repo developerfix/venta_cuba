@@ -18,6 +18,7 @@ import '../../../Controllers/home_controller.dart';
 // import '../../../Services/Firebase/firebase_messaging_service.dart';
 import '../../../Utils/global_variabel.dart';
 import '../Controller/SupabaseChatController.dart';
+import '../../../Services/RealPush/supabase_push_service.dart';
 import '../custom_text.dart';
 import '../widgets/message_tile.dart';
 
@@ -84,6 +85,10 @@ class _ChatPageState extends State<ChatPage> {
       );
     }
 
+    // Set chat screen as closed when leaving
+    print('🔴 CHAT PAGE: Setting chat screen CLOSED');
+    SupabasePushService.setChatScreenStatus(isOpen: false, chatId: null);
+
     super.dispose();
   }
 
@@ -122,6 +127,14 @@ class _ChatPageState extends State<ChatPage> {
 
     // Initialize listing data for this specific chat
     _initializeListingData();
+
+    // Delay setting chat screen status to ensure push service is initialized
+    Future.delayed(const Duration(milliseconds: 500), () {
+      print(
+          'testing 🔴 CHAT PAGE: Setting chat screen OPEN for chatId: ${widget.chatId}');
+      SupabasePushService.setChatScreenStatus(
+          isOpen: true, chatId: widget.chatId);
+    });
 
     // Improved scroll listener with better logic
     chatCont.scrollController.addListener(() {
@@ -354,14 +367,14 @@ class _ChatPageState extends State<ChatPage> {
                 homeController.isBusinessAccount ? "1" : "0", 0, true);
           },
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               CachedNetworkImage(
-                height: 50..h,
+                height: 50.h,
                 width: 50.w,
                 imageUrl: "${widget.userImage}",
                 imageBuilder: (context, imageProvider) => Container(
-                  height: 180..h,
+                  height: 180.h,
                   width: MediaQuery.of(context).size.width,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
@@ -372,7 +385,7 @@ class _ChatPageState extends State<ChatPage> {
                   ),
                 ),
                 placeholder: (context, url) => SizedBox(
-                    height: 50..h,
+                    height: 50.h,
                     width: 50.w,
                     child: Center(
                         child: CircularProgressIndicator(
@@ -381,7 +394,7 @@ class _ChatPageState extends State<ChatPage> {
                 errorWidget: (context, url, error) {
                   print("🔥 Profile image load error: $error for URL: $url");
                   return Container(
-                    height: 50..h,
+                    height: 50.h,
                     width: 50.w,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
@@ -404,9 +417,9 @@ class _ChatPageState extends State<ChatPage> {
                 children: [
                   CustomText(
                     text: widget.userName == ""
-                        ? "No Name"
-                        : widget.userName ?? "No Name",
-                    fontSize: 16..sp,
+                        ? "No Name".tr
+                        : widget.userName ?? "No Name".tr,
+                    fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
                     fontColor: Theme.of(context).textTheme.bodyLarge?.color ??
                         Colors.black,
@@ -425,7 +438,8 @@ class _ChatPageState extends State<ChatPage> {
                           DateTime? lastActiveTime =
                               presenceData['last_active_time'] != null
                                   ? DateTime.parse(
-                                      presenceData['last_active_time'])
+                                          presenceData['last_active_time'])
+                                      .toLocal()
                                   : null;
 
                           return CustomText(
@@ -654,92 +668,111 @@ class _ChatPageState extends State<ChatPage> {
                     ),
                     Expanded(
                       child: Container(
-                        height: 50..h,
-                        padding: EdgeInsets.only(left: 10.w, bottom: 5),
-                        decoration: BoxDecoration(
-                            color: Theme.of(context).cardColor,
-                            borderRadius: BorderRadius.circular(30.r),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Theme.of(context)
-                                    .shadowColor
-                                    .withValues(alpha: 0.1),
-                                blurRadius: 8,
-                                offset: Offset(0, 2),
-                                spreadRadius: 0,
-                              )
-                            ],
-                            border: Border.all(
-                                color: AppColors.textPrimary
-                                    .withValues(alpha: 0.5),
-                                width: 1.5)),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(width: 4..w),
-                            Expanded(
-                              child: TextField(
-                                focusNode: focusNode,
-                                controller: cont.messageController,
-                                maxLines: null,
-                                minLines: 1,
-                                keyboardType: TextInputType.multiline,
-                                textInputAction: TextInputAction.newline,
-                                decoration: InputDecoration(
-                                    border: InputBorder.none,
-                                    enabledBorder: InputBorder.none,
-                                    focusedBorder: InputBorder.none,
-                                    errorBorder: InputBorder.none,
-                                    focusedErrorBorder: InputBorder.none,
-                                    hintText: 'Type Message'.tr,
-                                    hintStyle: TextStyle(
-                                      fontSize: 14,
-                                      color: Theme.of(context)
-                                              .textTheme
-                                              .bodyMedium
-                                              ?.color
-                                              ?.withValues(alpha: 0.5) ??
-                                          Colors.black.withValues(alpha: 0.5),
-                                    )),
-                                onTap: () {
-                                  Future.delayed(Duration(milliseconds: 300),
-                                      () {
-                                    _scrollToBottom(animated: true);
-                                  });
-                                  cont.update();
-                                },
-                                onChanged: (String? value) {
-                                  if (cont.messageController.text.isNotEmpty) {
-                                    chatCont.isTyping = true;
-                                    cont.update();
-                                  } else {
-                                    cont.isTyping = false;
-                                    cont.update();
-                                  }
-                                },
-                              ),
-                            ),
-                            Container(
-                              decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(10)),
-                              child: Center(
-                                child: IconButton(
-                                  padding: EdgeInsets.zero,
-                                  icon: Icon(
-                                    Icons.send,
-                                    color: cont.isTyping
-                                        ? Theme.of(context).primaryColor
-                                        : Theme.of(context).iconTheme.color,
+                        // Flexible container that adjusts to content
+                        constraints: BoxConstraints(
+                          maxHeight: 120.h, // Maximum height (about 4 lines)
+                        ),
+                        child: IntrinsicHeight(
+                          child: Container(
+                            padding: EdgeInsets.symmetric(horizontal: 12.w),
+                            decoration: BoxDecoration(
+                                color: Theme.of(context).cardColor,
+                                borderRadius: BorderRadius.circular(30.r),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Theme.of(context)
+                                        .shadowColor
+                                        .withValues(alpha: 0.1),
+                                    blurRadius: 8,
+                                    offset: Offset(0, 2),
+                                    spreadRadius: 0,
+                                  )
+                                ],
+                                border: Border.all(
+                                    color: AppColors.textPrimary
+                                        .withValues(alpha: 0.5),
+                                    width: 1.5)),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    focusNode: focusNode,
+                                    controller: cont.messageController,
+                                    maxLines: null, // Allow unlimited lines within maxHeight
+                                    minLines: 1, // Start with 1 line only
+                                    keyboardType: TextInputType.multiline,
+                                    textAlignVertical: TextAlignVertical.center,
+                                    scrollPhysics: BouncingScrollPhysics(),
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      color: Theme.of(context).textTheme.bodyMedium?.color,
+                                    ),
+                                    decoration: InputDecoration(
+                                        isDense: true,
+                                        contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 0,
+                                          vertical: 12.h, // Proper vertical padding
+                                        ),
+                                        border: InputBorder.none,
+                                        enabledBorder: InputBorder.none,
+                                        focusedBorder: InputBorder.none,
+                                        errorBorder: InputBorder.none,
+                                        focusedErrorBorder: InputBorder.none,
+                                        hintText: 'Type Message'.tr,
+                                        hintStyle: TextStyle(
+                                          fontSize: 14.sp,
+                                          color: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyMedium
+                                                  ?.color
+                                                  ?.withValues(alpha: 0.5) ??
+                                              Colors.black.withValues(alpha: 0.5),
+                                        )),
+                                    onTap: () {
+                                      Future.delayed(Duration(milliseconds: 300),
+                                          () {
+                                        _scrollToBottom(animated: true);
+                                      });
+                                      cont.update();
+                                    },
+                                    onChanged: (String? value) {
+                                      if (cont
+                                          .messageController.text.isNotEmpty) {
+                                        chatCont.isTyping = true;
+                                        cont.update();
+                                      } else {
+                                        cont.isTyping = false;
+                                        cont.update();
+                                      }
+                                    },
                                   ),
-                                  onPressed: () async {
-                                    await sendMessage('text');
-                                    cont.update();
-                                  },
                                 ),
-                              ),
+                                SizedBox(width: 8.w),
+                                Padding(
+                                  padding: EdgeInsets.only(bottom: 2.h),
+                                  child: IconButton(
+                                    constraints: BoxConstraints(
+                                      minHeight: 35.h,
+                                      minWidth: 35.w,
+                                    ),
+                                    padding: EdgeInsets.zero,
+                                    icon: Icon(
+                                      Icons.send,
+                                      size: 22.sp,
+                                      color: cont.isTyping
+                                          ? Theme.of(context).primaryColor
+                                          : Theme.of(context).iconTheme.color,
+                                    ),
+                                    onPressed: () async {
+                                      await sendMessage('text');
+                                      cont.update();
+                                    },
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
                     ),
@@ -801,7 +834,7 @@ class _ChatPageState extends State<ChatPage> {
           children: [
             CircularProgressIndicator(),
             SizedBox(height: 16),
-            Text('Initializing chat...'),
+            Text('Initializing chat...'.tr),
           ],
         ),
       );
@@ -825,7 +858,7 @@ class _ChatPageState extends State<ChatPage> {
               children: [
                 Icon(Icons.error, color: Colors.red, size: 64),
                 SizedBox(height: 16),
-                Text('Error loading messages',
+                Text('Error loading messages'.tr,
                     style:
                         TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 SizedBox(height: 8),
@@ -836,7 +869,7 @@ class _ChatPageState extends State<ChatPage> {
                     print('💬 🔄 User requested chat reload');
                     getChat(); // Retry loading
                   },
-                  child: Text('Retry'),
+                  child: Text('Retry'.tr),
                 ),
               ],
             ),
@@ -853,46 +886,29 @@ class _ChatPageState extends State<ChatPage> {
                 children: [
                   Icon(Icons.warning, color: Colors.orange, size: 64),
                   SizedBox(height: 16),
-                  Text('No connection to messages'),
+                  Text('No connection to messages'.tr),
                   SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {
                       print('💬 🔄 User requested manual refresh');
                       getChat();
                     },
-                    child: Text('Try Again'),
+                    child: Text('Try Again'.tr),
                   ),
                 ],
               ),
             );
           case ConnectionState.waiting:
-            print('💬 ⏳ StreamBuilder: Connection state WAITING');
-
-            // Add timeout for loading state to prevent infinite loading
-            Future.delayed(Duration(seconds: 10), () {
-              if (mounted &&
-                  snapshot.connectionState == ConnectionState.waiting) {
-                print('💬 ⏰ Loading timeout reached, forcing refresh');
-                getChat();
-              }
-            });
-
+            print(
+                '💬 ⏳ StreamBuilder: Connection state WAITING - showing loading');
+            // Show loading indicator while waiting for initial data
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   CircularProgressIndicator(),
                   SizedBox(height: 16),
-                  Text('Loading messages...'),
-                  SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      print(
-                          '💬 🔄 User requested manual refresh during loading');
-                      getChat();
-                    },
-                    child: Text('Refresh'),
-                  ),
+                  Text('Loading messages...'.tr),
                 ],
               ),
             );
@@ -903,21 +919,10 @@ class _ChatPageState extends State<ChatPage> {
             break;
         }
 
-        if (!snapshot.hasData) {
-          print('💬 ⏳ StreamBuilder: No data yet, but connection is active');
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Loading messages...'),
-              ],
-            ),
-          );
-        }
-
-        final messages = snapshot.data!;
+        // For professional UX, don't show loading spinners
+        // Real-time stream will populate data as it arrives
+        final messages =
+            snapshot.hasData ? snapshot.data! : <Map<String, dynamic>>[];
         if (messages.isEmpty) {
           print('💬 📭 StreamBuilder: Data is empty, showing empty state');
           return Center(
@@ -926,10 +931,10 @@ class _ChatPageState extends State<ChatPage> {
               children: [
                 Icon(Icons.chat_bubble_outline, size: 64, color: Colors.grey),
                 SizedBox(height: 16),
-                Text('No messages yet',
+                Text('No messages yet'.tr,
                     style: TextStyle(fontSize: 16, color: Colors.grey)),
                 SizedBox(height: 8),
-                Text('Start the conversation!',
+                Text('Start the conversation!'.tr,
                     style: TextStyle(color: Colors.grey)),
               ],
             ),
@@ -968,10 +973,10 @@ class _ChatPageState extends State<ChatPage> {
                     var sendBy = message['send_by'];
 
                     DateTime? messageTime = message['time'] != null
-                        ? DateTime.tryParse(message['time'])
+                        ? DateTime.tryParse(message['time'])?.toLocal()
                         : null;
                     String formattedTime = messageTime != null
-                        ? DateFormat('h:mm a').format(messageTime.toLocal())
+                        ? _formatMessageTime(messageTime)
                         : "";
 
                     return "${authCont.user?.userId}" == sendBy
@@ -982,7 +987,7 @@ class _ChatPageState extends State<ChatPage> {
                               children: [
                                 SlidableAction(
                                   icon: Icons.save,
-                                  label: "Save",
+                                  label: "Save".tr,
                                   backgroundColor: Colors.blue,
                                   onPressed: (context) {
                                     if (message['message_type'] == 'image') {
@@ -1006,7 +1011,7 @@ class _ChatPageState extends State<ChatPage> {
                               children: [
                                 SlidableAction(
                                   icon: Icons.save,
-                                  label: "Save",
+                                  label: "Save".tr,
                                   backgroundColor: Colors.blue,
                                   onPressed: (context) {
                                     if (message['message_type'] == 'image') {
@@ -1213,7 +1218,7 @@ class _ChatPageState extends State<ChatPage> {
         widget.listingName != "null") {
       return widget.listingName!;
     }
-    return "Listing";
+    return "Listing".tr;
   }
 
   String _getListingLocation() {
@@ -1344,16 +1349,17 @@ class _ChatPageState extends State<ChatPage> {
       Get.back(); // Hide loading
       print("❌ Error uploading image: $error");
 
-      String errorMessage = "Failed to upload image";
+      String errorMessage = "Failed to upload image".tr;
       if (error.toString().contains('Bucket not found')) {
-        errorMessage = "Image storage not configured. Contact support.";
+        errorMessage = "Image storage not configured. Contact support.".tr;
       } else if (error.toString().contains('row-level security policy') ||
           error.toString().contains('Unauthorized') ||
           error.toString().contains('403')) {
         errorMessage =
-            "Image upload not authorized. Storage policies need configuration.";
+            "Image upload not authorized. Storage policies need configuration."
+                .tr;
       } else if (error.toString().contains('permission')) {
-        errorMessage = "Permission denied for image upload";
+        errorMessage = "Permission denied for image upload".tr;
       }
 
       errorAlertToast(errorMessage);
@@ -1389,7 +1395,32 @@ class _ChatPageState extends State<ChatPage> {
       // Firebase notifications are sent automatically by SupabaseChatController
     } catch (e) {
       print("❌ Error sending image message: $e");
-      errorAlertToast("Failed to send image");
+      errorAlertToast("Failed to send image".tr);
+    }
+  }
+
+  String _formatMessageTime(DateTime messageTime) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(Duration(days: 1));
+    final messageDate =
+        DateTime(messageTime.year, messageTime.month, messageTime.day);
+
+    if (messageDate == today) {
+      // Today: show only time
+      return DateFormat('h:mm a').format(messageTime);
+    } else if (messageDate == yesterday) {
+      // Yesterday: show "Yesterday HH:MM"
+      return "Yesterday ${DateFormat('h:mm a').format(messageTime)}";
+    } else if (now.difference(messageTime).inDays < 7) {
+      // This week: show day name and time
+      return "${DateFormat('EEEE h:mm a').format(messageTime)}";
+    } else if (messageTime.year == now.year) {
+      // This year: show month, day and time
+      return "${DateFormat('MMM d, h:mm a').format(messageTime)}";
+    } else {
+      // Different year: show full date and time
+      return "${DateFormat('MMM d, yyyy h:mm a').format(messageTime)}";
     }
   }
 }

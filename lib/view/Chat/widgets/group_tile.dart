@@ -104,14 +104,14 @@ class _GroupTileState extends State<GroupTile> {
             children: [
               SlidableAction(
                 icon: Icons.delete,
-                label: "Delete",
+                label: "Delete".tr,
                 backgroundColor: Colors.red,
                 foregroundColor: Colors.white,
                 onPressed: (context) {
                   chatCont.deleteChat(widget.userChatId ?? "");
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text("Chat deleted"),
+                      content: Text("Chat deleted".tr),
                       backgroundColor: Colors.red,
                       duration: Duration(seconds: 2),
                     ),
@@ -277,7 +277,9 @@ class _GroupTileState extends State<GroupTile> {
                                 child: CustomText(
                                   text: widget.messageType == "image"
                                       ? "Image".tr
-                                      : "${widget.lastMessage}",
+                                      : widget.messageType == "video"
+                                          ? "Video".tr
+                                          : "${widget.lastMessage}",
                                   fontWeight: widget.isUnread
                                       ? FontWeight.bold
                                       : FontWeight.w500,

@@ -12,6 +12,11 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.CAMERA" />
+    
+    <!-- Background service permissions for ntfy -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <!-- Badge permissions for Android -->
     <uses-permission android:name="com.sec.android.provider.badge.permission.READ" />
@@ -86,6 +91,12 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
+        <!-- Background service for ntfy notifications -->
+        <service
+            android:name=".NtfyBackgroundService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
 
         <!-- BOOT_COMPLETED moved to a separate receiver -->
         <receiver android:name=".BootCompletedReceiver"

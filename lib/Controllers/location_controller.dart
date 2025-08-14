@@ -58,20 +58,6 @@ class LocationController extends GetxController {
 
   Future selectLocation(int index) async {
     try {
-      // Show loading dialog
-      Get.dialog(
-        AlertDialog(
-          title: Text("Loading Location..."),
-          content: Row(
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(width: 20),
-              Text("Getting coordinates..."),
-            ],
-          ),
-        ),
-        barrierDismissible: false,
-      );
 
       print(
           "🔥 📍 STARTING GEOCODING for: ${placeList[index]["description"]}");
@@ -123,65 +109,10 @@ class LocationController extends GetxController {
                   : authCont.businessAddressCont.text =
                       placeList[index]["description"];
 
-      // Close loading dialog
-      Get.back();
-
       updateLocationList();
-
-      // Show success dialog
-      Get.dialog(
-        AlertDialog(
-          title: Text("✅ Success"),
-          content: Text("Location found!\nLat: $lat\nLng: $lng"),
-          actions: [
-            TextButton(
-              onPressed: () => Get.back(),
-              child: Text("OK"),
-            ),
-          ],
-        ),
-      );
     } catch (e, stackTrace) {
-      // Close loading dialog if open
-      if (Get.isDialogOpen ?? false) Get.back();
-
       print("🔥 ❌ GEOCODING FAILED with error: $e");
       print("🔥 🔍 Stack trace: $stackTrace");
-
-      // Show detailed error dialog
-      Get.dialog(
-        AlertDialog(
-          title: Text("❌ Location Error"),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text("Failed to get coordinates for:"),
-                SizedBox(height: 5),
-                Text("'${placeList[index]["description"]}'",
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                SizedBox(height: 10),
-                Text("Error Details:",
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                SizedBox(height: 5),
-                Text("$e", style: TextStyle(fontSize: 12, color: Colors.red)),
-                SizedBox(height: 10),
-                Text("Possible causes:",
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                Text("• Internet connection issue"),
-                Text("• Google services blocked"),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Get.back(),
-              child: Text("OK"),
-            ),
-          ],
-        ),
-      );
     }
   }
 
@@ -254,34 +185,6 @@ class LocationController extends GetxController {
       print("DEBUG: Places API exception: $e");
       print("DEBUG: Stack trace: $stackTrace");
 
-      // Show error dialog for Places API failures
-      Get.dialog(
-        AlertDialog(
-          title: Text("🔍 Search Error"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Failed to search for places"),
-              SizedBox(height: 10),
-              Text("Error: $e",
-                  style: TextStyle(fontSize: 12, color: Colors.red)),
-              SizedBox(height: 10),
-              Text("This might indicate:"),
-              Text("• Google Places API is blocked"),
-              Text("• Network connectivity issues"),
-              Text("• API quota exceeded"),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Get.back(),
-              child: Text("OK"),
-            ),
-          ],
-        ),
-      );
-
       placeList = [];
       update();
     }
@@ -314,12 +217,12 @@ class LocationController extends GetxController {
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        return Future.error("Your location permissions are denied");
+        return Future.error("Your location permissions are denied".tr);
       }
     }
     if (permission == LocationPermission.deniedForever) {
       return Future.error(
-          "Location permissions are permanently denied, we cannot request permissions.");
+          "Location permissions are permanently denied, we cannot request permissions".tr);
     }
     print('going to get the location');
     permission = await Geolocator.requestPermission();

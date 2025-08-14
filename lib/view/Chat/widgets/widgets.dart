@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 InputDecoration getTextInputDecoration(BuildContext context) {
   return InputDecoration(
@@ -41,7 +42,7 @@ void showSnackbar(context, color, message) {
       backgroundColor: color,
       duration: const Duration(seconds: 2),
       action: SnackBarAction(
-        label: "OK",
+        label: "OK".tr,
         onPressed: () {},
         textColor: Colors.white,
       ),

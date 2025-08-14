@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -42,6 +41,10 @@ class NtfyPushService {
   // Connection status
   static bool _isConnected = false;
   static final _connectionStatus = false.obs;
+  
+  // Chat screen status (to prevent notifications when chat is open)
+  static bool _isChatScreenOpen = false;
+  static String? _currentChatId;
   
   /// Initialize the ntfy push service with a user ID
   static Future<void> initialize({
@@ -191,14 +194,43 @@ class NtfyPushService {
       // Parse the message
       final Map<String, dynamic> data = json.decode(message.toString());
       
-      // Extract notification data
-      final String title = data['title'] ?? 'New Message';
-      final String body = data['message'] ?? '';
-      final Map<String, dynamic>? payload = data['click'] != null 
-          ? {'action': data['click']} 
-          : null;
+      // Filter out system messages and connection confirmations
+      final String? messageType = data['event'];
+      if (messageType == 'open' || messageType == 'keepalive') {
+        print('🔇 Skipping system message: $messageType');
+        return;
+      }
       
-      // Show local notification
+      // Only process messages that have actual content
+      final String? title = data['title'];
+      final String? body = data['message'];
+      
+      // Skip if no title or body (system messages)
+      if (title == null || title.isEmpty || body == null || body.isEmpty) {
+        print('🔇 Skipping message without content');
+        return;
+      }
+      
+      // Skip if this is not a chat message (check for chat ID in click action)
+      final String? clickAction = data['click'];
+      if (clickAction == null || !clickAction.startsWith('myapp://chat/')) {
+        print('🔇 Skipping non-chat message');
+        return;
+      }
+      
+      final Map<String, dynamic>? payload = {
+        'action': clickAction,
+        'type': data['type'] ?? 'chat',
+      };
+      
+      // Check if chat screen is open
+      if (_isChatScreenOpen) {
+        print('testing 🔇 BLOCKING ALL notifications - chat screen is open');
+        return;
+      }
+      
+      // Show local notification only for valid chat messages
+      print('testing 🔴 NTFY: Showing notification - title: "$title", body: "$body"');
       _showLocalNotification(
         title: title,
         body: body,
@@ -255,8 +287,7 @@ class NtfyPushService {
       );
       
       if (response.statusCode == 200) {
-        final messages = json.decode(response.body);
-        // Process any new messages
+        // Process any new messages if needed
         // (Implementation depends on your needs)
       }
     } catch (e) {
@@ -334,7 +365,6 @@ class NtfyPushService {
         if (payload['action'] != null) {
           final action = payload['action'].toString();
           if (action.startsWith('myapp://chat/')) {
-            final chatId = action.replaceFirst('myapp://chat/', '');
             // Navigate to chat screen with chatId
             // Get.toNamed('/chat', arguments: {'chatId': chatId});
           }
@@ -354,6 +384,11 @@ class NtfyPushService {
     String? clickAction,
   }) async {
     try {
+      print('🔴 NTFY: sendNotification called with:');
+      print('🔴 NTFY: recipientUserId: "$recipientUserId"');
+      print('🔴 NTFY: clickAction: "$clickAction"');
+      print('🔴 NTFY: data: $data');
+      
       final recipientTopic = 'venta_cuba_user_$recipientUserId';
       
       final payload = {
@@ -364,6 +399,8 @@ class NtfyPushService {
         if (clickAction != null) 'click': clickAction,
         if (data != null) ...data,
       };
+      
+      print('🔴 NTFY: Final payload: $payload');
       
       final response = await http.post(
         Uri.parse('$_ntfyServerUrl/'),
@@ -392,6 +429,14 @@ class NtfyPushService {
     
     // Reconnect with new server
     await _connectWebSocket();
+  }
+  
+  /// Set chat screen status to prevent notifications when chat is open
+  static void setChatScreenStatus({required bool isOpen, String? chatId}) {
+    print('testing 🔴 NTFY SERVICE: setChatScreenStatus called - isOpen: $isOpen, chatId: $chatId');
+    _isChatScreenOpen = isOpen;
+    _currentChatId = chatId;
+    print('testing 🔴 NTFY SERVICE: Updated - _isChatScreenOpen = $_isChatScreenOpen, _currentChatId = $_currentChatId');
   }
   
   /// Get connection status

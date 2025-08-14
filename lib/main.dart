@@ -216,9 +216,9 @@ class _MyAppState extends State<MyApp> {
     try {
       // Firebase removed for Cuba compatibility
       // await firebaseMessagingService.requestPermission();
-      print('Notification permissions ready (using local notifications)');
+      print('Notification permissions ready'.tr);
     } catch (e) {
-      print('Error checking notification permissions: $e');
+      print('Error checking notification permissions'.tr + ': $e');
     }
   }
 

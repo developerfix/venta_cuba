@@ -36,6 +36,7 @@ import '../Models/SubCategoriesModel.dart' as sub;
 import '../Models/SubSubCategoriesModel.dart';
 import '../Models/SubSubCategoriesModel.dart' as subSub;
 import '../Utils/funcations.dart';
+import '../Utils/image_upload_helper.dart';
 import '../api/api_client.dart';
 import '../view/PromoCodesScreen/PromoCodesScreen.dart';
 import '../view/category/SubSubCategories.dart';
@@ -198,7 +199,6 @@ class HomeController extends GetxController {
       errorAlertToast('Failed to load data. Please try again.'.tr);
     } finally {
       loadingHome = false.obs;
-      print('doneee');
       update();
     }
   }
@@ -440,14 +440,11 @@ class HomeController extends GetxController {
           Get.to(VideoPlayerScreenFile(
             file: videoFile,
           ));
-          print("File size: $fileSizeInMB MB");
         } else {
           errorAlertToast("Please select a video less than 20MB".tr);
         }
       }
-    } catch (e) {
-      print("Error picking video: $e");
-    }
+    } catch (e) {}
   }
 
   String selectedValue = 'No';
@@ -476,7 +473,7 @@ class HomeController extends GetxController {
               }
             : {
                 'package_id': paymentTypeId,
-                'transaction_id': transactionNumberController?.text,
+                'transaction_id': transactionNumberController.text,
                 'user_phone': phoneNoTr,
                 'cardHolderName': userNameTr,
                 'creditCardNumber': cardNumberController ?? "",
@@ -503,8 +500,6 @@ class HomeController extends GetxController {
         imageKey: "video",
         image: video,
         showdialog: true);
-    print("objhkjjhghject...........${response.body}");
-    print("object...........${response.statusCode}");
     if (response.statusCode == 200) {
       isEnterPromoCode = false;
       Get.offAll(Navigation_Bar());
@@ -728,13 +723,10 @@ class HomeController extends GetxController {
         return true; // Nothing to delete
       }
 
-      print("Deleting ${listingsToDelete.length} listings concurrently...");
-
       // Make ALL API calls concurrently for super fast deletion
       List<Future<bool>> futures = listingsToDelete.map((listing) async {
         try {
           if (listing.id == null) {
-            print("Skipping listing with null id");
             return false;
           }
 
@@ -751,15 +743,11 @@ class HomeController extends GetxController {
               showdialog: false);
 
           if (response.statusCode == 200) {
-            print("Successfully deleted listing ${listing.id}");
             return true;
           } else {
-            print(
-                "Failed to delete listing ${listing.id}: ${response.statusCode}");
             return false;
           }
         } catch (e) {
-          print("Error deleting listing ${listing.id}: $e");
           return false;
         }
       }).toList();
@@ -787,10 +775,8 @@ class HomeController extends GetxController {
         update(); // Trigger UI rebuild
       }
 
-      print("Deleted $successCount out of ${listingsToDelete.length} listings");
       return successCount > 0; // Return true if at least one was deleted
     } catch (e) {
-      print("Error deleting all listings: $e");
       return false;
     }
   }
@@ -855,7 +841,6 @@ class HomeController extends GetxController {
       'tag': tags,
       'gallery': postImages,
     };
-    print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>$data");
     final SharedPreferences prefss = await SharedPreferences.getInstance();
     prefss.setString('listing_data', jsonEncode(data));
     Navigator.push(
@@ -863,7 +848,6 @@ class HomeController extends GetxController {
         MaterialPageRoute(
           builder: (context) => Navigation_Bar(),
         ));
-    print("hhhhhh");
   }
 
   listingGetDraft() async {
@@ -909,22 +893,15 @@ class HomeController extends GetxController {
     paymentController.text =
         listingModel?.additionalFeatures?.optionalDetails?.payment ?? "";
     update();
-    print(jsonEncode(listingModel));
   }
 
   Future addListing(BuildContext context) async {
-    print("🔥 addListing - user.accessToken: ${authCont.user?.accessToken}");
-    print("🔥 addListing - tokenMain: $tokenMain");
-    print("🔥 addListing - selectedCategory: ${selectedCategory?.id}");
-    print("🔥 addListing - postImages length: ${postImages?.length}");
     String tagsData = "";
     String price = "0";
     String rawPrice = priceCont?.text.replaceAll(' ', '') ?? "0";
     (priceCont != null && priceCont!.text.isEmpty)
         ? price = "0"
         : price = rawPrice;
-    print("price...$price");
-    print("currency...$selectedCurrency");
     for (int i = 0; i < tags.length; i++) {
       if (i == 0) {
         tagsData = "${tags[i]}";
@@ -957,25 +934,16 @@ class HomeController extends GetxController {
       'video_link': youTubeController.text.trim(),
     });
 
-    print('isBusinessAccount:${authCont.isBusinessAccount}');
-    print('postImages:$postImages');
-
     // Additional debugging for authorization
     print(
         "🔥 BEFORE API CALL - authCont.user?.accessToken: ${authCont.user?.accessToken}");
-    print("🔥 BEFORE API CALL - tokenMain: $tokenMain");
     print(
         "🔥 BEFORE API CALL - authCont.user is null: ${authCont.user == null}");
 
     // Try to refresh token if it's null or empty
     if (authCont.user?.accessToken == null ||
         authCont.user?.accessToken == "") {
-      print("🔥 ERROR: User access token is null or empty!");
-      print("🔥 Attempting to refresh user details...");
       await authCont.getuserDetail();
-      print(
-          "🔥 After refresh - authCont.user?.accessToken: ${authCont.user?.accessToken}");
-      print("🔥 After refresh - tokenMain: $tokenMain");
 
       if (authCont.user?.accessToken == null ||
           authCont.user?.accessToken == "") {
@@ -986,7 +954,6 @@ class HomeController extends GetxController {
 
     // Use tokenMain as fallback if user token is still null
     String authToken = authCont.user?.accessToken ?? tokenMain ?? "";
-    print("🔥 Final auth token being used: $authToken");
 
     // Debug the request data
     Map<String, dynamic> requestData = {
@@ -1015,33 +982,64 @@ class HomeController extends GetxController {
     if (requestData['tag'] == "") {
       requestData.remove('tag');
     }
-    print("🔥 Request data: $requestData");
-    print("🔥 Images count: ${postImages?.length ?? 0}");
-
-    // Server blocks multipart uploads - use JSON only for now
     Response response;
 
     if (postImages.isNotEmpty) {
-      print(
-          "🔥 WARNING: Server blocks image uploads. Creating post without images.");
-      errorAlertToast(
-          'Image uploads are temporarily disabled due to server restrictions. Post will be created without images.');
-
-      // Clear images to proceed with JSON request
-      postImages.clear();
+      try {
+        // Process and compress images before upload
+        print('📤 Processing ${postImages.length} images for upload...');
+        List<String> processedImages = await ImageUploadHelper.processImagesForUpload(postImages);
+        
+        if (processedImages.isEmpty) {
+          errorAlertToast('Failed to process images. Please try again.');
+          return;
+        }
+        
+        print('✅ Processed ${processedImages.length} images successfully');
+        
+        // Debug info for upload
+        print('🔧 Upload Debug Info:');
+        print('  - Base URL: $baseUrl');
+        print('  - Endpoint: api/addListing');
+        print('  - Auth Token: ${authToken.isNotEmpty ? 'Present (${authToken.length} chars)' : 'Missing'}');
+        print('  - Number of images: ${processedImages.length}');
+        
+        // Use multipart form with proper authentication
+        response = await api.postWithForm(
+          "api/addListing",
+          requestData,
+          image: processedImages,
+          imageKey: "image[]",
+          headers: {
+            'Authorization': 'Bearer $authToken',
+            // Remove Content-Type header as it will be set automatically for multipart
+          },
+          showdialog: true,
+        );
+        
+        // Log response for debugging
+        print('📥 Response Status: ${response.statusCode}');
+        if (response.statusCode != 200) {
+          print('❌ Response Body: ${response.body}');
+        }
+      } catch (e) {
+        print('❌ Error during image upload: $e');
+        errorAlertToast('Failed to upload images. Please check your connection and try again.');
+        return;
+      }
+    } else {
+      // Use JSON for text-only posts
+      response = await api.postData(
+        "api/addListing",
+        requestData,
+        headers: {
+          'Accept': 'application/json',
+          'Access-Control-Allow-Origin': "*",
+          'Authorization': 'Bearer $authToken'
+        },
+        showdialog: true,
+      );
     }
-
-    print("🔥 Making request using postData (JSON)");
-    response = await api.postData(
-      "api/addListing",
-      requestData,
-      headers: {
-        'Accept': 'application/json',
-        'Access-Control-Allow-Origin': "*",
-        'Authorization': 'Bearer $authToken'
-      },
-      showdialog: true,
-    );
 
     if (response.statusCode == 200) {
       if (response.body["message"] ==
@@ -1069,7 +1067,6 @@ class HomeController extends GetxController {
         soldStatus = null;
 
         // Force refresh the listings
-        print("🔥 Refreshing listings after successful post creation");
         await getSellerListingByStatus();
 
         Get.offAll(Navigation_Bar());
@@ -1112,8 +1109,6 @@ class HomeController extends GetxController {
       },
       'video_link': youTubeController.text.trim(),
     });
-    print(selectedSubCategory?.id);
-    print(selectedSubSubCategory?.id);
     // Remove spaces from price
     String rawPrice = priceCont?.text.replaceAll(' ', '') ?? "0";
 
@@ -1146,33 +1141,67 @@ class HomeController extends GetxController {
       requestData.remove('tag');
     }
 
-    print("🔥 EditListing Request data: $requestData");
-    print("🔥 EditListing Images count: ${postImages?.length ?? 0}");
+    // Ensure authentication token is available
+    String authToken = authCont.user?.accessToken ?? tokenMain ?? "";
 
-    // Server blocks multipart uploads - use JSON only for now
     Response response;
 
     if (postImages.isNotEmpty) {
-      print(
-          "🔥 WARNING: Server blocks image uploads in edit. Editing post without images.");
-      errorAlertToast(
-          'Image uploads are temporarily disabled due to server restrictions. Post will be updated without images.');
-
-      // Clear images to proceed with JSON request
-      postImages.clear();
+      try {
+        // Process and compress images before upload
+        print('📤 Processing ${postImages.length} images for edit...');
+        List<String> processedImages = await ImageUploadHelper.processImagesForUpload(postImages);
+        
+        if (processedImages.isEmpty) {
+          errorAlertToast('Failed to process images. Please try again.');
+          return;
+        }
+        
+        print('✅ Processed ${processedImages.length} images successfully');
+        
+        // Debug info for upload
+        print('🔧 Edit Upload Debug Info:');
+        print('  - Base URL: $baseUrl');
+        print('  - Endpoint: api/editListing');
+        print('  - Auth Token: ${authToken.isNotEmpty ? 'Present (${authToken.length} chars)' : 'Missing'}');
+        print('  - Number of images: ${processedImages.length}');
+        
+        // Use multipart form with proper authentication
+        response = await api.postWithForm(
+          "api/editListing",
+          requestData,
+          image: processedImages,
+          imageKey: "image[]",
+          headers: {
+            'Authorization': 'Bearer $authToken',
+            // Remove Content-Type header as it will be set automatically for multipart
+          },
+          showdialog: true,
+        );
+        
+        // Log response for debugging
+        print('📥 Response Status: ${response.statusCode}');
+        if (response.statusCode != 200) {
+          print('❌ Response Body: ${response.body}');
+        }
+      } catch (e) {
+        print('❌ Error during image upload: $e');
+        errorAlertToast('Failed to upload images. Please check your connection and try again.');
+        return;
+      }
+    } else {
+      // Use JSON for text-only posts
+      response = await api.postData(
+        "api/editListing",
+        requestData,
+        headers: {
+          'Accept': 'application/json',
+          'Access-Control-Allow-Origin': "*",
+          'Authorization': 'Bearer $authToken'
+        },
+        showdialog: true,
+      );
     }
-
-    print("🔥 Making editListing request using postData (JSON)");
-    response = await api.postData(
-      "api/editListing",
-      requestData,
-      headers: {
-        'Accept': 'application/json',
-        'Access-Control-Allow-Origin': "*",
-        'Authorization': 'Bearer ${authCont.user?.accessToken}'
-      },
-      showdialog: true,
-    );
     if (response.statusCode == 200) {
       priceCont?.clear();
       titleCont.clear();
@@ -1189,7 +1218,6 @@ class HomeController extends GetxController {
       soldStatus = null;
 
       // Force refresh the listings
-      print("🔥 Refreshing listings after successful post edit");
       await getSellerListingByStatus();
 
       Get.offAll(Navigation_Bar());
@@ -1215,7 +1243,8 @@ class HomeController extends GetxController {
         latestAddress = '${authCont.user?.city}, Cuba';
       }
       // Get coordinates from address using Google Geocoding API
-      Map<String, double>? coordinates = await _getCoordinatesFromAddress(latestAddress);
+      Map<String, double>? coordinates =
+          await _getCoordinatesFromAddress(latestAddress);
       if (coordinates != null) {
         lat = coordinates['lat'].toString();
         lng = coordinates['lng'].toString();
@@ -1329,7 +1358,6 @@ class HomeController extends GetxController {
 
   Future getSellerDetails(
       String businessType, int onScreen, bool isNavigate) async {
-    print(sellerId);
     Response response = await api.postWithForm("api/getSellerDetails",
         {'seller_id': sellerId, 'reviews_type': "all", "type": selectedType},
         showdialog: true);
@@ -1368,12 +1396,9 @@ class HomeController extends GetxController {
     if (response.statusCode == 200) {
       String data = await response.stream.bytesToString();
       sellerDetailsModel = SellerDetailsModel.fromJson(jsonDecode(data));
-      print(data);
     } else {
-      String data = await response.stream.bytesToString();
-      print(data);
+      await response.stream.bytesToString();
       errorAlertToast('Something went wrong\nPlease try again!'.tr);
-      print(response.reasonPhrase);
     }
   }
 
@@ -1399,7 +1424,6 @@ class HomeController extends GetxController {
       if (response.statusCode == 200) {
         var body = response.body['data'];
         List<dynamic> dataListing = body['data'];
-        print('Page $currentPage: ${dataListing.length} items');
 
         for (var element in dataListing) {
           userFavouriteListingModelList.add(ListingModel.fromJson(element));
@@ -1452,7 +1476,6 @@ class HomeController extends GetxController {
   Future getSellerListingByStatus() async {
     // Prevent concurrent calls
     if (_isLoadingListings) {
-      print('getSellerListingByStatus already in progress, skipping...');
       return;
     }
 
@@ -1471,8 +1494,6 @@ class HomeController extends GetxController {
         data.addAll({'sold_status': soldStatus});
       }
 
-      print('🔥 Calling getSellerListingByStatus API with data: $data');
-
       Response response = await api.postWithForm(
           "api/getSellerListingByStatus",
           headers: {
@@ -1486,7 +1507,6 @@ class HomeController extends GetxController {
       if (response.statusCode == 200) {
         List<dynamic> dataListing = [];
         dataListing.addAll(response.body['data']);
-        print('🔥 API Response: ${dataListing.length} listings received');
 
         // Clear the list before adding new data
         userListingModelList.clear();
@@ -1508,13 +1528,9 @@ class HomeController extends GetxController {
           String businessStatusStr = businessStatus.toString();
           if (businessStatusStr == "1") {
             tempBusinessCount++;
-            print('🔥 Business listing found, count: $tempBusinessCount');
           } else if (businessStatusStr == "0") {
             tempPersonalCount++;
-            print('🔥 Personal listing found, count: $tempPersonalCount');
-          } else {
-            print('🔥 Unknown business_status: $businessStatus');
-          }
+          } else {}
         });
 
         // Update the actual counters only after processing all listings
@@ -1523,8 +1539,6 @@ class HomeController extends GetxController {
 
         print(
             '🔥 Final counts - Total listings: ${userListingModelList.length}');
-        print('🔥 Final counts - Business: ${bussinessPostCount}');
-        print('🔥 Final counts - Personal: ${personalAcountPost}');
 
         listingLoading = false;
         update();
@@ -1532,7 +1546,6 @@ class HomeController extends GetxController {
         errorAlertToast('Something went wrong\nPlease try again!'.tr);
       }
     } catch (e) {
-      print('🔥 Error in getSellerListingByStatus: $e');
       errorAlertToast('Something went wrong\nPlease try again!'.tr);
     } finally {
       _isLoadingListings = false;
@@ -1825,7 +1838,6 @@ class HomeController extends GetxController {
   }
 
   // Future getListingSearch({bool isLoadingShow = true}) async {
-  //   print(searchLongitude);
   //   Response response = await api.postWithForm(
   //       "api/getListing",
   //       {
@@ -1859,11 +1871,8 @@ class HomeController extends GetxController {
 
   Future getListingDetails(String listingId, {bool showDialog = true}) async {
     try {
-      print("🔥 Getting listing details for ID: $listingId");
-
       // Validate listingId
       if (listingId.isEmpty || listingId == "null") {
-        print("🔥 Invalid listing ID: $listingId");
         if (showDialog) {
           errorAlertToast('Invalid listing ID'.tr);
         }
@@ -1873,7 +1882,6 @@ class HomeController extends GetxController {
       // Try multipart first (original approach), then fallback to JSON
       Response response;
       try {
-        print("🔥 Trying multipart request for getListingDetails");
         response = await api.postWithForm(
           "api/getListingDetails",
           {
@@ -1888,7 +1896,6 @@ class HomeController extends GetxController {
           showdialog: false,
         );
       } catch (e) {
-        print("🔥 Multipart failed, trying JSON request: $e");
         response = await api.postData(
           "api/getListingDetails",
           {
@@ -1904,9 +1911,6 @@ class HomeController extends GetxController {
         );
       }
 
-      print("🔥 getListingDetails response status: ${response.statusCode}");
-      print("🔥 getListingDetails response body: ${response.body}");
-
       if (response.statusCode == 200) {
         if (response.body != null && response.body["data"] != null) {
           isListing = 0;
@@ -1919,10 +1923,7 @@ class HomeController extends GetxController {
           if (showDialog) {
             Get.to(FrameScreen());
           }
-          print("🔥 Listing details loaded successfully");
         } else {
-          print("🔥 Empty or null response data");
-          print("🔥 Response body structure: ${response.body?.keys}");
           // Don't show toast for chat screen (showDialog = false) to avoid annoying users
           if (showDialog) {
             errorAlertToast('No listing data found'.tr);
@@ -1948,7 +1949,6 @@ class HomeController extends GetxController {
         }
       }
     } catch (e) {
-      print("🔥 Exception in getListingDetails: $e");
       // Set listingModel to null to trigger the loading/error state in UI
       listingModel = null;
       update();
@@ -2006,11 +2006,7 @@ class HomeController extends GetxController {
           break;
         }
       }
-
-      print("Synced favorite status for item $itemId to $newFavoriteStatus");
-    } catch (e) {
-      print("Error syncing favorite status: $e");
-    }
+    } catch (e) {}
   }
 
   /// Helper method to sync favorite status in favorites list when changed from home screen
@@ -2021,16 +2017,13 @@ class HomeController extends GetxController {
         // Remove from favorites list if unfavorited
         userFavouriteListingModelList
             .removeWhere((item) => item.itemId == itemId);
-        print("Removed item $itemId from favorites list");
       } else {
         // If favorited, we don't need to add it here as it will be fetched next time
         // the favorites screen is opened
         print(
             "Item $itemId favorited - will be available in next favorites refresh");
       }
-    } catch (e) {
-      print("Error syncing favorite status in favorites list: $e");
-    }
+    } catch (e) {}
   }
 
   /// Helper method to sync favorite status in home screen when changed from favorites screen
@@ -2069,9 +2062,7 @@ class HomeController extends GetxController {
       if (itemFound) {
         print(
             "Successfully synced item $itemId to favorite status $newFavoriteStatus");
-      } else {
-        print("Warning: Item $itemId not found in main listing list for sync");
-      }
+      } else {}
 
       // Force update all GetBuilder widgets
       update();
@@ -2083,9 +2074,7 @@ class HomeController extends GetxController {
 
       // Force update using GetX's global update mechanism
       Get.forceAppUpdate();
-    } catch (e) {
-      print("Error syncing favorite status in home screen: $e");
-    }
+    } catch (e) {}
   }
 
   /// Helper method to sync seller favorite status in home screen when changed from favorites screen
@@ -2114,9 +2103,7 @@ class HomeController extends GetxController {
       }
 
       update();
-    } catch (e) {
-      print("Error syncing seller favorite status in home screen: $e");
-    }
+    } catch (e) {}
   }
 
   /// Helper method to sync multiple favorite status changes at once
@@ -2150,9 +2137,7 @@ class HomeController extends GetxController {
       update();
       print(
           "Updated ${itemIds.length} items favorite status to $newFavoriteStatus in home screen");
-    } catch (e) {
-      print("Error syncing multiple favorite status in home screen: $e");
-    }
+    } catch (e) {}
   }
 
   /// Helper method to sync multiple seller favorite status changes at once
@@ -2184,13 +2169,10 @@ class HomeController extends GetxController {
       update();
       print(
           "Updated ${sellerIds.length} sellers favorite status to $newFavoriteStatus in home screen");
-    } catch (e) {
-      print("Error syncing multiple seller favorite status in home screen: $e");
-    }
+    } catch (e) {}
   }
 
   Future<bool> favouriteSeller() async {
-    print("'seller_id': $sellerId,");
     Response response = await api.postWithForm(
         "api/favouriteSeller",
         {
@@ -2227,8 +2209,6 @@ class HomeController extends GetxController {
         return true; // Nothing to remove
       }
 
-      print("Removing ${itemIds.length} favourite listings concurrently...");
-
       // Make ALL API calls concurrently for super fast deletion
       List<Future<bool>> futures = itemIds.map((itemId) async {
         try {
@@ -2243,14 +2223,11 @@ class HomeController extends GetxController {
                   showdialog: false);
 
           if (response.statusCode == 200) {
-            print("Successfully removed listing $itemId");
             return true;
           } else {
-            print("Failed to remove listing $itemId: ${response.statusCode}");
             return false;
           }
         } catch (e) {
-          print("Error removing listing $itemId: $e");
           return false;
         }
       }).toList();
@@ -2265,10 +2242,8 @@ class HomeController extends GetxController {
       // Sync with home screen - mark all removed items as unfavorited
       syncMultipleFavoriteStatusInHomeScreen(itemIds, "0");
 
-      print("Removed $successCount out of ${itemIds.length} listings");
       return successCount > 0; // Return true if at least one was removed
     } catch (e) {
-      print("Error removing all favourite listings: $e");
       return false;
     }
   }
@@ -2286,8 +2261,6 @@ class HomeController extends GetxController {
       if (sellerIds.isEmpty) {
         return true; // Nothing to remove
       }
-
-      print("Removing ${sellerIds.length} favourite sellers concurrently...");
 
       // Make ALL API calls concurrently for super fast deletion
       List<Future<bool>> futures = sellerIds.map((sellerIdToRemove) async {
@@ -2307,7 +2280,6 @@ class HomeController extends GetxController {
               showdialog: false);
 
           if (response.statusCode == 200) {
-            print("Successfully removed seller $sellerIdToRemove");
             return true;
           } else {
             print(
@@ -2315,7 +2287,6 @@ class HomeController extends GetxController {
             return false;
           }
         } catch (e) {
-          print("Error removing seller $sellerIdToRemove: $e");
           return false;
         }
       }).toList();
@@ -2330,10 +2301,8 @@ class HomeController extends GetxController {
       // Sync with home screen - mark all removed sellers as unfavorited
       syncMultipleSellerFavoriteStatusInHomeScreen(sellerIds, "0");
 
-      print("Removed $successCount out of ${sellerIds.length} sellers");
       return successCount > 0; // Return true if at least one was removed
     } catch (e) {
-      print("Error removing all favourite sellers: $e");
       return false;
     }
   }
@@ -2372,7 +2341,6 @@ class HomeController extends GetxController {
       // Remove from favorites list
       favouriteSellerModel.data
           ?.removeWhere((seller) => seller.sellerId == sellerId);
-      print("Removed seller $sellerId from local favorites list");
 
       // Sync with home screen
       syncSellerFavoriteStatusInHomeScreen(sellerId ?? "", "0");
@@ -2407,11 +2375,8 @@ class HomeController extends GetxController {
           favouriteSellerModel.data
               ?.removeWhere((element) => element.type == "Personal");
         }
-        print("Refreshed favorite sellers list");
       }
-    } catch (e) {
-      print("Error refreshing favorite sellers list: $e");
-    }
+    } catch (e) {}
   }
 
   /// Helper method to load favorite sellers list silently during app initialization
@@ -2445,7 +2410,6 @@ class HomeController extends GetxController {
             "Loaded favorite sellers list silently: ${favouriteSellerModel.data?.length ?? 0} sellers");
       }
     } catch (e) {
-      print("Error loading favorite sellers list silently: $e");
       // Don't show error to user since this is a background operation
     }
   }
@@ -2658,7 +2622,8 @@ class HomeController extends GetxController {
   Future<void> getLatLong(String city, String province) async {
     try {
       String address = '$city, $province';
-      Map<String, double>? coordinates = await _getCoordinatesFromAddress(address);
+      Map<String, double>? coordinates =
+          await _getCoordinatesFromAddress(address);
 
       if (coordinates != null) {
         Get.log(
@@ -2668,17 +2633,17 @@ class HomeController extends GetxController {
         lat = "${coordinates['lat']}";
         lng = "${coordinates['lng']}";
       }
-    } catch (e) {
-      print('Error occurred: $e');
-    }
+    } catch (e) {}
   }
 
   // API-based geocoding replacement function
-  Future<Map<String, double>?> _getCoordinatesFromAddress(String address) async {
+  Future<Map<String, double>?> _getCoordinatesFromAddress(
+      String address) async {
     const apiKey = 'AIzaSyBx95Bvl9O-US2sQpqZ41GdsHIprnXvJv8';
     final encodedAddress = Uri.encodeComponent(address);
-    final url = 'https://maps.googleapis.com/maps/api/geocode/json?address=$encodedAddress&key=$apiKey';
-    
+    final url =
+        'https://maps.googleapis.com/maps/api/geocode/json?address=$encodedAddress&key=$apiKey';
+
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
@@ -2691,9 +2656,7 @@ class HomeController extends GetxController {
           };
         }
       }
-    } catch (e) {
-      print('Geocoding API error: $e');
-    }
+    } catch (e) {}
     return null;
   }
 }

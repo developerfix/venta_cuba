@@ -97,7 +97,6 @@ class ApiClient extends GetxService {
       if (showdialog) {
         Get.back();
       }
-      print("error" + e.toString());
       return const Response(statusCode: 1, statusText: noInternetMessage);
     }
   }
@@ -107,8 +106,6 @@ class ApiClient extends GetxService {
       bool showdialog = true,
       List<String>? image,
       String imageKey = ''}) async {
-    print(body);
-    print("🔥 postWithForm tokenMain: $tokenMain");
     if (showdialog) {
       showLoading();
     }
@@ -118,19 +115,19 @@ class ApiClient extends GetxService {
       Map<String, String> finalHeaders = {
         'Accept': 'application/json',
         'Access-Control-Allow-Origin': "*",
-        'Authorization': 'Bearer ${tokenMain ?? ""}'
       };
+
+      // Add Authorization header from tokenMain if available and not overridden
+      if (tokenMain != null && tokenMain!.isNotEmpty) {
+        finalHeaders['Authorization'] = 'Bearer $tokenMain';
+      }
 
       // If custom headers are provided, merge them and let them override defaults
       if (headers != null) {
         finalHeaders.addAll(headers);
       }
 
-      print("🔥 Final headers being sent: $finalHeaders");
-      print("🔥 Authorization header: ${finalHeaders['Authorization']}");
-      Get.log('url testing ${appBaseUrl + uri}');
       var request = Http.MultipartRequest('POST', Uri.parse(appBaseUrl + uri));
-      print("Sending body: $body");
       request.fields
           .addAll(body.map((key, value) => MapEntry(key, value.toString())));
 
@@ -144,14 +141,11 @@ class ApiClient extends GetxService {
         Get.back();
       }
       var response = await Http.Response.fromStream(streamedResponse);
-      print("object......${response.statusCode}");
-      print("object......${response.body}");
       return apichecker.checkApi(respons: response, showUserError: showdialog);
     } catch (e) {
       if (showdialog) {
         Get.back();
       }
-      print("error" + e.toString());
       return const Response(statusCode: 1, statusText: noInternetMessage);
     }
   }

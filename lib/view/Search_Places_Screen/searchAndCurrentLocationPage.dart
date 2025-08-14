@@ -22,71 +22,7 @@ class _SearchAndCurrentLocationPageState
   FocusNode focusNode = FocusNode();
   final locationCont = Get.put(LocationController());
 
-  // Debug banner for location search functionality
-  Widget _buildLocationSearchDebugBanner() {
-    return Container(
-      width: double.infinity,
-      color: Colors.teal.withOpacity(0.8),
-      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      margin: EdgeInsets.only(bottom: 10),
-      child: Column(
-        children: [
-          Text(
-            "🔥 LOCATION SEARCH DEBUG 🔥",
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
-          ),
-          SizedBox(height: 3),
-          GetBuilder<LocationController>(builder: (cont) {
-            return Column(
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      cont.placeList.isNotEmpty ? Icons.list : Icons.list_alt,
-                      color: cont.placeList.isNotEmpty ? Colors.green : Colors.orange,
-                      size: 16,
-                    ),
-                    SizedBox(width: 5),
-                    Expanded(
-                      child: Text(
-                        cont.placeList.isNotEmpty 
-                          ? "✅ Found ${cont.placeList.length} search results"
-                          : "⚠️ No search results yet",
-                        style: TextStyle(color: Colors.white, fontSize: 11),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 2),
-                Row(
-                  children: [
-                    Icon(
-                      cont.showOrHideLocationsList.value ? Icons.visibility : Icons.visibility_off,
-                      color: cont.showOrHideLocationsList.value ? Colors.green : Colors.grey,
-                      size: 16,
-                    ),
-                    SizedBox(width: 5),
-                    Expanded(
-                      child: Text(
-                        cont.showOrHideLocationsList.value 
-                          ? "✅ Search results visible"
-                          : "ℹ️ Search results hidden",
-                        style: TextStyle(color: Colors.white, fontSize: 11),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            );
-          }),
-        ],
-      ),
-    );
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -111,10 +47,9 @@ class _SearchAndCurrentLocationPageState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Debug banner for location search
-                    _buildLocationSearchDebugBanner(),
+
                     Container(
-                      height: 60..h,
+                      height: 60.h,
                       decoration: BoxDecoration(
                           color: Theme.of(context).cardColor,
                           borderRadius: BorderRadius.circular(5),

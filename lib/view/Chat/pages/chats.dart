@@ -80,9 +80,11 @@ class _ChatsState extends State<Chats> {
       );
     }
     
-    return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: chats,
-      builder: (context, AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
+    return GetBuilder<SupabaseChatController>(
+      builder: (chatController) {
+        return StreamBuilder<List<Map<String, dynamic>>>(
+          stream: chats,
+          builder: (context, AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
         print("🔥 📋 StreamBuilder state: hasData=${snapshot.hasData}, hasError=${snapshot.hasError}");
         
         if (snapshot.hasError) {
@@ -208,6 +210,8 @@ class _ChatsState extends State<Chats> {
                 color: Theme.of(context).primaryColor),
           );
         }
+          },
+        );
       },
     );
   }
@@ -218,7 +222,7 @@ class _ChatsState extends State<Chats> {
         padding: EdgeInsets.only(bottom: 80.0.h),
         child: SelectionArea(
           child: CustomText(
-            text: "No Chat",
+            text: "No Chat".tr,
             fontSize: 20,
             fontWeight: FontWeight.w700,
             textAlign: TextAlign.center,

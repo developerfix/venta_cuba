@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
 import 'package:venta_cuba/Services/RealPush/supabase_push_service.dart';
 import 'package:venta_cuba/Services/Supabase/supabase_service.dart';
+import 'package:venta_cuba/Services/Supabase/rls_helper.dart';
 
 class SupabaseChatController extends GetxController {
   String? path;
@@ -214,10 +215,6 @@ class SupabaseChatController extends GetxController {
       return Stream.value(<Map<String, dynamic>>[]);
     }
 
-    // Always refresh data when getChatMessages is called
-    // This ensures we get fresh data when reopening chat
-    print('💬 🔥 Refreshing messages for chat: $chatId');
-
     // Create or get existing stream controller for this chat
     if (!_messageStreams.containsKey(chatId) ||
         _messageStreams[chatId]!.isClosed) {
@@ -227,19 +224,24 @@ class SupabaseChatController extends GetxController {
 
       // Set up real-time subscription first
       _setupRealtimeSubscription(chatId);
+      
+      // Load initial data only when creating new stream
+      _loadMessagesForChat(chatId).catchError((error) {
+        print('💬 ❌ Error in initial data load: $error');
+        // Add empty data to prevent infinite loading
+        if (_messageStreams.containsKey(chatId) &&
+            !_messageStreams[chatId]!.isClosed) {
+          _messageStreams[chatId]!.add(<Map<String, dynamic>>[]);
+        }
+      });
     } else {
-      print('💬 🔥 Using existing stream controller for chat: $chatId');
-    }
-
-    // Always load fresh data from database
-    _loadMessagesForChat(chatId).catchError((error) {
-      print('💬 ❌ Error in data load: $error');
-      // Add empty data to prevent infinite loading
-      if (_messageStreams.containsKey(chatId) &&
-          !_messageStreams[chatId]!.isClosed) {
-        _messageStreams[chatId]!.add(<Map<String, dynamic>>[]);
+      print('💬 🔥 Using existing real-time stream for chat: $chatId');
+      // Still set up subscription if it doesn't exist (in case it was lost)
+      if (!_messageChannels.containsKey(chatId)) {
+        print('💬 🔥 Re-setting up real-time subscription for existing stream');
+        _setupRealtimeSubscription(chatId);
       }
-    });
+    }
 
     return _messageStreams[chatId]!.stream;
   }
@@ -344,38 +346,44 @@ class SupabaseChatController extends GetxController {
     if (!_messageChannels.containsKey(chatId)) {
       print('💬 Setting up real-time subscription for chat: $chatId');
 
-      _messageChannels[chatId] = _supabase
-          .channel('messages_$chatId')
-          .onPostgresChanges(
-            event: PostgresChangeEvent.all,
-            schema: 'public',
-            table: 'messages',
-            filter: PostgresChangeFilter(
-              type: PostgresChangeFilterType.eq,
-              column: 'chat_id',
-              value: chatId,
-            ),
-            callback: (payload) {
-              print('🔔 Real-time change detected for chat $chatId');
-              print('🔔 Event: ${payload.eventType}');
-              print('🔔 New record: ${payload.newRecord}');
+      try {
+        _messageChannels[chatId] = _supabase
+            .channel('messages_$chatId')
+            .onPostgresChanges(
+              event: PostgresChangeEvent.all,
+              schema: 'public',
+              table: 'messages',
+              filter: PostgresChangeFilter(
+                type: PostgresChangeFilterType.eq,
+                column: 'chat_id',
+                value: chatId,
+              ),
+              callback: (payload) {
+                print('🔔 Real-time change detected for chat $chatId');
+                print('🔔 Event: ${payload.eventType}');
+                print('🔔 Payload: $payload');
 
-              // Reload messages when any change occurs
-              _loadMessagesForChat(chatId);
+                // ALWAYS reload on any change to ensure real-time updates work
+                print('🔄 Reloading messages for real-time update...');
+                _loadMessagesForChat(chatId);
 
-              // Update unread indicators
-              updateUnreadMessageIndicators();
-            },
-          )
-          .subscribe();
+                // Update unread indicators
+                updateUnreadMessageIndicators();
+              },
+            )
+            .subscribe();
+            
+        print('✅ Real-time subscription created for chat: $chatId');
+        
+      } catch (e) {
+        print('❌ Error setting up real-time subscription: $e');
+      }
     }
   }
+  
+  // Removed polling fallback - real-time is working now
 
-  // Manually refresh messages for a specific chat
-  Future<void> refreshMessagesForChat(String chatId) async {
-    print('💬 Manually refreshing messages for chat: $chatId');
-    await _loadMessagesForChat(chatId);
-  }
+  // Removed manual refresh - using real-time subscription only
 
   // Send a message
   Future<void> sendMessage(
@@ -384,6 +392,12 @@ class SupabaseChatController extends GetxController {
   ) async {
     try {
       print('💬 Sending message to chat: $chatId');
+      
+      // Ensure RLS context is set for the current user
+      final senderId = chatMessageData['sendBy'];
+      if (senderId != null) {
+        await RLSHelper.setUserContext(senderId.toString());
+      }
 
       // First, ensure the chat exists before inserting the message
       final chatExists = await _supabase
@@ -394,9 +408,10 @@ class SupabaseChatController extends GetxController {
 
       final chatUpdateData = {
         'message': chatMessageData['message'],
-        'time': DateTime.now().toIso8601String(),
+        'time': DateTime.now().toUtc().toIso8601String(), // Explicitly use UTC
         'send_by': chatMessageData['sendBy'],
         'is_messaged': true,
+        'message_type': chatMessageData['messageType'] ?? 'text',
       };
 
       if (chatExists == null) {
@@ -431,7 +446,7 @@ class SupabaseChatController extends GetxController {
         'sender_name': chatMessageData['senderName'],
         'image': chatMessageData['image'],
         'message_type': chatMessageData['messageType'] ?? 'text',
-        'time': DateTime.now().toIso8601String(),
+        'time': DateTime.now().toUtc().toIso8601String(), // Explicitly use UTC
       };
 
       print('💬 Inserting message into messages table...');
@@ -440,11 +455,14 @@ class SupabaseChatController extends GetxController {
       await _supabase.from('messages').insert(messageData);
       print('💬 ✅ Message inserted successfully');
 
-      // Immediately refresh messages to show the new message
-      await refreshMessagesForChat(chatId);
+      // Real-time subscription will automatically update the stream
+      // No need to manually refresh - Supabase real-time handles this
 
       // Send ntfy notification to recipient
-      await _sendChatNotification(chatMessageData);
+      // Add chatId to the notification data
+      final notificationData = Map<String, dynamic>.from(chatMessageData);
+      notificationData['chatId'] = chatId;
+      await _sendChatNotification(notificationData);
 
       // Update unread count after sending message
       Future.delayed(const Duration(milliseconds: 500), () {
@@ -472,12 +490,15 @@ class SupabaseChatController extends GetxController {
       }
 
       // Send notification to recipient user via Supabase
+      final chatIdForNotification = chatMessageData['chatId'] ?? '';
+      print('💬 🔴 Sending notification with chatId: "$chatIdForNotification"');
+      
       await SupabasePushService.sendChatNotification(
         recipientUserId: sendToId,
-        senderName: chatMessageData['senderName'] ?? 'New Message',
-        message: chatMessageData['message'] ?? 'New message',
-        messageType: chatMessageData['image'] != null ? 'image' : 'text',
-        chatId: chatMessageData['chatId'] ?? '',
+        senderName: chatMessageData['senderName'] ?? 'New Message'.tr,
+        message: chatMessageData['message'] ?? 'New message'.tr,
+        messageType: chatMessageData['messageType'] ?? 'text',
+        chatId: chatIdForNotification,
       );
 
       print('💬 ✅ Supabase push notification sent to user: $sendToId');
@@ -523,7 +544,7 @@ class SupabaseChatController extends GetxController {
           '💬 Previous read times: sender=${chat['sender_last_read_time']}, recipient=${chat['recipient_last_read_time']}');
 
       Map<String, dynamic> updateData = {};
-      String currentTime = DateTime.now().toIso8601String();
+      String currentTime = DateTime.now().toUtc().toIso8601String(); // Use UTC
 
       if (chat['sender_id'] == userId) {
         updateData['sender_last_read_time'] = currentTime;
@@ -547,8 +568,12 @@ class SupabaseChatController extends GetxController {
         print(
             '💬 After update read times: sender=${updatedChat['sender_last_read_time']}, recipient=${updatedChat['recipient_last_read_time']}');
 
-        // Update badge count
+        // Update badge count and UI indicators
         await updateBadgeCountFromChats();
+        await updateUnreadMessageIndicators();
+        
+        // Trigger UI refresh for chat list
+        update();
       } else {
         print(
             '💬 ⚠️ User $userId is neither sender nor receiver for chat $chatId');
@@ -750,7 +775,7 @@ class SupabaseChatController extends GetxController {
       final data = {
         'user_id': userId,
         'is_online': isOnline,
-        'last_active_time': DateTime.now().toIso8601String(),
+        'last_active_time': DateTime.now().toUtc().toIso8601String(), // Use UTC
       };
 
       await _supabase.from('user_presence').upsert(data, onConflict: 'user_id');
@@ -828,7 +853,9 @@ class SupabaseChatController extends GetxController {
   String formatLastActiveTime(DateTime? lastActiveTime) {
     if (lastActiveTime == null) return "Last seen long ago".tr;
 
-    Duration difference = DateTime.now().difference(lastActiveTime);
+    // Convert to local time for accurate calculation
+    DateTime localLastActiveTime = lastActiveTime.toLocal();
+    Duration difference = DateTime.now().difference(localLastActiveTime);
 
     if (difference.inMinutes < 1) {
       return "Active now".tr;
@@ -851,7 +878,7 @@ class SupabaseChatController extends GetxController {
     if (!isOnline) return false;
 
     DateTime? lastActiveTime = presenceData['last_active_time'] != null
-        ? DateTime.parse(presenceData['last_active_time'])
+        ? DateTime.parse(presenceData['last_active_time']).toLocal()
         : null;
 
     if (lastActiveTime != null) {
