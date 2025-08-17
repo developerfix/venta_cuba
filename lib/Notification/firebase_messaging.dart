@@ -210,7 +210,7 @@ class FCM {
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
-      sound: 'default', // Explicitly set default sound
+      sound: 'notification_sound',
       badgeNumber: currentBadgeCount,
       interruptionLevel: InterruptionLevel.active,
     );
@@ -600,7 +600,7 @@ class FCM {
           presentAlert: true,
           presentBadge: true,
           presentSound: true,
-          sound: 'default',
+          sound: 'notification_sound',
           badgeNumber: 1,
           interruptionLevel: InterruptionLevel.active,
         );
@@ -682,7 +682,7 @@ class FCM {
       payload: ApnsPayload(
         aps: Aps(
           badge: badgeCount,
-          sound: 'default',
+          sound: 'notification_sound.aiff',
           alert: {
             'title': title,
             'body': body,
