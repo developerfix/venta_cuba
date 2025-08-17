@@ -22,6 +22,8 @@ class _SearchAndCurrentLocationPageState
   FocusNode focusNode = FocusNode();
   final locationCont = Get.put(LocationController());
 
+
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -45,8 +47,9 @@ class _SearchAndCurrentLocationPageState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+
                     Container(
-                      height: 60..h,
+                      height: 60.h,
                       decoration: BoxDecoration(
                           color: Theme.of(context).cardColor,
                           borderRadius: BorderRadius.circular(5),

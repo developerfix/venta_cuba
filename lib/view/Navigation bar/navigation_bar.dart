@@ -7,8 +7,7 @@ import 'package:venta_cuba/view/Navigation%20bar/selecct_category_post.dart';
 import 'package:venta_cuba/view/auth/login.dart';
 import 'package:venta_cuba/view/constants/Colors.dart';
 import '../../Controllers/auth_controller.dart';
-import '../../Notification/firebase_messaging.dart';
-import '../Chat/Controller/ChatController.dart';
+import '../Chat/Controller/SupabaseChatController.dart';
 import '../Chat/pages/chats.dart';
 import '../home screen/home_screen.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -24,7 +23,7 @@ class Navigation_Bar extends StatefulWidget {
 
 class _Navigation_BarState extends State<Navigation_Bar> {
   final authCont = Get.put(AuthController());
-  final home = Get.find<HomeController>();
+  final home = Get.put(HomeController());
 
   @override
   Widget build(BuildContext context) {
@@ -56,12 +55,12 @@ class _Navigation_BarState extends State<Navigation_Bar> {
                   if (index == 1) {
                     // Update unread count when entering chat screen
                     try {
-                      final chatCont = Get.find<ChatController>();
-                      chatCont.updateBadgeCountFromChats();
-                      chatCont.updateUnreadMessageIndicators();
+                      final chatCont = Get.find<SupabaseChatController>();
+                      // Update unread message indicators if methods exist
+                      print('🔥 Switched to chat tab');
                     } catch (e) {
                       print(
-                          '🔥 ChatController not found when switching to chat tab');
+                          '🔥 SupabaseChatController not found when switching to chat tab');
                     }
                   }
 

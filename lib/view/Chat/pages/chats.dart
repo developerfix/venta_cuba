@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
-import '../Controller/ChatController.dart';
+import '../Controller/SupabaseChatController.dart';
 import '../custom_text.dart';
 import '../widgets/group_tile.dart';
 
@@ -16,10 +15,10 @@ class Chats extends StatefulWidget {
 
 class _ChatsState extends State<Chats> {
   final authCont = Get.put(AuthController());
-  final chatCont = Get.put(ChatController());
+  final chatCont = Get.put(SupabaseChatController());
   String userName = "";
   String email = "";
-  Stream? chats;
+  Stream<List<Map<String, dynamic>>>? chats;
   TextEditingController textEditingController = TextEditingController();
 
   @override
@@ -40,12 +39,16 @@ class _ChatsState extends State<Chats> {
 
   gettingUserData() async {
     try {
-      await chatCont.getAllUser().then((snapshot) {
+      print("🔥 📋 LOADING CHATS LIST FROM SUPABASE...");
+      if (authCont.user?.userId != null) {
         setState(() {
-          chats = snapshot;
+          chats = chatCont.getAllChats(authCont.user!.userId.toString());
         });
-      });
-    } catch (e) {}
+        print("🔥 ✅ CHATS LIST STREAM INITIALIZED!");
+      }
+    } catch (e) {
+      print("🔥 ❌ ERROR LOADING CHATS LIST: $e");
+    }
   }
 
   @override
@@ -70,140 +73,126 @@ class _ChatsState extends State<Chats> {
   }
 
   groupList() {
-    return StreamBuilder(
-      stream: chats,
-      builder: (context, AsyncSnapshot snapshot) {
+    if (chats == null) {
+      return Center(
+        child: CircularProgressIndicator(
+            color: Theme.of(context).primaryColor),
+      );
+    }
+    
+    return GetBuilder<SupabaseChatController>(
+      builder: (chatController) {
+        return StreamBuilder<List<Map<String, dynamic>>>(
+          stream: chats,
+          builder: (context, AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
+        print("🔥 📋 StreamBuilder state: hasData=${snapshot.hasData}, hasError=${snapshot.hasError}");
+        
+        if (snapshot.hasError) {
+          print("🔥 ❌ StreamBuilder error: ${snapshot.error}");
+          return Center(
+            child: Container(
+              padding: EdgeInsets.all(20),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, color: Colors.red, size: 48),
+                  SizedBox(height: 16),
+                  Text(
+                    "🔥 Supabase Error",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    "${snapshot.error}",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        
         // make some checks
         if (snapshot.hasData) {
           if (snapshot.data != null) {
-            print("${snapshot.data.docs.length}");
-            if (snapshot.data.docs.length != 0) {
-              // Convert snapshot to a list that can be sorted
-              List chatDocs = snapshot.data.docs.toList();
+            print("${snapshot.data!.length} chats found");
+            if (snapshot.data!.length != 0) {
+              // Filter and sort chats
+              List<Map<String, dynamic>> chatDocs = snapshot.data!
+                  .where((chat) {
+                    // Only show chats that have actual messages
+                    bool hasMessages = chat['is_messaged'] == true ||
+                        (chat['message'] != null &&
+                            chat['message'].toString().trim().isNotEmpty &&
+                            chat['message'] != "");
+                    return hasMessages;
+                  })
+                  .toList();
 
-              // Sort the list by time in descending order (latest first)
+              // Sort by time (already sorted by Supabase, but just in case)
               chatDocs.sort((a, b) {
-                // Get timestamps with proper null handling
-                Timestamp? timeA;
-                Timestamp? timeB;
-
-                try {
-                  timeA = a.data().containsKey('time') && a['time'] is Timestamp
-                      ? a['time'] as Timestamp
-                      : null;
-                } catch (e) {
-                  timeA = null;
-                }
-
-                try {
-                  timeB = b.data().containsKey('time') && b['time'] is Timestamp
-                      ? b['time'] as Timestamp
-                      : null;
-                } catch (e) {
-                  timeB = null;
-                }
-
-                // Handle null cases - put documents without timestamps at the end
+                DateTime? timeA = a['time'] != null 
+                    ? DateTime.tryParse(a['time']) 
+                    : null;
+                DateTime? timeB = b['time'] != null 
+                    ? DateTime.tryParse(b['time']) 
+                    : null;
+                
                 if (timeA == null && timeB == null) return 0;
-                if (timeA == null) return 1; // A goes after B
-                if (timeB == null) return -1; // B goes after A
-
-                // Both have timestamps - sort in descending order (latest first)
+                if (timeA == null) return 1;
+                if (timeB == null) return -1;
+                
                 return timeB.compareTo(timeA);
               });
 
               return ListView.builder(
                 itemCount: chatDocs.length,
                 itemBuilder: (context, index) {
-                  if (chatDocs[index]['senderId'] ==
-                          "${authCont.user?.userId}" ||
-                      chatDocs[index]['sendToId'] ==
-                          "${authCont.user?.userId}") {
-                    // Only show chats that have actual messages
-                    bool hasMessages = chatDocs[index]['isMessaged'] == true ||
-                        (chatDocs[index]['message'] != null &&
-                            chatDocs[index]['message']
-                                .toString()
-                                .trim()
-                                .isNotEmpty &&
-                            chatDocs[index]['message'] != "");
-
-                    if (!hasMessages) {
-                      return Container(); // Don't show empty chats
-                    }
-
+                  var chat = chatDocs[index];
+                  String currentUserId = "${authCont.user?.userId}";
+                  
+                  if (chat['sender_id'] == currentUserId ||
+                      chat['send_to_id'] == currentUserId) {
+                    
                     // Calculate unread status for this chat
                     bool isUnread = chatCont.hasUnreadMessages(
-                        chatDocs[index].data(), "${authCont.user?.userId}");
+                        chat, currentUserId);
+
+                    // Determine which user is the "other" user
+                    bool isCurrentUserSender = chat['sender_id'] == currentUserId;
+                    String remoteUserId = isCurrentUserSender 
+                        ? chat['send_to_id'] 
+                        : chat['sender_id'];
+                    String remoteName = isCurrentUserSender 
+                        ? chat['send_to_name'] 
+                        : chat['sender_name'];
+                    String remoteImage = isCurrentUserSender 
+                        ? chat['send_to_image'] 
+                        : chat['sender_image'];
+                    String? remoteDeviceToken = isCurrentUserSender 
+                        ? chat['send_to_device_token'] 
+                        : chat['user_device_token'];
 
                     return GroupTile(
-                        userChatId: chatDocs[index].id,
-                        senderId: chatDocs[index]['senderId'],
-                        listingImage: chatDocs[index]['listingImage'],
-                        listingId: chatDocs[index]['listingId'],
-                        listingName: chatDocs[index]['listingName'],
-                        listingPrice: chatDocs[index]['listingPrice'],
-                        listingLocation: chatDocs[index]['listingLocation'],
-                        lastMessage: chatDocs[index]['message'],
-                        messageType: chatDocs[index]['messageType'],
-                        messageTime: chatDocs[index]['time'] is Timestamp
-                            ? chatDocs[index]['time'] as Timestamp
+                        userChatId: chat['id'],
+                        senderId: chat['sender_id'],
+                        listingImage: chat['listing_image'] ?? '',
+                        listingId: chat['listing_id'] ?? '',
+                        listingName: chat['listing_name'] ?? '',
+                        listingPrice: chat['listing_price'] ?? '',
+                        listingLocation: chat['listing_location'] ?? '',
+                        lastMessage: chat['message'] ?? '',
+                        messageType: chat['message_type'] ?? 'text',
+                        messageTime: chat['time'] != null 
+                            ? DateTime.tryParse(chat['time'])
                             : null,
-                        userName: chatDocs[index]['senderId'] ==
-                                "${authCont.user?.userId}"
-                            ? chatDocs[index]['sendToName']
-                            : chatDocs[index]['userName'],
-                        userImage: chatDocs[index]['senderId'] ==
-                                "${authCont.user?.userId}"
-                            ? chatDocs[index]['senderToImage']
-                            : chatDocs[index]['senderImage'],
-                        isUnread: isUnread, // Pass the unread status
-                        remoteUserId: chatDocs[index]['senderId'] ==
-                                "${authCont.user?.userId}"
-                            ? chatDocs[index]['sendToId']
-                            : chatDocs[index][
-                                'senderId'], // Pass remote user ID for presence tracking
-                        deviceToken: (() {
-                          // Debug: Print all chat document data
-                          print("🔥 === CHAT DOCUMENT DEBUG ===");
-                          var chatDoc = chatDocs[index];
-                          print("🔥 Document ID: ${chatDoc.id}");
-                          print("🔥 All fields: ${chatDoc.data()}");
-
-                          String currentUserId = "${authCont.user?.userId}";
-                          String senderId = chatDoc['senderId'] ?? "";
-                          String sendToId = chatDoc['sendToId'] ?? "";
-                          String? userDeviceToken = chatDoc['userDeviceToken'];
-                          String? sendToDeviceToken =
-                              chatDoc['sendToDeviceToken'];
-
-                          print("🔥 Current user ID: $currentUserId");
-                          print("🔥 Sender ID: $senderId");
-                          print("🔥 SendTo ID: $sendToId");
-                          print("🔥 userDeviceToken: $userDeviceToken");
-                          print("🔥 sendToDeviceToken: $sendToDeviceToken");
-
-                          // Logic: Get the device token of the OTHER user (not yourself)
-                          String? token;
-                          if (senderId == currentUserId) {
-                            // You are the sender, get recipient's token
-                            token = sendToDeviceToken;
-                            print(
-                                "🔥 ✅ You are SENDER → Using recipient's token: $token");
-                          } else {
-                            // You are the recipient, get sender's token
-                            token = userDeviceToken;
-                            print(
-                                "🔥 ✅ You are RECIPIENT → Using sender's token: $token");
-                          }
-
-                          print("🔥 === END DEBUG ===");
-                          return token;
-                        })(),
-                        remoteUid: chatDocs[index]['senderId'] ==
-                                "${authCont.user?.userId}"
-                            ? chatDocs[index]['sendToId']
-                            : chatDocs[index]['senderId']);
+                        userName: remoteName,
+                        userImage: remoteImage,
+                        isUnread: isUnread,
+                        remoteUserId: remoteUserId,
+                        deviceToken: remoteDeviceToken,
+                        remoteUid: remoteUserId);
                   } else {
                     return Container();
                   }
@@ -221,6 +210,8 @@ class _ChatsState extends State<Chats> {
                 color: Theme.of(context).primaryColor),
           );
         }
+          },
+        );
       },
     );
   }
@@ -231,7 +222,7 @@ class _ChatsState extends State<Chats> {
         padding: EdgeInsets.only(bottom: 80.0.h),
         child: SelectionArea(
           child: CustomText(
-            text: "No Chat",
+            text: "No Chat".tr,
             fontSize: 20,
             fontWeight: FontWeight.w700,
             textAlign: TextAlign.center,

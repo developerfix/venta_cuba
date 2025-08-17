@@ -1,21 +1,24 @@
-import 'package:firebase_app_check/firebase_app_check.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show SystemChrome, SystemUiOverlayStyle;
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:venta_cuba/Controllers/location_controller.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
-
 import 'package:venta_cuba/Controllers/theme_controller.dart';
-import 'package:venta_cuba/Services/Notfication/notficationservice.dart';
+
+// Firebase only for iOS notifications
+import 'package:firebase_core/firebase_core.dart';
+import 'package:venta_cuba/Services/Supabase/supabase_service.dart';
+import 'package:venta_cuba/config/app_config.dart';
 import 'package:venta_cuba/languages/languages.dart';
 import 'package:venta_cuba/view/splash%20Screens/white_screen.dart';
-import 'package:venta_cuba/view/Chat/Controller/ChatController.dart';
+import 'package:venta_cuba/view/Chat/Controller/SupabaseChatController.dart';
 import 'package:venta_cuba/view/constants/theme_config.dart';
-import 'Notification/firebase_messaging.dart';
+import 'package:venta_cuba/Notification/firebase_messaging.dart';
+
+String? deviceToken;
 
 // Background message handler - MUST be top-level function
 @pragma('vm:entry-point')
@@ -26,25 +29,89 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print(
       '🔥 Background notification: ${message.notification?.title} - ${message.notification?.body}');
 
-  // Show local notification for background messages
+  // Show local notification for background messages using existing FCM class
   await FCM.showBackgroundNotification(message);
 }
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await SharedPreferences.getInstance();
-  await Firebase.initializeApp();
+  try {
+    print('🔥 Starting app initialization...');
 
-  // Register background message handler
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    WidgetsFlutterBinding.ensureInitialized();
+    print('🔥 WidgetsFlutterBinding initialized');
 
-  await Future.delayed(Duration(seconds: 1));
-// usage of any Firebase services.
-  await FirebaseAppCheck.instance.activate(
-    androidProvider: AndroidProvider.playIntegrity,
-    appleProvider: AppleProvider.debug,
-  );
-  runApp(const MyApp());
+    // Initialize Firebase for iOS only (required for FCM)
+    if (Platform.isIOS) {
+      try {
+        await Firebase.initializeApp();
+
+        // Register background message handler
+        FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+        print('✅ Background message handler registered');
+        
+        // FCM service will be initialized later with proper BuildContext
+        print('✅ Firebase initialized for iOS');
+      } catch (e) {
+        print('❌ Error initializing Firebase for iOS: $e');
+      }
+    }
+
+    // Initialize Real Push Service (will initialize after login)
+    print('🔥 Real Push Service ready (will initialize after login)');
+
+    await SharedPreferences.getInstance();
+    print('🔥 SharedPreferences initialized');
+
+    // Initialize Supabase only if properly configured
+    if (AppConfig.isSupabaseConfigured) {
+      try {
+        await SupabaseService.initialize(
+          url: AppConfig.supabaseUrl,
+          anonKey: AppConfig.supabaseAnonKey,
+        );
+        print('✅ Supabase initialized successfully');
+      } catch (e) {
+        print('❌ Error initializing Supabase: $e');
+        print('💡 Chat functionality will be disabled');
+      }
+    } else {
+      print('⚠️ Supabase not configured - Chat functionality will be disabled');
+      print('💡 Please update AppConfig with your Supabase credentials');
+    }
+
+    // Firebase removed for Cuba compatibility
+    // Real Push Service will be initialized after user login
+    try {
+      print('✅ Real Push Service ready for initialization after login');
+    } catch (e) {
+      print('❌ Error with push service: $e');
+    }
+
+    print('🔥 About to run app...');
+
+    runApp(const MyApp());
+  } catch (e, stackTrace) {
+    print('🔥 CRITICAL ERROR in main(): $e');
+    print('🔥 Stack trace: $stackTrace');
+
+    // Run a minimal app to show error
+    runApp(MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error, size: 64, color: Colors.red),
+              SizedBox(height: 16),
+              Text('App initialization failed', style: TextStyle(fontSize: 18)),
+              SizedBox(height: 8),
+              Text('Error: $e', style: TextStyle(fontSize: 12)),
+            ],
+          ),
+        ),
+      ),
+    ));
+  }
 }
 
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
@@ -63,8 +130,11 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
       // App went to background or was closed, set user as offline
       try {
         final authCont = Get.find<AuthController>();
-        authCont.setUserOffline();
-        print('🔥 User set as offline');
+        if (authCont.user?.userId != null) {
+          final chatCont = Get.put(SupabaseChatController());
+          chatCont.setUserOffline(authCont.user!.userId.toString());
+          print('🔥 User set as offline');
+        }
       } catch (e) {
         print('Error setting user offline: $e');
       }
@@ -76,31 +146,33 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
       print('🔥 App resumed - handling badge count and user status');
 
       // Handle app opened - reset badge count first
-      await FCM.handleAppOpened();
+      // Firebase removed for Cuba compatibility
+      // await FirebaseMessagingService.handleAppOpened();
 
       final authCont = Get.find<AuthController>();
-      authCont.refreshDeviceToken();
 
-      // Also update device tokens in all chat documents
+      // Firebase removed for Cuba compatibility
+      // Real Push Service is handled in auth controller
       if (authCont.user?.userId != null) {
-        authCont.updateDeviceTokenInAllChats(deviceToken);
+        print('🔥 User active - push service ready');
       }
 
       // Set user as online when app becomes active
-      authCont.setUserOnline();
+      if (authCont.user?.userId != null) {
+        final chatCont = Get.put(SupabaseChatController());
+        await chatCont.setUserOnline(authCont.user!.userId.toString());
+      }
 
       // Update unread message indicators and restart chat listener
       try {
-        final chatCont = Get.find<ChatController>();
+        final chatCont = Get.put(SupabaseChatController());
         await chatCont.updateUnreadMessageIndicators();
         await chatCont.updateBadgeCountFromChats();
         chatCont.startListeningForChatUpdates();
         print('🔥 Chat services restarted on app resume');
       } catch (e) {
-        print('🔥 ChatController not found on app resume: $e');
+        print('🔥 SupabaseChatController not found on app resume: $e');
       }
-
-      // Notification functionality removed
     } catch (e) {
       print('🔥 Error handling app resume: $e');
     }
@@ -115,25 +187,31 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  FCM firebaseMessaging = FCM();
+  // Firebase removed for Cuba compatibility
+  // final firebaseMessagingService = FirebaseMessagingService();
   final locationCont = Get.put(LocationController());
   late final ThemeController themeController;
-  NotificationService notificationService = NotificationService();
 
   @override
   void initState() {
     super.initState();
 
-    // Initialize theme controller first
-    themeController = Get.put(ThemeController());
+    print('🔥 MyApp: initState() called');
 
-    notificationService.obtainCredentials();
+    // Initialize theme controller first
+    print('🔥 MyApp: Initializing ThemeController...');
+    themeController = Get.put(ThemeController());
+    print('🔥 MyApp: ThemeController initialized');
+
+    // Location and notification setup
     locationCheck();
-    firebaseMessaging.setNotifications(context);
-    firebaseMessaging.streamCtrl.stream.listen((msgData) {
-      debugPrint('messageData $msgData');
-    });
+
+    // Firebase removed for Cuba compatibility
+    // Notifications are handled by RealPushService
+    print('🔥 Push notifications ready via RealPushService');
+
     _fetchLocale().then((locale) {
+      print('🔥 MyApp: Locale fetched: $locale');
       setState(() {
         _locale = locale;
         debugPrint("_locale...................$_locale");
@@ -141,14 +219,17 @@ class _MyAppState extends State<MyApp> {
       Get.updateLocale(locale);
     });
 
-    // Listen for app lifecycle changes to refresh token
+    // Listen for app lifecycle changes
     WidgetsBinding.instance.addObserver(AppLifecycleObserver());
 
     // Check notification permissions after a delay
     Future.delayed(Duration(seconds: 3), () {
       checkNotificationPermissions();
     });
-    Get.lazyPut(() => ChatController());
+
+    Get.lazyPut(() => SupabaseChatController());
+
+    print('🔥 MyApp: initState() completed');
   }
 
   locationCheck() async {
@@ -161,16 +242,18 @@ class _MyAppState extends State<MyApp> {
 
   checkNotificationPermissions() async {
     try {
-      await firebaseMessaging.requestNotificationPermissions();
-      print('Notification permissions checked');
+      // Firebase removed for Cuba compatibility
+      // await firebaseMessagingService.requestPermission();
+      print('Notification permissions ready'.tr);
     } catch (e) {
-      print('Error checking notification permissions: $e');
+      print('Error checking notification permissions'.tr + ': $e');
     }
   }
 
   String languageCode = 'es';
   String countryCode = 'ES';
   Locale _locale = Locale("es", "ES");
+
   Future<Locale> _fetchLocale() async {
     var prefs = await SharedPreferences.getInstance();
     languageCode = prefs.getString('languageCode') ?? 'es';
@@ -183,26 +266,82 @@ class _MyAppState extends State<MyApp> {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return ScreenUtilInit(
-      designSize: const Size(360, 690),
-      minTextAdapt: true,
-      splitScreenMode: true,
-      builder: (context, child) {
-        return Obx(() => GetMaterialApp(
-              theme: ThemeConfig.lightTheme,
-              darkTheme: ThemeConfig.darkTheme,
-              themeMode: themeController.isDarkMode.value
-                  ? ThemeMode.dark
-                  : ThemeMode.light,
-              translations: Languages(),
-              locale: Locale(languageCode, countryCode),
-              fallbackLocale: Locale(languageCode, countryCode),
-              scaffoldMessengerKey: scaffoldMessengerKey,
-              navigatorKey: navigatorKey,
-              debugShowCheckedModeBanner: false,
-              home: WhiteScreen(),
-            ));
-      },
-    );
+    print('🔥 MyApp: build() called');
+
+    try {
+      return ScreenUtilInit(
+        designSize: const Size(360, 690),
+        minTextAdapt: true,
+        splitScreenMode: true,
+        builder: (context, child) {
+          print('🔥 MyApp: ScreenUtilInit builder called');
+
+          try {
+            return Obx(() {
+              print(
+                  '🔥 MyApp: Obx builder called, isDarkMode: ${themeController.isDarkMode.value}');
+
+              return GetMaterialApp(
+                theme: ThemeConfig.lightTheme,
+                darkTheme: ThemeConfig.darkTheme,
+                themeMode: themeController.isDarkMode.value
+                    ? ThemeMode.dark
+                    : ThemeMode.light,
+                translations: Languages(),
+                locale: Locale(languageCode, countryCode),
+                fallbackLocale: Locale(languageCode, countryCode),
+                scaffoldMessengerKey: scaffoldMessengerKey,
+                navigatorKey: navigatorKey,
+                debugShowCheckedModeBanner: false,
+                home: Builder(
+                  builder: (context) {
+                    print(
+                        '🔥 MyApp: Home Builder called, navigating to WhiteScreen');
+                    return WhiteScreen();
+                  },
+                ),
+              );
+            });
+          } catch (e) {
+            print('🔥 Error in Obx builder: $e');
+            return MaterialApp(
+              home: Scaffold(
+                body: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.error, size: 64, color: Colors.red),
+                      SizedBox(height: 16),
+                      Text('Theme initialization failed',
+                          style: TextStyle(fontSize: 18)),
+                      SizedBox(height: 8),
+                      Text('Error: $e', style: TextStyle(fontSize: 12)),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }
+        },
+      );
+    } catch (e) {
+      print('🔥 Error in MyApp build: $e');
+      return MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error, size: 64, color: Colors.red),
+                SizedBox(height: 16),
+                Text('App build failed', style: TextStyle(fontSize: 18)),
+                SizedBox(height: 8),
+                Text('Error: $e', style: TextStyle(fontSize: 12)),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
   }
 }

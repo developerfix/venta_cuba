@@ -5,7 +5,6 @@ import 'package:get/get_connect/http/src/request/request.dart';
 import 'package:http/http.dart' as http;
 import '../Controllers/auth_controller.dart';
 import '../Utils/funcations.dart';
-import '../view/auth/login.dart';
 import 'package:flutter/material.dart';
 
 import '../view/auth/sign_up.dart';
@@ -15,8 +14,22 @@ class ApiChecker {
       {required http.Response respons,
       bool showUserError = true,
       bool showSystemError = true}) async {
+    dynamic responseBody;
+    try {
+      print(respons.body);
+      // Try to parse as JSON first
+      responseBody = jsonDecode(respons.body);
+    } catch (e) {
+      // If JSON parsing fails, use the raw body
+      print("Response is not valid JSON, status code: ${respons.statusCode}");
+      print("Response headers: ${respons.headers}");
+      print(
+          "Response body (first 500 chars): ${respons.body.length > 500 ? respons.body.substring(0, 500) + '...' : respons.body}");
+      responseBody = respons.body;
+    }
+
     dynamic response = Response(
-      body: jsonDecode(respons.body) ?? respons.body,
+      body: responseBody,
       bodyString: respons.body.toString(),
       request: Request(
           headers: respons.request!.headers,
@@ -36,26 +49,60 @@ class ApiChecker {
       return response;
     } else if (response.statusCode! == 401 || response.statusCode! == 403) {
       if (showUserError) {
-        Get.offAll(() => Login());
-        errorAlertToast(response.body['message']);
+        // Handle cases where response.body might not be a Map (e.g., HTML error pages)
+        if (response.body is Map && response.body['message'] != null) {
+          errorAlertToast(response.body['message']);
+        } else {
+          errorAlertToast('Authentication failed. Please try again.'.tr);
+        }
       }
     } else if (response.statusCode! >= 500) {
       if (showSystemError) {
-        errorAlertToast(
-          'Server Error!\nPlease try again...'.tr,
-        );
+        // Check if it's an authentication-related server error
+        if (response.body != null &&
+            response.body is Map &&
+            response.body['message'] != null &&
+            response.body['message']
+                .toString()
+                .toLowerCase()
+                .contains('authenticate')) {
+          errorAlertToast('Server authentication error. Please try again.'.tr);
+        } else if (response.body != null &&
+            response.body is Map &&
+            response.body['message'] != null &&
+            response.body['message']
+                .toString()
+                .contains('makeHidden() on null')) {
+          // Handle specific server error for missing data
+          print('🔥 Server error: Data not found or null reference');
+          // Only show toast if showUserError is true (respects the showDialog parameter)
+          if (showUserError) {
+            errorAlertToast('Data not found. Please try again.'.tr);
+          }
+        } else {
+          errorAlertToast(
+            'Server Error!\nPlease try again...'.tr,
+          );
+        }
       }
     } else if (response.statusCode! >= 400) {
       if (showUserError) {
-        if (response.body['message'] == "Unauthorized") {
-          _showCustomAlertDialog();
-          errorAlertToast("wrong email or password".tr);
+        // Handle cases where response.body might not be a Map (e.g., HTML error pages)
+        if (response.body is Map && response.body['message'] != null) {
+          if (response.body['message'] == "Unauthorized") {
+            _showCustomAlertDialog();
+            errorAlertToast("wrong email or password".tr);
+          } else {
+            errorAlertToast("${response.body['message']}".tr);
+          }
         } else {
-          errorAlertToast("${response.body['message']}".tr);
+          // If response body is not a Map or doesn't have a message, show generic error
+          errorAlertToast('Request failed. Please try again.'.tr);
         }
       }
     }
-    return Response(statusCode: response.statusCode, statusText: response.body);
+    return Response(
+        statusCode: response.statusCode, statusText: response.body.toString());
   }
 
   void _showCustomAlertDialog() {
@@ -122,7 +169,7 @@ class ApiChecker {
         onPressed: onPressed,
         child: Text(
           text,
-          style: TextStyle(color: color ?? Colors.white),
+          style: TextStyle(color: color),
         ),
       ),
     );

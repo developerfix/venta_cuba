@@ -2,8 +2,9 @@ plugins {
     id "com.android.application"
     id "kotlin-android"
     id "dev.flutter.flutter-gradle-plugin"
-    id 'com.google.gms.google-services'
 }
+
+apply plugin: 'com.google.gms.google-services'
 
 def localProperties = new Properties()
 def localPropertiesFile = rootProject.file('local.properties')
@@ -39,21 +40,24 @@ android {
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
     }
-
-    defaultConfig {
-        applicationId "com.ventacuba.highapp.venta_cuba"
-        minSdkVersion 23
-        targetSdkVersion 34
-        versionCode flutterVersionCode.toInteger()
-        versionName flutterVersionName
-        multiDexEnabled true
-    }
- splits {
+defaultConfig {
+    applicationId "com.ventacuba.highapp.venta_cuba"
+    minSdkVersion 24  // Consider raising from 23 to 24
+    targetSdkVersion 34
+    versionCode flutterVersionCode.toInteger()
+    versionName flutterVersionName
+    multiDexEnabled true
+    ndk {
+            abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86_64'
+        }
+        
+}
+  splits {
         abi {
             enable true
             reset()
-            include "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
-            universalApk true  // So Google Play generates universal APK as well
+            include "armeabi-v7a", "arm64-v8a", "x86_64"
+            universalApk true
         }
     }
     signingConfigs {
@@ -77,14 +81,15 @@ flutter {
 }
 
 dependencies {
-    implementation platform('com.google.firebase:firebase-bom:32.2.3')
-    implementation 'com.google.firebase:firebase-analytics-ktx'
     implementation "androidx.multidex:multidex:2.0.1"
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.3'
-    
+
     // Removed SafetyNet dependency
     // implementation 'com.google.android.gms:play-services-safetynet:18.0.0'
-    
+
     // Added Play Integrity API
     implementation 'com.google.android.play:integrity:1.3.0'
+    
+    // OkHttp for background WebSocket connection
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
 }

@@ -1,6 +1,5 @@
 import 'dart:convert';
-import 'package:flutter/cupertino.dart';
-import 'package:geocoding/geocoding.dart' as geocoding;
+import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 // import 'package:google_maps_webservice/places.dart';
@@ -42,7 +41,6 @@ class LocationController extends GetxController {
   Rx<String>? _sessingToken = "12".obs;
   List placeList = [];
   var location = "".obs;
-  List<geocoding.Location>? locations;
   double? lat;
   double? lng;
   String address = "";
@@ -59,27 +57,63 @@ class LocationController extends GetxController {
   }
 
   Future selectLocation(int index) async {
-    locations =
-        await geocoding.locationFromAddress(placeList[index]["description"]);
-    lat = locations![0].latitude;
-    lng = locations![0].longitude;
+    try {
 
-    print(locations![0].latitude);
-    print(locations![0].longitude);
-    address = placeList[index]["description"];
+      print(
+          "🔥 📍 STARTING GEOCODING for: ${placeList[index]["description"]}");
 
-    userPreferences.setSaveHistory(
-        jsonEncode({'address': address, 'lat': lat, 'lng': lng}));
-    isTextFiled == 0
-        ? locationEditingController.value.text = placeList[index]["description"]
-        : isTextFiled == 1
-            ? authCont.businessCityCont.text = placeList[index]["description"]
-            : isTextFiled == 2
-                ? authCont.businessProvinceCont.text =
-                    placeList[index]["description"]
-                : authCont.businessAddressCont.text =
-                    placeList[index]["description"];
-    updateLocationList();
+      // Use Google Geocoding Web API instead of native geocoding
+      String addressToGeocode = placeList[index]["description"];
+      String encodedAddress = Uri.encodeComponent(addressToGeocode);
+      String geocodingUrl = 'https://maps.googleapis.com/maps/api/geocode/json?address=$encodedAddress&key=AIzaSyBx95Bvl9O-US2sQpqZ41GdsHIprnXvJv8';
+      
+      print("🔥 📡 Making Geocoding API request to: $geocodingUrl");
+      
+      var response = await http.get(Uri.parse(geocodingUrl)).timeout(Duration(seconds: 15));
+      
+      print("🔥 📊 Geocoding API response status: ${response.statusCode}");
+      print("🔥 📋 Geocoding API response: ${response.body}");
+      
+      if (response.statusCode == 200) {
+        var data = jsonDecode(response.body);
+        String status = data['status'] ?? 'UNKNOWN';
+        
+        print("🔥 📍 Geocoding API status: $status");
+        
+        if (status == 'OK' && data['results'] != null && data['results'].isNotEmpty) {
+          lat = data['results'][0]['geometry']['location']['lat'];
+          lng = data['results'][0]['geometry']['location']['lng'];
+          
+          print("🔥 ✅ GEOCODING SUCCESSFUL!");
+          print("🔥 📍 Latitude: $lat");
+          print("🔥 📍 Longitude: $lng");
+        } else {
+          throw Exception('Geocoding failed: $status - ${data['error_message'] ?? 'No coordinates found'}');
+        }
+      } else {
+        throw Exception('HTTP ${response.statusCode}: Geocoding API request failed');
+      }
+
+      address = placeList[index]["description"];
+
+      userPreferences.setSaveHistory(
+          jsonEncode({'address': address, 'lat': lat, 'lng': lng}));
+      isTextFiled == 0
+          ? locationEditingController.value.text =
+              placeList[index]["description"]
+          : isTextFiled == 1
+              ? authCont.businessCityCont.text = placeList[index]["description"]
+              : isTextFiled == 2
+                  ? authCont.businessProvinceCont.text =
+                      placeList[index]["description"]
+                  : authCont.businessAddressCont.text =
+                      placeList[index]["description"];
+
+      updateLocationList();
+    } catch (e, stackTrace) {
+      print("🔥 ❌ GEOCODING FAILED with error: $e");
+      print("🔥 🔍 Stack trace: $stackTrace");
+    }
   }
 
   void onChange(String value) {
@@ -90,19 +124,85 @@ class LocationController extends GetxController {
   }
 
   void getSuggestion(String input) async {
-    String apiKey = "AIzaSyBx95Bvl9O-US2sQpqZ41GdsHIprnXvJv8";
-    String baseURL =
-        'https://maps.googleapis.com/maps/api/place/autocomplete/json';
-    String request =
-        '$baseURL?input=$input&key=$apiKey&sessiontoken=$_sessingToken';
-
-    var response = await http.get(Uri.parse(request));
-    print(response.body.toString());
-    if (response.statusCode == 200) {
-      placeList = jsonDecode(response.body.toString())["predictions"];
+    // Don't search if input is empty or too short
+    if (input.trim().isEmpty || input.trim().length < 2) {
+      placeList = [];
       update();
-    } else {
-      throw Exception("location failed");
+      return;
+    }
+    
+    try {
+      print("🔥 🔍 STARTING PLACES API SEARCH for: '$input'");
+      String apiKey = "AIzaSyBx95Bvl9O-US2sQpqZ41GdsHIprnXvJv8";
+      String baseURL =
+          'https://maps.googleapis.com/maps/api/place/autocomplete/json';
+      String request =
+          '$baseURL?input=$input&key=$apiKey&sessiontoken=$_sessingToken';
+
+      print("🔥 📡 Making Places API request to: $request");
+
+      var response = await http.get(Uri.parse(request)).timeout(Duration(seconds: 10));
+
+      print("🔥 📊 Places API response status: ${response.statusCode}");
+      print("🔥 📋 Places API response: ${response.body}");
+
+      if (response.statusCode == 200) {
+        var jsonResponse = jsonDecode(response.body.toString());
+        String status = jsonResponse["status"] ?? "UNKNOWN";
+        
+        print("🔥 📍 Places API status: $status");
+
+        if (status == "OK" || status == "ZERO_RESULTS") {
+          placeList = jsonResponse["predictions"] ?? [];
+          print("🔥 ✅ Found ${placeList.length} place suggestions");
+          if (placeList.isEmpty && status == "ZERO_RESULTS") {
+            print("🔥 ⚠️ Google Places returned ZERO_RESULTS for: '$input'");
+          }
+          update();
+        } else if (status == "REQUEST_DENIED") {
+          print("🔥 ❌ Google Places API: REQUEST_DENIED - API key issue or service blocked");
+          placeList = [];
+          update();
+          // Show user-visible error
+          _showLocationError("Google Places API blocked or invalid API key");
+        } else if (status == "OVER_QUERY_LIMIT") {
+          print("🔥 ❌ Google Places API: OVER_QUERY_LIMIT - rate limit exceeded");
+          placeList = [];
+          update();
+          _showLocationError("Too many location requests, try again later");
+        } else {
+          print("DEBUG: Places API error status: ${jsonResponse["status"]}");
+          print(
+              "DEBUG: Error message: ${jsonResponse["error_message"] ?? 'No message'}");
+          throw Exception("Places API error: ${jsonResponse["status"]}");
+        }
+      } else {
+        print("DEBUG: HTTP error ${response.statusCode}: ${response.body}");
+        throw Exception(
+            "HTTP ${response.statusCode}: Places API request failed");
+      }
+    } catch (e, stackTrace) {
+      print("DEBUG: Places API exception: $e");
+      print("DEBUG: Stack trace: $stackTrace");
+
+      placeList = [];
+      update();
+    }
+  }
+
+  // Show user-visible location error  
+  void _showLocationError(String message) {
+    try {
+      Get.snackbar(
+        "🔥 Location Error",
+        message,
+        backgroundColor: Get.theme.colorScheme.error,
+        colorText: Get.theme.colorScheme.onError,
+        duration: Duration(seconds: 5),
+        snackPosition: SnackPosition.TOP,
+      );
+    } catch (e) {
+      print("🔥 ❌ Could not show snackbar: $e");
     }
   }
 
@@ -117,12 +217,12 @@ class LocationController extends GetxController {
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        return Future.error("Your location permissions are denied");
+        return Future.error("Your location permissions are denied".tr);
       }
     }
     if (permission == LocationPermission.deniedForever) {
       return Future.error(
-          "Location permissions are permanently denied, we cannot request permissions.");
+          "Location permissions are permanently denied, we cannot request permissions".tr);
     }
     print('going to get the location');
     permission = await Geolocator.requestPermission();

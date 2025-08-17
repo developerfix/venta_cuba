@@ -3,7 +3,6 @@ import Flutter
 import GoogleMaps  // Add this import
 import flutter_local_notifications
 import UserNotifications
-import Firebase
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {

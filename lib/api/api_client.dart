@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as Http;
 import '../Utils/funcations.dart';
@@ -30,7 +31,7 @@ class ApiClient extends GetxService {
   void updateHeader(
     String token,
   ) {
-    token = tokenMain!;
+    tokenMain = token;
     _mainHeaders = {
       'Content-Type': 'application/json; charset=UTF-8',
       'Accept': 'application/json',
@@ -63,35 +64,40 @@ class ApiClient extends GetxService {
 
   Future<Response> postData(String uri, dynamic body,
       {Map<String, String>? headers, bool showdialog = true}) async {
-    print("???????????????");
-    print(tokenMain);
+    print("🔥 postData tokenMain: $tokenMain");
     if (showdialog) {
       showLoading();
     }
     try {
-      _mainHeaders = {
+      // Start with default headers
+      Map<String, String> finalHeaders = {
         'Content-Type': 'application/json; charset=UTF-8',
         'Accept': 'application/json',
         'Access-Control-Allow-Origin': "*",
-        'Authorization': 'Bearer $tokenMain'
+        'Authorization': 'Bearer ${tokenMain ?? ""}'
       };
+
+      // If custom headers are provided, merge them and let them override defaults
+      if (headers != null) {
+        finalHeaders.addAll(headers);
+      }
+
       print(Uri.parse(appBaseUrl + uri));
       print("body : ${jsonEncode(body)}");
-      print("headers : ${jsonEncode(_mainHeaders)}");
+      print("Final headers : ${jsonEncode(finalHeaders)}");
       Http.Response _response = await Http.post(
         Uri.parse(appBaseUrl + uri),
         body: jsonEncode(body),
-        headers: headers ?? _mainHeaders,
+        headers: finalHeaders,
       ).timeout(Duration(seconds: timeoutInSeconds));
       if (showdialog) {
         Get.back();
       }
-      return apichecker.checkApi(respons: _response);
+      return apichecker.checkApi(respons: _response, showUserError: showdialog);
     } catch (e) {
       if (showdialog) {
         Get.back();
       }
-      print("error" + e.toString());
       return const Response(statusCode: 1, statusText: noInternetMessage);
     }
   }
@@ -101,37 +107,60 @@ class ApiClient extends GetxService {
       bool showdialog = true,
       List<String>? image,
       String imageKey = ''}) async {
-    print(body);
     if (showdialog) {
       showLoading();
     }
     try {
-      var header = headers ?? _mainHeaders;
-      print(header);
-      Get.log('url testing ${appBaseUrl + uri}');
+      // Start with default headers for multipart form data
+      // Note: Content-Type will be automatically set by MultipartRequest
+      Map<String, String> finalHeaders = {
+        'Accept': 'application/json',
+        'Access-Control-Allow-Origin': "*",
+      };
+
+      // Add Authorization header from tokenMain if available and not overridden
+      if (tokenMain != null && tokenMain!.isNotEmpty) {
+        finalHeaders['Authorization'] = 'Bearer $tokenMain';
+      }
+
+      // If custom headers are provided, merge them and let them override defaults
+      if (headers != null) {
+        finalHeaders.addAll(headers);
+      }
+
       var request = Http.MultipartRequest('POST', Uri.parse(appBaseUrl + uri));
-      print("Sending body: $body");
       request.fields
           .addAll(body.map((key, value) => MapEntry(key, value.toString())));
 
-      request.headers.addAll(header);
-      image?.forEach((element) async {
-        request.files.add(await Http.MultipartFile.fromPath(imageKey, element));
-      });
+      request.headers.addAll(finalHeaders);
+      if (image != null) {
+        print('🔧 DEBUG: Adding ${image.length} files with key "$imageKey"');
+        for (String element in image) {
+          print('🔧 DEBUG: Processing file path: $element');
+          // Check if file exists before creating multipart file
+          File tempFile = File(element);
+          if (await tempFile.exists()) {
+            print('🔧 DEBUG: File exists, size: ${await tempFile.length()} bytes');
+            var file = await Http.MultipartFile.fromPath(imageKey, element);
+            print('🔧 DEBUG: Created multipart file: ${file.filename}, size: ${file.length} bytes');
+            request.files.add(file);
+          } else {
+            print('❌ DEBUG: File does not exist: $element');
+          }
+        }
+        print('🔧 DEBUG: Total files in request: ${request.files.length}');
+      }
 
       Http.StreamedResponse streamedResponse = await request.send();
       if (showdialog) {
         Get.back();
       }
       var response = await Http.Response.fromStream(streamedResponse);
-      print("object......${response.statusCode}");
-      print("object......${response.body}");
-      return apichecker.checkApi(respons: response);
+      return apichecker.checkApi(respons: response, showUserError: showdialog);
     } catch (e) {
       if (showdialog) {
         Get.back();
       }
-      print("error" + e.toString());
       return const Response(statusCode: 1, statusText: noInternetMessage);
     }
   }

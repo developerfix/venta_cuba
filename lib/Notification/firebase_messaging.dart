@@ -10,10 +10,8 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_app_badge_control/flutter_app_badge_control.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:venta_cuba/Services/Notfication/notficationservice.dart';
+import 'package:venta_cuba/Controllers/auth_controller.dart';
 import 'package:venta_cuba/Utils/global_variabel.dart';
-
-import '../Controllers/auth_controller.dart';
 import 'fcm_model.dart';
 
 bool isOpenFile = false;
@@ -491,29 +489,6 @@ class FCM {
     }
   }
 
-  // Test notification with sound (useful for debugging)
-  static Future<void> sendTestNotificationWithSound() async {
-    try {
-      print('🔥 Sending test notification with sound...');
-
-      await notification(
-        'This is a test notification to verify sound is working',
-        'Test Notification Sound',
-        'test_channel',
-        'test',
-        '{"type": "test"}',
-        false,
-        true,
-        AndroidNotificationCategory.message,
-        badgeCount: 1,
-      );
-
-      print('🔥 Test notification sent successfully');
-    } catch (e) {
-      print('🔥 Error sending test notification: $e');
-    }
-  }
-
   // Clear badge count and update app icon
   static Future<void> clearBadgeCount() async {
     await resetBadgeCount();
@@ -652,8 +627,6 @@ class FCM {
     int? badgeCount,
   }) async {
     // Ensure a fresh token
-    NotificationService notificationService = NotificationService();
-    await notificationService.obtainCredentials();
 
     if (notificationAccessToken.isEmpty) {
       print('🔥 Error: No valid access token available');

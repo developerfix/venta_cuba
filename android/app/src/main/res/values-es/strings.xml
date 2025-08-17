@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">VentaCuba</string>
+    <string name="channel_name">Servicio VentaCuba</string>
+    <string name="channel_description">Servicio de mensajería en segundo plano</string>
+    <string name="service_title">VentaCuba</string>
+    <string name="service_text">Activo</string>
+    <string name="notification_title">Nuevo Mensaje</string>
+    <string name="notification_content">Tienes un nuevo mensaje</string>
+    <string name="battery_optimization_title">Optimización de Batería</string>
+    <string name="battery_optimization_message">Para recibir notificaciones cuando la aplicación esté cerrada, por favor permite que VentaCuba funcione en segundo plano deshabilitando la optimización de batería.</string>
+    <string name="allow">Permitir</string>
+    <string name="deny">Denegar</string>
+    <string name="notification_permission_title">Permiso de Notificaciones</string>
+    <string name="notification_permission_message">VentaCuba necesita permisos de notificaciones para enviarte mensajes importantes y actualizaciones.</string>
+</resources>
