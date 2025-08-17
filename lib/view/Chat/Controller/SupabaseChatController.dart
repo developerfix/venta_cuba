@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
 import 'package:venta_cuba/Services/RealPush/supabase_push_service.dart';
+import 'package:venta_cuba/Notification/firebase_messaging.dart';
 import 'package:venta_cuba/Services/Supabase/supabase_service.dart';
 import 'package:venta_cuba/Services/Supabase/rls_helper.dart';
 
@@ -427,11 +428,17 @@ class SupabaseChatController extends GetxController {
           'send_to_image': chatMessageData['sendToImage'],
           'user_device_token': chatMessageData['userDeviceToken'],
           'send_to_device_token': chatMessageData['sendToDeviceToken'],
+          // Store listing information when creating new chat
+          'listing_id': chatMessageData['listingId'],
+          'listing_name': chatMessageData['listingName'],
+          'listing_image': chatMessageData['listingImage'],
+          'listing_price': chatMessageData['listingPrice'],
+          'listing_location': chatMessageData['listingLocation'],
           ...chatUpdateData,
         };
 
         await _supabase.from('chats').insert(newChatData);
-        print('💬 ✅ New chat created successfully');
+        print('💬 ✅ New chat created successfully with listing data');
       } else {
         // Update existing chat
         print('💬 Updating existing chat: $chatId');
@@ -476,7 +483,7 @@ class SupabaseChatController extends GetxController {
     }
   }
 
-  // Send ntfy notification for chat message
+  // Send push notification for chat message
   Future<void> _sendChatNotification(
       Map<String, dynamic> chatMessageData) async {
     try {
@@ -489,21 +496,75 @@ class SupabaseChatController extends GetxController {
         return;
       }
 
-      // Send notification to recipient user via Supabase
+      // Send notification to recipient user
       final chatIdForNotification = chatMessageData['chatId'] ?? '';
       print('💬 🔴 Sending notification with chatId: "$chatIdForNotification"');
       
-      await SupabasePushService.sendChatNotification(
-        recipientUserId: sendToId,
-        senderName: chatMessageData['senderName'] ?? 'New Message'.tr,
-        message: chatMessageData['message'] ?? 'New message'.tr,
-        messageType: chatMessageData['messageType'] ?? 'text',
-        chatId: chatIdForNotification,
+      // Check if recipient is on iOS (by checking their device token)
+      final supabaseService = SupabaseService.instance;
+      final tokens = await supabaseService.getUserDeviceTokens(sendToId);
+      
+      // Check if any token is an iOS FCM token (longer than 100 chars)
+      bool hasIOSDevice = tokens.any((token) => 
+        token.length > 100 && !token.contains('cuba-friendly-token')
       );
+      
+      if (Platform.isIOS || hasIOSDevice) {
+        // Use FCM service for iOS recipients
+        print('🍎 Sending iOS FCM notification');
+        
+        // Get the recipient's device token
+        final recipientToken = await supabaseService.getDeviceToken(sendToId);
+        
+        if (recipientToken != null && recipientToken.isNotEmpty) {
+          final fcmService = FCM();
+          await fcmService.sendNotificationFCM(
+            userId: sendToId,
+            remoteId: senderId,
+            name: chatMessageData['senderName'] ?? 'New Message'.tr,
+            deviceToken: recipientToken,
+            title: chatMessageData['senderName'] ?? 'New Message'.tr,
+            body: _formatMessageBody(
+              chatMessageData['message'] ?? 'New message'.tr,
+              chatMessageData['messageType'] ?? 'text'
+            ),
+            type: 'message',
+          );
+        } else {
+          print('⚠️ No device token found for recipient: $sendToId');
+        }
+      } else {
+        // Use regular push service for Android
+        await SupabasePushService.sendChatNotification(
+          recipientUserId: sendToId,
+          senderName: chatMessageData['senderName'] ?? 'New Message'.tr,
+          message: chatMessageData['message'] ?? 'New message'.tr,
+          messageType: chatMessageData['messageType'] ?? 'text',
+          chatId: chatIdForNotification,
+        );
+      }
 
-      print('💬 ✅ Supabase push notification sent to user: $sendToId');
+      print('💬 ✅ Push notification sent to user: $sendToId');
     } catch (e) {
       print('💬 ❌ Error sending chat notification: $e');
+    }
+  }
+  
+  // Helper method to format message body for notifications
+  String _formatMessageBody(String message, String messageType) {
+    switch (messageType) {
+      case 'image':
+        return '📷 Photo';
+      case 'video':
+        return '📹 Video';
+      case 'file':
+        return '📎 File';
+      default:
+        // Truncate long messages for notification
+        if (message.length > 100) {
+          return message.substring(0, 97) + '...';
+        }
+        return message;
     }
   }
 

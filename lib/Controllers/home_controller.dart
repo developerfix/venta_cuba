@@ -987,36 +987,37 @@ class HomeController extends GetxController {
     if (postImages.isNotEmpty) {
       try {
         // Process and compress images before upload
-        print('📤 Processing ${postImages.length} images for upload...');
-        List<String> processedImages = await ImageUploadHelper.processImagesForUpload(postImages);
-        
+        List<String> processedImages =
+            await ImageUploadHelper.processImagesForUpload(postImages);
+
         if (processedImages.isEmpty) {
           errorAlertToast('Failed to process images. Please try again.');
           return;
         }
-        
+
         print('✅ Processed ${processedImages.length} images successfully');
-        
+
         // Debug info for upload
         print('🔧 Upload Debug Info:');
         print('  - Base URL: $baseUrl');
         print('  - Endpoint: api/addListing');
-        print('  - Auth Token: ${authToken.isNotEmpty ? 'Present (${authToken.length} chars)' : 'Missing'}');
+        print(
+            '  - Auth Token: ${authToken.isNotEmpty ? 'Present (${authToken.length} chars)' : 'Missing'}');
         print('  - Number of images: ${processedImages.length}');
-        
+
         // Use multipart form with proper authentication
         response = await api.postWithForm(
           "api/addListing",
           requestData,
           image: processedImages,
-          imageKey: "image[]",
+          imageKey: "gallery",
           headers: {
             'Authorization': 'Bearer $authToken',
             // Remove Content-Type header as it will be set automatically for multipart
           },
           showdialog: true,
         );
-        
+
         // Log response for debugging
         print('📥 Response Status: ${response.statusCode}');
         if (response.statusCode != 200) {
@@ -1024,7 +1025,8 @@ class HomeController extends GetxController {
         }
       } catch (e) {
         print('❌ Error during image upload: $e');
-        errorAlertToast('Failed to upload images. Please check your connection and try again.');
+        errorAlertToast(
+            'Failed to upload images. Please check your connection and try again.');
         return;
       }
     } else {
@@ -1150,35 +1152,37 @@ class HomeController extends GetxController {
       try {
         // Process and compress images before upload
         print('📤 Processing ${postImages.length} images for edit...');
-        List<String> processedImages = await ImageUploadHelper.processImagesForUpload(postImages);
-        
+        List<String> processedImages =
+            await ImageUploadHelper.processImagesForUpload(postImages);
+
         if (processedImages.isEmpty) {
           errorAlertToast('Failed to process images. Please try again.');
           return;
         }
-        
+
         print('✅ Processed ${processedImages.length} images successfully');
-        
+
         // Debug info for upload
         print('🔧 Edit Upload Debug Info:');
         print('  - Base URL: $baseUrl');
         print('  - Endpoint: api/editListing');
-        print('  - Auth Token: ${authToken.isNotEmpty ? 'Present (${authToken.length} chars)' : 'Missing'}');
+        print(
+            '  - Auth Token: ${authToken.isNotEmpty ? 'Present (${authToken.length} chars)' : 'Missing'}');
         print('  - Number of images: ${processedImages.length}');
-        
+
         // Use multipart form with proper authentication
         response = await api.postWithForm(
           "api/editListing",
           requestData,
           image: processedImages,
-          imageKey: "image[]",
+          imageKey: "gallery",
           headers: {
             'Authorization': 'Bearer $authToken',
             // Remove Content-Type header as it will be set automatically for multipart
           },
           showdialog: true,
         );
-        
+
         // Log response for debugging
         print('📥 Response Status: ${response.statusCode}');
         if (response.statusCode != 200) {
@@ -1186,7 +1190,8 @@ class HomeController extends GetxController {
         }
       } catch (e) {
         print('❌ Error during image upload: $e');
-        errorAlertToast('Failed to upload images. Please check your connection and try again.');
+        errorAlertToast(
+            'Failed to upload images. Please check your connection and try again.');
         return;
       }
     } else {

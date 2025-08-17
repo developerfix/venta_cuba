@@ -44,7 +44,6 @@ class SupabasePushService {
     required String message,
     required String messageType,
     required String chatId,
-    String? fcmToken, // For iOS recipients
   }) async {
     try {
       // Send via platform-specific service
@@ -54,7 +53,6 @@ class SupabasePushService {
         message: message,
         messageType: messageType,
         chatId: chatId,
-        fcmToken: fcmToken,
       );
       
       print('✅ Chat notification sent successfully');

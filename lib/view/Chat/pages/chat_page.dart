@@ -158,16 +158,22 @@ class _ChatPageState extends State<ChatPage> {
   // Initialize listing data for this specific chat
   void _initializeListingData() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      print("🔥 📋 INITIALIZING LISTING DATA");
+      print("🔥 📋 Widget listing ID: ${widget.listingId}");
+      print("🔥 📋 Widget listing name: ${widget.listingName}");
+      print("🔥 📋 Widget listing image: ${widget.listingImage}");
+      
       homeCont.listingModel = null;
       homeCont.update();
 
       if (widget.listingId != null &&
           widget.listingId!.isNotEmpty &&
           widget.listingId != "null") {
-        print("🔥 Fetching listing details for ID: ${widget.listingId}");
+        print("🔥 📋 Fetching listing details for ID: ${widget.listingId}");
         homeCont.getListingDetails(widget.listingId!, showDialog: false);
       } else {
-        print("🔥 No valid listing ID provided: ${widget.listingId}");
+        print("🔥 📋 No valid listing ID provided, using widget data");
+        print("🔥 📋 Fallback data - Name: ${widget.listingName}, Price: ${widget.listingPrice}");
       }
     });
   }
@@ -1065,6 +1071,12 @@ class _ChatPageState extends State<ChatPage> {
           "userDeviceToken": deviceToken,
           "sendToDeviceToken": widget.deviceToken,
           "image": messageType == "image" ? message : null,
+          // Include listing information for database storage
+          "listingId": widget.listingId,
+          "listingName": widget.listingName,
+          "listingImage": widget.listingImage,
+          "listingPrice": widget.listingPrice,
+          "listingLocation": widget.listingLocation,
         };
 
         print("🔥 💬 Sending to Supabase...");
@@ -1208,16 +1220,21 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   String _getListingTitle() {
+    // First try to get from API data
     if (homeCont.listingModel?.title != null &&
         homeCont.listingModel!.title!.isNotEmpty &&
         homeCont.listingModel!.title != "null") {
       return homeCont.listingModel!.title!;
     }
+    
+    // Then try from widget parameters (passed from navigation)
     if (widget.listingName != null &&
         widget.listingName!.isNotEmpty &&
         widget.listingName != "null") {
       return widget.listingName!;
     }
+    
+    // Default fallback - avoid showing "Anuncio"
     return "Listing".tr;
   }
 
@@ -1383,6 +1400,12 @@ class _ChatPageState extends State<ChatPage> {
         "userDeviceToken": deviceToken,
         "sendToDeviceToken": widget.deviceToken,
         "image": imageUrl,
+        // Include listing information for database storage
+        "listingId": widget.listingId,
+        "listingName": widget.listingName,
+        "listingImage": widget.listingImage,
+        "listingPrice": widget.listingPrice,
+        "listingLocation": widget.listingLocation,
       };
 
       await chatCont.sendMessage(id ?? "", chatMessageData);

@@ -30,6 +30,9 @@ class AppConfig {
   // static const String oneSignalAppId = '6efefee8-7382-460d-b6d1-db9d9c0f4e84';
   // static const String oneSignalApiKey = 'os_v2_app_n37p52dtqjda3nwr3oozyd2oqshnsalzoyauivfbavgty6kz4ozrcsdnjw4vza4g2o6nqzl5u4kt7hjiqi4ha27buwptmwu5cg3fgyy';
 
+  // Firebase Cloud Messaging Configuration (for iOS notifications)
+  static const String fcmServerKey = 'AAAA7uKKmBo:APA91bFJ8XUQ9vFzGhXSdqTm7RBOdqR8QJLEyPUNxFkDnPKMZxfgW8HhA6vJ9JQGLxYxMnj_FXYX6PQd7RuP5NyDwVsxKpJ4rGhTqUeR3bKcLmN9zFvX2wQsP1YtA8E_2LvBnMxD';
+
   // Laravel Backend Configuration (keeping existing)
   static const String laravelBaseUrl = 'https://ventacuba.co';
 

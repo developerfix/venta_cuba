@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 import 'package:country_list_pick/support/code_country.dart';
 import 'package:flutter/cupertino.dart';
@@ -23,8 +24,12 @@ import '../view/Chat/Controller/SupabaseChatController.dart';
 // import '../Services/Firebase/firebase_messaging_service.dart';
 import '../Services/RealPush/supabase_push_service.dart';
 import '../Services/RealPush/real_push_service.dart';
+import '../Services/RealPush/platform_push_service.dart';
+// FCM notifications are now handled directly in SupabaseChatController
 import '../Services/Supabase/rls_helper.dart';
+import '../Services/Supabase/supabase_service.dart';
 import '../config/app_config.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 String deviceToken = '';
 
@@ -444,13 +449,43 @@ class AuthController extends GetxController {
 
   Future<void> refreshDeviceToken() async {
     try {
-      // Get Firebase FCM token as device token
-      // Firebase removed for Cuba compatibility
-      // String? fcmToken = await _firebaseMessagingService.getToken();
-      String? fcmToken = 'cuba-friendly-token';
+      String? fcmToken;
+      
+      if (Platform.isIOS) {
+        // Get real FCM token for iOS
+        fcmToken = await PlatformPushService.getFCMToken();
+        if (fcmToken == null) {
+          // Try to get token directly from Firebase
+          try {
+            fcmToken = await FirebaseMessaging.instance.getToken();
+          } catch (e) {
+            print('Error getting FCM token directly: $e');
+          }
+        }
+        print('Refreshed device token (iOS FCM Token): ${fcmToken?.substring(0, 20)}...');
+        
+        // Store FCM token in Supabase for iOS
+        if (fcmToken != null && user?.userId != null) {
+          try {
+            final supabaseService = SupabaseService.instance;
+            await supabaseService.associateTokenWithUser(
+              user!.userId.toString(), 
+              fcmToken, 
+              platform: 'ios'
+            );
+            print('✅ FCM token stored in Supabase for iOS user');
+          } catch (e) {
+            print('❌ Error storing FCM token in Supabase: $e');
+          }
+        }
+      } else {
+        // Use cuba-friendly token for Android (ntfy.sh compatibility)
+        fcmToken = 'cuba-friendly-token';
+        print('Refreshed device token (Android Cuba Token): $fcmToken');
+      }
+      
       if (fcmToken != null) {
         deviceToken = fcmToken;
-        print('Refreshed device token (Firebase FCM Token): $fcmToken');
       }
     } catch (e) {
       print('Error refreshing device token: $e');
@@ -791,7 +826,7 @@ class AuthController extends GetxController {
     fetchAccountType();
     await getuserDetail();
     
-    // Initialize services for Cuba
+    // Initialize services
     try {
       if (user?.userId != null) {
         final userId = user!.userId.toString();
@@ -801,13 +836,26 @@ class AuthController extends GetxController {
         await RLSHelper.setUserContext(userId);
         print('✅ RLS user context set for secure chat access');
         
-        // Initialize push notifications with user ID
-        await RealPushService.initialize(
-          userId: userId,
-          customServerUrl: AppConfig.ntfyServerUrl,
-        );
+        // Initialize push notifications
+        if (Platform.isIOS) {
+          // Initialize FCM service and store token
+          try {
+            // FCM service will be initialized from UI with BuildContext
+            // Token association will happen automatically in FCM.updateTokenOnServer
+            print('🍎 FCM service ready for iOS');
+          } catch (e) {
+            print('❌ Error setting up FCM: $e');
+          }
+        } else {
+          // Initialize Android push service
+          await RealPushService.initialize(
+            userId: userId,
+            customServerUrl: AppConfig.ntfyServerUrl,
+          );
+          print('🤖 Android push service initialized');
+        }
         
-        print('✅ All services initialized successfully for Cuba');
+        print('✅ All services initialized successfully');
       }
     } catch (e) {
       print('❌ Error initializing services: $e');
@@ -841,11 +889,20 @@ class AuthController extends GetxController {
         print('🔥 SupabaseChatController not found on logout: $e');
       }
 
-      // Remove Firebase messaging user ID
-      // Firebase removed for Cuba compatibility
-      // await _firebaseMessagingService.removeUserId();
+      // Clear FCM token from Supabase for iOS
+      if (Platform.isIOS && deviceToken.isNotEmpty && deviceToken != 'cuba-friendly-token') {
+        try {
+          final supabaseService = SupabaseService.instance;
+          await supabaseService.removeDeviceToken(deviceToken);
+          print('🍎 FCM token cleared from Supabase for iOS user');
+        } catch (e) {
+          print('❌ Error clearing FCM token from Supabase: $e');
+        }
+      }
+
+      // Stop push service
       SupabasePushService.stopListening();
-      print('🔥 AuthController: Supabase Push service stopped on logout');
+      print('🔥 AuthController: Push service stopped on logout');
 
       // Clear local device token
       deviceToken = "";

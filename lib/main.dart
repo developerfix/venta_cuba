@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -6,19 +8,30 @@ import 'package:venta_cuba/Controllers/location_controller.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
 import 'package:venta_cuba/Controllers/theme_controller.dart';
 
-// Firebase removed for Cuba compatibility
-// import 'package:firebase_core/firebase_core.dart';
-// import 'package:firebase_messaging/firebase_messaging.dart';
+// Firebase only for iOS notifications
+import 'package:firebase_core/firebase_core.dart';
 import 'package:venta_cuba/Services/Supabase/supabase_service.dart';
 import 'package:venta_cuba/config/app_config.dart';
 import 'package:venta_cuba/languages/languages.dart';
 import 'package:venta_cuba/view/splash%20Screens/white_screen.dart';
 import 'package:venta_cuba/view/Chat/Controller/SupabaseChatController.dart';
 import 'package:venta_cuba/view/constants/theme_config.dart';
+import 'package:venta_cuba/Notification/firebase_messaging.dart';
 
 String? deviceToken;
 
-// Firebase background handler removed for Cuba compatibility
+// Background message handler - MUST be top-level function
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  print('🔥 Background message received: ${message.messageId}');
+  print('🔥 Background message data: ${message.data}');
+  print(
+      '🔥 Background notification: ${message.notification?.title} - ${message.notification?.body}');
+
+  // Show local notification for background messages using existing FCM class
+  await FCM.showBackgroundNotification(message);
+}
 
 Future<void> main() async {
   try {
@@ -27,8 +40,23 @@ Future<void> main() async {
     WidgetsFlutterBinding.ensureInitialized();
     print('🔥 WidgetsFlutterBinding initialized');
 
-    // Initialize Real Push Service instead of Firebase
-    // Note: User ID will be set after login
+    // Initialize Firebase for iOS only (required for FCM)
+    if (Platform.isIOS) {
+      try {
+        await Firebase.initializeApp();
+
+        // Register background message handler
+        FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+        print('✅ Background message handler registered');
+        
+        // FCM service will be initialized later with proper BuildContext
+        print('✅ Firebase initialized for iOS');
+      } catch (e) {
+        print('❌ Error initializing Firebase for iOS: $e');
+      }
+    }
+
+    // Initialize Real Push Service (will initialize after login)
     print('🔥 Real Push Service ready (will initialize after login)');
 
     await SharedPreferences.getInstance();

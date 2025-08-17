@@ -12,8 +12,11 @@
       "WebFetch(domain:nativenotify.com)",
       "Bash(find:*)",
       "Bash(del \"C:\\Users\\DELL\\Downloads\\venta_cuba111\\venta_cuba\\test_push_notifications.bat\")",
-      "Bash(del \"C:\\Users\\DELL\\Downloads\\venta_cuba111\\venta_cuba\\test_push_notifications.sh\")"
+      "Bash(del \"C:\\Users\\DELL\\Downloads\\venta_cuba111\\venta_cuba\\test_push_notifications.sh\")",
+      "Bash(grep:*)",
+      "Bash(rg:*)"
     ],
-    "deny": []
+    "deny": [],
+    "defaultMode": "acceptEdits"
   }
 }

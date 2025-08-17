@@ -102,7 +102,14 @@ class ImageUploadHelper {
         // Compress image if needed
         File? compressed = await compressImage(imageFile);
         if (compressed != null) {
-          processedPaths.add(compressed.path);
+          // Verify the file exists before adding to processed paths
+          if (await compressed.exists()) {
+            print('✅ Processed image exists: ${compressed.path}');
+            print('✅ File size: ${await compressed.length()} bytes');
+            processedPaths.add(compressed.path);
+          } else {
+            print('❌ Processed image file does not exist: ${compressed.path}');
+          }
         }
       } catch (e) {
         print('❌ Error processing image $imagePath: $e');
