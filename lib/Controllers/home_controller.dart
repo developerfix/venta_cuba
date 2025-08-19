@@ -1010,7 +1010,7 @@ class HomeController extends GetxController {
           "api/addListing",
           requestData,
           image: processedImages,
-          imageKey: "gallery",
+          imageKey: "gallery[]",
           headers: {
             'Authorization': 'Bearer $authToken',
             // Remove Content-Type header as it will be set automatically for multipart
@@ -1175,7 +1175,7 @@ class HomeController extends GetxController {
           "api/editListing",
           requestData,
           image: processedImages,
-          imageKey: "gallery",
+          imageKey: "gallery[]",
           headers: {
             'Authorization': 'Bearer $authToken',
             // Remove Content-Type header as it will be set automatically for multipart

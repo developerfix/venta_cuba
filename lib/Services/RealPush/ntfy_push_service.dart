@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import '../Supabase/supabase_service.dart';
 
 /// Ntfy Push Service - Works in Cuba without Firebase
 /// 
@@ -84,11 +85,33 @@ class NtfyPushService {
       // Monitor connectivity changes
       _monitorConnectivity();
       
+      // Store Android platform info in Supabase
+      await _storeAndroidPlatformInfo(userId);
+      
       print('✅ Ntfy push service initialized successfully');
       print('📍 Server: $_ntfyServerUrl');
       print('📍 User topic: $_userTopic');
     } catch (e) {
       print('❌ Error initializing ntfy push service: $e');
+    }
+  }
+  
+  /// Store Android platform information in Supabase
+  static Future<void> _storeAndroidPlatformInfo(String userId) async {
+    try {
+      // Use cuba-friendly-token as a placeholder for Android devices
+      const androidToken = 'cuba-friendly-token';
+      
+      final supabaseService = SupabaseService.instance;
+      await supabaseService.associateTokenWithUser(
+        userId, 
+        androidToken, 
+        platform: 'android'
+      );
+      
+      print('✅ Android platform info stored in Supabase for user: $userId');
+    } catch (e) {
+      print('❌ Error storing Android platform info: $e');
     }
   }
   

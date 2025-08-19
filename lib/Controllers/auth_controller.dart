@@ -20,7 +20,7 @@ import '../view/Navigation bar/navigation_bar.dart';
 import '../view/auth/login.dart';
 import 'package:http/http.dart' as http;
 import '../view/Chat/Controller/SupabaseChatController.dart';
-// Firebase removed for Cuba compatibility 
+// Firebase removed for Cuba compatibility
 // import '../Services/Firebase/firebase_messaging_service.dart';
 import '../Services/RealPush/supabase_push_service.dart';
 import '../Services/RealPush/real_push_service.dart';
@@ -267,29 +267,33 @@ class AuthController extends GetxController {
         try {
           print('🔥 AuthController: Setting user online...');
           final chatCont = Get.put(SupabaseChatController());
-          
+
           // Add timeout to prevent hanging
           await chatCont.setUserOnline(user!.userId.toString()).timeout(
             const Duration(seconds: 10),
             onTimeout: () {
-              print('🔥 AuthController: setUserOnline timed out, continuing...');
+              print(
+                  '🔥 AuthController: setUserOnline timed out, continuing...');
             },
           );
 
           // Set RLS user context for secure Supabase access
           await RLSHelper.setUserContext(user!.userId.toString());
-          print('🔥 AuthController: RLS user context set for user: ${user!.userId}');
+          print(
+              '🔥 AuthController: RLS user context set for user: ${user!.userId}');
 
           // Initialize Supabase Push Service for this user
           await SupabasePushService.initialize(user!.userId.toString());
-          print('🔥 AuthController: Supabase Push Service initialized for user: ${user!.userId}');
+          print(
+              '🔥 AuthController: Supabase Push Service initialized for user: ${user!.userId}');
 
           // Device token is now handled by Firebase messaging service
           Future.delayed(Duration(seconds: 2), () async {
             try {
               print('🔥 Firebase messaging user association completed');
             } catch (e) {
-              print('🔥 AuthController: Error with Firebase messaging setup: $e');
+              print(
+                  '🔥 AuthController: Error with Firebase messaging setup: $e');
             }
           });
         } catch (e) {
@@ -305,7 +309,7 @@ class AuthController extends GetxController {
         print('🔥 AuthController: Starting chat services...');
         final chatCont = Get.put(SupabaseChatController());
         chatCont.startListeningForChatUpdates();
-        
+
         // Add timeout for unread message indicators
         await chatCont.updateUnreadMessageIndicators().timeout(
           const Duration(seconds: 5),
@@ -450,7 +454,7 @@ class AuthController extends GetxController {
   Future<void> refreshDeviceToken() async {
     try {
       String? fcmToken;
-      
+
       if (Platform.isIOS) {
         // Get real FCM token for iOS
         fcmToken = await PlatformPushService.getFCMToken();
@@ -462,17 +466,16 @@ class AuthController extends GetxController {
             print('Error getting FCM token directly: $e');
           }
         }
-        print('Refreshed device token (iOS FCM Token): ${fcmToken?.substring(0, 20)}...');
-        
+        print(
+            'Refreshed device token (iOS FCM Token): ${fcmToken?.substring(0, 20)}...');
+
         // Store FCM token in Supabase for iOS
         if (fcmToken != null && user?.userId != null) {
           try {
             final supabaseService = SupabaseService.instance;
             await supabaseService.associateTokenWithUser(
-              user!.userId.toString(), 
-              fcmToken, 
-              platform: 'ios'
-            );
+                user!.userId.toString(), fcmToken,
+                platform: 'ios');
             print('✅ FCM token stored in Supabase for iOS user');
           } catch (e) {
             print('❌ Error storing FCM token in Supabase: $e');
@@ -482,8 +485,21 @@ class AuthController extends GetxController {
         // Use cuba-friendly token for Android (ntfy.sh compatibility)
         fcmToken = 'cuba-friendly-token';
         print('Refreshed device token (Android Cuba Token): $fcmToken');
+
+        // Store Android platform info in Supabase
+        if (user?.userId != null) {
+          try {
+            final supabaseService = SupabaseService.instance;
+            await supabaseService.associateTokenWithUser(
+                user!.userId.toString(), fcmToken,
+                platform: 'android');
+            print('✅ Android platform info stored in Supabase');
+          } catch (e) {
+            print('❌ Error storing Android platform info: $e');
+          }
+        }
       }
-      
+
       if (fcmToken != null) {
         deviceToken = fcmToken;
       }
@@ -715,10 +731,11 @@ class AuthController extends GetxController {
       if (user?.userId != null) {
         final chatController = Get.find<SupabaseChatController>();
         await chatController.setUserOffline(user!.userId.toString());
-        
+
         // Stop push notification service
         SupabasePushService.stopListening();
-        print('🔥 AuthController: Supabase Push service stopped for offline user');
+        print(
+            '🔥 AuthController: Supabase Push service stopped for offline user');
       }
     } catch (e) {
       print('🔥 Error setting user offline: $e');
@@ -825,17 +842,17 @@ class AuthController extends GetxController {
     changeAccountType();
     fetchAccountType();
     await getuserDetail();
-    
+
     // Initialize services
     try {
       if (user?.userId != null) {
         final userId = user!.userId.toString();
         print('🚀 Initializing services for user: $userId');
-        
+
         // Set RLS user context for secure Supabase access
         await RLSHelper.setUserContext(userId);
         print('✅ RLS user context set for secure chat access');
-        
+
         // Initialize push notifications
         if (Platform.isIOS) {
           // Initialize FCM service and store token
@@ -854,14 +871,14 @@ class AuthController extends GetxController {
           );
           print('🤖 Android push service initialized');
         }
-        
+
         print('✅ All services initialized successfully');
       }
     } catch (e) {
       print('❌ Error initializing services: $e');
       // Don't block login if services fail
     }
-    
+
     update();
     Get.offAll(Navigation_Bar());
   }
@@ -890,7 +907,9 @@ class AuthController extends GetxController {
       }
 
       // Clear FCM token from Supabase for iOS
-      if (Platform.isIOS && deviceToken.isNotEmpty && deviceToken != 'cuba-friendly-token') {
+      if (Platform.isIOS &&
+          deviceToken.isNotEmpty &&
+          deviceToken != 'cuba-friendly-token') {
         try {
           final supabaseService = SupabaseService.instance;
           await supabaseService.removeDeviceToken(deviceToken);
@@ -983,7 +1002,7 @@ class AuthController extends GetxController {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       prefs.remove('token');
       prefs.remove('user_data');
-      
+
       // Clear RLS user context for security
       try {
         await RLSHelper.clearUserContext();
@@ -991,7 +1010,7 @@ class AuthController extends GetxController {
       } catch (e) {
         print('⚠️ Error clearing RLS context on deletion: $e');
       }
-      
+
       Get.offAll(() => const Login());
     } else {
       errorAlertToast('Something went wrong\nPlease try again!'.tr);
