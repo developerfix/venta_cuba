@@ -287,9 +287,18 @@ class AuthController extends GetxController {
           print(
               '🔥 AuthController: Supabase Push Service initialized for user: ${user!.userId}');
 
-          // Device token is now handled by Firebase messaging service
+          // Save device token to Supabase after user data is loaded
           Future.delayed(Duration(seconds: 2), () async {
             try {
+              if (deviceToken.isNotEmpty && user?.userId != null) {
+                final supabaseService = SupabaseService.instance;
+                String platform = Platform.isIOS ? 'ios' : 'android';
+                await supabaseService.associateTokenWithUser(
+                    user!.userId.toString(), deviceToken,
+                    platform: platform);
+                print(
+                    '✅ Device token saved to Supabase after login for $platform');
+              }
               print('🔥 Firebase messaging user association completed');
             } catch (e) {
               print(

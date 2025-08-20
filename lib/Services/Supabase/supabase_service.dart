@@ -3,21 +3,22 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class SupabaseService {
   static SupabaseClient? _client;
   static SupabaseService? _instance;
-  
+
   static SupabaseService get instance {
     _instance ??= SupabaseService._internal();
     return _instance!;
   }
-  
+
   SupabaseService._internal();
-  
+
   static SupabaseClient get client {
     if (_client == null) {
-      throw Exception('Supabase not initialized. Call SupabaseService.initialize() first.');
+      throw Exception(
+          'Supabase not initialized. Call SupabaseService.initialize() first.');
     }
     return _client!;
   }
-  
+
   static Future<void> initialize({
     required String url,
     required String anonKey,
@@ -38,10 +39,10 @@ class SupabaseService {
           retryAttempts: 3,
         ),
       );
-      
+
       _client = Supabase.instance.client;
       print('✅ Supabase initialized successfully');
-      
+
       // Create tables if they don't exist (run this once in Supabase SQL editor)
       await _createTablesIfNeeded();
     } catch (e) {
@@ -49,13 +50,14 @@ class SupabaseService {
       rethrow;
     }
   }
-  
+
   // SQL to create tables in Supabase (run this in Supabase SQL editor)
   static Future<void> _createTablesIfNeeded() async {
     // This SQL should be run in Supabase SQL editor, not from the app
     // Note: This is documentation only - the SQL is not executed from the app
-    print('📝 Tables structure defined. Please run the SQL in Supabase SQL editor.');
-    
+    print(
+        '📝 Tables structure defined. Please run the SQL in Supabase SQL editor.');
+
     /*
     const String createTableSQL = '''
     -- Enable UUID extension
@@ -110,7 +112,7 @@ class SupabaseService {
       is_active BOOLEAN DEFAULT true,
       created_at TIMESTAMPTZ DEFAULT NOW(),
       updated_at TIMESTAMPTZ DEFAULT NOW(),
-      UNIQUE(device_token)
+      UNIQUE(user_id, device_token)
     );
     
     -- Create indexes for better performance
@@ -143,7 +145,7 @@ class SupabaseService {
     ''';
     */
   }
-  
+
   // Helper method to handle Supabase errors
   static String getErrorMessage(dynamic error) {
     if (error is PostgrestException) {
@@ -156,22 +158,20 @@ class SupabaseService {
       return error.toString();
     }
   }
-  
+
   // Device Token Management Methods
-  
+
   /// Save device token to Supabase
-  Future<bool> saveDeviceToken(String deviceToken, {String platform = 'android'}) async {
+  Future<bool> saveDeviceToken(String deviceToken,
+      {String platform = 'android'}) async {
     try {
-      await client
-          .from('device_tokens')
-          .upsert({
-            'device_token': deviceToken,
-            'platform': platform,
-            'is_active': true,
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .select();
-          
+      await client.from('device_tokens').upsert({
+        'device_token': deviceToken,
+        'platform': platform,
+        'is_active': true,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).select();
+
       print('✅ Device token saved: $deviceToken');
       return true;
     } catch (e) {
@@ -179,21 +179,20 @@ class SupabaseService {
       return false;
     }
   }
-  
+
   /// Associate device token with a user
-  Future<bool> associateTokenWithUser(String userId, String deviceToken, {String platform = 'android'}) async {
+  Future<bool> associateTokenWithUser(String userId, String deviceToken,
+      {String platform = 'android'}) async {
     try {
-      await client
-          .from('device_tokens')
-          .upsert({
-            'user_id': userId,
-            'device_token': deviceToken,
-            'platform': platform,
-            'is_active': true,
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .select();
-          
+      // Use upsert with composite key (user_id, device_token)
+      await client.from('device_tokens').upsert({
+        'user_id': userId,
+        'device_token': deviceToken,
+        'platform': platform,
+        'is_active': true,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).select();
+
       print('✅ Device token associated with user: $userId');
       return true;
     } catch (e) {
@@ -201,7 +200,7 @@ class SupabaseService {
       return false;
     }
   }
-  
+
   /// Get device tokens for a specific user
   Future<List<String>> getUserDeviceTokens(String userId) async {
     try {
@@ -210,11 +209,11 @@ class SupabaseService {
           .select('device_token')
           .eq('user_id', userId)
           .eq('is_active', true);
-          
+
       final tokens = (response as List)
           .map((item) => item['device_token'] as String)
           .toList();
-          
+
       print('✅ Retrieved ${tokens.length} device tokens for user: $userId');
       return tokens;
     } catch (e) {
@@ -233,13 +232,14 @@ class SupabaseService {
           .eq('is_active', true)
           .order('updated_at', ascending: false)
           .limit(1);
-          
+
       if (response.isNotEmpty) {
         final token = response[0]['device_token'] as String;
-        print('✅ Retrieved device token for user $userId: ${token.substring(0, 20)}...');
+        print(
+            '✅ Retrieved device token for user $userId: ${token.substring(0, 20)}...');
         return token;
       }
-      
+
       print('⚠️ No device token found for user: $userId');
       return null;
     } catch (e) {
@@ -247,15 +247,14 @@ class SupabaseService {
       return null;
     }
   }
-  
+
   /// Remove device token
   Future<bool> removeDeviceToken(String deviceToken) async {
     try {
       await client
           .from('device_tokens')
-          .update({'is_active': false})
-          .eq('device_token', deviceToken);
-          
+          .update({'is_active': false}).eq('device_token', deviceToken);
+
       print('✅ Device token removed: $deviceToken');
       return true;
     } catch (e) {
@@ -263,15 +262,14 @@ class SupabaseService {
       return false;
     }
   }
-  
+
   /// Remove all device tokens for a user
   Future<bool> removeUserDeviceTokens(String userId) async {
     try {
       await client
           .from('device_tokens')
-          .update({'is_active': false})
-          .eq('user_id', userId);
-          
+          .update({'is_active': false}).eq('user_id', userId);
+
       print('✅ All device tokens removed for user: $userId');
       return true;
     } catch (e) {
@@ -279,7 +277,7 @@ class SupabaseService {
       return false;
     }
   }
-  
+
   /// Get user's platform based on their device tokens
   Future<String?> getUserPlatform(String userId) async {
     try {
@@ -290,13 +288,13 @@ class SupabaseService {
           .eq('is_active', true)
           .order('updated_at', ascending: false)
           .limit(1);
-          
+
       if (response.isNotEmpty) {
         final platform = response[0]['platform'] as String;
         print('✅ Retrieved platform for user $userId: $platform');
         return platform;
       }
-      
+
       print('⚠️ No platform found for user: $userId');
       return null;
     } catch (e) {
@@ -315,12 +313,12 @@ class SupabaseService {
     try {
       // Get user's device tokens
       final tokens = await getUserDeviceTokens(userId);
-      
+
       if (tokens.isEmpty) {
         print('⚠️ No device tokens found for user: $userId');
         return false;
       }
-      
+
       // In a real implementation, you would call your backend API
       // that uses Firebase Admin SDK to send notifications
       // For now, we'll just log the notification details
@@ -329,11 +327,11 @@ class SupabaseService {
       print('Body: $body');
       print('Data: $data');
       print('Tokens: $tokens');
-      
+
       // You would implement server-side Firebase push notification here
       // Example backend endpoint: POST /api/send-notification
       // Body: { tokens, title, body, data }
-      
+
       return true;
     } catch (e) {
       print('❌ Error sending push notification: $e');
