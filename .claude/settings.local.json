@@ -14,7 +14,11 @@
       "Bash(del \"C:\\Users\\DELL\\Downloads\\venta_cuba111\\venta_cuba\\test_push_notifications.bat\")",
       "Bash(del \"C:\\Users\\DELL\\Downloads\\venta_cuba111\\venta_cuba\\test_push_notifications.sh\")",
       "Bash(grep:*)",
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "Bash(pod install:*)",
+      "Bash(pod repo update:*)",
+      "Bash(pod update:*)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
