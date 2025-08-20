@@ -500,16 +500,13 @@ class SupabaseChatController extends GetxController {
       final chatIdForNotification = chatMessageData['chatId'] ?? '';
       print('💬 🔴 Sending notification with chatId: "$chatIdForNotification"');
       
-      // Check if recipient is on iOS (by checking their device token)
+      // Get recipient's platform from database instead of checking sender's platform
       final supabaseService = SupabaseService.instance;
-      final tokens = await supabaseService.getUserDeviceTokens(sendToId);
+      final recipientPlatform = await supabaseService.getUserPlatform(sendToId);
       
-      // Check if any token is an iOS FCM token (longer than 100 chars)
-      bool hasIOSDevice = tokens.any((token) => 
-        token.length > 100 && !token.contains('cuba-friendly-token')
-      );
+      print('💬 🔍 Recipient $sendToId platform: $recipientPlatform');
       
-      if (Platform.isIOS || hasIOSDevice) {
+      if (recipientPlatform == 'ios') {
         // Use FCM service for iOS recipients
         print('🍎 Sending iOS FCM notification');
         
@@ -533,8 +530,9 @@ class SupabaseChatController extends GetxController {
         } else {
           print('⚠️ No device token found for recipient: $sendToId');
         }
-      } else {
-        // Use regular push service for Android
+      } else if (recipientPlatform == 'android') {
+        // Use ntfy service for Android recipients
+        print('🤖 Sending Android ntfy notification');
         await SupabasePushService.sendChatNotification(
           recipientUserId: sendToId,
           senderName: chatMessageData['senderName'] ?? 'New Message'.tr,
@@ -542,6 +540,45 @@ class SupabaseChatController extends GetxController {
           messageType: chatMessageData['messageType'] ?? 'text',
           chatId: chatIdForNotification,
         );
+      } else {
+        // Fallback: Try to determine platform from device token if platform info is missing
+        print('⚠️ Platform unknown for recipient $sendToId, trying fallback detection');
+        final tokens = await supabaseService.getUserDeviceTokens(sendToId);
+        
+        // Check if any token is an iOS FCM token (longer than 100 chars)
+        bool hasIOSDevice = tokens.any((token) => 
+          token.length > 100 && !token.contains('cuba-friendly-token')
+        );
+        
+        if (hasIOSDevice) {
+          print('🍎 Fallback: Detected iOS device, using FCM');
+          final recipientToken = await supabaseService.getDeviceToken(sendToId);
+          
+          if (recipientToken != null && recipientToken.isNotEmpty) {
+            final fcmService = FCM();
+            await fcmService.sendNotificationFCM(
+              userId: sendToId,
+              remoteId: senderId,
+              name: chatMessageData['senderName'] ?? 'New Message'.tr,
+              deviceToken: recipientToken,
+              title: chatMessageData['senderName'] ?? 'New Message'.tr,
+              body: _formatMessageBody(
+                chatMessageData['message'] ?? 'New message'.tr,
+                chatMessageData['messageType'] ?? 'text'
+              ),
+              type: 'message',
+            );
+          }
+        } else {
+          print('🤖 Fallback: Assuming Android device, using ntfy');
+          await SupabasePushService.sendChatNotification(
+            recipientUserId: sendToId,
+            senderName: chatMessageData['senderName'] ?? 'New Message'.tr,
+            message: chatMessageData['message'] ?? 'New message'.tr,
+            messageType: chatMessageData['messageType'] ?? 'text',
+            chatId: chatIdForNotification,
+          );
+        }
       }
 
       print('💬 ✅ Push notification sent to user: $sendToId');

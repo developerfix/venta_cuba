@@ -8,7 +8,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:venta_cuba/Controllers/home_controller.dart';
 import '../../Controllers/location_controller.dart';
 import '../Chat/custom_text.dart';
-import '../Navigation bar/navigation_bar.dart';
 import 'package:http/http.dart' as http;
 
 class SearchPlacesScreen extends StatefulWidget {
@@ -33,197 +32,244 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
 
   double zoomLevel = 7.19;
 
+  // final Mode _mode = Mode.overlay;
+
   @override
   void initState() {
+    // TODO: implement initState
     initialCameraPosition = CameraPosition(
         target: LatLng(locationCont.lat!, locationCont.lng!), zoom: 14.0);
+    //   markOnCurrentLocation();
     super.initState();
   }
 
   bool isOnMap = false;
 
-  // Test Google Services availability (for professional error handling)
-  Future<Map<String, bool>> _testGoogleServices() async {
-    Map<String, bool> results = {
-      'places': false,
-      'geocoding': false,
-    };
-
-    try {
-      // Test Places API
-      final placesTest = await http.get(
-        Uri.parse(
-            'https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=23.1136,-82.3666&radius=1000&key=$kGoogleApiKey'),
-      );
-      results['places'] = placesTest.statusCode == 200;
-
-      // Test Geocoding API
-      final geocodingTest = await http.get(
-        Uri.parse(
-            'https://maps.googleapis.com/maps/api/geocode/json?latlng=23.1136,-82.3666&key=$kGoogleApiKey'),
-      );
-      results['geocoding'] = geocodingTest.statusCode == 200;
-    } catch (e) {
-      // Silent fail - services might be blocked
-    }
-
-    return results;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: InkWell(
-            onTap: () {
-              Get.back();
-            },
-            child: Icon(Icons.arrow_back_ios_new)),
-        title: Text("Select Location".tr),
-      ),
-      body: Stack(
-        children: [
-          GetBuilder<LocationController>(
-            builder: (cont) {
+      key: homeScaffoldKey,
+      body: SelectionArea(
+        child: Stack(
+          alignment: Alignment.bottomCenter,
+          children: [
+            GetBuilder<LocationController>(builder: (cont) {
               return GoogleMap(
-                  mapType: MapType.normal,
-                  initialCameraPosition: initialCameraPosition,
-                  onMapCreated: (GoogleMapController controller) {
-                    cont.googleMapController = controller;
-                    markOnCurrentLocation();
-                  },
-                  markers: markersList);
-            },
-          ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 20.w),
-              decoration: BoxDecoration(
-                color: Theme.of(context).scaffoldBackgroundColor,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: Offset(0, -5),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(height: 10.h),
-                  // Location display
-                  Container(
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: Theme.of(context).dividerColor.withOpacity(0.3),
-                      ),
-                    ),
-                    child: Row(
+                myLocationButtonEnabled: false,
+                zoomControlsEnabled: false,
+                zoomGesturesEnabled: false,
+                initialCameraPosition: initialCameraPosition,
+                //markers: markersList,
+                mapType: MapType.normal,
+                onMapCreated: (GoogleMapController controller) {
+                  cont.googleMapController = controller;
+                },
+                onTap: (value) {
+                  isOnMap = true;
+                  print("Good");
+                },
+                onLongPress: (value) {
+                  isOnMap = true;
+                  print("Bad");
+                },
+                onCameraMove: (value) {
+                  if (isOnMap) {
+                    locationCont.lat = value.target.latitude;
+                    locationCont.lng = value.target.longitude;
+                    homeCont.lat = locationCont.lat.toString();
+                    homeCont.lng = locationCont.lng.toString();
+                    Timer(Duration(seconds: 1), () {
+                      locationCont.getAddressFromLatLngOnly(
+                          value.target.latitude, value.target.longitude);
+                    });
+                  }
+                },
+              );
+            }),
+            Positioned(
+              top: 40..h,
+              child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20.w),
+                  child: GetBuilder<LocationController>(builder: (cont) {
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Icon(Icons.location_on,
-                            color: Color(0xFF0254B8), size: 20),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: GetBuilder<LocationController>(
-                            builder: (cont) {
-                              return Text(
-                                cont.address.isNotEmpty
-                                    ? cont.address
-                                    : "Fetching location...".tr,
-                                style: TextStyle(fontSize: 14),
-                                overflow: TextOverflow.ellipsis,
-                              );
+                        Container(
+                          height: 50,
+                          width: 50,
+                          padding: EdgeInsets.only(left: 10),
+                          decoration: BoxDecoration(
+                              color: Colors.white, shape: BoxShape.circle),
+                          child: IconButton(
+                            onPressed: () {
+                              Get.back();
                             },
+                            icon: const Icon(Icons.arrow_back_ios),
                           ),
                         ),
+                        SizedBox(
+                          width: 10.w,
+                        ),
+                        SizedBox(width: 230, child: Text(cont.address)),
+                        SizedBox(
+                          width: 10.w,
+                        ),
+                        Container(
+                          height: 50,
+                          width: 50,
+                          // decoration: BoxDecoration(
+                          //     color: Colors.white, shape: BoxShape.circle),
+                          // child: IconButton(
+                          //   onPressed: () {
+                          //     _handlePressButton();
+                          //   },
+                          //   icon: const Icon(Icons.search_outlined),
+                          // ),
+                        ),
                       ],
+                    );
+                  })),
+            ),
+            // Positioned(
+            //   top: 40..h,
+            //   right: 20..w,
+            //   child: Container(
+            //     height: 50,
+            //     width: 50,
+            //     decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+            //     child: IconButton(
+            //       onPressed: () {
+            //         _handlePressButton();
+            //       },
+            //       icon: const Icon(Icons.search_outlined),
+            //     ),
+            //   ),
+            // ),
+            // Positioned(
+            //   top: 40..h,
+            //   left: 20..w,
+            //   child: Container(
+            //     height: 50,
+            //     width: 50,
+            //     padding: EdgeInsets.only(left: 10),
+            //     decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+            //     child: IconButton(
+            //       onPressed: () {
+            //         Get.back();
+            //       },
+            //       icon: const Icon(Icons.arrow_back_ios),
+            //     ),
+            //   ),
+            // ),
+            Visibility(
+              visible: widget.isShowRadius,
+              child: GetBuilder<HomeController>(
+                builder: (cont) {
+                  return Center(
+                    child: Container(
+                      height: 300,
+                      width: 300,
+                      decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: const Color(0xFF0254B8))),
+                      child: Icon(
+                        Icons.location_on,
+                        color: Colors.red,
+                        size: 50,
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 10.h),
-                  // Radius selector (if enabled)
+                  );
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
                   Visibility(
                     visible: widget.isShowRadius,
                     child: GetBuilder<HomeController>(
                       builder: (cont) {
                         return Container(
-                          padding: EdgeInsets.all(12),
+                          height: 90.h,
+                          // width: 300.w,
                           decoration: BoxDecoration(
-                            color: Theme.of(context).cardColor,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: Theme.of(context)
-                                  .dividerColor
-                                  .withOpacity(0.3),
+                            color: Colors.white,
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(10),
+                              topRight: Radius.circular(10),
                             ),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    "Search Radius".tr,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  Text(
-                                    "${cont.radius.toStringAsFixed(0)} miles",
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF0254B8),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: 8),
-                              SliderTheme(
-                                data: SliderTheme.of(context).copyWith(
-                                  activeTrackColor: const Color(0xFF0254B8),
-                                  inactiveTrackColor: Colors.grey[300],
-                                  thumbColor: const Color(0xFF0254B8),
-                                  thumbShape: CircleThumbShape(thumbRadius: 10),
-                                  overlayShape: RoundSliderOverlayShape(
-                                      overlayRadius: 20),
-                                  overlayColor:
-                                      const Color(0xFF0254B8).withOpacity(0.2),
+                          child: Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: Column(
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text("Search Range".tr),
+                                    Container(
+                                      height: 20.h,
+                                      width: 100.w,
+                                      decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(5),
+                                          border: Border.all(
+                                              color: Colors.black26)),
+                                      child: Padding(
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal: 5.w),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text("${cont.radius.toInt()}"),
+                                            Text(
+                                              "Km",
+                                              style: TextStyle(
+                                                  color: Colors.black26),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    )
+                                  ],
                                 ),
-                                child: Slider(
-                                  value: cont.radius,
-                                  min: 1,
-                                  max: 500,
-                                  divisions: 499,
-                                  onChanged: (value) {
-                                    isOnMap = false;
-                                    cont.radius = value;
-                                    cont.update();
-                                    updateRadius(
-                                      LatLng(
-                                          locationCont.lat!, locationCont.lng!),
-                                      value,
-                                    );
-                                  },
-                                ),
-                              ),
-                            ],
+                                SliderTheme(
+                                    data: SliderTheme.of(context).copyWith(
+                                      activeTrackColor: Colors.white,
+                                      thumbColor: Colors.white,
+                                      overlayColor: Color(0x29eb1555),
+                                      thumbShape: CircleThumbShape(),
+                                      overlayShape: RoundSliderOverlayShape(
+                                          overlayRadius: 20.0),
+                                    ),
+                                    child: Slider(
+                                        min: 1,
+                                        max: 500,
+                                        value: cont.radius,
+                                        activeColor: const Color(0xFF0254B8),
+                                        divisions: 499,
+                                        onChanged: (value) {
+                                          isOnMap = false;
+                                          print(
+                                              ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>$isOnMap");
+                                          cont.radius = value;
+                                          cont.update();
+                                          updateRadius(
+                                              LatLng(locationCont.lat!,
+                                                  locationCont.lng!),
+                                              value);
+                                        }))
+                              ],
+                            ),
                           ),
                         );
                       },
                     ),
                   ),
-                  SizedBox(height: 10.h),
-                  // Set Location button
                   GetBuilder<HomeController>(
                     builder: (cont) {
                       return InkWell(
@@ -243,19 +289,15 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
                               await sharedPreferences.setString(
                                   "saveRadius", cont.radius.toString());
                               homeCont.addressCont.text = locationCont.address;
-                              // Navigate to homepage
-                              Get.offAll(() => Navigation_Bar());
+                              Get.close(2);
                             } else {
                               Get.back();
                             }
                           } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content:
-                                    Text('Please select a location first'.tr),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
+                            ScaffoldMessenger.of(context)
+                                .showSnackBar(const SnackBar(
+                              content: Text('Select Place first.'),
+                            ));
                           }
                         },
                         child: Container(
@@ -263,58 +305,31 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
                           width: double.infinity,
                           decoration: BoxDecoration(
                             color: const Color(0xFF0254B8),
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: widget.isShowRadius
+                                ? BorderRadius.only(
+                                    bottomLeft: Radius.circular(10),
+                                    bottomRight: Radius.circular(10),
+                                  )
+                                : BorderRadius.circular(10),
                           ),
                           child: Center(
                             child: CustomText(
                               text: "Set Location".tr,
                               fontColor: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
                       );
                     },
                   ),
-                  SizedBox(height: 20.h),
+                  SizedBox(height: 40..h)
                 ],
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
-  }
-
-  void markOnCurrentLocation() async {
-    // Wait a bit for the map to be ready
-    await Future.delayed(Duration(milliseconds: 500));
-
-    if (locationCont.lat != null && locationCont.lng != null) {
-      markersList.add(
-        Marker(
-          markerId: MarkerId("selected_location"),
-          position: LatLng(locationCont.lat!, locationCont.lng!),
-          infoWindow: InfoWindow(
-            title: "Selected Location".tr,
-            snippet: locationCont.address,
-          ),
-        ),
-      );
-
-      // Move camera to the selected location
-      locationCont.googleMapController.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(
-            target: LatLng(locationCont.lat!, locationCont.lng!),
-            zoom: 14.0,
-          ),
-        ),
-      );
-
-      setState(() {});
-    }
   }
 
   updateRadius(LatLng latLng, double radiusInMiles) {
@@ -337,7 +352,7 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
   }
 }
 
-// Custom thumb shape for the slider
+//
 class CircleThumbShape extends SliderComponentShape {
   final double thumbRadius;
 
@@ -351,6 +366,7 @@ class CircleThumbShape extends SliderComponentShape {
   }
 
   @override
+  @override
   void paint(
     PaintingContext context,
     Offset center, {
@@ -360,11 +376,14 @@ class CircleThumbShape extends SliderComponentShape {
     required TextPainter labelPainter,
     required RenderBox parentBox,
     required Size sizeWithOverflow,
+    /*The missing link*/
     required double textScaleFactor,
+    /*And the missing link I missed*/
     required SliderThemeData sliderTheme,
     required TextDirection textDirection,
     required double value,
   }) {
+    // We need to draw the thumb here
     final Canvas canvas = context.canvas;
 
     final fillPaint = Paint()

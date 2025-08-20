@@ -11,8 +11,6 @@
       "Bash(./gradlew:*)",
       "WebFetch(domain:nativenotify.com)",
       "Bash(find:*)",
-      "Bash(del \"C:\\Users\\DELL\\Downloads\\venta_cuba111\\venta_cuba\\test_push_notifications.bat\")",
-      "Bash(del \"C:\\Users\\DELL\\Downloads\\venta_cuba111\\venta_cuba\\test_push_notifications.sh\")",
       "Bash(grep:*)",
       "Bash(rg:*)",
       "Bash(pod install:*)",

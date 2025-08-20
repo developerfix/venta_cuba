@@ -280,6 +280,31 @@ class SupabaseService {
     }
   }
   
+  /// Get user's platform based on their device tokens
+  Future<String?> getUserPlatform(String userId) async {
+    try {
+      final response = await client
+          .from('device_tokens')
+          .select('platform')
+          .eq('user_id', userId)
+          .eq('is_active', true)
+          .order('updated_at', ascending: false)
+          .limit(1);
+          
+      if (response.isNotEmpty) {
+        final platform = response[0]['platform'] as String;
+        print('✅ Retrieved platform for user $userId: $platform');
+        return platform;
+      }
+      
+      print('⚠️ No platform found for user: $userId');
+      return null;
+    } catch (e) {
+      print('❌ Error getting platform for user $userId: $e');
+      return null;
+    }
+  }
+
   /// Send push notification via Firebase (server-side implementation needed)
   Future<bool> sendPushNotification({
     required String userId,
