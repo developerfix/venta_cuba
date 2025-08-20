@@ -24,9 +24,8 @@ class ListingView extends StatelessWidget {
     return GetBuilder<HomeController>(
       init: homeCont,
       builder: (cont) {
-        // Make a copy and shuffle it
-        // final shuffledList = List.from(cont.listingModelList)..shuffle();
-        final shuffledList = cont.listingModelList; // Use original list
+        // Use the already shuffled list from controller
+        final shuffledList = cont.listingModelList;
 
         return GridView.builder(
           itemCount: shuffledList.length + 1,

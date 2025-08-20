@@ -98,6 +98,10 @@ class HomeController extends GetxController {
   RxBool loadingCategory = false.obs;
   RxBool loadingSubCategory = false.obs;
   RxBool loadingSubSubCategory = false.obs;
+  
+  // Randomization control
+  RxBool hasShuffledThisSession = false.obs;
+  bool shouldShuffleOnLocationChange = false;
   SelectedCategoryModel? selectedCategoryModel;
   ctg.Data? selectedCategory;
   sub.Data? selectedSubCategory;
@@ -156,10 +160,65 @@ class HomeController extends GetxController {
   RxBool shouldFetchData =
       false.obs; // Flag to determine if data should be fetched
 
+  // Method to shuffle listings for new login sessions only
+  Future<void> shuffleListingsOnLogin() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String currentSessionId = prefs.getString('current_session_id') ?? '';
+      
+      // Generate new session id if none exists or if it's a fresh login
+      if (currentSessionId.isEmpty || !hasShuffledThisSession.value) {
+        String newSessionId = DateTime.now().millisecondsSinceEpoch.toString();
+        await prefs.setString('current_session_id', newSessionId);
+        
+        if (listingModelList.isNotEmpty) {
+          listingModelList.shuffle();
+          hasShuffledThisSession.value = true;
+          update();
+          Get.log("📝 Listings shuffled for new session: $newSessionId");
+        }
+      } else {
+        Get.log("📝 Shuffle skipped - same session or list is empty");
+      }
+    } catch (e) {
+      Get.log("📝 Error in shuffleListingsOnLogin: $e");
+    }
+  }
+
+  // Method to shuffle listings when location changes
+  void shuffleListingsOnLocationChange() {
+    if (listingModelList.isNotEmpty) {
+      listingModelList.shuffle();
+      update();
+      Get.log("📝 Listings shuffled due to location change");
+    } else {
+      Get.log("📝 Location shuffle skipped - list is empty");
+    }
+  }
+
+  // Method to force shuffle after location change - called directly from UI
+  void forceShuffleAfterLocationChange() {
+    shouldShuffleOnLocationChange = true;
+  }
+
+  // Method to reset shuffle flag and session (called on logout/app restart)
+  Future<void> resetShuffleSession() async {
+    try {
+      hasShuffledThisSession.value = false;
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.remove('current_session_id');
+      Get.log("📝 Shuffle session reset for next login");
+    } catch (e) {
+      Get.log("📝 Error resetting shuffle session: $e");
+    }
+  }
+
   @override
   void onInit() {
     super.onInit();
     fetchAccountType();
+    // Reset shuffle session on app start (fresh app launch)
+    resetShuffleSession();
   }
 
   @override
@@ -182,7 +241,13 @@ class HomeController extends GetxController {
   Future<void> homeData() async {
     try {
       await loadLastLocationAndRadius();
-      if (hasLocationOrRadiusChanged() || listingModelList.isEmpty) {
+      bool locationChanged = hasLocationOrRadiusChanged();
+      
+      if (locationChanged || listingModelList.isEmpty) {
+        // Set flag to shuffle on location change
+        if (locationChanged) {
+          shouldShuffleOnLocationChange = true;
+        }
         loadingHome = true.obs;
         scrollsController.addListener(onScroll);
         searchScrollController.addListener(onScrollSearch);
@@ -269,6 +334,19 @@ class HomeController extends GetxController {
           Get.log("After category filtering: ${newListings.length} items");
 
           listingModelList.addAll(newListings);
+          
+          // Shuffle listings on first load 
+          if (currentPage.value == 1) {
+            if (shouldShuffleOnLocationChange) {
+              // Always shuffle when location changes
+              shuffleListingsOnLocationChange();
+              shouldShuffleOnLocationChange = false; // Reset flag
+            } else {
+              // Regular login-based shuffle
+              await shuffleListingsOnLogin();
+            }
+          }
+          
           currentPage.value++;
           hasMore.value = dataListing.length == 15;
         } else {

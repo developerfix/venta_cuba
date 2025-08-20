@@ -238,12 +238,17 @@ class _HomeScreenState extends State<HomeScreen> {
                               Get.to(SearchAndCurrentLocationPage())?.then((_) {
                                 setState(() {
                                   getAdd();
+                                  // Always force shuffle when returning from location selection
+                                  cont.forceShuffleAfterLocationChange();
                                   if (cont.hasLocationOrRadiusChanged()) {
                                     cont.shouldFetchData.value = true;
                                     cont.listingModelList.clear();
                                     cont.currentPage.value = 1;
                                     cont.hasMore.value = true;
                                     cont.homeData();
+                                  } else {
+                                    // Even if location didn't change, shuffle the existing list
+                                    cont.shuffleListingsOnLocationChange();
                                   }
                                 });
                               });

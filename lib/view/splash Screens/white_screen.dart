@@ -84,20 +84,15 @@ class _WhiteScreenState extends State<WhiteScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // App Logo or Title
-            Text(
-              'Venta Cuba',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).primaryColor,
-              ),
+            // App Logo
+            Image.asset(
+              "assets/images/watermark.png",
+              height: 130,
+              width: 130,
             ),
             const SizedBox(height: 40),
 
-            if (isLoading) ...[
-              const CircularProgressIndicator(),
-            ] else if (errorMessage != null) ...[
+            if (errorMessage != null) ...[
               Icon(
                 Icons.error_outline,
                 size: 48,

@@ -66,7 +66,7 @@ class ApiChecker {
                 .toString()
                 .toLowerCase()
                 .contains('authenticate')) {
-          errorAlertToast('Server authentication error. Please try again.'.tr);
+          // errorAlertToast('Server authentication error. Please try again.'.tr);
         } else if (response.body != null &&
             response.body is Map &&
             response.body['message'] != null &&
@@ -77,12 +77,12 @@ class ApiChecker {
           print('🔥 Server error: Data not found or null reference');
           // Only show toast if showUserError is true (respects the showDialog parameter)
           if (showUserError) {
-            errorAlertToast('Data not found. Please try again.'.tr);
+            // errorAlertToast('Data not found. Please try again.'.tr);
           }
         } else {
-          errorAlertToast(
-            'Server Error!\nPlease try again...'.tr,
-          );
+          // errorAlertToast(
+          //   'Server Error!\nPlease try again...'.tr,
+          // );
         }
       }
     } else if (response.statusCode! >= 400) {
