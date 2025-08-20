@@ -12,7 +12,11 @@
       "WebFetch(domain:nativenotify.com)",
       "Bash(find:*)",
       "Bash(grep:*)",
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "Bash(pod install:*)",
+      "Bash(pod repo update:*)",
+      "Bash(pod update:*)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
