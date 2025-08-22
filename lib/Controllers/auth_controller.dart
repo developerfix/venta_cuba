@@ -37,7 +37,8 @@ class AuthController extends GetxController {
   int currentIndexBottomAppBar = 0;
   RxBool hasUnreadMessages = false.obs;
   RxInt unreadMessageCount = 0.obs;
-  bool _savingDeviceToken = false; // Flag to prevent concurrent device token saves
+  bool _savingDeviceToken =
+      false; // Flag to prevent concurrent device token saves
   late SharedPreferences prefs;
   TextEditingController firstNameCont = TextEditingController(text: "");
   TextEditingController lastNameCont = TextEditingController(text: "");
@@ -334,44 +335,23 @@ class AuthController extends GetxController {
 
   Future checkUserLoggedIn() async {
     try {
-      print('🔥 AuthController: Checking user login status...');
-
       final SharedPreferences prefss = await SharedPreferences.getInstance();
-      bool isLogin = (prefss.get("user_data") == null ? false : true);
-
-      print('🔥 AuthController: User login status: $isLogin');
+      bool isLogin = (prefss.get("user_data") != null);
 
       if (isLogin) {
-        print('🔥 AuthController: User is logged in, getting user details...');
-        await getuserDetail();
-        print('🔥 AuthController: Navigating to Navigation_Bar...');
+        // Navigate immediately, load user details in background
+        Get.offAll(() => Navigation_Bar());
 
-        // Use a small delay to ensure navigation works properly and avoid double navigation
-        await Future.delayed(const Duration(milliseconds: 300));
-        if (Get.currentRoute != '/Navigation_Bar') {
-          Get.offAll(() => Navigation_Bar());
-        }
+        // Load user details after navigation (non-blocking)
+        getuserDetail().catchError((e) {
+          print('Error loading user details: $e');
+        });
       } else {
-        print('🔥 AuthController: User not logged in, navigating to Login...');
-
-        // Use a small delay to ensure navigation works properly and avoid double navigation
-        await Future.delayed(const Duration(milliseconds: 300));
-        if (Get.currentRoute != '/Login') {
-          Get.offAll(() => const Login());
-        }
+        Get.offAll(() => const Login());
       }
     } catch (e) {
-      print('🔥 AuthController: Error in checkUserLoggedIn: $e');
-      // If there's an error, navigate to login as fallback
-      try {
-        await Future.delayed(const Duration(milliseconds: 300));
-        if (Get.currentRoute != '/Login') {
-          Get.offAll(() => const Login());
-        }
-      } catch (navError) {
-        print('🔥 AuthController: Navigation error: $navError');
-      }
-      // Don't rethrow - we've handled the navigation, let the splash screen know we're done
+      print('Error in checkUserLoggedIn: $e');
+      Get.offAll(() => const Login());
     }
   }
 
@@ -402,9 +382,11 @@ class AuthController extends GetxController {
           if (response.body != null && response.body['user_id'] != null) {
             String userId = response.body['user_id'].toString();
             await saveDeviceTokenWithPlatform(userId);
-            print('✅ Device token saved to Supabase during registration for user: $userId');
+            print(
+                '✅ Device token saved to Supabase during registration for user: $userId');
           } else {
-            print('⚠️ No user_id found in signup response, skipping Supabase token save');
+            print(
+                '⚠️ No user_id found in signup response, skipping Supabase token save');
           }
         } catch (e) {
           print('❌ Error saving device token to Supabase during signup: $e');
@@ -527,26 +509,25 @@ class AuthController extends GetxController {
   Future<void> saveDeviceTokenWithPlatform(String userId) async {
     // Prevent concurrent device token saves
     if (_savingDeviceToken) {
-      print('ℹ️ Device token save already in progress for user $userId, skipping');
+      print(
+          'ℹ️ Device token save already in progress for user $userId, skipping');
       return;
     }
-    
+
     _savingDeviceToken = true;
-    
+
     try {
       if (deviceToken.isNotEmpty) {
         final supabaseService = SupabaseService.instance;
         String platform = Platform.isIOS ? 'ios' : 'android';
-        
+
         // Use associateTokenWithUser which already handles upsert internally
-        bool success = await supabaseService.associateTokenWithUser(
-          userId, 
-          deviceToken,
-          platform: platform
-        );
-        
+        bool success = await supabaseService
+            .associateTokenWithUser(userId, deviceToken, platform: platform);
+
         if (success) {
-          print('✅ Device token saved to Supabase for user $userId on $platform platform');
+          print(
+              '✅ Device token saved to Supabase for user $userId on $platform platform');
         } else {
           print('⚠️ Failed to save device token to Supabase for user $userId');
         }
@@ -555,8 +536,11 @@ class AuthController extends GetxController {
       }
     } catch (e) {
       // Handle duplicate key constraint error gracefully
-      if (e.toString().contains('duplicate key value violates unique constraint')) {
-        print('ℹ️ Device token already exists for user $userId - this is normal during login');
+      if (e
+          .toString()
+          .contains('duplicate key value violates unique constraint')) {
+        print(
+            'ℹ️ Device token already exists for user $userId - this is normal during login');
       } else {
         print('❌ Error saving device token to Supabase: $e');
       }
