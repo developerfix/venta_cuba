@@ -37,6 +37,7 @@ class AuthController extends GetxController {
   int currentIndexBottomAppBar = 0;
   RxBool hasUnreadMessages = false.obs;
   RxInt unreadMessageCount = 0.obs;
+  bool _savingDeviceToken = false; // Flag to prevent concurrent device token saves
   late SharedPreferences prefs;
   TextEditingController firstNameCont = TextEditingController(text: "");
   TextEditingController lastNameCont = TextEditingController(text: "");
@@ -288,23 +289,14 @@ class AuthController extends GetxController {
               '🔥 AuthController: Supabase Push Service initialized for user: ${user!.userId}');
 
           // Save device token to Supabase after user data is loaded
-          Future.delayed(Duration(seconds: 2), () async {
-            try {
-              if (deviceToken.isNotEmpty && user?.userId != null) {
-                final supabaseService = SupabaseService.instance;
-                String platform = Platform.isIOS ? 'ios' : 'android';
-                await supabaseService.associateTokenWithUser(
-                    user!.userId.toString(), deviceToken,
-                    platform: platform);
-                print(
-                    '✅ Device token saved to Supabase after login for $platform');
-              }
-              print('🔥 Firebase messaging user association completed');
-            } catch (e) {
-              print(
-                  '🔥 AuthController: Error with Firebase messaging setup: $e');
+          try {
+            if (user?.userId != null) {
+              await saveDeviceTokenWithPlatform(user!.userId.toString());
             }
-          });
+            print('🔥 Device token association completed');
+          } catch (e) {
+            print('🔥 AuthController: Error with device token setup: $e');
+          }
         } catch (e) {
           print('🔥 AuthController: Error setting user online: $e');
           // Don't let this block the login process
@@ -405,6 +397,20 @@ class AuthController extends GetxController {
       print("signUp statusCode: ${response.statusCode}");
 
       if (response.statusCode == 200) {
+        // Extract user ID from response and save device token to Supabase
+        try {
+          if (response.body != null && response.body['user_id'] != null) {
+            String userId = response.body['user_id'].toString();
+            await saveDeviceTokenWithPlatform(userId);
+            print('✅ Device token saved to Supabase during registration for user: $userId');
+          } else {
+            print('⚠️ No user_id found in signup response, skipping Supabase token save');
+          }
+        } catch (e) {
+          print('❌ Error saving device token to Supabase during signup: $e');
+          // Don't block the signup process if Supabase fails
+        }
+
         firstNameCont.clear();
         lastNameCont.clear();
         emailCreateCont.clear();
@@ -514,6 +520,48 @@ class AuthController extends GetxController {
       }
     } catch (e) {
       print('Error refreshing device token: $e');
+    }
+  }
+
+  /// Helper method to save device token with platform detection
+  Future<void> saveDeviceTokenWithPlatform(String userId) async {
+    // Prevent concurrent device token saves
+    if (_savingDeviceToken) {
+      print('ℹ️ Device token save already in progress for user $userId, skipping');
+      return;
+    }
+    
+    _savingDeviceToken = true;
+    
+    try {
+      if (deviceToken.isNotEmpty) {
+        final supabaseService = SupabaseService.instance;
+        String platform = Platform.isIOS ? 'ios' : 'android';
+        
+        // Use associateTokenWithUser which already handles upsert internally
+        bool success = await supabaseService.associateTokenWithUser(
+          userId, 
+          deviceToken,
+          platform: platform
+        );
+        
+        if (success) {
+          print('✅ Device token saved to Supabase for user $userId on $platform platform');
+        } else {
+          print('⚠️ Failed to save device token to Supabase for user $userId');
+        }
+      } else {
+        print('⚠️ Device token is empty, cannot save to Supabase');
+      }
+    } catch (e) {
+      // Handle duplicate key constraint error gracefully
+      if (e.toString().contains('duplicate key value violates unique constraint')) {
+        print('ℹ️ Device token already exists for user $userId - this is normal during login');
+      } else {
+        print('❌ Error saving device token to Supabase: $e');
+      }
+    } finally {
+      _savingDeviceToken = false;
     }
   }
 

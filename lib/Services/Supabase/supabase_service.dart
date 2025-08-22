@@ -184,16 +184,16 @@ class SupabaseService {
   Future<bool> associateTokenWithUser(String userId, String deviceToken,
       {String platform = 'android'}) async {
     try {
-      // Use upsert with composite key (user_id, device_token)
+      // Use upsert with explicit conflict resolution on the unique constraint (user_id, device_token)
       await client.from('device_tokens').upsert({
         'user_id': userId,
         'device_token': deviceToken,
         'platform': platform,
         'is_active': true,
         'updated_at': DateTime.now().toIso8601String(),
-      }).select();
+      }, onConflict: 'user_id,device_token').select();
 
-      print('✅ Device token associated with user: $userId');
+      print('✅ Device token associated/updated for user: $userId');
       return true;
     } catch (e) {
       print('❌ Error associating device token with user: $e');
