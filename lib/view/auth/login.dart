@@ -245,63 +245,84 @@ class _LoginState extends State<Login> {
 
                                     SizedBox(height: 20..h),
 
-                                    GestureDetector(
-                                        onTap: () async {
-                                          if (cont.emailCont.text.isEmpty ||
-                                              !GetUtils.isEmail(
-                                                  cont.emailCont.text)) {
-                                            errorAlertToast(
-                                                "Please Enter Correct Email"
-                                                    .tr);
-                                          } else if (cont
-                                                  .passCont.text.isEmpty ||
-                                              cont.passCont.text.length < 8) {
-                                            errorAlertToast(
-                                                "Please Enter Correct Password"
-                                                    .tr);
-                                          } else {
-                                            await cont.login();
-                                            SharedPreferences shared =
-                                                await SharedPreferences
-                                                    .getInstance();
-                                            shared.setString("save_password",
-                                                cont.passCont.text);
-                                          }
-                                          if (_rememberMe) {
-                                            await _prefs?.setBool(
-                                                'remember_me', true);
-                                            await _prefs?.setString(
-                                                'saved_email',
-                                                cont.emailCont.text);
-                                            await _prefs?.setString(
-                                                'saved_pass',
-                                                cont.passCont.text);
-                                          } else {
-                                            await _prefs?.setBool(
-                                                'remember_me', false);
-                                            await _prefs?.remove('saved_email');
-                                            await _prefs?.remove('saved_pass');
-                                          }
-                                        },
+                                    Obx(() => GestureDetector(
+                                        onTap: cont.isLoading.value
+                                            ? null
+                                            : () async {
+                                                if (cont.emailCont.text
+                                                        .isEmpty ||
+                                                    !GetUtils.isEmail(
+                                                        cont.emailCont.text)) {
+                                                  errorAlertToast(
+                                                      "Please Enter Correct Email"
+                                                          .tr);
+                                                } else if (cont.passCont.text
+                                                        .isEmpty ||
+                                                    cont.passCont.text.length <
+                                                        8) {
+                                                  errorAlertToast(
+                                                      "Please Enter Correct Password"
+                                                          .tr);
+                                                } else {
+                                                  await cont.login();
+                                                  SharedPreferences shared =
+                                                      await SharedPreferences
+                                                          .getInstance();
+                                                  shared.setString(
+                                                      "save_password",
+                                                      cont.passCont.text);
+                                                }
+                                                if (_rememberMe) {
+                                                  await _prefs?.setBool(
+                                                      'remember_me', true);
+                                                  await _prefs?.setString(
+                                                      'saved_email',
+                                                      cont.emailCont.text);
+                                                  await _prefs?.setString(
+                                                      'saved_pass',
+                                                      cont.passCont.text);
+                                                } else {
+                                                  await _prefs?.setBool(
+                                                      'remember_me', false);
+                                                  await _prefs
+                                                      ?.remove('saved_email');
+                                                  await _prefs
+                                                      ?.remove('saved_pass');
+                                                }
+                                              },
                                         child: Container(
                                           height: 50..h,
                                           width:
                                               MediaQuery.of(context).size.width,
                                           decoration: BoxDecoration(
-                                            color: AppColors.k0xFF0254B8,
+                                            color: cont.isLoading.value
+                                                ? AppColors.k0xFF0254B8
+                                                    .withOpacity(0.7)
+                                                : AppColors.k0xFF0254B8,
                                             borderRadius:
                                                 BorderRadius.circular(50),
                                           ),
                                           child: Center(
-                                            child: Text(
-                                              'Sign in'.tr,
-                                              style: TextStyle(
-                                                  fontSize: 17..sp,
-                                                  fontWeight: FontWeight.w400,
-                                                  color: Colors.white),
-                                            ),
+                                            child: cont.isLoading.value
+                                                ? SizedBox(
+                                                    height: 25,
+                                                    width: 25,
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                      color: Colors.white,
+                                                      strokeWidth: 2.5,
+                                                    ),
+                                                  )
+                                                : Text(
+                                                    'Sign in'.tr,
+                                                    style: TextStyle(
+                                                        fontSize: 17..sp,
+                                                        fontWeight:
+                                                            FontWeight.w400,
+                                                        color: Colors.white),
+                                                  ),
                                           ),
-                                        )),
+                                        ))),
                                     SizedBox(height: 15..h),
 
                                     GestureDetector(

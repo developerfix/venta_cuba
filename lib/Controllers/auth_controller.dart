@@ -20,6 +20,7 @@ import '../view/Navigation bar/navigation_bar.dart';
 import '../view/auth/login.dart';
 import 'package:http/http.dart' as http;
 import '../view/Chat/Controller/SupabaseChatController.dart';
+import 'home_controller.dart';
 // Firebase removed for Cuba compatibility
 // import '../Services/Firebase/firebase_messaging_service.dart';
 import '../Services/RealPush/supabase_push_service.dart';
@@ -37,6 +38,7 @@ class AuthController extends GetxController {
   int currentIndexBottomAppBar = 0;
   RxBool hasUnreadMessages = false.obs;
   RxInt unreadMessageCount = 0.obs;
+  RxBool isLoading = false.obs; // Add loading state for login button
   bool _savingDeviceToken =
       false; // Flag to prevent concurrent device token saves
   late SharedPreferences prefs;
@@ -412,6 +414,10 @@ class AuthController extends GetxController {
 
   Future login() async {
     try {
+      // Set loading state to true
+      isLoading.value = true;
+      update();
+      
       // Get fresh device token before login
       await refreshDeviceToken();
 
@@ -431,6 +437,14 @@ class AuthController extends GetxController {
         tokenMain = response.body["access_token"];
         api.updateHeader(tokenMain ?? "");
 
+        // Reset shuffle session for new login to ensure proper shuffling
+        try {
+          final homeController = Get.find<HomeController>();
+          await homeController.resetShuffleSession();
+        } catch (e) {
+          // HomeController might not be initialized yet, that's ok
+        }
+
         onLoginSuccess(response.body);
         return response.statusCode;
       } else if (response.statusCode! >= 400) {
@@ -445,6 +459,10 @@ class AuthController extends GetxController {
     } catch (e) {
       print('🔥 Login error: $e');
       errorAlertToast('Something went wrong\nPlease try again!'.tr);
+    } finally {
+      // Always set loading state to false when done
+      isLoading.value = false;
+      update();
     }
   }
 

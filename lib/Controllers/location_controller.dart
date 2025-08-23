@@ -287,6 +287,10 @@ class LocationController extends GetxController {
       homeCont.address = _formattedAddress;
       homeCont.update();
       homeCont.listingModelList.clear();
+      
+      // Set flag to shuffle listings when location changes
+      homeCont.forceShuffleAfterLocationChange();
+      
       homeCont.getListing();
     } else {}
   }

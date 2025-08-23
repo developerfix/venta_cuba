@@ -281,6 +281,10 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
                               cont.currentPage.value = 1;
                               cont.hasMore.value = true;
                               cont.listingModelList.clear();
+                              
+                              // Set flag to shuffle listings when location changes
+                              homeCont.forceShuffleAfterLocationChange();
+                              
                               await homeCont.getListing();
                               SharedPreferences sharedPreferences =
                                   await SharedPreferences.getInstance();

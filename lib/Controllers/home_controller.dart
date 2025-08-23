@@ -218,7 +218,10 @@ class HomeController extends GetxController {
     super.onInit();
     fetchAccountType();
     // Reset shuffle session on app start (fresh app launch)
-    resetShuffleSession();
+    // This ensures shuffling happens when app is reopened
+    resetShuffleSession().then((_) {
+      Get.log("📝 Shuffle session reset on app initialization");
+    });
   }
 
   @override
@@ -299,6 +302,18 @@ class HomeController extends GetxController {
       }
 
       Get.log("Fetching Page: ${currentPage.value}");
+      
+      // Check if no location is selected  
+      bool noLocationSelected = false;
+      // Check for default location or empty location
+      if (address == null || 
+          address == '' || 
+          address == "4JF7+RM6, Av. Paseo, La Habana, Cuba" ||
+          (lat == "23.124792615936276" && lng == "-82.38597269330762" && radius == 50.0)) {
+        noLocationSelected = true;
+        Get.log("📍 No location selected - will filter to user's own posts only");
+      }
+      
       Response response = await api.postData(
         "api/getListing?page=${currentPage.value}",
         {
@@ -329,13 +344,46 @@ class HomeController extends GetxController {
           List<ListingModel> newListings =
               dataListing.map((e) => ListingModel.fromJson(e)).toList();
 
+          // Filter to only show current user's posts when no location is selected
+          if (noLocationSelected) {
+            if (authCont.user?.userId != null) {
+              // Strictly filter to only user's own posts
+              List<ListingModel> userOwnPosts = newListings.where((listing) {
+                bool isOwnPost = listing.userId?.toString() == authCont.user?.userId?.toString();
+                if (!isOwnPost) {
+                  Get.log("📍 Filtered out post from user ${listing.userId} (current user: ${authCont.user?.userId})");
+                }
+                return isOwnPost;
+              }).toList();
+              
+              newListings = userOwnPosts;
+              Get.log("📍 No location selected - showing ${newListings.length} user's own posts only");
+              
+              // If no own posts, clear the list
+              if (newListings.isEmpty && currentPage.value == 1) {
+                listingModelList.clear();
+                Get.log("📍 No own posts to show when no location is selected");
+              }
+            } else {
+              // If not logged in and no location, show nothing
+              newListings = [];
+              listingModelList.clear();
+              Get.log("📍 Not logged in and no location - showing no posts");
+            }
+          }
+
           // Apply client-side category filtering for consistency with search
           newListings = applyCategoryFilter(newListings);
           Get.log("After category filtering: ${newListings.length} items");
 
+          // Always shuffle new items before adding them to the list
+          // This ensures randomization on both initial load and scroll
+          newListings.shuffle();
+          Get.log("📝 Shuffled ${newListings.length} new items");
+          
           listingModelList.addAll(newListings);
           
-          // Shuffle listings on first load 
+          // Additional shuffle for entire list on first load 
           if (currentPage.value == 1) {
             if (shouldShuffleOnLocationChange) {
               // Always shuffle when location changes
