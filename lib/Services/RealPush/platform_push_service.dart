@@ -1,169 +1,93 @@
 import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:get/get.dart';
 import 'ntfy_push_service.dart';
-import 'android_background_service.dart';
 import '../Supabase/supabase_service.dart';
-import '../../config/app_config.dart';
+import '../../Notification/firebase_messaging.dart';
 
-/// Platform-specific Push Service
-///
-/// This service provides push notifications for:
-/// - Android: Uses ntfy.sh for notifications
-/// 
-/// Note: iOS notifications are now handled by the FCM class in lib/Notification/firebase_messaging.dart
-///
-/// IMPORTANT: ntfy.sh WebSocket only works when app is running!
-/// For background notifications on Android, use server-side HTTP push to ntfy.sh
+/// Simplified Platform Push Service
 class PlatformPushService {
-  static bool _isInitialized = false;
   static String? _currentUserId;
   static bool _isChatScreenOpen = false;
   static String? _currentChatId;
 
-  /// Initialize the platform-specific push service
+  /// Initialize push service for current platform
   static Future<void> initialize(String userId) async {
     try {
-      print('🔔 Initializing Platform Push Service for user: $userId');
+      print('🔔 Initializing Push Service for user: $userId on ${Platform.isAndroid ? "Android" : "iOS"}');
       _currentUserId = userId;
 
       if (Platform.isIOS) {
-        // Initialize Firebase for iOS
-        await _initializeFirebase(userId);
+        await _initializeIOSPush(userId);
       } else if (Platform.isAndroid) {
-        // For older Chinese phones: Use background service + ntfy WebSocket
-        print('📱 Detected Android - Starting background ntfy service');
-
-        // Start native background service for terminated app notifications
-        final backgroundStarted =
-            await AndroidBackgroundService.startService(userId: userId);
-
-        if (backgroundStarted) {
-          print(
-              '✅ Background service started - notifications work when app is terminated');
-        } else {
-          print(
-              '⚠️ Background service failed - falling back to foreground only');
-        }
-
-        // Also initialize foreground WebSocket for instant notifications when app is open
-        await _initializeNtfy(userId);
-
-        // Keep background service running for when app gets terminated
-        print(
-            '📱 App is open - background service will continue running for when app terminates');
+        await _initializeAndroidPush(userId);
       }
 
-      _isInitialized = true;
-      print('✅ Platform Push Service initialized successfully');
+      print('✅ Push Service initialized successfully');
     } catch (e) {
-      print('❌ Error initializing Platform Push Service: $e');
+      print('❌ Error initializing Push Service: $e');
     }
   }
 
-  /// Initialize Firebase for iOS
-  static Future<void> _initializeFirebase(String userId) async {
+  /// Initialize iOS with FCM
+  static Future<void> _initializeIOSPush(String userId) async {
     try {
-      // Firebase already initialized in main.dart for iOS
-
-      // Request notification permissions
       final messaging = FirebaseMessaging.instance;
+      
+      // Request permissions
       final settings = await messaging.requestPermission(
         alert: true,
         badge: true,
         sound: true,
-        provisional: false,
       );
 
       if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-        print('✅ ' + 'iOS notification permissions granted'.tr);
-
         // Get FCM token
         final token = await messaging.getToken();
-        print('📱 FCM Token: $token');
-
-        // Save FCM token to Supabase for iOS only
+        
         if (token != null) {
-          try {
-            final supabaseService = SupabaseService.instance;
-            await supabaseService.saveDeviceToken(token, platform: 'ios');
-            await supabaseService.associateTokenWithUser(userId, token,
-                platform: 'ios');
-            print('✅ FCM token saved to Supabase for iOS user: $userId');
-          } catch (e) {
-            print('❌ Error saving FCM token to Supabase: $e');
-          }
+          // Save token to Supabase with iOS platform
+          final supabase = SupabaseService.instance;
+          await supabase.saveDeviceTokenWithPlatform(
+            userId: userId,
+            token: token,
+            platform: 'ios',
+          );
+          print('✅ iOS FCM token saved for user: $userId');
         }
 
-        // Configure foreground notifications
-        await FirebaseMessaging.instance
-            .setForegroundNotificationPresentationOptions(
+        // Configure foreground presentation
+        await messaging.setForegroundNotificationPresentationOptions(
           alert: true,
           badge: true,
           sound: true,
         );
-
-        // Listen for foreground messages
-        FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
-
-        // Handle notification taps
-        FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
-
-        // Handle background messages
-        FirebaseMessaging.onBackgroundMessage(
-            _firebaseMessagingBackgroundHandler);
-
-        print('✅ Firebase initialized for iOS');
-      } else {
-        print('❌ ' + 'iOS notification permissions denied'.tr);
       }
     } catch (e) {
-      print('❌ Error initializing Firebase: $e');
+      print('❌ Error initializing iOS push: $e');
     }
   }
 
-  /// Initialize ntfy for Android
-  static Future<void> _initializeNtfy(String userId) async {
+  /// Initialize Android with ntfy
+  static Future<void> _initializeAndroidPush(String userId) async {
     try {
+      // Save Android platform info to Supabase
+      final supabase = SupabaseService.instance;
+      await supabase.saveDeviceTokenWithPlatform(
+        userId: userId,
+        token: 'ntfy_user_$userId', // Using ntfy topic as identifier
+        platform: 'android',
+      );
+      
+      // Initialize ntfy service
       await NtfyPushService.initialize(userId: userId);
-      print('✅ ntfy initialized for Android');
+      
+      print('✅ Android ntfy service initialized for user: $userId');
     } catch (e) {
-      print('❌ Error initializing ntfy: $e');
+      print('❌ Error initializing Android push: $e');
     }
   }
 
-  /// Handle foreground messages on iOS
-  static void _handleForegroundMessage(RemoteMessage message) {
-    print('📨 Received foreground message: ${message.notification?.title}');
-
-    // Don't show notification if chat screen is open and it's the same chat
-    if (_isChatScreenOpen && message.data['chatId'] == _currentChatId) {
-      print('🔇 Chat screen is open, skipping notification');
-      return;
-    }
-
-    // Show notification
-    _showIOSNotification(message);
-  }
-
-  /// Handle notification tap on iOS
-  static void _handleNotificationTap(RemoteMessage message) {
-    print('👆 Notification tapped: ${message.data}');
-
-    if (message.data['chatId'] != null) {
-      final chatId = message.data['chatId'];
-      // Navigate to chat screen
-      Get.toNamed('/chat', arguments: {'chatId': chatId});
-    }
-  }
-
-  /// Show iOS notification
-  static void _showIOSNotification(RemoteMessage message) {
-    // iOS handles this automatically, but we can add custom logic here
-    print('📱 Showing iOS notification: ${message.notification?.title}');
-  }
-
-  /// Send a chat notification
+  /// Send chat notification to recipient (Cross-platform)
   static Future<void> sendChatNotification({
     required String recipientUserId,
     required String senderName,
@@ -172,27 +96,55 @@ class PlatformPushService {
     required String chatId,
   }) async {
     try {
-      // This service now only handles Android notifications via ntfy
-      if (Platform.isAndroid) {
-        // Send via ntfy for Android
-        print('🔴 PLATFORM: Sending ntfy notification with chatId: "$chatId"');
-        print('🔴 PLATFORM: Click action will be: "myapp://chat/$chatId"');
-
+      print('🔔 Sending cross-platform notification to user: $recipientUserId');
+      
+      // Get recipient's platform from Supabase
+      final supabaseService = SupabaseService.instance;
+      final recipientPlatform = await supabaseService.getUserPlatform(recipientUserId);
+      
+      print('🔔 Recipient platform: $recipientPlatform');
+      
+      if (recipientPlatform == 'ios') {
+        // Send FCM notification for iOS recipients
+        print('🍎 Sending FCM notification to iOS user: $recipientUserId');
+        
+        final recipientToken = await supabaseService.getDeviceToken(recipientUserId);
+        
+        if (recipientToken != null && 
+            recipientToken.isNotEmpty && 
+            !recipientToken.startsWith('ntfy_user_') &&
+            recipientToken != 'cuba-friendly-token') {
+          
+          final fcmService = FCM();
+          await fcmService.sendNotificationFCM(
+            userId: recipientUserId,
+            remoteId: _currentUserId ?? '',
+            name: senderName,
+            deviceToken: recipientToken,
+            title: senderName,
+            body: _formatMessageBody(message, messageType),
+            type: 'message',
+            chatId: chatId,
+          );
+          print('✅ FCM notification sent to iOS user: $recipientUserId');
+        } else {
+          print('⚠️ No valid FCM token found for iOS user: $recipientUserId');
+        }
+      } else {
+        // Send ntfy notification for Android recipients (default)
+        print('🤖 Sending ntfy notification to Android user: $recipientUserId');
+        
         await NtfyPushService.sendNotification(
           recipientUserId: recipientUserId,
           title: senderName,
           body: _formatMessageBody(message, messageType),
           clickAction: 'myapp://chat/$chatId',
-          data: {
-            'chatId': chatId,
-            'type': 'chat',
-          },
+          data: {'chatId': chatId, 'type': 'chat'},
         );
+        print('✅ ntfy notification sent to Android user: $recipientUserId');
       }
-
-      print('✅ Chat notification sent successfully');
     } catch (e) {
-      print('❌ Error sending chat notification: $e');
+      print('❌ Error sending cross-platform chat notification: $e');
     }
   }
 
@@ -206,62 +158,40 @@ class PlatformPushService {
       case 'file':
         return '📎 File';
       default:
-        return message;
+        return message.length > 100 ? '${message.substring(0, 100)}...' : message;
     }
   }
 
-  /// Set chat screen status (to prevent notifications when chat is open)
+  /// Set chat screen status
   static void setChatScreenStatus({required bool isOpen, String? chatId}) {
-    print(
-        'testing 🔴 PLATFORM PUSH: setChatScreenStatus called - isOpen: $isOpen, chatId: $chatId');
     _isChatScreenOpen = isOpen;
     _currentChatId = chatId;
-
+    
     if (Platform.isAndroid) {
-      // Pass the chat screen status to ntfy service
-      print(
-          'testing 🔴 PLATFORM PUSH: Calling NtfyPushService.setChatScreenStatus');
       NtfyPushService.setChatScreenStatus(isOpen: isOpen, chatId: chatId);
-      print('📱 Chat screen ${isOpen ? 'opened' : 'closed'} for chat: $chatId');
     }
   }
 
   /// Get FCM token (iOS only)
   static Future<String?> getFCMToken() async {
-    if (Platform.isIOS && _isInitialized) {
-      try {
-        final token = await FirebaseMessaging.instance.getToken();
-        return token;
-      } catch (e) {
-        print('❌ Error getting FCM token: $e');
-        return null;
-      }
-    }
-    return null;
-  }
-
-  /// Stop listening for push notifications
-  static Future<void> stopListening() async {
     try {
-      if (Platform.isAndroid) {
-        // Stop foreground WebSocket only
-        await NtfyPushService.dispose();
-
-        // Keep background service running - it will detect app state automatically
-        print('📱 App closing - background service will handle notifications');
+      if (Platform.isIOS) {
+        final messaging = FirebaseMessaging.instance;
+        final token = await messaging.getToken();
+        print('🔔 Retrieved FCM token: ${token?.substring(0, 20)}...');
+        return token;
       }
-
-      _isInitialized = false;
-      print('✅ Platform Push Service stopped successfully');
+      return null;
     } catch (e) {
-      print('❌ Error stopping Platform Push Service: $e');
+      print('❌ Error getting FCM token: $e');
+      return null;
     }
   }
-}
 
-/// Background message handler for Firebase (iOS)
-@pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Firebase already initialized in main.dart
-  print('📨 Background message: ${message.notification?.title}');
+  /// Stop listening
+  static Future<void> stopListening() async {
+    if (Platform.isAndroid) {
+      await NtfyPushService.dispose();
+    }
+  }
 }

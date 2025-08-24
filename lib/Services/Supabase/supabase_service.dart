@@ -42,108 +42,10 @@ class SupabaseService {
 
       _client = Supabase.instance.client;
       print('✅ Supabase initialized successfully');
-
-      // Create tables if they don't exist (run this once in Supabase SQL editor)
-      await _createTablesIfNeeded();
     } catch (e) {
       print('❌ Error initializing Supabase: $e');
       rethrow;
     }
-  }
-
-  // SQL to create tables in Supabase (run this in Supabase SQL editor)
-  static Future<void> _createTablesIfNeeded() async {
-    // This SQL should be run in Supabase SQL editor, not from the app
-    // Note: This is documentation only - the SQL is not executed from the app
-    print(
-        '📝 Tables structure defined. Please run the SQL in Supabase SQL editor.');
-
-    /*
-    const String createTableSQL = '''
-    -- Enable UUID extension
-    CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-    
-    -- Create chat table
-    CREATE TABLE IF NOT EXISTS chats (
-      id TEXT PRIMARY KEY,
-      sender_id TEXT NOT NULL,
-      send_to_id TEXT NOT NULL,
-      sender_name TEXT,
-      send_to_name TEXT,
-      sender_image TEXT,
-      send_to_image TEXT,
-      message TEXT,
-      time TIMESTAMPTZ DEFAULT NOW(),
-      send_by TEXT,
-      user_device_token TEXT,
-      send_to_device_token TEXT,
-      is_messaged BOOLEAN DEFAULT false,
-      sender_last_read_time TIMESTAMPTZ,
-      recipient_last_read_time TIMESTAMPTZ,
-      created_at TIMESTAMPTZ DEFAULT NOW(),
-      updated_at TIMESTAMPTZ DEFAULT NOW()
-    );
-    
-    -- Create messages table
-    CREATE TABLE IF NOT EXISTS messages (
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      chat_id TEXT NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
-      message TEXT,
-      send_by TEXT NOT NULL,
-      sender_name TEXT,
-      time TIMESTAMPTZ DEFAULT NOW(),
-      image TEXT,
-      created_at TIMESTAMPTZ DEFAULT NOW()
-    );
-    
-    -- Create users presence table
-    CREATE TABLE IF NOT EXISTS user_presence (
-      user_id TEXT PRIMARY KEY,
-      is_online BOOLEAN DEFAULT false,
-      last_active_time TIMESTAMPTZ DEFAULT NOW()
-    );
-    
-    -- Create device tokens table
-    CREATE TABLE IF NOT EXISTS device_tokens (
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      user_id TEXT,
-      device_token TEXT NOT NULL,
-      platform TEXT DEFAULT 'android',
-      is_active BOOLEAN DEFAULT true,
-      created_at TIMESTAMPTZ DEFAULT NOW(),
-      updated_at TIMESTAMPTZ DEFAULT NOW(),
-      UNIQUE(user_id, device_token)
-    );
-    
-    -- Create indexes for better performance
-    CREATE INDEX IF NOT EXISTS idx_chats_sender_id ON chats(sender_id);
-    CREATE INDEX IF NOT EXISTS idx_chats_send_to_id ON chats(send_to_id);
-    CREATE INDEX IF NOT EXISTS idx_messages_chat_id ON messages(chat_id);
-    CREATE INDEX IF NOT EXISTS idx_messages_time ON messages(time);
-    CREATE INDEX IF NOT EXISTS idx_device_tokens_user_id ON device_tokens(user_id);
-    CREATE INDEX IF NOT EXISTS idx_device_tokens_active ON device_tokens(is_active);
-    
-    -- Enable Row Level Security
-    ALTER TABLE chats ENABLE ROW LEVEL SECURITY;
-    ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
-    ALTER TABLE user_presence ENABLE ROW LEVEL SECURITY;
-    ALTER TABLE device_tokens ENABLE ROW LEVEL SECURITY;
-    
-    -- Create policies (adjust based on your security needs)
-    -- For now, allowing all authenticated users to read/write
-    CREATE POLICY "Enable all access for authenticated users" ON chats
-      FOR ALL USING (true);
-      
-    CREATE POLICY "Enable all access for authenticated users" ON messages
-      FOR ALL USING (true);
-      
-    CREATE POLICY "Enable all access for authenticated users" ON user_presence
-      FOR ALL USING (true);
-      
-    CREATE POLICY "Enable all access for authenticated users" ON device_tokens
-      FOR ALL USING (true);
-    ''';
-    */
   }
 
   // Helper method to handle Supabase errors
@@ -197,6 +99,37 @@ class SupabaseService {
       return true;
     } catch (e) {
       print('❌ Error associating device token with user: $e');
+      return false;
+    }
+  }
+
+  /// Save device token with platform information - SIMPLIFIED
+  Future<bool> saveDeviceTokenWithPlatform({
+    required String userId,
+    required String token,
+    required String platform,
+  }) async {
+    try {
+      // First, deactivate any existing tokens for this user on this platform
+      await client
+          .from('device_tokens')
+          .update({'is_active': false})
+          .eq('user_id', userId)
+          .eq('platform', platform);
+
+      // Insert or update the new token
+      await client.from('device_tokens').upsert({
+        'user_id': userId,
+        'device_token': token,
+        'platform': platform,
+        'is_active': true,
+        'updated_at': DateTime.now().toIso8601String(),
+      }, onConflict: 'user_id,device_token');
+
+      print('✅ Device token saved for $platform user: $userId');
+      return true;
+    } catch (e) {
+      print('❌ Error saving device token: $e');
       return false;
     }
   }
@@ -283,16 +216,34 @@ class SupabaseService {
     try {
       final response = await client
           .from('device_tokens')
-          .select('platform')
+          .select('platform, device_token')
           .eq('user_id', userId)
           .eq('is_active', true)
           .order('updated_at', ascending: false)
           .limit(1);
 
       if (response.isNotEmpty) {
-        final platform = response[0]['platform'] as String;
-        print('✅ Retrieved platform for user $userId: $platform');
-        return platform;
+        final platform = response[0]['platform'] as String?;
+        final token = response[0]['device_token'] as String?;
+
+        // If platform is explicitly set, use it
+        if (platform != null && platform.isNotEmpty) {
+          print('✅ Retrieved platform for user $userId: $platform');
+          return platform;
+        }
+
+        // Fallback: detect platform from token pattern
+        if (token != null) {
+          if (token.startsWith('ntfy_user_') ||
+              token == 'cuba-friendly-token') {
+            print(
+                '✅ Detected Android platform for user $userId from token pattern');
+            return 'android';
+          } else if (token.length > 100) {
+            print('✅ Detected iOS platform for user $userId from token length');
+            return 'ios';
+          }
+        }
       }
 
       print('⚠️ No platform found for user: $userId');

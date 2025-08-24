@@ -23,13 +23,10 @@ import '../view/Chat/Controller/SupabaseChatController.dart';
 import 'home_controller.dart';
 // Firebase removed for Cuba compatibility
 // import '../Services/Firebase/firebase_messaging_service.dart';
-import '../Services/RealPush/supabase_push_service.dart';
-import '../Services/RealPush/real_push_service.dart';
 import '../Services/RealPush/platform_push_service.dart';
 // FCM notifications are now handled directly in SupabaseChatController
 import '../Services/Supabase/rls_helper.dart';
 import '../Services/Supabase/supabase_service.dart';
-import '../config/app_config.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 String deviceToken = '';
@@ -286,10 +283,10 @@ class AuthController extends GetxController {
           print(
               '🔥 AuthController: RLS user context set for user: ${user!.userId}');
 
-          // Initialize Supabase Push Service for this user
-          await SupabasePushService.initialize(user!.userId.toString());
+          // Initialize Platform Push Service for this user
+          await PlatformPushService.initialize(user!.userId.toString());
           print(
-              '🔥 AuthController: Supabase Push Service initialized for user: ${user!.userId}');
+              '🔥 AuthController: Platform Push Service initialized for user: ${user!.userId}');
 
           // Save device token to Supabase after user data is loaded
           try {
@@ -468,58 +465,32 @@ class AuthController extends GetxController {
 
   Future<void> refreshDeviceToken() async {
     try {
-      String? fcmToken;
+      String? token;
 
       if (Platform.isIOS) {
         // Get real FCM token for iOS
-        fcmToken = await PlatformPushService.getFCMToken();
-        if (fcmToken == null) {
+        token = await PlatformPushService.getFCMToken();
+        if (token == null) {
           // Try to get token directly from Firebase
           try {
-            fcmToken = await FirebaseMessaging.instance.getToken();
+            token = await FirebaseMessaging.instance.getToken();
           } catch (e) {
             print('Error getting FCM token directly: $e');
           }
         }
-        print(
-            'Refreshed device token (iOS FCM Token): ${fcmToken?.substring(0, 20)}...');
-
-        // Store FCM token in Supabase for iOS
-        if (fcmToken != null && user?.userId != null) {
-          try {
-            final supabaseService = SupabaseService.instance;
-            await supabaseService.associateTokenWithUser(
-                user!.userId.toString(), fcmToken,
-                platform: 'ios');
-            print('✅ FCM token stored in Supabase for iOS user');
-          } catch (e) {
-            print('❌ Error storing FCM token in Supabase: $e');
-          }
+        
+        if (token != null) {
+          deviceToken = token;
+          print('✅ Refreshed iOS FCM token: ${token.substring(0, 20)}...');
         }
       } else {
-        // Use cuba-friendly token for Android (ntfy.sh compatibility)
-        fcmToken = 'cuba-friendly-token';
-        print('Refreshed device token (Android Cuba Token): $fcmToken');
-
-        // Store Android platform info in Supabase
-        if (user?.userId != null) {
-          try {
-            final supabaseService = SupabaseService.instance;
-            await supabaseService.associateTokenWithUser(
-                user!.userId.toString(), fcmToken,
-                platform: 'android');
-            print('✅ Android platform info stored in Supabase');
-          } catch (e) {
-            print('❌ Error storing Android platform info: $e');
-          }
-        }
-      }
-
-      if (fcmToken != null) {
-        deviceToken = fcmToken;
+        // For Android, use a placeholder token since we use ntfy.sh
+        token = 'ntfy_user_${user?.userId ?? "unknown"}';
+        deviceToken = token;
+        print('✅ Refreshed Android token: $token');
       }
     } catch (e) {
-      print('Error refreshing device token: $e');
+      print('❌ Error refreshing device token: $e');
     }
   }
 
@@ -527,41 +498,56 @@ class AuthController extends GetxController {
   Future<void> saveDeviceTokenWithPlatform(String userId) async {
     // Prevent concurrent device token saves
     if (_savingDeviceToken) {
-      print(
-          'ℹ️ Device token save already in progress for user $userId, skipping');
+      print('ℹ️ Device token save already in progress for user $userId, skipping');
       return;
     }
 
     _savingDeviceToken = true;
 
     try {
-      if (deviceToken.isNotEmpty) {
-        final supabaseService = SupabaseService.instance;
-        String platform = Platform.isIOS ? 'ios' : 'android';
-
-        // Use associateTokenWithUser which already handles upsert internally
-        bool success = await supabaseService
-            .associateTokenWithUser(userId, deviceToken, platform: platform);
-
-        if (success) {
-          print(
-              '✅ Device token saved to Supabase for user $userId on $platform platform');
+      final supabaseService = SupabaseService.instance;
+      
+      if (Platform.isIOS) {
+        // For iOS, save the FCM token if we have one
+        String? fcmToken = await PlatformPushService.getFCMToken();
+        if (fcmToken == null) {
+          try {
+            fcmToken = await FirebaseMessaging.instance.getToken();
+          } catch (e) {
+            print('❌ Error getting FCM token: $e');
+          }
+        }
+        
+        if (fcmToken != null && fcmToken.isNotEmpty) {
+          bool success = await supabaseService.saveDeviceTokenWithPlatform(
+            userId: userId,
+            token: fcmToken,
+            platform: 'ios',
+          );
+          
+          if (success) {
+            deviceToken = fcmToken; // Update local token
+            print('✅ iOS FCM token saved: ${fcmToken.substring(0, 20)}...');
+          }
         } else {
-          print('⚠️ Failed to save device token to Supabase for user $userId');
+          print('⚠️ No FCM token available for iOS user: $userId');
         }
       } else {
-        print('⚠️ Device token is empty, cannot save to Supabase');
+        // For Android, save ntfy identifier
+        String androidToken = 'ntfy_user_$userId';
+        bool success = await supabaseService.saveDeviceTokenWithPlatform(
+          userId: userId,
+          token: androidToken,
+          platform: 'android',
+        );
+        
+        if (success) {
+          deviceToken = androidToken; // Update local token
+          print('✅ Android ntfy identifier saved for user: $userId');
+        }
       }
     } catch (e) {
-      // Handle duplicate key constraint error gracefully
-      if (e
-          .toString()
-          .contains('duplicate key value violates unique constraint')) {
-        print(
-            'ℹ️ Device token already exists for user $userId - this is normal during login');
-      } else {
-        print('❌ Error saving device token to Supabase: $e');
-      }
+      print('❌ Error saving device token with platform: $e');
     } finally {
       _savingDeviceToken = false;
     }
@@ -792,9 +778,9 @@ class AuthController extends GetxController {
         await chatController.setUserOffline(user!.userId.toString());
 
         // Stop push notification service
-        SupabasePushService.stopListening();
+        await PlatformPushService.stopListening();
         print(
-            '🔥 AuthController: Supabase Push service stopped for offline user');
+            '🔥 AuthController: Platform push service stopped for offline user');
       }
     } catch (e) {
       print('🔥 Error setting user offline: $e');
@@ -912,23 +898,12 @@ class AuthController extends GetxController {
         await RLSHelper.setUserContext(userId);
         print('✅ RLS user context set for secure chat access');
 
-        // Initialize push notifications
-        if (Platform.isIOS) {
-          // Initialize FCM service and store token
-          try {
-            // FCM service will be initialized from UI with BuildContext
-            // Token association will happen automatically in FCM.updateTokenOnServer
-            print('🍎 FCM service ready for iOS');
-          } catch (e) {
-            print('❌ Error setting up FCM: $e');
-          }
-        } else {
-          // Initialize Android push service
-          await RealPushService.initialize(
-            userId: userId,
-            customServerUrl: AppConfig.ntfyServerUrl,
-          );
-          print('🤖 Android push service initialized');
+        // Initialize push notifications with Platform Push Service
+        try {
+          await PlatformPushService.initialize(userId);
+          print('✅ Platform push service initialized for user: $userId');
+        } catch (e) {
+          print('❌ Error initializing platform push service: $e');
         }
 
         print('✅ All services initialized successfully');
@@ -979,8 +954,8 @@ class AuthController extends GetxController {
       }
 
       // Stop push service
-      SupabasePushService.stopListening();
-      print('🔥 AuthController: Push service stopped on logout');
+      await PlatformPushService.stopListening();
+      print('🔥 AuthController: Platform push service stopped on logout');
 
       // Clear local device token
       deviceToken = "";

@@ -19,6 +19,9 @@
       "Bash(ls:*)"
     ],
     "deny": [],
-    "defaultMode": "acceptEdits"
+    "defaultMode": "acceptEdits",
+    "additionalDirectories": [
+      "C:\\c\\Users\\DELL\\Downloads\\venta_cuba111"
+    ]
   }
 }

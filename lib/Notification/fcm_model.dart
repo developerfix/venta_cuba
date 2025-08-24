@@ -40,6 +40,7 @@ class Data {
   String? title;
   String? body;
   String? type;
+  String? chatId;  // Added for chat navigation
 
   Data(
       {this.userId,
@@ -48,7 +49,8 @@ class Data {
       this.profileImage,
       this.title,
       this.body,
-      this.type});
+      this.type,
+      this.chatId});
 
   Data.fromJson(Map<String, dynamic> json) {
     userId = json['user_id'];
@@ -58,6 +60,7 @@ class Data {
     title = json['title'];
     body = json['body'];
     type = json['type'];
+    chatId = json['chat_id'];
   }
 
   Map<String, dynamic> toJson() {
@@ -69,6 +72,7 @@ class Data {
     data['title'] = title;
     data['body'] = body;
     data['type'] = type;
+    if (chatId != null) data['chat_id'] = chatId;
     return data;
   }
 }

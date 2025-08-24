@@ -624,6 +624,7 @@ class FCM {
     String? title,
     String? body,
     String? type,
+    String? chatId,  // Added for chat navigation
     int? badgeCount,
   }) async {
     // Ensure a fresh token
@@ -647,6 +648,7 @@ class FCM {
       title: title,
       body: body,
       type: type,
+      chatId: chatId,  // Include chatId for navigation
     );
     NotificationData notification = NotificationData(title: title, body: body);
 
