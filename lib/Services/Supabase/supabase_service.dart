@@ -63,25 +63,6 @@ class SupabaseService {
 
   // Device Token Management Methods
 
-  /// Save device token to Supabase
-  Future<bool> saveDeviceToken(String deviceToken,
-      {String platform = 'android'}) async {
-    try {
-      await client.from('device_tokens').upsert({
-        'device_token': deviceToken,
-        'platform': platform,
-        'is_active': true,
-        'updated_at': DateTime.now().toIso8601String(),
-      }).select();
-
-      print('✅ Device token saved: $deviceToken');
-      return true;
-    } catch (e) {
-      print('❌ Error saving device token: $e');
-      return false;
-    }
-  }
-
   /// Save device token with platform information - SIMPLIFIED
   Future<bool> saveDeviceTokenWithPlatform({
     required String userId,
