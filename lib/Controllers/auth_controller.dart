@@ -484,10 +484,10 @@ class AuthController extends GetxController {
           print('✅ Refreshed iOS FCM token: ${token.substring(0, 20)}...');
         }
       } else {
-        // For Android, use a placeholder token since we use ntfy.sh
-        token = 'ntfy_user_${user?.userId ?? "unknown"}';
+        // For Android, use the ntfy topic identifier (consistent format)
+        token = 'venta_cuba_user_${user?.userId ?? "unknown"}';
         deviceToken = token;
-        print('✅ Refreshed Android token: $token');
+        print('✅ Refreshed Android ntfy topic: $token');
       }
     } catch (e) {
       print('❌ Error refreshing device token: $e');
@@ -533,8 +533,8 @@ class AuthController extends GetxController {
           print('⚠️ No FCM token available for iOS user: $userId');
         }
       } else {
-        // For Android, save ntfy identifier
-        String androidToken = 'ntfy_user_$userId';
+        // For Android, save ntfy topic identifier (consistent format)
+        String androidToken = 'venta_cuba_user_$userId';
         bool success = await supabaseService.saveDeviceTokenWithPlatform(
           userId: userId,
           token: androidToken,
@@ -543,7 +543,7 @@ class AuthController extends GetxController {
         
         if (success) {
           deviceToken = androidToken; // Update local token
-          print('✅ Android ntfy identifier saved for user: $userId');
+          print('✅ Android ntfy topic saved for user: $userId');
         }
       }
     } catch (e) {

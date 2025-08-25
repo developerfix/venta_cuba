@@ -4,7 +4,7 @@ import 'ntfy_push_service.dart';
 import '../Supabase/supabase_service.dart';
 import '../../Notification/firebase_messaging.dart';
 
-/// Simplified Platform Push Service
+/// Simplified Platform Push Service for Cross-Platform Notifications
 class PlatformPushService {
   static String? _currentUserId;
   static bool _isChatScreenOpen = false;
@@ -42,9 +42,15 @@ class PlatformPushService {
 
       if (settings.authorizationStatus == AuthorizationStatus.authorized) {
         // Get FCM token
-        final token = await messaging.getToken();
+        String? token = await messaging.getToken();
         
-        if (token != null) {
+        // Wait for token if not immediately available
+        if (token == null) {
+          await Future.delayed(Duration(seconds: 2));
+          token = await messaging.getToken();
+        }
+        
+        if (token != null && token.isNotEmpty) {
           // Save token to Supabase with iOS platform
           final supabase = SupabaseService.instance;
           await supabase.saveDeviceTokenWithPlatform(
@@ -52,7 +58,9 @@ class PlatformPushService {
             token: token,
             platform: 'ios',
           );
-          print('✅ iOS FCM token saved for user: $userId');
+          print('✅ iOS FCM token saved: ${token.substring(0, 20)}... for user: $userId');
+        } else {
+          print('⚠️ Could not get FCM token for iOS user: $userId');
         }
 
         // Configure foreground presentation
@@ -70,81 +78,123 @@ class PlatformPushService {
   /// Initialize Android with ntfy
   static Future<void> _initializeAndroidPush(String userId) async {
     try {
-      // Save Android platform info to Supabase
+      // Initialize ntfy service first
+      await NtfyPushService.initialize(userId: userId);
+      
+      // Save Android platform info to Supabase with ntfy topic
       final supabase = SupabaseService.instance;
+      final ntfyTopic = 'venta_cuba_user_$userId';
+      
       await supabase.saveDeviceTokenWithPlatform(
         userId: userId,
-        token: 'ntfy_user_$userId', // Using ntfy topic as identifier
+        token: ntfyTopic, // Use actual ntfy topic
         platform: 'android',
       );
       
-      // Initialize ntfy service
-      await NtfyPushService.initialize(userId: userId);
-      
-      print('✅ Android ntfy service initialized for user: $userId');
+      print('✅ Android ntfy service initialized with topic: $ntfyTopic for user: $userId');
     } catch (e) {
       print('❌ Error initializing Android push: $e');
     }
   }
 
-  /// Send chat notification to recipient (Cross-platform)
+  /// Send chat notification to recipient (Cross-platform) - FIXED VERSION
   static Future<void> sendChatNotification({
     required String recipientUserId,
     required String senderName,
     required String message,
     required String messageType,
     required String chatId,
+    String? senderId,
   }) async {
     try {
-      print('🔔 Sending cross-platform notification to user: $recipientUserId');
+      print('🔔 === CROSS-PLATFORM NOTIFICATION ===');
+      print('🔔 From: ${senderId ?? _currentUserId} To: $recipientUserId');
       
-      // Get recipient's platform from Supabase
+      // Don't send notification to yourself
+      if (recipientUserId == (senderId ?? _currentUserId)) {
+        print('🔔 Skipping self-notification');
+        return;
+      }
+      
+      // Get recipient's device info from Supabase
       final supabaseService = SupabaseService.instance;
-      final recipientPlatform = await supabaseService.getUserPlatform(recipientUserId);
       
-      print('🔔 Recipient platform: $recipientPlatform');
+      // First try to get the device token directly
+      final recipientToken = await supabaseService.getDeviceToken(recipientUserId);
+      print('🔔 Recipient token retrieved: ${recipientToken?.substring(0, 30) ?? "NULL"}...');
       
-      if (recipientPlatform == 'ios') {
-        // Send FCM notification for iOS recipients
-        print('🍎 Sending FCM notification to iOS user: $recipientUserId');
-        
-        final recipientToken = await supabaseService.getDeviceToken(recipientUserId);
-        
-        if (recipientToken != null && 
-            recipientToken.isNotEmpty && 
-            !recipientToken.startsWith('ntfy_user_') &&
-            recipientToken != 'cuba-friendly-token') {
-          
-          final fcmService = FCM();
-          await fcmService.sendNotificationFCM(
-            userId: recipientUserId,
-            remoteId: _currentUserId ?? '',
-            name: senderName,
-            deviceToken: recipientToken,
-            title: senderName,
-            body: _formatMessageBody(message, messageType),
-            type: 'message',
-            chatId: chatId,
-          );
-          print('✅ FCM notification sent to iOS user: $recipientUserId');
-        } else {
-          print('⚠️ No valid FCM token found for iOS user: $recipientUserId');
+      // Determine platform based on token pattern
+      String? recipientPlatform;
+      if (recipientToken != null && recipientToken.isNotEmpty) {
+        if (recipientToken.startsWith('venta_cuba_user_') || 
+            recipientToken.startsWith('ntfy_user_')) {
+          recipientPlatform = 'android';
+        } else if (recipientToken.length > 50) {
+          // FCM tokens are typically long strings
+          recipientPlatform = 'ios';
         }
-      } else {
-        // Send ntfy notification for Android recipients (default)
-        print('🤖 Sending ntfy notification to Android user: $recipientUserId');
+      }
+      
+      // If platform detection failed, try to get it explicitly
+      if (recipientPlatform == null) {
+        recipientPlatform = await supabaseService.getUserPlatform(recipientUserId);
+      }
+      
+      print('🔔 Detected platform: ${recipientPlatform ?? "UNKNOWN"}');
+      print('🔔 Token pattern: ${recipientToken?.substring(0, 20) ?? "NO TOKEN"}...');
+      
+      // Send notification based on platform
+      if (recipientPlatform == 'ios' && recipientToken != null && 
+          !recipientToken.startsWith('venta_cuba_user_') && 
+          !recipientToken.startsWith('ntfy_user_')) {
         
-        await NtfyPushService.sendNotification(
+        // iOS: Use FCM
+        print('🍎 Sending FCM notification to iOS user');
+        
+        final fcmService = FCM();
+        final success = await fcmService.sendNotificationFCM(
+          userId: recipientUserId,
+          remoteId: senderId ?? _currentUserId ?? '',
+          name: senderName,
+          deviceToken: recipientToken,
+          title: senderName,
+          body: _formatMessageBody(message, messageType),
+          type: 'message',
+          chatId: chatId,
+        );
+        
+        if (success) {
+          print('✅ FCM notification sent successfully to iOS user');
+        } else {
+          print('❌ FCM notification failed for iOS user');
+        }
+        
+      } else {
+        // Android: Use ntfy (default for Android or unknown)
+        print('🤖 Sending ntfy notification to Android user');
+        
+        final success = await NtfyPushService.sendNotification(
           recipientUserId: recipientUserId,
           title: senderName,
           body: _formatMessageBody(message, messageType),
           clickAction: 'myapp://chat/$chatId',
-          data: {'chatId': chatId, 'type': 'chat'},
+          data: {
+            'chatId': chatId,
+            'senderId': senderId ?? _currentUserId ?? '',
+            'type': 'chat'
+          },
         );
-        print('✅ ntfy notification sent to Android user: $recipientUserId');
+        
+        if (success) {
+          print('✅ ntfy notification sent successfully to Android user');
+        } else {
+          print('❌ ntfy notification failed for Android user');
+        }
       }
-    } catch (e) {
-      print('❌ Error sending cross-platform chat notification: $e');
+      
+    } catch (e, stackTrace) {
+      print('❌ Error in sendChatNotification: $e');
+      print('❌ Stack trace: $stackTrace');
     }
   }
 
@@ -157,8 +207,12 @@ class PlatformPushService {
         return '📹 Video';
       case 'file':
         return '📎 File';
+      case 'audio':
+        return '🎵 Audio';
       default:
-        return message.length > 100 ? '${message.substring(0, 100)}...' : message;
+        return message.length > 100 
+          ? '${message.substring(0, 97)}...' 
+          : message;
     }
   }
 
@@ -177,8 +231,20 @@ class PlatformPushService {
     try {
       if (Platform.isIOS) {
         final messaging = FirebaseMessaging.instance;
-        final token = await messaging.getToken();
-        print('🔔 Retrieved FCM token: ${token?.substring(0, 20)}...');
+        String? token = await messaging.getToken();
+        
+        // Retry once if token is null
+        if (token == null) {
+          await Future.delayed(Duration(seconds: 2));
+          token = await messaging.getToken();
+        }
+        
+        if (token != null) {
+          print('🔔 Retrieved FCM token: ${token.substring(0, 20)}...');
+        } else {
+          print('⚠️ Could not retrieve FCM token');
+        }
+        
         return token;
       }
       return null;
@@ -192,6 +258,26 @@ class PlatformPushService {
   static Future<void> stopListening() async {
     if (Platform.isAndroid) {
       await NtfyPushService.dispose();
+    }
+    _currentUserId = null;
+    _isChatScreenOpen = false;
+    _currentChatId = null;
+  }
+
+  /// Re-register device token (for token refresh)
+  static Future<void> refreshDeviceToken(String userId) async {
+    try {
+      print('🔔 Refreshing device token for user: $userId');
+      
+      if (Platform.isIOS) {
+        await _initializeIOSPush(userId);
+      } else {
+        await _initializeAndroidPush(userId);
+      }
+      
+      print('✅ Device token refreshed');
+    } catch (e) {
+      print('❌ Error refreshing device token: $e');
     }
   }
 }

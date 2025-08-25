@@ -63,7 +63,6 @@ class SupabasePushService {
   
   /// Set chat screen status to prevent notifications when chat is open (Android)
   static void setChatScreenStatus({required bool isOpen, String? chatId}) {
-    print('testing 🔴 SUPABASE PUSH: setChatScreenStatus called - isOpen: $isOpen, chatId: $chatId');
     PlatformPushService.setChatScreenStatus(isOpen: isOpen, chatId: chatId);
   }
   
