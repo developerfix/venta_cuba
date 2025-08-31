@@ -459,91 +459,51 @@ class AuthController extends GetxController {
       String? token;
 
       if (Platform.isIOS) {
-        // Check if running on simulator for mock token testing
         try {
-          // Try to detect simulator environment
-          bool isSimulator = false;
-          try {
-            // This will be true on simulator
-            isSimulator = Platform.environment['SIMULATOR_DEVICE_NAME'] != null ||
-                         Platform.environment['SIMULATOR_DEVICE_SET_PATH'] != null ||
-                         Platform.environment['SIMULATOR_ROOT'] != null ||
-                         Platform.environment['SIMULATOR_HOST_HOME'] != null;
-            
-            // Additional check: iOS simulators typically cannot get APNS tokens
-            if (!isSimulator && Platform.isIOS) {
-              try {
-                final messaging = FirebaseMessaging.instance;
-                final apnsCheck = await messaging.getAPNSToken();
-                if (apnsCheck == null) {
-                  isSimulator = true; // Likely simulator if APNS token is null immediately
-                  print('🧪 Detected simulator: APNS token is null');
-                }
-              } catch (e) {
-                isSimulator = true; // If APNS token throws error, likely simulator
-                print('🧪 Detected simulator: APNS token error - $e');
+          // Get actual FCM token with APNS handling
+          print('🔔 Requesting FCM token with APNS check...');
+          
+          // First ensure APNS token is available
+          final messaging = FirebaseMessaging.instance;
+          String? apnsToken;
+          int maxRetries = 5;
+          int retryCount = 0;
+          
+          while (apnsToken == null && retryCount < maxRetries) {
+            try {
+              apnsToken = await messaging.getAPNSToken();
+              if (apnsToken != null) {
+                print('✅ APNS token available for FCM generation');
+                break;
               }
+            } catch (e) {
+              print('⚠️ APNS token not ready, attempt ${retryCount + 1}/$maxRetries: $e');
             }
             
-            print('🔍 Simulator detection in auth: $isSimulator');
-          } catch (e) {
-            // Fallback detection - real devices will have valid FCM tokens
-            isSimulator = false;
+            retryCount++;
+            await Future.delayed(Duration(seconds: 2));
           }
-
-          if (isSimulator) {
-            // Generate mock FCM token for simulator testing
-            final timestamp = DateTime.now().millisecondsSinceEpoch;
-            final userId = user?.userId ?? "simulator_user";
-            token = "mock_fcm_token_ios_simulator_${userId}_${timestamp}_very_long_string_to_simulate_real_fcm_token_format_that_is_typically_over_100_characters_long";
-            deviceToken = token;
-            print('🧪 Generated mock iOS FCM token for simulator: ${token.substring(0, 50)}...');
-          } else {
-            // Real device - get actual FCM token with APNS handling
-            print('🔔 Real iOS device - requesting FCM token with APNS check...');
-            
-            // First ensure APNS token is available
-            final messaging = FirebaseMessaging.instance;
-            String? apnsToken;
-            int maxRetries = 5;
-            int retryCount = 0;
-            
-            while (apnsToken == null && retryCount < maxRetries) {
+          
+          if (apnsToken != null) {
+            // Now try to get FCM token
+            token = await PlatformPushService.getFCMToken();
+            if (token == null) {
+              // Try to get token directly from Firebase
               try {
-                apnsToken = await messaging.getAPNSToken();
-                if (apnsToken != null) {
-                  print('✅ APNS token available for FCM generation');
-                  break;
-                }
+                token = await messaging.getToken();
               } catch (e) {
-                print('⚠️ APNS token not ready, attempt ${retryCount + 1}/$maxRetries: $e');
+                print('Error getting FCM token directly: $e');
               }
-              
-              retryCount++;
-              await Future.delayed(Duration(seconds: 2));
             }
             
-            if (apnsToken != null) {
-              // Now try to get FCM token
-              token = await PlatformPushService.getFCMToken();
-              if (token == null) {
-                // Try to get token directly from Firebase
-                try {
-                  token = await messaging.getToken();
-                } catch (e) {
-                  print('Error getting FCM token directly: $e');
-                }
-              }
-              
-              if (token != null) {
-                deviceToken = token;
-                print('✅ Refreshed iOS FCM token: ${token.substring(0, 20)}...');
-              } else {
-                print('⚠️ Could not get FCM token even after APNS token was available');
-              }
+            if (token != null) {
+              deviceToken = token;
+              print('✅ Refreshed iOS FCM token: ${token.substring(0, 20)}...');
             } else {
-              print('❌ APNS token not available after retries, cannot get FCM token');
+              print('⚠️ Could not get FCM token even after APNS token was available');
             }
+          } else {
+            print('❌ APNS token not available after retries, cannot get FCM token');
           }
         } catch (e) {
           print('❌ Error in iOS token refresh: $e');
