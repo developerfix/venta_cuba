@@ -70,21 +70,21 @@ class SupabaseService {
     required String platform,
   }) async {
     try {
-      // First, deactivate any existing tokens for this user on this platform
+      // First, delete any existing tokens for this user on this platform
       await client
           .from('device_tokens')
-          .update({'is_active': false})
+          .delete()
           .eq('user_id', userId)
           .eq('platform', platform);
 
-      // Insert or update the new token
-      await client.from('device_tokens').upsert({
+      // Insert the new token (single token per user per platform)
+      await client.from('device_tokens').insert({
         'user_id': userId,
         'device_token': token,
         'platform': platform,
         'is_active': true,
         'updated_at': DateTime.now().toIso8601String(),
-      }, onConflict: 'user_id,device_token');
+      });
 
       print('✅ Device token saved for $platform user: $userId');
       return true;

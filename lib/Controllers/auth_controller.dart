@@ -283,20 +283,11 @@ class AuthController extends GetxController {
           print(
               '🔥 AuthController: RLS user context set for user: ${user!.userId}');
 
-          // Initialize Platform Push Service for this user
+          // Initialize Platform Push Service for this user (this already saves the token)
           await PlatformPushService.initialize(user!.userId.toString());
           print(
               '🔥 AuthController: Platform Push Service initialized for user: ${user!.userId}');
-
-          // Save device token to Supabase after user data is loaded
-          try {
-            if (user?.userId != null) {
-              await saveDeviceTokenWithPlatform(user!.userId.toString());
-            }
-            print('🔥 Device token association completed');
-          } catch (e) {
-            print('🔥 AuthController: Error with device token setup: $e');
-          }
+          print('🔥 Device token association completed');
         } catch (e) {
           print('🔥 AuthController: Error setting user online: $e');
           // Don't let this block the login process
@@ -468,20 +459,94 @@ class AuthController extends GetxController {
       String? token;
 
       if (Platform.isIOS) {
-        // Get real FCM token for iOS
-        token = await PlatformPushService.getFCMToken();
-        if (token == null) {
-          // Try to get token directly from Firebase
+        // Check if running on simulator for mock token testing
+        try {
+          // Try to detect simulator environment
+          bool isSimulator = false;
           try {
-            token = await FirebaseMessaging.instance.getToken();
+            // This will be true on simulator
+            isSimulator = Platform.environment['SIMULATOR_DEVICE_NAME'] != null ||
+                         Platform.environment['SIMULATOR_DEVICE_SET_PATH'] != null ||
+                         Platform.environment['SIMULATOR_ROOT'] != null ||
+                         Platform.environment['SIMULATOR_HOST_HOME'] != null;
+            
+            // Additional check: iOS simulators typically cannot get APNS tokens
+            if (!isSimulator && Platform.isIOS) {
+              try {
+                final messaging = FirebaseMessaging.instance;
+                final apnsCheck = await messaging.getAPNSToken();
+                if (apnsCheck == null) {
+                  isSimulator = true; // Likely simulator if APNS token is null immediately
+                  print('🧪 Detected simulator: APNS token is null');
+                }
+              } catch (e) {
+                isSimulator = true; // If APNS token throws error, likely simulator
+                print('🧪 Detected simulator: APNS token error - $e');
+              }
+            }
+            
+            print('🔍 Simulator detection in auth: $isSimulator');
           } catch (e) {
-            print('Error getting FCM token directly: $e');
+            // Fallback detection - real devices will have valid FCM tokens
+            isSimulator = false;
           }
-        }
-        
-        if (token != null) {
-          deviceToken = token;
-          print('✅ Refreshed iOS FCM token: ${token.substring(0, 20)}...');
+
+          if (isSimulator) {
+            // Generate mock FCM token for simulator testing
+            final timestamp = DateTime.now().millisecondsSinceEpoch;
+            final userId = user?.userId ?? "simulator_user";
+            token = "mock_fcm_token_ios_simulator_${userId}_${timestamp}_very_long_string_to_simulate_real_fcm_token_format_that_is_typically_over_100_characters_long";
+            deviceToken = token;
+            print('🧪 Generated mock iOS FCM token for simulator: ${token.substring(0, 50)}...');
+          } else {
+            // Real device - get actual FCM token with APNS handling
+            print('🔔 Real iOS device - requesting FCM token with APNS check...');
+            
+            // First ensure APNS token is available
+            final messaging = FirebaseMessaging.instance;
+            String? apnsToken;
+            int maxRetries = 5;
+            int retryCount = 0;
+            
+            while (apnsToken == null && retryCount < maxRetries) {
+              try {
+                apnsToken = await messaging.getAPNSToken();
+                if (apnsToken != null) {
+                  print('✅ APNS token available for FCM generation');
+                  break;
+                }
+              } catch (e) {
+                print('⚠️ APNS token not ready, attempt ${retryCount + 1}/$maxRetries: $e');
+              }
+              
+              retryCount++;
+              await Future.delayed(Duration(seconds: 2));
+            }
+            
+            if (apnsToken != null) {
+              // Now try to get FCM token
+              token = await PlatformPushService.getFCMToken();
+              if (token == null) {
+                // Try to get token directly from Firebase
+                try {
+                  token = await messaging.getToken();
+                } catch (e) {
+                  print('Error getting FCM token directly: $e');
+                }
+              }
+              
+              if (token != null) {
+                deviceToken = token;
+                print('✅ Refreshed iOS FCM token: ${token.substring(0, 20)}...');
+              } else {
+                print('⚠️ Could not get FCM token even after APNS token was available');
+              }
+            } else {
+              print('❌ APNS token not available after retries, cannot get FCM token');
+            }
+          }
+        } catch (e) {
+          print('❌ Error in iOS token refresh: $e');
         }
       } else {
         // For Android, use the ntfy topic identifier (consistent format)
@@ -508,11 +573,22 @@ class AuthController extends GetxController {
       final supabaseService = SupabaseService.instance;
       
       if (Platform.isIOS) {
-        // For iOS, save the FCM token if we have one
+        // For iOS, save the FCM token if we have one (with improved APNS handling)
         String? fcmToken = await PlatformPushService.getFCMToken();
+        
+        // If PlatformPushService couldn't get token, try direct approach with APNS check
         if (fcmToken == null) {
           try {
-            fcmToken = await FirebaseMessaging.instance.getToken();
+            final messaging = FirebaseMessaging.instance;
+            
+            // Check APNS token first
+            String? apnsToken = await messaging.getAPNSToken();
+            if (apnsToken != null) {
+              fcmToken = await messaging.getToken();
+              print('🔔 Got FCM token directly after APNS check: ${fcmToken?.substring(0, 20)}...');
+            } else {
+              print('❌ APNS token not available, cannot get FCM token');
+            }
           } catch (e) {
             print('❌ Error getting FCM token: $e');
           }
@@ -528,9 +604,44 @@ class AuthController extends GetxController {
           if (success) {
             deviceToken = fcmToken; // Update local token
             print('✅ iOS FCM token saved: ${fcmToken.substring(0, 20)}...');
+          } else {
+            // Show error dialog for Supabase save failure
+            try {
+              Get.dialog(
+                AlertDialog(
+                  title: Text('❌ Token Save Failed'),
+                  content: Text('FCM token could not be saved to Supabase in auth controller.\n\nToken: ${fcmToken.substring(0, 30)}...\n\nNotifications may not work.\n\nPlease screenshot and send to developer.'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Get.back(),
+                      child: Text('OK'),
+                    ),
+                  ],
+                ),
+              );
+            } catch (e) {
+              print('Error showing auth controller error dialog: $e');
+            }
           }
         } else {
           print('⚠️ No FCM token available for iOS user: $userId');
+          // Show error dialog for no FCM token
+          try {
+            Get.dialog(
+              AlertDialog(
+                title: Text('❌ No FCM Token'),
+                content: Text('No FCM token available for iOS user in auth controller.\n\nUser ID: $userId\n\nNotifications will not work.\n\nPlease screenshot and send to developer.'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Get.back(),
+                    child: Text('OK'),
+                  ),
+                ],
+              ),
+            );
+          } catch (dialogError) {
+            print('Error showing no token dialog: $dialogError');
+          }
         }
       } else {
         // For Android, save ntfy topic identifier (consistent format)
@@ -548,6 +659,23 @@ class AuthController extends GetxController {
       }
     } catch (e) {
       print('❌ Error saving device token with platform: $e');
+      // Show error dialog with actual error details
+      try {
+        Get.dialog(
+          AlertDialog(
+            title: Text('❌ Device Token Error'),
+            content: Text('Error saving device token with platform:\n\n$e\n\nUser ID: $userId\n\nPlease screenshot and send to developer.'),
+            actions: [
+              TextButton(
+                onPressed: () => Get.back(),
+                child: Text('OK'),
+              ),
+            ],
+          ),
+        );
+      } catch (dialogError) {
+        print('Error showing device token error dialog: $dialogError');
+      }
     } finally {
       _savingDeviceToken = false;
     }
@@ -940,16 +1068,18 @@ class AuthController extends GetxController {
         print('🔥 SupabaseChatController not found on logout: $e');
       }
 
-      // Clear FCM token from Supabase for iOS
-      if (Platform.isIOS &&
-          deviceToken.isNotEmpty &&
-          deviceToken != 'cuba-friendly-token') {
+      // Clear device token from Supabase for all platforms
+      if (user?.userId != null) {
         try {
-          final supabaseService = SupabaseService.instance;
-          await supabaseService.removeDeviceToken(deviceToken);
-          print('🍎 FCM token cleared from Supabase for iOS user');
+          // Remove all tokens for this user (both iOS and Android)
+          await SupabaseService.client
+              .from('device_tokens')
+              .delete()
+              .eq('user_id', user!.userId.toString());
+          
+          print('🔥 All device tokens cleared from Supabase for user: ${user!.userId}');
         } catch (e) {
-          print('❌ Error clearing FCM token from Supabase: $e');
+          print('❌ Error clearing device tokens from Supabase: $e');
         }
       }
 

@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'ntfy_push_service.dart';
 import '../Supabase/supabase_service.dart';
 import '../../Notification/firebase_messaging.dart';
@@ -31,47 +33,213 @@ class PlatformPushService {
   /// Initialize iOS with FCM
   static Future<void> _initializeIOSPush(String userId) async {
     try {
-      final messaging = FirebaseMessaging.instance;
-      
-      // Request permissions
-      final settings = await messaging.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
-
-      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-        // Get FCM token
-        String? token = await messaging.getToken();
+      // Check if running on simulator first
+      bool isSimulator = false;
+      try {
+        isSimulator = Platform.environment['SIMULATOR_DEVICE_NAME'] != null ||
+                     Platform.environment['SIMULATOR_DEVICE_SET_PATH'] != null ||
+                     Platform.environment['SIMULATOR_ROOT'] != null ||
+                     Platform.environment['SIMULATOR_HOST_HOME'] != null;
         
-        // Wait for token if not immediately available
-        if (token == null) {
-          await Future.delayed(Duration(seconds: 2));
-          token = await messaging.getToken();
+        // Additional check: iOS simulators typically cannot get APNS tokens
+        if (!isSimulator && Platform.isIOS) {
+          try {
+            final messaging = FirebaseMessaging.instance;
+            final apnsCheck = await messaging.getAPNSToken();
+            if (apnsCheck == null) {
+              isSimulator = true; // Likely simulator if APNS token is null immediately
+              print('🧪 Detected simulator: APNS token is null');
+            }
+          } catch (e) {
+            isSimulator = true; // If APNS token throws error, likely simulator
+            print('🧪 Detected simulator: APNS token error - $e');
+          }
         }
         
-        if (token != null && token.isNotEmpty) {
-          // Save token to Supabase with iOS platform
-          final supabase = SupabaseService.instance;
-          await supabase.saveDeviceTokenWithPlatform(
-            userId: userId,
-            token: token,
-            platform: 'ios',
-          );
-          print('✅ iOS FCM token saved: ${token.substring(0, 20)}... for user: $userId');
-        } else {
-          print('⚠️ Could not get FCM token for iOS user: $userId');
-        }
+        print('🔍 Simulator detection: $isSimulator');
+        print('🔍 Environment check - SIMULATOR_DEVICE_NAME: ${Platform.environment['SIMULATOR_DEVICE_NAME']}');
+        print('🔍 Environment check - SIMULATOR_DEVICE_SET_PATH: ${Platform.environment['SIMULATOR_DEVICE_SET_PATH']}');
+      } catch (e) {
+        isSimulator = false;
+      }
 
-        // Configure foreground presentation
-        await messaging.setForegroundNotificationPresentationOptions(
+      String? token;
+
+      if (isSimulator) {
+        // Generate mock FCM token for simulator testing
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        token = "mock_fcm_token_ios_simulator_${userId}_${timestamp}_very_long_string_to_simulate_real_fcm_token_format_that_is_typically_over_100_characters_long_for_proper_testing";
+        print('🧪 Generated mock iOS FCM token for simulator: ${token.substring(0, 50)}...');
+        
+        // Save mock token to Supabase with iOS platform
+        final supabase = SupabaseService.instance;
+        await supabase.saveDeviceTokenWithPlatform(
+          userId: userId,
+          token: token,
+          platform: 'ios',
+        );
+        print('✅ Mock iOS FCM token saved: ${token.substring(0, 20)}... for user: $userId');
+        
+      } else {
+        // Real device - normal FCM flow with APNS token handling
+        final messaging = FirebaseMessaging.instance;
+        
+        // Request permissions first
+        final settings = await messaging.requestPermission(
           alert: true,
           badge: true,
           sound: true,
         );
+
+        if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+          // Wait for APNS token to be available (critical for FCM token generation)
+          print('🔔 Real iOS device - waiting for APNS token...');
+          String? apnsToken;
+          int maxRetries = 10;
+          int retryCount = 0;
+          
+          while (apnsToken == null && retryCount < maxRetries) {
+            try {
+              apnsToken = await messaging.getAPNSToken();
+              if (apnsToken != null) {
+                print('✅ APNS token available: ${apnsToken.substring(0, 20)}...');
+                break;
+              }
+            } catch (e) {
+              print('⚠️ APNS token not ready, attempt ${retryCount + 1}/$maxRetries: $e');
+            }
+            
+            retryCount++;
+            await Future.delayed(Duration(seconds: 2));
+          }
+          
+          if (apnsToken == null) {
+            print('❌ APNS token not available after $maxRetries attempts');
+            // Show error dialog for debugging
+            try {
+              Get.dialog(
+                AlertDialog(
+                  title: Text('🔔 Push Notification Debug'),
+                  content: Text('APNS token not available after $maxRetries attempts.\n\nThis might prevent notifications from working.\n\nPlease screenshot and send to developer.'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Get.back(),
+                      child: Text('OK'),
+                    ),
+                  ],
+                ),
+              );
+            } catch (e) {
+              print('Error showing APNS error dialog: $e');
+            }
+            return;
+          }
+
+          // Now get FCM token with APNS token available
+          token = await messaging.getToken();
+          
+          // Retry if token is still null
+          if (token == null) {
+            print('🔔 FCM token null, retrying...');
+            await Future.delayed(Duration(seconds: 3));
+            token = await messaging.getToken();
+          }
+          
+          if (token != null && token.isNotEmpty) {
+            // Save token to Supabase with iOS platform
+            final supabase = SupabaseService.instance;
+            bool success = await supabase.saveDeviceTokenWithPlatform(
+              userId: userId,
+              token: token,
+              platform: 'ios',
+            );
+            
+            if (success) {
+              print('✅ iOS FCM token saved: ${token.substring(0, 20)}... for user: $userId');
+              // Show success dialog for debugging
+              try {
+                Get.dialog(
+                  AlertDialog(
+                    title: Text('✅ Push Notifications Ready'),
+                    content: Text('FCM token successfully saved to Supabase!\n\nToken: ${token.substring(0, 30)}...\n\nNotifications should work now.'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Get.back(),
+                        child: Text('OK'),
+                      ),
+                    ],
+                  ),
+                );
+              } catch (e) {
+                print('Error showing success dialog: $e');
+              }
+            } else {
+              // Show error dialog for Supabase save failure
+              try {
+                Get.dialog(
+                  AlertDialog(
+                    title: Text('❌ Token Save Failed'),
+                    content: Text('FCM token could not be saved to Supabase.\n\nToken: ${token.substring(0, 30)}...\n\nError: Check console logs\n\nNotifications may not work.\n\nPlease screenshot and send to developer.'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Get.back(),
+                        child: Text('OK'),
+                      ),
+                    ],
+                  ),
+                );
+              } catch (dialogError) {
+                print('Error showing Supabase error dialog: $dialogError');
+              }
+            }
+          } else {
+            print('⚠️ Could not get FCM token for iOS user: $userId');
+            // Show error dialog for FCM token failure
+            try {
+              Get.dialog(
+                AlertDialog(
+                  title: Text('❌ FCM Token Failed'),
+                  content: Text('Could not generate FCM token for iOS.\n\nAPNS token was available but FCM token generation failed.\n\nPlease screenshot and send to developer.'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Get.back(),
+                      child: Text('OK'),
+                    ),
+                  ],
+                ),
+              );
+            } catch (e) {
+              print('Error showing FCM error dialog: $e');
+            }
+          }
+
+          // Configure foreground presentation
+          await messaging.setForegroundNotificationPresentationOptions(
+            alert: true,
+            badge: true,
+            sound: true,
+          );
+        }
       }
     } catch (e) {
       print('❌ Error initializing iOS push: $e');
+      // Show error dialog with actual error details
+      try {
+        Get.dialog(
+          AlertDialog(
+            title: Text('❌ iOS Push Init Failed'),
+            content: Text('Error initializing iOS push notifications:\n\n$e\n\nPlease screenshot and send to developer.'),
+            actions: [
+              TextButton(
+                onPressed: () => Get.back(),
+                child: Text('OK'),
+              ),
+            ],
+          ),
+        );
+      } catch (dialogError) {
+        print('Error showing iOS init error dialog: $dialogError');
+      }
     }
   }
 
@@ -230,19 +398,85 @@ class PlatformPushService {
   static Future<String?> getFCMToken() async {
     try {
       if (Platform.isIOS) {
+        // Check if running on simulator
+        bool isSimulator = false;
+        try {
+          isSimulator = Platform.environment['SIMULATOR_DEVICE_NAME'] != null ||
+                       Platform.environment['SIMULATOR_DEVICE_SET_PATH'] != null ||
+                       Platform.environment['SIMULATOR_ROOT'] != null ||
+                       Platform.environment['SIMULATOR_HOST_HOME'] != null;
+          
+          // Additional check: iOS simulators typically cannot get APNS tokens
+          if (!isSimulator && Platform.isIOS) {
+            try {
+              final messaging = FirebaseMessaging.instance;
+              final apnsCheck = await messaging.getAPNSToken();
+              if (apnsCheck == null) {
+                isSimulator = true; // Likely simulator if APNS token is null immediately
+                print('🧪 Detected simulator in getFCMToken: APNS token is null');
+              }
+            } catch (e) {
+              isSimulator = true; // If APNS token throws error, likely simulator
+              print('🧪 Detected simulator in getFCMToken: APNS token error - $e');
+            }
+          }
+          
+          print('🔍 Simulator detection in getFCMToken: $isSimulator');
+        } catch (e) {
+          isSimulator = false;
+        }
+
+        if (isSimulator) {
+          // Generate mock FCM token for simulator testing
+          final timestamp = DateTime.now().millisecondsSinceEpoch;
+          final mockToken = "mock_fcm_token_ios_simulator_${timestamp}_very_long_string_to_simulate_real_fcm_token_format_that_is_typically_over_100_characters_long_for_proper_testing";
+          print('🧪 Generated mock FCM token for iOS simulator: ${mockToken.substring(0, 50)}...');
+          return mockToken;
+        }
+
+        // Real device - get actual FCM token with APNS token check
         final messaging = FirebaseMessaging.instance;
+        
+        // First ensure APNS token is available
+        print('🔔 Checking APNS token availability...');
+        String? apnsToken;
+        int maxRetries = 5;
+        int retryCount = 0;
+        
+        while (apnsToken == null && retryCount < maxRetries) {
+          try {
+            apnsToken = await messaging.getAPNSToken();
+            if (apnsToken != null) {
+              print('✅ APNS token available for FCM token generation');
+              break;
+            }
+          } catch (e) {
+            print('⚠️ APNS token not ready, attempt ${retryCount + 1}/$maxRetries: $e');
+          }
+          
+          retryCount++;
+          await Future.delayed(Duration(seconds: 2));
+        }
+        
+        if (apnsToken == null) {
+          print('❌ APNS token not available, cannot generate FCM token');
+          return null;
+        }
+
+        // Now get FCM token
         String? token = await messaging.getToken();
         
-        // Retry once if token is null
+        // Retry if token is null
         if (token == null) {
-          await Future.delayed(Duration(seconds: 2));
+          print('🔔 FCM token null, retrying...');
+          await Future.delayed(Duration(seconds: 3));
           token = await messaging.getToken();
         }
         
         if (token != null) {
           print('🔔 Retrieved FCM token: ${token.substring(0, 20)}...');
         } else {
-          print('⚠️ Could not retrieve FCM token');
+          print('⚠️ Could not retrieve FCM token after APNS token was available');
         }
         
         return token;
