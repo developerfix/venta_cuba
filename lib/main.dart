@@ -21,9 +21,11 @@ String? deviceToken;
 // Background message handler - MUST be top-level function
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
-  print('🔥 Background message received: ${message.messageId}');
-  await FCM.showBackgroundNotification(message);
+  if (Platform.isIOS) {
+    await Firebase.initializeApp();
+    print('🔥 Background message received: ${message.messageId}');
+    await FCM.showBackgroundNotification(message);
+  }
 }
 
 void main() {
