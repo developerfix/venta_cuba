@@ -18,7 +18,7 @@ bool isOpenFile = false;
 String filePathD = "";
 
 class FCM {
-  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+  FirebaseMessaging? _firebaseMessaging;
   final streamCtrl = StreamController<String>.broadcast();
   final authCont = Get.put(AuthController());
 
@@ -36,17 +36,20 @@ class FCM {
   late InitializationSettings initializationSettings;
 
   void initializing() async {
-    await FirebaseMessaging.instance
-        .setAutoInitEnabled(true); // later added for manifest.xml permission
-    await FirebaseMessaging.instance
-        .setForegroundNotificationPresentationOptions(
-      alert: true,
-      badge: true,
-      sound: true,
-    )
-        .catchError((onError) {
-      print("this is firebase error::: ${onError.toString()}");
-    });
+    if (Platform.isIOS) {
+      _firebaseMessaging = FirebaseMessaging.instance;
+      await _firebaseMessaging!
+          .setAutoInitEnabled(true); // later added for manifest.xml permission
+      await _firebaseMessaging!
+          .setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      )
+          .catchError((onError) {
+        print("this is firebase error::: ${onError.toString()}");
+      });
+    }
 
     androidInitializationSettings =
         const AndroidInitializationSettings('@drawable/profits');
@@ -71,7 +74,8 @@ class FCM {
     print('🔥 Starting Firebase messaging listeners...');
 
     // Listen for messages when app is in foreground
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+    if (Platform.isIOS) {
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
       print('🔥 Received foreground message: ${message.messageId}');
       print('🔥 Message data: ${message.data}');
       print(
@@ -121,27 +125,28 @@ class FCM {
           false,
           false,
           AndroidNotificationCategory.message);
-    });
+      });
 
-    // Listen for messages when app is in background but opened
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print('🔥 App opened from background message: ${message.messageId}');
-      print('🔥 Message data: ${message.data}');
-      // Handle navigation to chat if needed
-      _handleNotificationTap(message);
-    });
-
-    // Handle initial message when app is opened from terminated state
-    FirebaseMessaging.instance
-        .getInitialMessage()
-        .then((RemoteMessage? message) {
-      if (message != null) {
-        print('🔥 App opened from terminated state: ${message.messageId}');
+      // Listen for messages when app is in background but opened
+      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        print('🔥 App opened from background message: ${message.messageId}');
         print('🔥 Message data: ${message.data}');
         // Handle navigation to chat if needed
         _handleNotificationTap(message);
-      }
-    });
+      });
+
+      // Handle initial message when app is opened from terminated state
+      FirebaseMessaging.instance
+          .getInitialMessage()
+          .then((RemoteMessage? message) {
+        if (message != null) {
+          print('🔥 App opened from terminated state: ${message.messageId}');
+          print('🔥 Message data: ${message.data}');
+          // Handle navigation to chat if needed
+          _handleNotificationTap(message);
+        }
+      });
+    }
   }
 
   static void _showNotifications(
@@ -238,16 +243,17 @@ class FCM {
       print('🔥 iOS Local Notification Permissions Result: $result');
 
       // Also request Firebase messaging permissions
-      NotificationSettings settings =
-          await _firebaseMessaging.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-        carPlay: false,
-        criticalAlert: false,
-        provisional: false,
-        announcement: false,
-      );
+      if (Platform.isIOS) {
+        NotificationSettings settings =
+            await _firebaseMessaging!.requestPermission(
+          alert: true,
+          badge: true,
+          sound: true,
+          carPlay: false,
+          criticalAlert: false,
+          provisional: false,
+          announcement: false,
+        );
 
       print('🔥 Firebase iOS Permissions - Sound: ${settings.sound}');
       print('🔥 Firebase iOS Permissions - Alert: ${settings.alert}');
@@ -262,106 +268,113 @@ class FCM {
       } else if (settings.authorizationStatus ==
           AuthorizationStatus.notDetermined) {
         print('🔥 ⚠️ iOS Notifications are NOT DETERMINED - requesting again');
-      } else {
-        print('🔥 ✅ iOS Notifications are AUTHORIZED');
+        } else {
+          print('🔥 ✅ iOS Notifications are AUTHORIZED');
+        }
       }
     } else if (Platform.isAndroid) {
       // Android notification permissions are handled automatically
       print('🔥 Android platform detected - permissions handled automatically');
-      await _firebaseMessaging.requestPermission(
-          sound: true, badge: true, alert: true);
     }
   }
 
   setNotifications(BuildContext context) async {
     initializing();
-    firebaseCloudMessagingListeners(context);
+    if (Platform.isIOS) {
+      firebaseCloudMessagingListeners(context);
+    }
 
     // Load badge count from storage
     await loadBadgeCount();
 
     // Request notification permissions (platform specific)
-    await ios_permission();
-    await requestNotificationPermissions();
+    if (Platform.isIOS) {
+      await ios_permission();
+      await requestNotificationPermissions();
 
-    // Check and log current permission status for debugging
-    await checkNotificationPermissions();
+      // Check and log current permission status for debugging
+      await checkNotificationPermissions();
+    }
 
     if (Platform.isIOS) {
       try {
-        String? apnsToken = await _firebaseMessaging.getAPNSToken();
+        String? apnsToken = await _firebaseMessaging!.getAPNSToken();
         print('🔥 APNS Token: $apnsToken');
         if (apnsToken == null) {
           print(
               '🔥 ⚠️ WARNING: APNS Token is null - iOS notifications may not work');
           // Wait a bit and try again
           await Future.delayed(Duration(seconds: 3));
-          apnsToken = await _firebaseMessaging.getAPNSToken();
+          apnsToken = await _firebaseMessaging!.getAPNSToken();
           print('🔥 APNS Token (retry): $apnsToken');
         }
       } catch (e) {
         print('🔥 Error getting APNS token: $e');
       }
+
+      // Get initial token
+      await getAndUpdateToken();
+
+      // Listen for token refresh
+      _firebaseMessaging!.onTokenRefresh.listen((newToken) {
+        deviceToken = newToken;
+        debugPrint('🔥 Token refreshed: $newToken');
+        // Update token locally if user is logged in
+        updateTokenOnServer(newToken);
+      });
     }
-
-    // Get initial token
-    await getAndUpdateToken();
-
-    // Listen for token refresh
-    _firebaseMessaging.onTokenRefresh.listen((newToken) {
-      deviceToken = newToken;
-      debugPrint('🔥 Token refreshed: $newToken');
-      // Update token locally if user is logged in
-      updateTokenOnServer(newToken);
-    });
   }
 
   Future<void> getAndUpdateToken() async {
-    try {
-      String? token = await _firebaseMessaging.getToken();
-      if (token != null) {
-        deviceToken = token;
-        debugPrint('🔥 Initial device token: $token');
-        // Update token locally if user is logged in
-        updateTokenOnServer(token);
-      } else {
-        print('🔥 Failed to get FCM token');
+    if (Platform.isIOS) {
+      try {
+        String? token = await _firebaseMessaging!.getToken();
+        if (token != null) {
+          deviceToken = token;
+          debugPrint('🔥 Initial device token: $token');
+          // Update token locally if user is logged in
+          updateTokenOnServer(token);
+        } else {
+          print('🔥 Failed to get FCM token');
+        }
+      } catch (e) {
+        print('🔥 Error getting FCM token: $e');
       }
-    } catch (e) {
-      print('🔥 Error getting FCM token: $e');
     }
   }
 
   Future<void> requestNotificationPermissions() async {
-    try {
-      NotificationSettings settings =
-          await _firebaseMessaging.requestPermission(
-        alert: true,
-        announcement: false,
-        badge: true,
-        carPlay: false,
-        criticalAlert: false,
-        provisional: false,
-        sound: true,
-      );
+    if (Platform.isIOS) {
+      try {
+        NotificationSettings settings =
+            await _firebaseMessaging!.requestPermission(
+          alert: true,
+          announcement: false,
+          badge: true,
+          carPlay: false,
+          criticalAlert: false,
+          provisional: false,
+          sound: true,
+        );
 
-      print('🔥 === NOTIFICATION PERMISSIONS ===');
-      print('🔥 Authorization Status: ${settings.authorizationStatus}');
-      print('🔥 Alert Setting: ${settings.alert}');
-      print('🔥 Badge Setting: ${settings.badge}');
-      print('🔥 Sound Setting: ${settings.sound}');
+        print('🔥 === NOTIFICATION PERMISSIONS ===');
+        print('🔥 Authorization Status: ${settings.authorizationStatus}');
+        print('🔥 Alert Setting: ${settings.alert}');
+        print('🔥 Badge Setting: ${settings.badge}');
+        print('🔥 Sound Setting: ${settings.sound}');
 
-      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-        print('🔥 ✅ User granted full notification permission');
-      } else if (settings.authorizationStatus ==
-          AuthorizationStatus.provisional) {
-        print('🔥 ⚠️ User granted provisional notification permission');
-      } else {
-        print('🔥 ❌ User declined or has not accepted notification permission');
-        print('🔥 ❌ Push notifications will NOT work!');
+        if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+          print('🔥 ✅ User granted full notification permission');
+        } else if (settings.authorizationStatus ==
+            AuthorizationStatus.provisional) {
+          print('🔥 ⚠️ User granted provisional notification permission');
+        } else {
+          print('🔥 ❌ User declined or has not accepted notification permission');
+          print('🔥 ❌ Push notifications will NOT work!');
+        }
+      } catch (e) {
+        print('🔥 ❌ Error requesting notification permissions: $e');
       }
-    } catch (e) {
-      print('🔥 ❌ Error requesting notification permissions: $e');
     }
   }
 
@@ -464,28 +477,28 @@ class FCM {
 
   // Check and log notification permissions status (useful for debugging)
   static Future<void> checkNotificationPermissions() async {
-    try {
-      final FirebaseMessaging messaging = FirebaseMessaging.instance;
-      NotificationSettings settings = await messaging.getNotificationSettings();
+    if (Platform.isIOS) {
+      try {
+        final FirebaseMessaging messaging = FirebaseMessaging.instance;
+        NotificationSettings settings = await messaging.getNotificationSettings();
 
-      print('🔥 === CURRENT NOTIFICATION PERMISSIONS STATUS ===');
-      print('🔥 Authorization Status: ${settings.authorizationStatus}');
-      print('🔥 Alert Setting: ${settings.alert}');
-      print('🔥 Badge Setting: ${settings.badge}');
-      print('🔥 Sound Setting: ${settings.sound}');
-      print('🔥 Critical Alert: ${settings.criticalAlert}');
-      print('🔥 Announcement: ${settings.announcement}');
+        print('🔥 === CURRENT NOTIFICATION PERMISSIONS STATUS ===');
+        print('🔥 Authorization Status: ${settings.authorizationStatus}');
+        print('🔥 Alert Setting: ${settings.alert}');
+        print('🔥 Badge Setting: ${settings.badge}');
+        print('🔥 Sound Setting: ${settings.sound}');
+        print('🔥 Critical Alert: ${settings.criticalAlert}');
+        print('🔥 Announcement: ${settings.announcement}');
 
-      if (Platform.isIOS) {
         print(
             '🔥 iOS Sound Permission: ${settings.sound == AppleNotificationSetting.enabled ? "ENABLED" : "DISABLED"}');
         if (settings.sound != AppleNotificationSetting.enabled) {
           print(
               '🔥 ⚠️ WARNING: Sound permission is not enabled! User needs to enable it in Settings.');
         }
+      } catch (e) {
+        print('🔥 Error checking notification permissions: $e');
       }
-    } catch (e) {
-      print('🔥 Error checking notification permissions: $e');
     }
   }
 
