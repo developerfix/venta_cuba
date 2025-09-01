@@ -283,14 +283,62 @@ class AuthController extends GetxController {
           print(
               '🔥 AuthController: RLS user context set for user: ${user!.userId}');
 
-          // Initialize Platform Push Service for this user (this already saves the token)
-          await PlatformPushService.initialize(user!.userId.toString());
-          print(
-              '🔥 AuthController: Platform Push Service initialized for user: ${user!.userId}');
-          print('🔥 Device token association completed');
+          // Initialize Platform Push Service for this user with timeout protection
+          try {
+            await PlatformPushService.initialize(user!.userId.toString()).timeout(
+              Duration(seconds: 10),
+              onTimeout: () {
+                print('⚠️ Platform Push Service initialization timed out, will retry in background');
+                // Initialize in background without blocking login
+                _initializePushServiceInBackground(user!.userId.toString());
+              },
+            );
+            print('✅ Platform Push Service initialized for user: ${user!.userId}');
+          } catch (pushError) {
+            print('❌ Platform Push Service initialization failed: $pushError');
+            // Show immediate error dialog for push service failure
+            Future.delayed(Duration(milliseconds: 1000), () {
+              try {
+                Get.dialog(
+                  AlertDialog(
+                    title: Text('❌ Push Service Failed'),
+                    content: Text('Platform Push Service initialization failed during login:\n\n$pushError\n\nUser ID: ${user!.userId}\n\nWill retry in background.\n\nPlease screenshot and send to developer.'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Get.back(),
+                        child: Text('OK'),
+                      ),
+                    ],
+                  ),
+                );
+              } catch (dialogError) {
+                print('Error showing push service failure dialog: $dialogError');
+              }
+            });
+            // Try to initialize in background
+            _initializePushServiceInBackground(user!.userId.toString());
+          }
         } catch (e) {
           print('🔥 AuthController: Error setting user online: $e');
-          // Don't let this block the login process
+          // Show error dialog for user online failure
+          Future.delayed(Duration(milliseconds: 1000), () {
+            try {
+              Get.dialog(
+                AlertDialog(
+                  title: Text('❌ User Online Error'),
+                  content: Text('Error setting user online during login:\n\n$e\n\nUser ID: ${user!.userId}\n\nSome features may not work properly.\n\nPlease screenshot and send to developer.'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Get.back(),
+                      child: Text('OK'),
+                    ),
+                  ],
+                ),
+              );
+            } catch (dialogError) {
+              print('Error showing user online error dialog: $dialogError');
+            }
+          });
         }
       }
 
@@ -312,11 +360,49 @@ class AuthController extends GetxController {
         print('🔥 AuthController: Chat services initialized');
       } catch (e) {
         print('🔥 AuthController: Error initializing chat services: $e');
-        // Don't let this block the login process
+        // Show error dialog for chat services failure
+        Future.delayed(Duration(milliseconds: 1000), () {
+          try {
+            Get.dialog(
+              AlertDialog(
+                title: Text('❌ Chat Services Error'),
+                content: Text('Error initializing chat services during login:\n\n$e\n\nUser ID: ${user!.userId}\n\nChat features may not work properly.\n\nPlease screenshot and send to developer.'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Get.back(),
+                    child: Text('OK'),
+                  ),
+                ],
+              ),
+            );
+          } catch (dialogError) {
+            print('Error showing chat services error dialog: $dialogError');
+          }
+        });
       }
     } catch (e) {
       print('🔥 AuthController: Error in getuserDetail: $e');
-      Get.offAll(() => const Login());
+      // Show error dialog for getuserDetail failure
+      try {
+        Get.dialog(
+          AlertDialog(
+            title: Text('❌ User Details Error'),
+            content: Text('Critical error loading user details:\n\n$e\n\nReturning to login screen.\n\nPlease screenshot and send to developer.'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Get.back();
+                  Get.offAll(() => const Login());
+                },
+                child: Text('OK'),
+              ),
+            ],
+          ),
+        );
+      } catch (dialogError) {
+        print('Error showing getuserDetail error dialog: $dialogError');
+        Get.offAll(() => const Login());
+      }
       rethrow; // Re-throw to let calling method handle the error
     }
 
@@ -406,15 +492,22 @@ class AuthController extends GetxController {
       isLoading.value = true;
       update();
       
-      // Get fresh device token before login
-      await refreshDeviceToken();
+      // Get basic device token before login (simplified, no hanging retries)
+      await _getBasicDeviceToken();
 
+      // Add timeout to API call to prevent hanging
       Response response = await api.postData(
         "api/login",
         {
           'email': emailCont.text.trim(),
           'password': passCont.text.trim(),
           'device_token': deviceToken
+        },
+      ).timeout(
+        Duration(seconds: 10),
+        onTimeout: () {
+          print('❌ Login API call timed out');
+          throw Exception('Login API call timed out after 10 seconds. Please check your internet connection.');
         },
       );
 
@@ -433,25 +526,236 @@ class AuthController extends GetxController {
           // HomeController might not be initialized yet, that's ok
         }
 
-        onLoginSuccess(response.body);
+        // Call login success with timeout protection
+        await _handleLoginSuccess(response.body);
         return response.statusCode;
       } else if (response.statusCode! >= 400) {
-        errorAlertToast('Your Email or Password is incorrect');
+        Get.dialog(
+          AlertDialog(
+            title: Text('❌ Login Failed'),
+            content: Text('Your Email or Password is incorrect.\n\nStatus Code: ${response.statusCode}\n\nPlease check your credentials and try again.'),
+            actions: [
+              TextButton(
+                onPressed: () => Get.back(),
+                child: Text('OK'),
+              ),
+            ],
+          ),
+        );
       } else if (response.statusCode == 500) {
-        errorAlertToast('Your Email or Password is incorrect');
+        Get.dialog(
+          AlertDialog(
+            title: Text('❌ Server Error'),
+            content: Text('Server error occurred during login.\n\nStatus Code: 500\n\nPlease try again later or contact support.'),
+            actions: [
+              TextButton(
+                onPressed: () => Get.back(),
+                child: Text('OK'),
+              ),
+            ],
+          ),
+        );
       } else {
-        errorAlertToast('Something went wrong\nPlease try again!'.tr);
+        Get.dialog(
+          AlertDialog(
+            title: Text('❌ Login Error'),
+            content: Text('Login failed with status code: ${response.statusCode}\n\nPlease try again or contact support if the issue persists.'),
+            actions: [
+              TextButton(
+                onPressed: () => Get.back(),
+                child: Text('OK'),
+              ),
+            ],
+          ),
+        );
       }
-      print(
-          "........................................................${response.statusCode}");
+      print("Login failed with status code: ${response.statusCode}");
     } catch (e) {
       print('🔥 Login error: $e');
-      errorAlertToast('Something went wrong\nPlease try again!'.tr);
+      Get.dialog(
+        AlertDialog(
+          title: Text('❌ Login Exception'),
+          content: Text('An error occurred during login:\n\n$e\n\nPlease screenshot this error and send to developer.'),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: Text('OK'),
+            ),
+          ],
+        ),
+      );
     } finally {
       // Always set loading state to false when done
       isLoading.value = false;
       update();
     }
+  }
+
+  // Simplified device token fetching for login (no hanging retries)
+  Future<void> _getBasicDeviceToken() async {
+    try {
+      if (Platform.isIOS) {
+        // Simple FCM token request with timeout
+        final messaging = FirebaseMessaging.instance;
+        
+        // Request permissions first
+        await messaging.requestPermission(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+        
+        // Try to get token with timeout (no hanging retries)
+        String? token = await messaging.getToken().timeout(
+          Duration(seconds: 8),
+          onTimeout: () {
+            print('⚠️ FCM token request timed out during login');
+            // Show timeout error dialog
+            Future.delayed(Duration(milliseconds: 500), () {
+              try {
+                Get.dialog(
+                  AlertDialog(
+                    title: Text('⏰ FCM Token Timeout'),
+                    content: Text('FCM token request timed out during login (8 seconds).\n\nThis may indicate network issues or Firebase configuration problems.\n\nUsing placeholder token for login.\n\nPlease screenshot and send to developer.'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Get.back(),
+                        child: Text('OK'),
+                      ),
+                    ],
+                  ),
+                );
+              } catch (dialogError) {
+                print('Error showing FCM timeout dialog: $dialogError');
+              }
+            });
+            return null;
+          },
+        );
+        
+        if (token != null) {
+          deviceToken = token;
+          print('✅ Basic iOS FCM token obtained: ${token.substring(0, 20)}...');
+        } else {
+          // Use a placeholder for login to proceed
+          deviceToken = 'ios-token-pending-${user?.userId ?? DateTime.now().millisecondsSinceEpoch}';
+          print('⚠️ Using placeholder iOS token for login: $deviceToken');
+        }
+      } else {
+        // For Android, use ntfy topic format
+        deviceToken = 'venta_cuba_user_${user?.userId ?? "pending"}';
+        print('✅ Basic Android token set: $deviceToken');
+      }
+    } catch (e) {
+      print('❌ Error getting basic device token: $e');
+      // Use fallback token to allow login to proceed
+      deviceToken = '${Platform.isIOS ? "ios" : "android"}-fallback-${DateTime.now().millisecondsSinceEpoch}';
+      
+      // Show error dialog with real error details (delayed to not block login)
+      Future.delayed(Duration(milliseconds: 500), () {
+        try {
+          Get.dialog(
+            AlertDialog(
+              title: Text('❌ Device Token Error'),
+              content: Text('Error getting device token during login:\n\n$e\n\nPlatform: ${Platform.isIOS ? "iOS" : "Android"}\n\nUsing fallback token: $deviceToken\n\nPlease screenshot and send to developer.'),
+              actions: [
+                TextButton(
+                  onPressed: () => Get.back(),
+                  child: Text('OK'),
+                ),
+              ],
+            ),
+          );
+        } catch (dialogError) {
+          print('Error showing device token error dialog: $dialogError');
+        }
+      });
+    }
+  }
+
+  // Handle login success with timeout protection
+  Future<void> _handleLoginSuccess(Map<String, dynamic> responseBody) async {
+    try {
+      // Store user data first
+      await prefs.setString("user_data", jsonEncode(responseBody));
+      isBusinessAccount = false;
+      changeAccountType();
+      fetchAccountType();
+      
+      // Load user details with timeout
+      await getuserDetail().timeout(
+        Duration(seconds: 15),
+        onTimeout: () {
+          print('⚠️ getuserDetail timed out during login');
+          // Show warning but don't block login
+          Get.dialog(
+            AlertDialog(
+              title: Text('⚠️ Initialization Warning'),
+              content: Text('User details loading timed out.\n\nLogin succeeded but some features may need a moment to initialize.\n\nIf issues persist, please restart the app.'),
+              actions: [
+                TextButton(
+                  onPressed: () => Get.back(),
+                  child: Text('OK'),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+
+      // Navigate to main screen regardless
+      Get.offAll(Navigation_Bar());
+      
+    } catch (e) {
+      print('❌ Error in handleLoginSuccess: $e');
+      
+      // Show error but still navigate (login was successful)
+      Get.dialog(
+        AlertDialog(
+          title: Text('⚠️ Initialization Error'),
+          content: Text('Login successful but initialization failed:\n\n$e\n\nYou are now logged in but some features may not work properly.\n\nPlease screenshot and send to developer.'),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: Text('OK'),
+            ),
+          ],
+        ),
+      );
+      
+      // Still navigate since login was successful
+      Get.offAll(Navigation_Bar());
+    }
+  }
+
+  // Initialize push service in background (non-blocking)
+  void _initializePushServiceInBackground(String userId) {
+    Future.delayed(Duration(seconds: 2), () async {
+      try {
+        print('🔄 Retrying Platform Push Service initialization in background...');
+        await PlatformPushService.initialize(userId);
+        print('✅ Background Platform Push Service initialization completed');
+      } catch (e) {
+        print('❌ Background Platform Push Service initialization failed: $e');
+        // Show error dialog with real error details
+        try {
+          Get.dialog(
+            AlertDialog(
+              title: Text('❌ Push Notifications Failed'),
+              content: Text('Background push service initialization failed:\n\n$e\n\nNotifications may not work properly.\n\nPlease screenshot and send to developer.'),
+              actions: [
+                TextButton(
+                  onPressed: () => Get.back(),
+                  child: Text('OK'),
+                ),
+              ],
+            ),
+          );
+        } catch (dialogError) {
+          print('Error showing background push service error dialog: $dialogError');
+        }
+      }
+    });
   }
 
   Future<void> refreshDeviceToken() async {
@@ -565,43 +869,12 @@ class AuthController extends GetxController {
             deviceToken = fcmToken; // Update local token
             print('✅ iOS FCM token saved: ${fcmToken.substring(0, 20)}...');
           } else {
-            // Show error dialog for Supabase save failure
-            try {
-              Get.dialog(
-                AlertDialog(
-                  title: Text('❌ Token Save Failed'),
-                  content: Text('FCM token could not be saved to Supabase in auth controller.\n\nToken: ${fcmToken.substring(0, 30)}...\n\nNotifications may not work.\n\nPlease screenshot and send to developer.'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Get.back(),
-                      child: Text('OK'),
-                    ),
-                  ],
-                ),
-              );
-            } catch (e) {
-              print('Error showing auth controller error dialog: $e');
-            }
+            print('❌ Failed to save FCM token to Supabase in auth controller');
+            // Log error but don't show blocking dialog during login flow
           }
         } else {
           print('⚠️ No FCM token available for iOS user: $userId');
-          // Show error dialog for no FCM token
-          try {
-            Get.dialog(
-              AlertDialog(
-                title: Text('❌ No FCM Token'),
-                content: Text('No FCM token available for iOS user in auth controller.\n\nUser ID: $userId\n\nNotifications will not work.\n\nPlease screenshot and send to developer.'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Get.back(),
-                    child: Text('OK'),
-                  ),
-                ],
-              ),
-            );
-          } catch (dialogError) {
-            print('Error showing no token dialog: $dialogError');
-          }
+          // Log error but don't show blocking dialog during login flow
         }
       } else {
         // For Android, save ntfy topic identifier (consistent format)
@@ -619,23 +892,25 @@ class AuthController extends GetxController {
       }
     } catch (e) {
       print('❌ Error saving device token with platform: $e');
-      // Show error dialog with actual error details
-      try {
-        Get.dialog(
-          AlertDialog(
-            title: Text('❌ Device Token Error'),
-            content: Text('Error saving device token with platform:\n\n$e\n\nUser ID: $userId\n\nPlease screenshot and send to developer.'),
-            actions: [
-              TextButton(
-                onPressed: () => Get.back(),
-                child: Text('OK'),
-              ),
-            ],
-          ),
-        );
-      } catch (dialogError) {
-        print('Error showing device token error dialog: $dialogError');
-      }
+      // Show error dialog with real error details (non-blocking, after login)
+      Future.delayed(Duration(milliseconds: 500), () {
+        try {
+          Get.dialog(
+            AlertDialog(
+              title: Text('❌ Device Token Error'),
+              content: Text('Error saving device token with platform:\n\n$e\n\nUser ID: $userId\n\nNotifications may not work properly.\n\nPlease screenshot and send to developer.'),
+              actions: [
+                TextButton(
+                  onPressed: () => Get.back(),
+                  child: Text('OK'),
+                ),
+              ],
+            ),
+          );
+        } catch (dialogError) {
+          print('Error showing device token error dialog: $dialogError');
+        }
+      });
     } finally {
       _savingDeviceToken = false;
     }
