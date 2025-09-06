@@ -121,7 +121,16 @@ class _MyAppState extends State<MyApp> {
       NotificationService notificationService = NotificationService();
       notificationService.obtainCredentials();
     } catch (e) {
-      print('Error obtaining notification credentials: $e');
+      Get.dialog(AlertDialog(
+        title: const Text('Error'),
+        content: Text('Failed to obtain notification credentials: $e'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ));
     }
     if (Platform.isIOS) {
       try {
