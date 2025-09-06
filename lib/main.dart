@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -16,6 +17,8 @@ import 'package:venta_cuba/view/Chat/Controller/SupabaseChatController.dart';
 import 'package:venta_cuba/view/constants/theme_config.dart';
 import 'package:venta_cuba/Notification/firebase_messaging.dart';
 
+import 'Services/notification_service.dart';
+
 String? deviceToken;
 
 // Background message handler - MUST be top-level function
@@ -25,17 +28,20 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     await Firebase.initializeApp();
     print('🔥 Background message received: ${message.messageId}');
     await FCM.showBackgroundNotification(message);
+    await FirebaseAppCheck.instance.activate(
+      appleProvider: AppleProvider.debug,
+    );
   }
 }
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Register background handler for iOS only - non-blocking
   if (Platform.isIOS) {
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   }
-  
+
   runApp(const MyApp());
 }
 
@@ -96,30 +102,44 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    
+
     themeController = Get.put(ThemeController());
-    
+
     // Initialize services in background after app starts
     _initializeServicesInBackground();
-    
+
     // Add lifecycle observer
     WidgetsBinding.instance.addObserver(AppLifecycleObserver());
-    
+
     // Load locale in background
     _loadLocale();
   }
-  
+
   void _initializeServicesInBackground() async {
     // Initialize Firebase for iOS only
+    try {
+      NotificationService notificationService = NotificationService();
+      notificationService.obtainCredentials();
+    } catch (e) {
+      print('Error obtaining notification credentials: $e');
+    }
     if (Platform.isIOS) {
       try {
+        FCM firebaseMessaging = FCM();
+
         await Firebase.initializeApp();
+
+        firebaseMessaging.setNotifications(context);
+        firebaseMessaging.streamCtrl.stream.listen((msgData) {
+          debugPrint('messageData $msgData');
+        });
+
         print('✅ Firebase initialized for iOS');
       } catch (e) {
         print('Firebase init error: $e');
       }
     }
-    
+
     // Initialize SharedPreferences
     try {
       await SharedPreferences.getInstance();
@@ -127,7 +147,7 @@ class _MyAppState extends State<MyApp> {
     } catch (e) {
       print('SharedPreferences init error: $e');
     }
-    
+
     // Initialize Supabase if configured
     if (AppConfig.isSupabaseConfigured) {
       try {
@@ -140,14 +160,14 @@ class _MyAppState extends State<MyApp> {
         print('Supabase init error: $e');
       }
     }
-    
+
     // Check location preferences
     _checkLocationPreferences();
-    
+
     // Initialize chat controller
     Get.lazyPut(() => SupabaseChatController());
   }
-  
+
   void _checkLocationPreferences() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     bool isLocationOn = sharedPreferences.getBool('isLocationOn') ?? false;
@@ -155,7 +175,7 @@ class _MyAppState extends State<MyApp> {
       //locationCont.getLocation();
     }
   }
-  
+
   void _loadLocale() async {
     var prefs = await SharedPreferences.getInstance();
     languageCode = prefs.getString('languageCode') ?? 'es';

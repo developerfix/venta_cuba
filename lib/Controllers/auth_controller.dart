@@ -296,49 +296,11 @@ class AuthController extends GetxController {
             print('✅ Platform Push Service initialized for user: ${user!.userId}');
           } catch (pushError) {
             print('❌ Platform Push Service initialization failed: $pushError');
-            // Show immediate error dialog for push service failure
-            Future.delayed(Duration(milliseconds: 1000), () {
-              try {
-                Get.dialog(
-                  AlertDialog(
-                    title: Text('❌ Push Service Failed'),
-                    content: Text('Platform Push Service initialization failed during login:\n\n$pushError\n\nUser ID: ${user!.userId}\n\nWill retry in background.\n\nPlease screenshot and send to developer.'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Get.back(),
-                        child: Text('OK'),
-                      ),
-                    ],
-                  ),
-                );
-              } catch (dialogError) {
-                print('Error showing push service failure dialog: $dialogError');
-              }
-            });
             // Try to initialize in background
             _initializePushServiceInBackground(user!.userId.toString());
           }
         } catch (e) {
           print('🔥 AuthController: Error setting user online: $e');
-          // Show error dialog for user online failure
-          Future.delayed(Duration(milliseconds: 1000), () {
-            try {
-              Get.dialog(
-                AlertDialog(
-                  title: Text('❌ User Online Error'),
-                  content: Text('Error setting user online during login:\n\n$e\n\nUser ID: ${user!.userId}\n\nSome features may not work properly.\n\nPlease screenshot and send to developer.'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Get.back(),
-                      child: Text('OK'),
-                    ),
-                  ],
-                ),
-              );
-            } catch (dialogError) {
-              print('Error showing user online error dialog: $dialogError');
-            }
-          });
         }
       }
 
@@ -360,49 +322,10 @@ class AuthController extends GetxController {
         print('🔥 AuthController: Chat services initialized');
       } catch (e) {
         print('🔥 AuthController: Error initializing chat services: $e');
-        // Show error dialog for chat services failure
-        Future.delayed(Duration(milliseconds: 1000), () {
-          try {
-            Get.dialog(
-              AlertDialog(
-                title: Text('❌ Chat Services Error'),
-                content: Text('Error initializing chat services during login:\n\n$e\n\nUser ID: ${user!.userId}\n\nChat features may not work properly.\n\nPlease screenshot and send to developer.'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Get.back(),
-                    child: Text('OK'),
-                  ),
-                ],
-              ),
-            );
-          } catch (dialogError) {
-            print('Error showing chat services error dialog: $dialogError');
-          }
-        });
       }
     } catch (e) {
       print('🔥 AuthController: Error in getuserDetail: $e');
-      // Show error dialog for getuserDetail failure
-      try {
-        Get.dialog(
-          AlertDialog(
-            title: Text('❌ User Details Error'),
-            content: Text('Critical error loading user details:\n\n$e\n\nReturning to login screen.\n\nPlease screenshot and send to developer.'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Get.back();
-                  Get.offAll(() => const Login());
-                },
-                child: Text('OK'),
-              ),
-            ],
-          ),
-        );
-      } catch (dialogError) {
-        print('Error showing getuserDetail error dialog: $dialogError');
-        Get.offAll(() => const Login());
-      }
+      Get.offAll(() => const Login());
       rethrow; // Re-throw to let calling method handle the error
     }
 
@@ -530,60 +453,15 @@ class AuthController extends GetxController {
         await _handleLoginSuccess(response.body);
         return response.statusCode;
       } else if (response.statusCode! >= 400) {
-        Get.dialog(
-          AlertDialog(
-            title: Text('❌ Login Failed'),
-            content: Text('Your Email or Password is incorrect.\n\nStatus Code: ${response.statusCode}\n\nPlease check your credentials and try again.'),
-            actions: [
-              TextButton(
-                onPressed: () => Get.back(),
-                child: Text('OK'),
-              ),
-            ],
-          ),
-        );
+        print('Login failed - incorrect credentials: ${response.statusCode}');
       } else if (response.statusCode == 500) {
-        Get.dialog(
-          AlertDialog(
-            title: Text('❌ Server Error'),
-            content: Text('Server error occurred during login.\n\nStatus Code: 500\n\nPlease try again later or contact support.'),
-            actions: [
-              TextButton(
-                onPressed: () => Get.back(),
-                child: Text('OK'),
-              ),
-            ],
-          ),
-        );
+        print('Server error during login - Status Code: 500');
       } else {
-        Get.dialog(
-          AlertDialog(
-            title: Text('❌ Login Error'),
-            content: Text('Login failed with status code: ${response.statusCode}\n\nPlease try again or contact support if the issue persists.'),
-            actions: [
-              TextButton(
-                onPressed: () => Get.back(),
-                child: Text('OK'),
-              ),
-            ],
-          ),
-        );
+        print('Login failed with status code: ${response.statusCode}');
       }
       print("Login failed with status code: ${response.statusCode}");
     } catch (e) {
       print('🔥 Login error: $e');
-      Get.dialog(
-        AlertDialog(
-          title: Text('❌ Login Exception'),
-          content: Text('An error occurred during login:\n\n$e\n\nPlease screenshot this error and send to developer.'),
-          actions: [
-            TextButton(
-              onPressed: () => Get.back(),
-              child: Text('OK'),
-            ),
-          ],
-        ),
-      );
     } finally {
       // Always set loading state to false when done
       isLoading.value = false;
@@ -610,25 +488,6 @@ class AuthController extends GetxController {
           Duration(seconds: 8),
           onTimeout: () {
             print('⚠️ FCM token request timed out during login');
-            // Show timeout error dialog
-            Future.delayed(Duration(milliseconds: 500), () {
-              try {
-                Get.dialog(
-                  AlertDialog(
-                    title: Text('⏰ FCM Token Timeout'),
-                    content: Text('FCM token request timed out during login (8 seconds).\n\nThis may indicate network issues or Firebase configuration problems.\n\nUsing placeholder token for login.\n\nPlease screenshot and send to developer.'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Get.back(),
-                        child: Text('OK'),
-                      ),
-                    ],
-                  ),
-                );
-              } catch (dialogError) {
-                print('Error showing FCM timeout dialog: $dialogError');
-              }
-            });
             return null;
           },
         );
@@ -650,26 +509,6 @@ class AuthController extends GetxController {
       print('❌ Error getting basic device token: $e');
       // Use fallback token to allow login to proceed
       deviceToken = '${Platform.isIOS ? "ios" : "android"}-fallback-${DateTime.now().millisecondsSinceEpoch}';
-      
-      // Show error dialog with real error details (delayed to not block login)
-      Future.delayed(Duration(milliseconds: 500), () {
-        try {
-          Get.dialog(
-            AlertDialog(
-              title: Text('❌ Device Token Error'),
-              content: Text('Error getting device token during login:\n\n$e\n\nPlatform: ${Platform.isIOS ? "iOS" : "Android"}\n\nUsing fallback token: $deviceToken\n\nPlease screenshot and send to developer.'),
-              actions: [
-                TextButton(
-                  onPressed: () => Get.back(),
-                  child: Text('OK'),
-                ),
-              ],
-            ),
-          );
-        } catch (dialogError) {
-          print('Error showing device token error dialog: $dialogError');
-        }
-      });
     }
   }
 
@@ -687,19 +526,6 @@ class AuthController extends GetxController {
         Duration(seconds: 15),
         onTimeout: () {
           print('⚠️ getuserDetail timed out during login');
-          // Show warning but don't block login
-          Get.dialog(
-            AlertDialog(
-              title: Text('⚠️ Initialization Warning'),
-              content: Text('User details loading timed out.\n\nLogin succeeded but some features may need a moment to initialize.\n\nIf issues persist, please restart the app.'),
-              actions: [
-                TextButton(
-                  onPressed: () => Get.back(),
-                  child: Text('OK'),
-                ),
-              ],
-            ),
-          );
         },
       );
 
@@ -708,20 +534,6 @@ class AuthController extends GetxController {
       
     } catch (e) {
       print('❌ Error in handleLoginSuccess: $e');
-      
-      // Show error but still navigate (login was successful)
-      Get.dialog(
-        AlertDialog(
-          title: Text('⚠️ Initialization Error'),
-          content: Text('Login successful but initialization failed:\n\n$e\n\nYou are now logged in but some features may not work properly.\n\nPlease screenshot and send to developer.'),
-          actions: [
-            TextButton(
-              onPressed: () => Get.back(),
-              child: Text('OK'),
-            ),
-          ],
-        ),
-      );
       
       // Still navigate since login was successful
       Get.offAll(Navigation_Bar());
@@ -737,23 +549,6 @@ class AuthController extends GetxController {
         print('✅ Background Platform Push Service initialization completed');
       } catch (e) {
         print('❌ Background Platform Push Service initialization failed: $e');
-        // Show error dialog with real error details
-        try {
-          Get.dialog(
-            AlertDialog(
-              title: Text('❌ Push Notifications Failed'),
-              content: Text('Background push service initialization failed:\n\n$e\n\nNotifications may not work properly.\n\nPlease screenshot and send to developer.'),
-              actions: [
-                TextButton(
-                  onPressed: () => Get.back(),
-                  child: Text('OK'),
-                ),
-              ],
-            ),
-          );
-        } catch (dialogError) {
-          print('Error showing background push service error dialog: $dialogError');
-        }
       }
     });
   }
@@ -892,25 +687,6 @@ class AuthController extends GetxController {
       }
     } catch (e) {
       print('❌ Error saving device token with platform: $e');
-      // Show error dialog with real error details (non-blocking, after login)
-      Future.delayed(Duration(milliseconds: 500), () {
-        try {
-          Get.dialog(
-            AlertDialog(
-              title: Text('❌ Device Token Error'),
-              content: Text('Error saving device token with platform:\n\n$e\n\nUser ID: $userId\n\nNotifications may not work properly.\n\nPlease screenshot and send to developer.'),
-              actions: [
-                TextButton(
-                  onPressed: () => Get.back(),
-                  child: Text('OK'),
-                ),
-              ],
-            ),
-          );
-        } catch (dialogError) {
-          print('Error showing device token error dialog: $dialogError');
-        }
-      });
     } finally {
       _savingDeviceToken = false;
     }

@@ -1,7 +1,5 @@
 import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'ntfy_push_service.dart';
 import '../Supabase/supabase_service.dart';
 import '../../Notification/firebase_messaging.dart';
@@ -33,6 +31,9 @@ class PlatformPushService {
   /// Initialize iOS with FCM
   static Future<void> _initializeIOSPush(String userId) async {
     try {
+      // Add Firebase initialization check
+      print('🔥 Checking Firebase initialization...');
+      
       String? token;
 
       // Normal FCM flow with APNS token handling
@@ -46,10 +47,10 @@ class PlatformPushService {
         );
 
       if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-        // Wait for APNS token to be available (reduced retries to prevent hanging)
+        // Wait for APNS token to be available with better retry logic
         print('🔔 Waiting for APNS token...');
         String? apnsToken;
-        int maxRetries = 3; // Reduced from 10 to 3
+        int maxRetries = 8; // Increased for better reliability
         int retryCount = 0;
         
         while (apnsToken == null && retryCount < maxRetries) {
@@ -64,30 +65,12 @@ class PlatformPushService {
           }
           
           retryCount++;
-          await Future.delayed(Duration(milliseconds: 500)); // Reduced from 2s to 500ms
+          // Progressive delay: 500ms, 1s, 1.5s, 2s, etc.
+          await Future.delayed(Duration(milliseconds: 500 + (retryCount * 500)));
         }
         
         if (apnsToken == null) {
           print('❌ APNS token not available after $maxRetries attempts');
-          // Show error dialog with delay to not block login
-          Future.delayed(Duration(milliseconds: 1000), () {
-            try {
-              Get.dialog(
-                AlertDialog(
-                  title: Text('❌ APNS Token Failed'),
-                  content: Text('APNS token not available after $maxRetries attempts.\n\nThis prevents FCM token generation on iOS.\n\nNotifications will not work.\n\nPlease screenshot and send to developer.'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Get.back(),
-                      child: Text('OK'),
-                    ),
-                  ],
-                ),
-              );
-            } catch (e) {
-              print('Error showing APNS error dialog: $e');
-            }
-          });
           return;
         }
 
@@ -114,47 +97,9 @@ class PlatformPushService {
             print('✅ iOS FCM token saved: ${token.substring(0, 20)}... for user: $userId');
           } else {
             print('❌ Failed to save FCM token to Supabase for user: $userId');
-            // Show error dialog with delay to not block login
-            Future.delayed(Duration(milliseconds: 1000), () {
-              try {
-                Get.dialog(
-                  AlertDialog(
-                    title: Text('❌ Token Save Failed'),
-                    content: Text('FCM token could not be saved to Supabase.\n\nToken: ${token!.substring(0, 30)}...\n\nUser ID: $userId\n\nNotifications may not work.\n\nPlease screenshot and send to developer.'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Get.back(),
-                        child: Text('OK'),
-                      ),
-                    ],
-                  ),
-                );
-              } catch (dialogError) {
-                print('Error showing Supabase save error dialog: $dialogError');
-              }
-            });
           }
         } else {
           print('⚠️ Could not get FCM token for iOS user: $userId');
-          // Show error dialog with delay to not block login
-          Future.delayed(Duration(milliseconds: 1000), () {
-            try {
-              Get.dialog(
-                AlertDialog(
-                  title: Text('❌ FCM Token Failed'),
-                  content: Text('Could not generate FCM token for iOS.\n\nAPNS token was available but FCM token generation failed.\n\nUser ID: $userId\n\nNotifications will not work.\n\nPlease screenshot and send to developer.'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Get.back(),
-                      child: Text('OK'),
-                    ),
-                  ],
-                ),
-              );
-            } catch (e) {
-              print('Error showing FCM token failure dialog: $e');
-            }
-          });
         }
 
         // Configure foreground presentation
@@ -164,48 +109,11 @@ class PlatformPushService {
           sound: true,
         );
       } else {
-        // Permissions denied - show error dialog
+        // Permissions denied
         print('❌ iOS push notification permissions denied: ${settings.authorizationStatus}');
-        Future.delayed(Duration(milliseconds: 1000), () {
-          try {
-            Get.dialog(
-              AlertDialog(
-                title: Text('❌ Permissions Denied'),
-                content: Text('iOS push notification permissions denied.\n\nStatus: ${settings.authorizationStatus}\n\nNotifications will not work.\n\nPlease enable notifications in iOS Settings > Venta Cuba > Notifications.\n\nPlease screenshot and send to developer.'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Get.back(),
-                    child: Text('OK'),
-                  ),
-                ],
-              ),
-            );
-          } catch (e) {
-            print('Error showing permissions denied dialog: $e');
-          }
-        });
       }
     } catch (e) {
       print('❌ Error initializing iOS push: $e');
-      // Show error dialog with delay to not block login
-      Future.delayed(Duration(milliseconds: 1000), () {
-        try {
-          Get.dialog(
-            AlertDialog(
-              title: Text('❌ iOS Push Init Failed'),
-              content: Text('Error initializing iOS push notifications:\n\n$e\n\nNotifications will not work.\n\nPlease screenshot and send to developer.'),
-              actions: [
-                TextButton(
-                  onPressed: () => Get.back(),
-                  child: Text('OK'),
-                ),
-              ],
-            ),
-          );
-        } catch (dialogError) {
-          print('Error showing iOS init error dialog: $dialogError');
-        }
-      });
       rethrow; // Re-throw to allow timeout handling in auth controller
     }
   }
@@ -229,25 +137,6 @@ class PlatformPushService {
       print('✅ Android ntfy service initialized with topic: $ntfyTopic for user: $userId');
     } catch (e) {
       print('❌ Error initializing Android push: $e');
-      // Show error dialog with delay to not block login
-      Future.delayed(Duration(milliseconds: 1000), () {
-        try {
-          Get.dialog(
-            AlertDialog(
-              title: Text('❌ Android Push Failed'),
-              content: Text('Error initializing Android push notifications:\n\n$e\n\nUser ID: $userId\n\nNotifications may not work.\n\nPlease screenshot and send to developer.'),
-              actions: [
-                TextButton(
-                  onPressed: () => Get.back(),
-                  child: Text('OK'),
-                ),
-              ],
-            ),
-          );
-        } catch (dialogError) {
-          print('Error showing Android push error dialog: $dialogError');
-        }
-      });
     }
   }
 
@@ -410,25 +299,6 @@ class PlatformPushService {
         
         if (apnsToken == null) {
           print('❌ APNS token not available, cannot generate FCM token');
-          // Show error dialog for APNS token failure in getFCMToken
-          Future.delayed(Duration(milliseconds: 1000), () {
-            try {
-              Get.dialog(
-                AlertDialog(
-                  title: Text('❌ APNS Token Unavailable'),
-                  content: Text('APNS token not available in getFCMToken after $maxRetries attempts.\n\nCannot generate FCM token without APNS token.\n\nNotifications will not work.\n\nPlease screenshot and send to developer.'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Get.back(),
-                      child: Text('OK'),
-                    ),
-                  ],
-                ),
-              );
-            } catch (e) {
-              print('Error showing APNS unavailable dialog: $e');
-            }
-          });
           return null;
         }
 
@@ -446,25 +316,6 @@ class PlatformPushService {
           print('🔔 Retrieved FCM token: ${token.substring(0, 20)}...');
         } else {
           print('⚠️ Could not retrieve FCM token after APNS token was available');
-          // Show error dialog for FCM token failure in getFCMToken
-          Future.delayed(Duration(milliseconds: 1000), () {
-            try {
-              Get.dialog(
-                AlertDialog(
-                  title: Text('❌ FCM Token Generation Failed'),
-                  content: Text('Could not retrieve FCM token in getFCMToken even though APNS token was available.\n\nThis indicates a Firebase configuration or network issue.\n\nNotifications will not work.\n\nPlease screenshot and send to developer.'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Get.back(),
-                      child: Text('OK'),
-                    ),
-                  ],
-                ),
-              );
-            } catch (e) {
-              print('Error showing FCM generation failed dialog: $e');
-            }
-          });
         }
         
         return token;
@@ -472,25 +323,6 @@ class PlatformPushService {
       return null;
     } catch (e) {
       print('❌ Error getting FCM token: $e');
-      // Show error dialog with real error details
-      Future.delayed(Duration(milliseconds: 1000), () {
-        try {
-          Get.dialog(
-            AlertDialog(
-              title: Text('❌ FCM Token Error'),
-              content: Text('Exception occurred while getting FCM token:\n\n$e\n\nNotifications will not work.\n\nPlease screenshot and send to developer.'),
-              actions: [
-                TextButton(
-                  onPressed: () => Get.back(),
-                  child: Text('OK'),
-                ),
-              ],
-            ),
-          );
-        } catch (dialogError) {
-          print('Error showing FCM token error dialog: $dialogError');
-        }
-      });
       return null;
     }
   }

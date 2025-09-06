@@ -16,7 +16,9 @@
       "Bash(pod install:*)",
       "Bash(pod repo update:*)",
       "Bash(pod update:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(security cms:*)",
+      "Bash(xcodebuild:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",
