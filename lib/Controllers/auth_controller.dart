@@ -632,24 +632,22 @@ class AuthController extends GetxController {
       final supabaseService = SupabaseService.instance;
       
       if (Platform.isIOS) {
-        // For iOS, save the FCM token if we have one (with improved APNS handling)
-        String? fcmToken = await PlatformPushService.getFCMToken();
+        // For iOS, try multiple approaches to get FCM token
+        String? fcmToken;
         
-        // If PlatformPushService couldn't get token, try direct approach with APNS check
+        // First try PlatformPushService
+        fcmToken = await PlatformPushService.getFCMToken();
+        
+        // If still null, try direct Firebase approach without APNS check
         if (fcmToken == null) {
           try {
             final messaging = FirebaseMessaging.instance;
-            
-            // Check APNS token first
-            String? apnsToken = await messaging.getAPNSToken();
-            if (apnsToken != null) {
-              fcmToken = await messaging.getToken();
-              print('🔔 Got FCM token directly after APNS check: ${fcmToken?.substring(0, 20)}...');
-            } else {
-              print('❌ APNS token not available, cannot get FCM token');
+            fcmToken = await messaging.getToken();
+            if (fcmToken != null) {
+              print('🔔 Got FCM token directly from Firebase: ${fcmToken.substring(0, 20)}...');
             }
           } catch (e) {
-            print('❌ Error getting FCM token: $e');
+            print('❌ Error getting FCM token directly: $e');
           }
         }
         
@@ -662,14 +660,23 @@ class AuthController extends GetxController {
           
           if (success) {
             deviceToken = fcmToken; // Update local token
-            print('✅ iOS FCM token saved: ${fcmToken.substring(0, 20)}...');
+            print('✅ iOS FCM token saved to Supabase: ${fcmToken.substring(0, 20)}...');
           } else {
-            print('❌ Failed to save FCM token to Supabase in auth controller');
-            // Log error but don't show blocking dialog during login flow
+            print('❌ Failed to save FCM token to Supabase, will retry once');
+            // Retry once after a delay
+            await Future.delayed(Duration(seconds: 2));
+            success = await supabaseService.saveDeviceTokenWithPlatform(
+              userId: userId,
+              token: fcmToken,
+              platform: 'ios',
+            );
+            if (success) {
+              deviceToken = fcmToken;
+              print('✅ iOS FCM token saved to Supabase on retry');
+            }
           }
         } else {
           print('⚠️ No FCM token available for iOS user: $userId');
-          // Log error but don't show blocking dialog during login flow
         }
       } else {
         // For Android, save ntfy topic identifier (consistent format)

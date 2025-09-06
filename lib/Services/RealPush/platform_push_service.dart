@@ -25,83 +25,36 @@ class PlatformPushService {
       print('✅ Push Service initialized successfully');
     } catch (e) {
       print('❌ Error initializing Push Service: $e');
+      // Don't rethrow - handle gracefully
     }
   }
 
-  /// Initialize iOS with FCM
+  /// Initialize iOS with FCM - FIXED VERSION
   static Future<void> _initializeIOSPush(String userId) async {
     try {
-      // Add Firebase initialization check
-      print('🔥 Checking Firebase initialization...');
+      print('🍎 Starting iOS push initialization for user: $userId');
       
-      String? token;
-
-      // Normal FCM flow with APNS token handling
       final messaging = FirebaseMessaging.instance;
       
       // Request permissions first
       final settings = await messaging.requestPermission(
-          alert: true,
-          badge: true,
-          sound: true,
-        );
+        alert: true,
+        badge: true,
+        sound: true,
+      );
 
-      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-        // Wait for APNS token to be available with better retry logic
-        print('🔔 Waiting for APNS token...');
-        String? apnsToken;
-        int maxRetries = 8; // Increased for better reliability
-        int retryCount = 0;
-        
-        while (apnsToken == null && retryCount < maxRetries) {
-          try {
-            apnsToken = await messaging.getAPNSToken();
-            if (apnsToken != null) {
-              print('✅ APNS token available: ${apnsToken.substring(0, 20)}...');
-              break;
-            }
-          } catch (e) {
-            print('⚠️ APNS token not ready, attempt ${retryCount + 1}/$maxRetries: $e');
-          }
-          
-          retryCount++;
-          // Progressive delay: 500ms, 1s, 1.5s, 2s, etc.
-          await Future.delayed(Duration(milliseconds: 500 + (retryCount * 500)));
-        }
-        
-        if (apnsToken == null) {
-          print('❌ APNS token not available after $maxRetries attempts');
-          return;
-        }
+      if (settings.authorizationStatus != AuthorizationStatus.authorized) {
+        print('❌ iOS push notification permissions denied: ${settings.authorizationStatus}');
+        return;
+      }
 
-        // Now get FCM token with APNS token available
-        token = await messaging.getToken();
+      // Get FCM token with proper retry logic
+      String? token = await _getIOSTokenWithRetry(messaging);
+      
+      if (token != null && token.isNotEmpty) {
+        // Save token to Supabase
+        await _saveTokenToSupabase(userId, token, 'ios');
         
-        // Retry if token is still null
-        if (token == null) {
-          print('🔔 FCM token null, retrying...');
-          await Future.delayed(Duration(seconds: 3));
-          token = await messaging.getToken();
-        }
-        
-        if (token != null && token.isNotEmpty) {
-          // Save token to Supabase with iOS platform
-          final supabase = SupabaseService.instance;
-          bool success = await supabase.saveDeviceTokenWithPlatform(
-            userId: userId,
-            token: token,
-            platform: 'ios',
-          );
-          
-          if (success) {
-            print('✅ iOS FCM token saved: ${token.substring(0, 20)}... for user: $userId');
-          } else {
-            print('❌ Failed to save FCM token to Supabase for user: $userId');
-          }
-        } else {
-          print('⚠️ Could not get FCM token for iOS user: $userId');
-        }
-
         // Configure foreground presentation
         await messaging.setForegroundNotificationPresentationOptions(
           alert: true,
@@ -109,13 +62,118 @@ class PlatformPushService {
           sound: true,
         );
       } else {
-        // Permissions denied
-        print('❌ iOS push notification permissions denied: ${settings.authorizationStatus}');
+        print('⚠️ Could not get FCM token for iOS user: $userId');
+        // Try again in background
+        _retryIOSTokenInBackground(userId);
       }
     } catch (e) {
       print('❌ Error initializing iOS push: $e');
-      rethrow; // Re-throw to allow timeout handling in auth controller
+      // Try again in background
+      _retryIOSTokenInBackground(userId);
     }
+  }
+
+  /// Get iOS token with proper retry logic
+  static Future<String?> _getIOSTokenWithRetry(FirebaseMessaging messaging) async {
+    String? token;
+    
+    // First attempt - quick check
+    try {
+      token = await messaging.getToken();
+      if (token != null) {
+        print('✅ Got FCM token on first attempt: ${token.substring(0, 20)}...');
+        return token;
+      }
+    } catch (e) {
+      print('⚠️ First FCM token attempt failed: $e');
+    }
+
+    // Wait for APNS token if needed
+    print('🔔 Waiting for APNS token...');
+    String? apnsToken;
+    
+    for (int i = 0; i < 5; i++) {
+      try {
+        apnsToken = await messaging.getAPNSToken();
+        if (apnsToken != null) {
+          print('✅ APNS token available: ${apnsToken.substring(0, 20)}...');
+          break;
+        }
+      } catch (e) {
+        print('⚠️ APNS not ready, attempt ${i + 1}/5');
+      }
+      
+      if (i < 4) {
+        await Future.delayed(Duration(milliseconds: 500 + (i * 500)));
+      }
+    }
+    
+    // Try to get FCM token after APNS is ready
+    if (apnsToken != null) {
+      try {
+        token = await messaging.getToken();
+        if (token != null) {
+          print('✅ Got FCM token after APNS ready: ${token.substring(0, 20)}...');
+          return token;
+        }
+      } catch (e) {
+        print('❌ Failed to get FCM token even with APNS ready: $e');
+      }
+    }
+    
+    return null;
+  }
+
+  /// Save token to Supabase with error handling
+  static Future<void> _saveTokenToSupabase(String userId, String token, String platform) async {
+    try {
+      final supabase = SupabaseService.instance;
+      bool success = await supabase.saveDeviceTokenWithPlatform(
+        userId: userId,
+        token: token,
+        platform: platform,
+      );
+      
+      if (success) {
+        print('✅ $platform token saved to Supabase: ${token.substring(0, 20)}... for user: $userId');
+      } else {
+        print('❌ Failed to save $platform token to Supabase for user: $userId');
+        // Retry once after delay
+        await Future.delayed(Duration(seconds: 2));
+        await supabase.saveDeviceTokenWithPlatform(
+          userId: userId,
+          token: token,
+          platform: platform,
+        );
+      }
+    } catch (e) {
+      print('❌ Error saving token to Supabase: $e');
+    }
+  }
+
+  /// Retry iOS token in background
+  static void _retryIOSTokenInBackground(String userId) {
+    Future.delayed(Duration(seconds: 3), () async {
+      try {
+        print('🔄 Retrying iOS token fetch in background for user: $userId');
+        
+        final messaging = FirebaseMessaging.instance;
+        String? token = await _getIOSTokenWithRetry(messaging);
+        
+        if (token != null) {
+          await _saveTokenToSupabase(userId, token, 'ios');
+        } else {
+          // Try one more time after another delay
+          await Future.delayed(Duration(seconds: 5));
+          token = await messaging.getToken();
+          if (token != null) {
+            await _saveTokenToSupabase(userId, token, 'ios');
+          }
+        }
+      } catch (e) {
+        print('❌ Background iOS token retry failed: $e');
+      }
+    });
   }
 
   /// Initialize Android with ntfy
@@ -125,14 +183,8 @@ class PlatformPushService {
       await NtfyPushService.initialize(userId: userId);
       
       // Save Android platform info to Supabase with ntfy topic
-      final supabase = SupabaseService.instance;
       final ntfyTopic = 'venta_cuba_user_$userId';
-      
-      await supabase.saveDeviceTokenWithPlatform(
-        userId: userId,
-        token: ntfyTopic, // Use actual ntfy topic
-        platform: 'android',
-      );
+      await _saveTokenToSupabase(userId, ntfyTopic, 'android');
       
       print('✅ Android ntfy service initialized with topic: $ntfyTopic for user: $userId');
     } catch (e) {
@@ -140,7 +192,7 @@ class PlatformPushService {
     }
   }
 
-  /// Send chat notification to recipient (Cross-platform) - FIXED VERSION
+  /// Send chat notification to recipient (Cross-platform)
   static Future<void> sendChatNotification({
     required String recipientUserId,
     required String senderName,
@@ -269,56 +321,12 @@ class PlatformPushService {
     }
   }
 
-  /// Get FCM token (iOS only)
+  /// Get FCM token (iOS only) - SIMPLIFIED VERSION
   static Future<String?> getFCMToken() async {
     try {
       if (Platform.isIOS) {
-        // Get actual FCM token with APNS token check
         final messaging = FirebaseMessaging.instance;
-        
-        // First ensure APNS token is available (reduced retries)
-        print('🔔 Checking APNS token availability...');
-        String? apnsToken;
-        int maxRetries = 2; // Reduced from 5 to 2
-        int retryCount = 0;
-        
-        while (apnsToken == null && retryCount < maxRetries) {
-          try {
-            apnsToken = await messaging.getAPNSToken();
-            if (apnsToken != null) {
-              print('✅ APNS token available for FCM token generation');
-              break;
-            }
-          } catch (e) {
-            print('⚠️ APNS token not ready, attempt ${retryCount + 1}/$maxRetries: $e');
-          }
-          
-          retryCount++;
-          await Future.delayed(Duration(milliseconds: 500)); // Reduced from 2s to 500ms
-        }
-        
-        if (apnsToken == null) {
-          print('❌ APNS token not available, cannot generate FCM token');
-          return null;
-        }
-
-        // Now get FCM token
-        String? token = await messaging.getToken();
-        
-        // Retry if token is null
-        if (token == null) {
-          print('🔔 FCM token null, retrying...');
-          await Future.delayed(Duration(seconds: 3));
-          token = await messaging.getToken();
-        }
-        
-        if (token != null) {
-          print('🔔 Retrieved FCM token: ${token.substring(0, 20)}...');
-        } else {
-          print('⚠️ Could not retrieve FCM token after APNS token was available');
-        }
-        
-        return token;
+        return await _getIOSTokenWithRetry(messaging);
       }
       return null;
     } catch (e) {
