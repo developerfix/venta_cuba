@@ -4,6 +4,7 @@ import GoogleMaps
 import flutter_local_notifications
 import UserNotifications
 import Firebase
+import FirebaseMessaging
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -29,10 +30,19 @@ import Firebase
       center.requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
         if granted {
           print("🔥 iOS: Notification permissions granted")
+          // Register for remote notifications after permission is granted
+          DispatchQueue.main.async {
+            application.registerForRemoteNotifications()
+          }
         } else {
           print("🔥 iOS: Notification permissions denied: \(error?.localizedDescription ?? "Unknown error")")
         }
       }
+    } else {
+      // For iOS 9 and below
+      let settings = UIUserNotificationSettings(types: [.alert, .badge, .sound], categories: nil)
+      application.registerUserNotificationSettings(settings)
+      application.registerForRemoteNotifications()
     }
 
     GeneratedPluginRegistrant.register(with: self)
@@ -90,5 +100,37 @@ import Firebase
   override func applicationWillEnterForeground(_ application: UIApplication) {
     super.applicationWillEnterForeground(application)
     print("🔥 iOS: App will enter foreground")
+  }
+
+  // APNS token handling - Required since FirebaseAppDelegateProxyEnabled = false
+  override func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+    print("🔥 iOS: APNS device token received")
+    
+    // Convert token to string for logging
+    let tokenParts = deviceToken.map { data in String(format: "%02.2hhx", data) }
+    let token = tokenParts.joined()
+    print("🔥 iOS: APNS Token: \(token.prefix(20))...")
+    
+    // Forward to Firebase Messaging
+    Messaging.messaging().apnsToken = deviceToken
+    print("🔥 iOS: APNS token set in Firebase Messaging")
+    
+    super.application(application, didRegisterForRemoteNotificationsWithDeviceToken: deviceToken)
+  }
+
+  override func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+    print("🔥 iOS: Failed to register for remote notifications: \(error.localizedDescription)")
+    super.application(application, didFailToRegisterForRemoteNotificationsWithError: error)
+  }
+
+  // Handle remote notification received
+  override func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+    print("🔥 iOS: Remote notification received: \(userInfo)")
+    
+    // Forward to Firebase Messaging
+    Messaging.messaging().appDidReceiveMessage(userInfo)
+    
+    super.application(application, didReceiveRemoteNotification: userInfo, fetchCompletionHandler: completionHandler)
+    completionHandler(.newData)
   }
 }

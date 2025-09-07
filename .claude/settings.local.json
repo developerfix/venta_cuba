@@ -18,7 +18,9 @@
       "Bash(pod update:*)",
       "Bash(ls:*)",
       "Bash(security cms:*)",
-      "Bash(xcodebuild:*)"
+      "Bash(xcodebuild:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:stackoverflow.com)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",

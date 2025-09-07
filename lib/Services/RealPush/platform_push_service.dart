@@ -52,6 +52,10 @@ class PlatformPushService {
         return;
       }
 
+      print('🍎 Waiting for APNS token registration...');
+      // Wait a bit longer for APNS token to be registered
+      await Future.delayed(Duration(seconds: 3));
+
       // Get FCM token with proper retry logic
       String? token = await _getIOSTokenWithRetry(messaging);
 
@@ -77,70 +81,83 @@ class PlatformPushService {
     }
   }
 
-  /// Get iOS token with proper retry logic and show error dialog (GetX dialog)
+  /// Get iOS token with proper retry logic using Stack Overflow solution
   static Future<String?> _getIOSTokenWithRetry(
       FirebaseMessaging messaging) async {
     String? token;
     String errorDetails = '';
 
-    // First attempt
-    try {
-      token = await messaging.getToken();
-      if (token != null) {
-        print('✅ Got FCM token on first attempt: ${token.substring(0, 20)}...');
-        return token;
+    // Check APNS token first (Stack Overflow solution)
+    print('🔔 Checking APNS token availability...');
+    String? apnsToken = await messaging.getAPNSToken();
+    
+    if (apnsToken != null) {
+      print('✅ APNS token available immediately: ${apnsToken.substring(0, 20)}...');
+      // Try to get FCM token now
+      try {
+        token = await messaging.getToken();
+        if (token != null) {
+          print('✅ Got FCM token with APNS ready: ${token.substring(0, 20)}...');
+          return token;
+        }
+      } catch (e) {
+        print('⚠️ FCM token failed despite APNS ready: $e');
+        errorDetails = 'FCM failed with APNS ready: $e';
       }
-    } catch (e) {
-      errorDetails = 'First attempt error: $e';
-      print('⚠️ First FCM token attempt failed: $e');
-      _showErrorDialog("FCM Token Error", errorDetails);
+    } else {
+      print('⚠️ APNS token not ready, waiting...');
+      // Wait and try again (Stack Overflow approach)
+      await Future.delayed(Duration(seconds: 3));
+      
+      apnsToken = await messaging.getAPNSToken();
+      if (apnsToken != null) {
+        print('✅ APNS token available after delay: ${apnsToken.substring(0, 20)}...');
+        try {
+          token = await messaging.getToken();
+          if (token != null) {
+            print('✅ Got FCM token after APNS delay: ${token.substring(0, 20)}...');
+            return token;
+          }
+        } catch (e) {
+          print('⚠️ FCM token failed after APNS delay: $e');
+          errorDetails = 'FCM failed after APNS delay: $e';
+        }
+      } else {
+        print('⚠️ APNS token still not ready after delay');
+        errorDetails = 'APNS token not available after delay';
+      }
     }
 
-    // Wait for APNS token
-    print('🔔 Waiting for APNS token...');
-    String? apnsToken;
-
+    // Final retry loop if above approaches failed
+    print('🔄 Entering retry loop for APNS token...');
     for (int i = 0; i < 5; i++) {
       try {
         apnsToken = await messaging.getAPNSToken();
         if (apnsToken != null) {
-          print('✅ APNS token available: ${apnsToken.substring(0, 20)}...');
-          break;
+          print('✅ APNS token available on retry ${i + 1}: ${apnsToken.substring(0, 20)}...');
+          
+          // Try FCM token with APNS ready
+          token = await messaging.getToken();
+          if (token != null) {
+            print('✅ Got FCM token on retry ${i + 1}: ${token.substring(0, 20)}...');
+            return token;
+          }
         }
       } catch (e) {
-        errorDetails += '\nAPNS attempt ${i + 1}: $e';
-        print('⚠️ APNS not ready, attempt ${i + 1}/5: $e');
-        _showErrorDialog("APNS Error", "APNS attempt ${i + 1}: $e");
+        errorDetails += '\nRetry ${i + 1}: $e';
+        print('⚠️ Retry ${i + 1}/5 failed: $e');
       }
 
       if (i < 4) {
-        await Future.delayed(Duration(milliseconds: 500 + (i * 500)));
+        await Future.delayed(Duration(milliseconds: 1000 + (i * 500)));
       }
     }
 
-    // Try FCM after APNS ready
-    if (apnsToken != null) {
-      try {
-        token = await messaging.getToken();
-        if (token != null) {
-          print(
-              '✅ Got FCM token after APNS ready: ${token.substring(0, 20)}...');
-          return token;
-        }
-      } catch (e) {
-        errorDetails += '\nFCM with APNS error: $e';
-        print('❌ Failed to get FCM token even with APNS ready: $e');
-        _showErrorDialog("FCM Token Error", errorDetails);
-        throw Exception('FCM Token Error: $errorDetails');
-      }
-    } else {
-      final msg =
-          'APNS Token unavailable after 5 attempts. Details: $errorDetails';
-      _showErrorDialog("APNS Token Error", msg);
-      throw Exception(msg);
-    }
-
-    return null;
+    // If we get here, everything failed
+    final msg = 'Failed to get FCM token after all attempts. Details: $errorDetails';
+    print('❌ $msg');
+    _showErrorDialog("FCM Token Error", msg);
+    throw Exception(msg);
   }
 
   /// Simple error dialog using GetX
