@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseService {
@@ -89,7 +91,18 @@ class SupabaseService {
       print('✅ Device token saved for $platform user: $userId');
       return true;
     } catch (e) {
-      print('❌ Error saving device token: $e');
+      Get.dialog(
+        AlertDialog(
+          title: Text('storing Device Token Failed'),
+          content: Text('Error: $e'),
+          actions: [
+            TextButton(
+              child: const Text("OK"),
+              onPressed: () => Get.back(),
+            ),
+          ],
+        ),
+      );
       return false;
     }
   }

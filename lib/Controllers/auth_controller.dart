@@ -634,11 +634,17 @@ class AuthController extends GetxController {
       if (Platform.isIOS) {
         // For iOS, try multiple approaches to get FCM token
         String? fcmToken;
+        String? errorDetails;
         
         // First try PlatformPushService
-        fcmToken = await PlatformPushService.getFCMToken();
+        try {
+          fcmToken = await PlatformPushService.getFCMToken();
+        } catch (e) {
+          errorDetails = 'PlatformPushService error: $e';
+          print('❌ $errorDetails');
+        }
         
-        // If still null, try direct Firebase approach without APNS check
+        // If still null, try direct Firebase approach
         if (fcmToken == null) {
           try {
             final messaging = FirebaseMessaging.instance;
@@ -647,7 +653,31 @@ class AuthController extends GetxController {
               print('🔔 Got FCM token directly from Firebase: ${fcmToken.substring(0, 20)}...');
             }
           } catch (e) {
+            errorDetails = (errorDetails != null ? '$errorDetails\n\n' : '') + 
+                          'Firebase direct error: $e';
             print('❌ Error getting FCM token directly: $e');
+            
+            // Show error dialog for debugging
+            Get.dialog(
+              AlertDialog(
+                title: Text('iOS Notification Setup Error'),
+                content: SingleChildScrollView(
+                  child: Text(
+                    'Failed to get notification token.\n\n'
+                    'Technical details:\n$errorDetails\n\n'
+                    'Please screenshot this and send to support.',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Get.back(),
+                    child: Text('OK'),
+                  ),
+                ],
+              ),
+              barrierDismissible: false,
+            );
           }
         }
         
@@ -673,6 +703,26 @@ class AuthController extends GetxController {
             if (success) {
               deviceToken = fcmToken;
               print('✅ iOS FCM token saved to Supabase on retry');
+            } else {
+              // Show error if still failed after retry
+              Get.dialog(
+                AlertDialog(
+                  title: Text('Token Save Error'),
+                  content: Text(
+                    'Failed to save notification token to server.\n'
+                    'Token exists but cannot be saved.\n'
+                    'User ID: $userId\n'
+                    'Token: ${fcmToken.substring(0, 30)}...\n\n'
+                    'Please screenshot and send to support.',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Get.back(),
+                      child: Text('OK'),
+                    ),
+                  ],
+                ),
+              );
             }
           }
         } else {
