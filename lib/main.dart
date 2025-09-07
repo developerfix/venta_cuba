@@ -1,46 +1,72 @@
 import 'dart:io';
-import 'package:firebase_app_check/firebase_app_check.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:venta_cuba/Controllers/location_controller.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
 import 'package:venta_cuba/Controllers/theme_controller.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:venta_cuba/Services/Supabase/supabase_service.dart';
 import 'package:venta_cuba/config/app_config.dart';
 import 'package:venta_cuba/languages/languages.dart';
 import 'package:venta_cuba/view/splash%20Screens/white_screen.dart';
 import 'package:venta_cuba/view/Chat/Controller/SupabaseChatController.dart';
 import 'package:venta_cuba/view/constants/theme_config.dart';
-import 'package:venta_cuba/Notification/firebase_messaging.dart';
 
-import 'Services/notification_service.dart';
 
 String? deviceToken;
 
-// Background message handler - MUST be top-level function
-@pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  if (Platform.isIOS) {
-    await Firebase.initializeApp();
-    print('🔥 Background message received: ${message.messageId}');
-    await FCM.showBackgroundNotification(message);
-    await FirebaseAppCheck.instance.activate(
-      appleProvider: AppleProvider.debug,
-    );
+
+// Global SharedPreferences instance
+SharedPreferences? globalPrefs;
+
+// Initialize SharedPreferences with iOS-specific handling
+Future<void> initializeSharedPreferences() async {
+  if (globalPrefs != null) return;
+
+  int maxRetries = 5;
+  for (int i = 0; i < maxRetries; i++) {
+    try {
+      // Add platform-specific delay for iOS
+      if (Platform.isIOS) {
+        // Wait for platform channels to be fully established
+        await Future.delayed(Duration(milliseconds: 100 * (i + 1)));
+
+        // Ensure method channel is ready
+        const platform = MethodChannel('plugins.flutter.io/shared_preferences');
+        try {
+          await platform.invokeMethod('getAll');
+        } catch (e) {
+          print('Platform channel not ready, attempt ${i + 1}/$maxRetries');
+          if (i < maxRetries - 1) continue;
+        }
+      }
+
+      globalPrefs = await SharedPreferences.getInstance();
+
+      // Verify it's working
+      await globalPrefs!.reload();
+
+      print('✅ SharedPreferences initialized successfully on attempt ${i + 1}');
+      return;
+    } catch (e) {
+      print('⚠️ SharedPreferences init attempt ${i + 1} failed: $e');
+      if (i == maxRetries - 1) {
+        print(
+            '❌ Failed to initialize SharedPreferences after $maxRetries attempts');
+        // Don't throw - allow app to continue with limited functionality
+      }
+    }
   }
 }
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Register background handler for iOS only - non-blocking
-  if (Platform.isIOS) {
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  }
+  // Initialize SharedPreferences before anything else
+  await initializeSharedPreferences();
+
 
   runApp(const MyApp());
 }
@@ -116,45 +142,11 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _initializeServicesInBackground() async {
-    // Initialize Firebase for iOS only
-    try {
-      NotificationService notificationService = NotificationService();
-      notificationService.obtainCredentials();
-    } catch (e) {
-      Get.dialog(AlertDialog(
-        title: const Text('Error'),
-        content: Text('Failed to obtain notification credentials: $e'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
-          ),
-        ],
-      ));
-    }
-    if (Platform.isIOS) {
-      try {
-        FCM firebaseMessaging = FCM();
 
-        await Firebase.initializeApp();
-
-        firebaseMessaging.setNotifications(context);
-        firebaseMessaging.streamCtrl.stream.listen((msgData) {
-          debugPrint('messageData $msgData');
-        });
-
-        print('✅ Firebase initialized for iOS');
-      } catch (e) {
-        print('Firebase init error: $e');
-      }
-    }
-
-    // Initialize SharedPreferences
-    try {
-      await SharedPreferences.getInstance();
-      print('✅ SharedPreferences initialized');
-    } catch (e) {
-      print('SharedPreferences init error: $e');
+    // SharedPreferences already initialized in main()
+    if (globalPrefs == null) {
+      // Try one more time if it failed in main
+      await initializeSharedPreferences();
     }
 
     // Initialize Supabase if configured
@@ -178,21 +170,23 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _checkLocationPreferences() async {
-    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    bool isLocationOn = sharedPreferences.getBool('isLocationOn') ?? false;
-    if (isLocationOn) {
-      //locationCont.getLocation();
+    if (globalPrefs != null) {
+      bool isLocationOn = globalPrefs!.getBool('isLocationOn') ?? false;
+      if (isLocationOn) {
+        //locationCont.getLocation();
+      }
     }
   }
 
   void _loadLocale() async {
-    var prefs = await SharedPreferences.getInstance();
-    languageCode = prefs.getString('languageCode') ?? 'es';
-    countryCode = prefs.getString('countryCode') ?? 'ES';
-    setState(() {
-      _locale = Locale(languageCode, countryCode);
-    });
-    Get.updateLocale(_locale);
+    if (globalPrefs != null) {
+      languageCode = globalPrefs!.getString('languageCode') ?? 'es';
+      countryCode = globalPrefs!.getString('countryCode') ?? 'ES';
+      setState(() {
+        _locale = Locale(languageCode, countryCode);
+      });
+      Get.updateLocale(_locale);
+    }
   }
 
   @override

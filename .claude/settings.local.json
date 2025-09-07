@@ -21,7 +21,8 @@
       "Bash(xcodebuild:*)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:stackoverflow.com)",
-      "Bash(pod clean:*)"
+      "Bash(pod clean:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",

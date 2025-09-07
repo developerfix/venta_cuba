@@ -3,8 +3,6 @@ import Flutter
 import GoogleMaps
 import flutter_local_notifications
 import UserNotifications
-import Firebase
-import FirebaseMessaging
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -13,8 +11,8 @@ import FirebaseMessaging
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
 
-    // 🔥 CRITICAL: Initialize Firebase FIRST
-    FirebaseApp.configure()
+    // Initialize Flutter plugins
+    GeneratedPluginRegistrant.register(with: self)
     
     FlutterLocalNotificationsPlugin.setPluginRegistrantCallback { (registry) in
       GeneratedPluginRegistrant.register(with: registry)
@@ -101,7 +99,7 @@ import FirebaseMessaging
     print("🔥 iOS: App will enter foreground")
   }
 
-  // APNS token handling - Required since FirebaseAppDelegateProxyEnabled = false
+  // APNS token handling
   override func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
     print("🔥 iOS: APNS device token received")
     
@@ -109,10 +107,6 @@ import FirebaseMessaging
     let tokenParts = deviceToken.map { data in String(format: "%02.2hhx", data) }
     let token = tokenParts.joined()
     print("🔥 iOS: APNS Token: \(token.prefix(20))...")
-    
-    // Forward to Firebase Messaging
-    Messaging.messaging().apnsToken = deviceToken
-    print("🔥 iOS: APNS token set in Firebase Messaging")
     
     super.application(application, didRegisterForRemoteNotificationsWithDeviceToken: deviceToken)
   }
@@ -125,9 +119,6 @@ import FirebaseMessaging
   // Handle remote notification received
   override func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
     print("🔥 iOS: Remote notification received: \(userInfo)")
-    
-    // Forward to Firebase Messaging
-    Messaging.messaging().appDidReceiveMessage(userInfo)
     
     super.application(application, didReceiveRemoteNotification: userInfo, fetchCompletionHandler: completionHandler)
     completionHandler(.newData)
