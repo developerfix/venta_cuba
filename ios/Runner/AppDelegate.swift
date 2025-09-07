@@ -45,7 +45,6 @@ import FirebaseMessaging
       application.registerForRemoteNotifications()
     }
 
-    GeneratedPluginRegistrant.register(with: self)
     GMSServices.provideAPIKey("AIzaSyBx95Bvl9O-US2sQpqZ41GdsHIprnXvJv8")
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
