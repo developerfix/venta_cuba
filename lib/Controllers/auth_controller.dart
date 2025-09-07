@@ -332,8 +332,6 @@ class AuthController extends GetxController {
           print(
               '✅ Platform Push Service initialized for user: ${user!.userId}');
         } catch (pushError) {
-          errorAlertToast(
-              '🔥 AuthController: Platform Push Service initialization failed: $pushError');
           // Try to initialize in background
           _initializePushServiceInBackground(user!.userId.toString());
         }
@@ -466,8 +464,7 @@ class AuthController extends GetxController {
         } catch (initError) {
           print(
               '🔥 Critical: SharedPreferences initialization failed completely: $initError');
-          errorAlertToast(
-              'Storage initialization failed. Please restart the app.');
+
           return;
         }
       }
@@ -509,28 +506,13 @@ class AuthController extends GetxController {
         return response.statusCode;
       } else if (response.statusCode! >= 400) {
         print('Login failed - incorrect credentials: ${response.statusCode}');
-        errorAlertToast('Invalid email or password. Please try again.'.tr);
       } else if (response.statusCode == 500) {
         print('Server error during login - Status Code: 500');
-        errorAlertToast('Server error. Please try again later.'.tr);
       } else {
         print('Login failed with status code: ${response.statusCode}');
-        errorAlertToast(
-            'Login failed. Please check your connection and try again.'.tr);
       }
     } catch (e) {
       print('🔥 Login error: $e');
-
-      // Show appropriate error message to user
-      if (e.toString().contains('timeout')) {
-        errorAlertToast(
-            'Login timed out. Please check your internet connection and try again.'
-                .tr);
-      } else {
-        errorAlertToast(
-            'Login failed. Please check your internet connection and try again.'
-                .tr);
-      }
     } finally {
       // Always set loading state to false when done
       isLoading.value = false;
@@ -557,10 +539,7 @@ class AuthController extends GetxController {
       // Load user details with timeout
       await getuserDetail().timeout(
         Duration(seconds: 15),
-        onTimeout: () {
-          errorAlertToast(
-              'Failed to load user details. Please try again later.'.tr);
-        },
+        onTimeout: () {},
       );
 
       // Navigate to main screen regardless
@@ -577,11 +556,9 @@ class AuthController extends GetxController {
   void _initializePushServiceInBackground(String userId) {
     Future.delayed(Duration(seconds: 2), () async {
       try {
-        errorAlertToast(
-            '🔄 Retrying Platform Push Service initialization in background...');
         await PlatformPushService.initialize(userId);
       } catch (e) {
-        errorAlertToast('Push notifications may not work properly.'.tr);
+        //
       }
     });
   }
@@ -597,18 +574,13 @@ class AuthController extends GetxController {
             token = await PlatformPushService.getFCMToken();
             if (token != null) {
               deviceToken = token;
-              print('✅ Refreshed iOS notification token: ${token.substring(0, 20)}...');
+              print(
+                  '✅ Refreshed iOS notification token: ${token.substring(0, 20)}...');
             } else {
               print('⚠️ Could not get notification token for iOS');
-              errorAlertToast(
-                  'Failed to setup notifications. Please check your settings.'
-                      .tr);
             }
           } catch (e) {
             print('❌ Error getting iOS notification token: $e');
-            errorAlertToast(
-                'iOS notification setup failed. Please enable notifications in Settings.'
-                    .tr);
           }
         } catch (e) {
           print('❌ Error in iOS token refresh: $e');
@@ -655,8 +627,10 @@ class AuthController extends GetxController {
         if (fcmToken == null) {
           try {
             // Use iOS-specific token generation for Cuba
-            fcmToken = 'ios_cuba_token_${userId}_${DateTime.now().millisecondsSinceEpoch}';
-            print('🔔 Generated Cuba-friendly iOS token: ${fcmToken.substring(0, 20)}...');
+            fcmToken =
+                'ios_cuba_token_${userId}_${DateTime.now().millisecondsSinceEpoch}';
+            print(
+                '🔔 Generated Cuba-friendly iOS token: ${fcmToken.substring(0, 20)}...');
           } catch (e) {
             errorDetails = (errorDetails != null ? '$errorDetails\n\n' : '') +
                 'Token generation error: $e';

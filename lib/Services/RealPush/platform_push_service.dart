@@ -22,7 +22,6 @@ class PlatformPushService {
         await _initializeAndroidPush(userId);
       }
     } catch (e) {
-      errorAlertToast('🔥 Platform Push Service initialization failed: $e');
       // Don't rethrow - handle gracefully
     }
   }
@@ -31,17 +30,18 @@ class PlatformPushService {
   static Future<void> _initializeIOSPush(String userId) async {
     try {
       // For iOS without Firebase, use local notifications and generate a unique identifier
-      final token = 'ios_cuba_${userId}_${DateTime.now().millisecondsSinceEpoch}';
-      
-      print('🍎 Generated Cuba-friendly iOS token: ${token.substring(0, 20)}...');
-      
+      final token =
+          'ios_cuba_${userId}_${DateTime.now().millisecondsSinceEpoch}';
+
+      print(
+          '🍎 Generated Cuba-friendly iOS token: ${token.substring(0, 20)}...');
+
       // Save token to Supabase
       await _saveTokenToSupabase(userId, token, 'ios');
-      
+
       print('✅ iOS Cuba-friendly push initialized for user: $userId');
     } catch (e) {
       print('❌ Error initializing iOS push: $e');
-      errorAlertToast('❌ Error initializing iOS push: $e');
     }
   }
 
@@ -78,7 +78,6 @@ class PlatformPushService {
       print('❌ Error saving token to Supabase: $e');
     }
   }
-
 
   /// Initialize Android with ntfy
   static Future<void> _initializeAndroidPush(String userId) async {
