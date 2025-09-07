@@ -162,7 +162,7 @@ class _ChatPageState extends State<ChatPage> {
       print("🔥 📋 Widget listing ID: ${widget.listingId}");
       print("🔥 📋 Widget listing name: ${widget.listingName}");
       print("🔥 📋 Widget listing image: ${widget.listingImage}");
-      
+
       homeCont.listingModel = null;
       homeCont.update();
 
@@ -173,7 +173,8 @@ class _ChatPageState extends State<ChatPage> {
         homeCont.getListingDetails(widget.listingId!, showDialog: false);
       } else {
         print("🔥 📋 No valid listing ID provided, using widget data");
-        print("🔥 📋 Fallback data - Name: ${widget.listingName}, Price: ${widget.listingPrice}");
+        print(
+            "🔥 📋 Fallback data - Name: ${widget.listingName}, Price: ${widget.listingPrice}");
       }
     });
   }
@@ -705,20 +706,25 @@ class _ChatPageState extends State<ChatPage> {
                                   child: TextField(
                                     focusNode: focusNode,
                                     controller: cont.messageController,
-                                    maxLines: null, // Allow unlimited lines within maxHeight
+                                    maxLines:
+                                        null, // Allow unlimited lines within maxHeight
                                     minLines: 1, // Start with 1 line only
                                     keyboardType: TextInputType.multiline,
                                     textAlignVertical: TextAlignVertical.center,
                                     scrollPhysics: BouncingScrollPhysics(),
                                     style: TextStyle(
                                       fontSize: 14.sp,
-                                      color: Theme.of(context).textTheme.bodyMedium?.color,
+                                      color: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.color,
                                     ),
                                     decoration: InputDecoration(
                                         isDense: true,
                                         contentPadding: EdgeInsets.symmetric(
                                           horizontal: 0,
-                                          vertical: 12.h, // Proper vertical padding
+                                          vertical:
+                                              12.h, // Proper vertical padding
                                         ),
                                         border: InputBorder.none,
                                         enabledBorder: InputBorder.none,
@@ -733,11 +739,12 @@ class _ChatPageState extends State<ChatPage> {
                                                   .bodyMedium
                                                   ?.color
                                                   ?.withValues(alpha: 0.5) ??
-                                              Colors.black.withValues(alpha: 0.5),
+                                              Colors.black
+                                                  .withValues(alpha: 0.5),
                                         )),
                                     onTap: () {
-                                      Future.delayed(Duration(milliseconds: 300),
-                                          () {
+                                      Future.delayed(
+                                          Duration(milliseconds: 300), () {
                                         _scrollToBottom(animated: true);
                                       });
                                       cont.update();
@@ -823,6 +830,30 @@ class _ChatPageState extends State<ChatPage> {
               ),
             );
           }),
+          // Notification warning text
+          // Positioned(
+          //   bottom: 0,
+          //   left: 0,
+          //   right: 0,
+          //   child: Container(
+          //     padding: EdgeInsets.all(8.0),
+          //     margin: EdgeInsets.all(8.0),
+          //     decoration: BoxDecoration(
+          //       color: Colors.orange.withValues(alpha: 0.1),
+          //       border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+          //       borderRadius: BorderRadius.circular(8.0),
+          //     ),
+          //     child: Text(
+          //       'Notifications will not work on ios due to restrictions in Cuba'.tr,
+          //       style: TextStyle(
+          //         fontSize: 12.sp,
+          //         color: Colors.orange[700],
+          //         fontStyle: FontStyle.italic,
+          //       ),
+          //       textAlign: TextAlign.center,
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );
@@ -1226,14 +1257,14 @@ class _ChatPageState extends State<ChatPage> {
         homeCont.listingModel!.title != "null") {
       return homeCont.listingModel!.title!;
     }
-    
+
     // Then try from widget parameters (passed from navigation)
     if (widget.listingName != null &&
         widget.listingName!.isNotEmpty &&
         widget.listingName != "null") {
       return widget.listingName!;
     }
-    
+
     // Default fallback - avoid showing "Anuncio"
     return "Listing".tr;
   }
@@ -1434,7 +1465,7 @@ class _ChatPageState extends State<ChatPage> {
       return DateFormat('h:mm a').format(messageTime);
     } else if (messageDate == yesterday) {
       // Yesterday: show "Yesterday HH:MM"
-      return "Yesterday ${DateFormat('h:mm a').format(messageTime)}";
+      return "${'Yesterday'.tr} ${DateFormat('h:mm a').format(messageTime)}";
     } else if (now.difference(messageTime).inDays < 7) {
       // This week: show day name and time
       return "${DateFormat('EEEE h:mm a').format(messageTime)}";

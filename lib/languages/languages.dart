@@ -342,6 +342,7 @@ class Languages extends Translations {
           "Account Settings": "Account Settings",
           "Profile Details": "Profile Details",
           "Notifications": "Notifications",
+          "Notifications will not work on ios due to restrictions in Cuba": "Notifications will not work on ios due to restrictions in Cuba",
           "My Ratings": "My Ratings",
           "Saved Searches": "Saved Searches",
           "Favorite Listings": "Favorite Listings",
@@ -971,9 +972,12 @@ It is not allowed to use our member-to-member communication resources to send sp
           'No Chat': 'No Chat',
           'Listing': 'Listing',
           'Failed to upload image': 'Failed to upload image',
-          'Image storage not configured. Contact support.': 'Image storage not configured. Contact support.',
-          'Image upload not authorized. Storage policies need configuration.': 'Image upload not authorized. Storage policies need configuration.',
-          'Image upload failed. Storage bucket may not be configured.': 'Image upload failed. Storage bucket may not be configured.',
+          'Image storage not configured. Contact support.':
+              'Image storage not configured. Contact support.',
+          'Image upload not authorized. Storage policies need configuration.':
+              'Image upload not authorized. Storage policies need configuration.',
+          'Image upload failed. Storage bucket may not be configured.':
+              'Image upload failed. Storage bucket may not be configured.',
           'Failed to send image': 'Failed to send image',
           'New Message': 'New Message',
           'New message': 'New message',
@@ -983,6 +987,7 @@ It is not allowed to use our member-to-member communication resources to send sp
           'Fetching location...': 'Fetching location...',
           'Please select a location first': 'Please select a location first',
           'Choose Location': 'Choose Location',
+          'Yesterday': 'Yesterday',
           'Set Location': 'Set Location',
           'Selected Location': 'Selected Location',
           'Image': 'Image',
@@ -1232,6 +1237,7 @@ A menos que se indique explícitamente lo contrario en esta Política de Privaci
 
 ''',
           'Third Parties:': 'Terceros:',
+          'Yesterday': 'Ayer',
           "other_information":
               ''''\n\n No toleramos el abuso de nuestro sitio web. No tiene permiso para agregar otros usuarios de VentaCuba a su lista de correo (correo electrónico o postal) con fines comerciales, incluso si un usuario le ha comprado algo, a menos que el usuario haya dado su consentimiento explícito. Si nota que alguien está abusando de nuestro sitio web (spam o correos electrónicos falsos), notifíquenoslo aquí.
 
@@ -1787,6 +1793,7 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
           "Account Settings": "Configuraciones De La Cuenta",
           "Profile Details": "Detalles Del Perfil",
           "Notifications": "Notificaciones",
+          "Notifications will not work on ios due to restrictions in Cuba": "Las notificaciones no funcionarán en iOS debido a las restricciones en Cuba",
           "My Ratings": "Mis calificaciones",
 
           "Saved Searches": "Búsquedas guardadas",
@@ -1973,18 +1980,30 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
           'Click here to enter a location to see publications near you.':
               'Haga clic aquí para ingresar una ubicación para ver publicaciones cerca de usted.',
           'Notification permissions ready': 'Permisos de notificaciones listos',
-          'Error checking notification permissions': 'Error al verificar permisos de notificaciones',
-          'iOS notification permissions granted': 'Permisos de notificaciones de iOS concedidos',
-          'iOS notification permissions denied': 'Permisos de notificaciones de iOS denegados',
-          'Permission denied for image upload': 'Permiso denegado para subir imagen',
-          'Your location permissions are denied': 'Sus permisos de ubicación están denegados',
-          'Location permissions are permanently denied, we cannot request permissions': 'Los permisos de ubicación están permanentemente denegados, no podemos solicitar permisos',
-          'Battery optimization exemption requested': 'Se solicitó exención de optimización de batería',
-          'Could not request battery optimization': 'No se pudo solicitar la optimización de batería',
-          'Background service started successfully': 'Servicio en segundo plano iniciado exitosamente',
-          'Failed to start background service': 'No se pudo iniciar el servicio en segundo plano',
-          'Background service stopped successfully': 'Servicio en segundo plano detenido exitosamente',
-          'Failed to stop background service': 'No se pudo detener el servicio en segundo plano',
+          'Error checking notification permissions':
+              'Error al verificar permisos de notificaciones',
+          'iOS notification permissions granted':
+              'Permisos de notificaciones de iOS concedidos',
+          'iOS notification permissions denied':
+              'Permisos de notificaciones de iOS denegados',
+          'Permission denied for image upload':
+              'Permiso denegado para subir imagen',
+          'Your location permissions are denied':
+              'Sus permisos de ubicación están denegados',
+          'Location permissions are permanently denied, we cannot request permissions':
+              'Los permisos de ubicación están permanentemente denegados, no podemos solicitar permisos',
+          'Battery optimization exemption requested':
+              'Se solicitó exención de optimización de batería',
+          'Could not request battery optimization':
+              'No se pudo solicitar la optimización de batería',
+          'Background service started successfully':
+              'Servicio en segundo plano iniciado exitosamente',
+          'Failed to start background service':
+              'No se pudo iniciar el servicio en segundo plano',
+          'Background service stopped successfully':
+              'Servicio en segundo plano detenido exitosamente',
+          'Failed to stop background service':
+              'No se pudo detener el servicio en segundo plano',
           // Chat interface translations
           'OK': 'Aceptar',
           'Delete': 'Eliminar',
@@ -2006,9 +2025,12 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
           'No Chat': 'Sin chat',
           'Listing': 'Anuncio',
           'Failed to upload image': 'Error al subir imagen',
-          'Image storage not configured. Contact support.': 'Almacenamiento de imágenes no configurado. Contacta soporte.',
-          'Image upload not authorized. Storage policies need configuration.': 'Carga de imagen no autorizada. Las políticas de almacenamiento necesitan configuración.',
-          'Image upload failed. Storage bucket may not be configured.': 'Error al subir imagen. El almacenamiento puede no estar configurado.',
+          'Image storage not configured. Contact support.':
+              'Almacenamiento de imágenes no configurado. Contacta soporte.',
+          'Image upload not authorized. Storage policies need configuration.':
+              'Carga de imagen no autorizada. Las políticas de almacenamiento necesitan configuración.',
+          'Image upload failed. Storage bucket may not be configured.':
+              'Error al subir imagen. El almacenamiento puede no estar configurado.',
           'Failed to send image': 'Error al enviar imagen',
           'New Message': 'Nuevo mensaje',
           'New message': 'Nuevo mensaje',
@@ -2016,7 +2038,8 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
           'Search Radius': 'Radio de búsqueda',
           'miles': 'millas',
           'Fetching location...': 'Obteniendo ubicación...',
-          'Please select a location first': 'Por favor selecciona una ubicación primero',
+          'Please select a location first':
+              'Por favor selecciona una ubicación primero',
           'Choose Location': 'Elegir ubicación',
           'Set Location': 'Establecer ubicación',
           'Selected Location': 'Ubicación seleccionada',
