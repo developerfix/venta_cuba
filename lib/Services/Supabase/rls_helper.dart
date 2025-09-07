@@ -19,7 +19,8 @@ class RLSHelper {
 
       print('✅ RLS ready for user: $userId');
     } catch (e) {
-      errorAlertToast(' ❌ Error setting RLS user context: $e');
+      // TODO: Handle RLS context error
+      print(' ❌ Error setting RLS user context: $e');
     }
   }
 

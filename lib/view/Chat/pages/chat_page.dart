@@ -830,30 +830,6 @@ class _ChatPageState extends State<ChatPage> {
               ),
             );
           }),
-          // Notification warning text
-          // Positioned(
-          //   bottom: 0,
-          //   left: 0,
-          //   right: 0,
-          //   child: Container(
-          //     padding: EdgeInsets.all(8.0),
-          //     margin: EdgeInsets.all(8.0),
-          //     decoration: BoxDecoration(
-          //       color: Colors.orange.withValues(alpha: 0.1),
-          //       border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
-          //       borderRadius: BorderRadius.circular(8.0),
-          //     ),
-          //     child: Text(
-          //       'Notifications will not work on ios due to restrictions in Cuba'.tr,
-          //       style: TextStyle(
-          //         fontSize: 12.sp,
-          //         color: Colors.orange[700],
-          //         fontStyle: FontStyle.italic,
-          //       ),
-          //       textAlign: TextAlign.center,
-          //     ),
-          //   ),
-          // ),
         ],
       ),
     );
@@ -1390,8 +1366,8 @@ class _ChatPageState extends State<ChatPage> {
         await sendImageMessage(imageUrl);
       } else {
         print("❌ Image upload failed - no URL returned");
-        errorAlertToast(
-            "Image upload failed. Storage bucket may not be configured.");
+        // TODO: Handle image upload failure
+        print("❌ Image upload failed. Storage bucket may not be configured.");
       }
     } catch (error) {
       Get.back(); // Hide loading
@@ -1410,7 +1386,8 @@ class _ChatPageState extends State<ChatPage> {
         errorMessage = "Permission denied for image upload".tr;
       }
 
-      errorAlertToast(errorMessage);
+      // TODO: Handle upload error
+      print("❌ Upload error: $errorMessage");
     }
   }
 
@@ -1449,7 +1426,8 @@ class _ChatPageState extends State<ChatPage> {
       // Firebase notifications are sent automatically by SupabaseChatController
     } catch (e) {
       print("❌ Error sending image message: $e");
-      errorAlertToast("Failed to send image".tr);
+      // TODO: Handle failed image send
+      print("❌ Failed to send image: $e");
     }
   }
 

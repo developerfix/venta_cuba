@@ -342,7 +342,7 @@ class Languages extends Translations {
           "Account Settings": "Account Settings",
           "Profile Details": "Profile Details",
           "Notifications": "Notifications",
-          "Notifications will not work on ios due to restrictions in Cuba": "Notifications will not work on ios due to restrictions in Cuba",
+          "Notifications won't work outside the app because of network restrictions": "Notifications won't work outside the app because of network restrictions",
           "My Ratings": "My Ratings",
           "Saved Searches": "Saved Searches",
           "Favorite Listings": "Favorite Listings",
@@ -1793,7 +1793,7 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
           "Account Settings": "Configuraciones De La Cuenta",
           "Profile Details": "Detalles Del Perfil",
           "Notifications": "Notificaciones",
-          "Notifications will not work on ios due to restrictions in Cuba": "Las notificaciones no funcionarán en iOS debido a las restricciones en Cuba",
+          "Notifications won't work outside the app because of network restrictions": "Las notificaciones no funcionarán fuera de la aplicación debido a restricciones de red",
           "My Ratings": "Mis calificaciones",
 
           "Saved Searches": "Búsquedas guardadas",

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -67,6 +68,27 @@ class _ChatsState extends State<Chats> {
         body: Column(
           children: [
             SizedBox(height: 2.h, child: Divider()),
+            // Notification warning text - only show on iOS
+            if (Platform.isIOS)
+              Container(
+                padding: EdgeInsets.all(8.0),
+                margin: EdgeInsets.all(8.0),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.1),
+                  border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                child: Text(
+                  'Notifications won\'t work outside the app because of network restrictions'
+                      .tr,
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: Colors.orange[700],
+                    fontStyle: FontStyle.italic,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
             Expanded(child: groupList()),
           ],
         ));

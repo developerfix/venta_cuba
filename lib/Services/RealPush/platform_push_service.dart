@@ -108,84 +108,25 @@ class PlatformPushService {
         return;
       }
 
-      // Get recipient's device info from Supabase
-      final supabaseService = SupabaseService.instance;
+      // Send notification using ntfy (works on both iOS and Android)
+      print('📱 Sending ntfy notification (Cross-platform)');
 
-      // First try to get the device token directly
-      final recipientToken =
-          await supabaseService.getDeviceToken(recipientUserId);
-      print(
-          '🔔 Recipient token retrieved: ${recipientToken?.substring(0, 30) ?? "NULL"}...');
+      final success = await NtfyPushService.sendNotification(
+        recipientUserId: recipientUserId,
+        title: senderName,
+        body: _formatMessageBody(message, messageType),
+        clickAction: 'myapp://chat/$chatId',
+        data: {
+          'chatId': chatId,
+          'senderId': senderId ?? _currentUserId ?? '',
+          'type': 'chat'
+        },
+      );
 
-      // Determine platform based on token pattern
-      String? recipientPlatform;
-      if (recipientToken != null && recipientToken.isNotEmpty) {
-        if (recipientToken.startsWith('venta_cuba_user_') ||
-            recipientToken.startsWith('ntfy_user_')) {
-          recipientPlatform = 'android';
-        } else if (recipientToken.length > 50) {
-          // FCM tokens are typically long strings
-          recipientPlatform = 'ios';
-        }
-      }
-
-      // If platform detection failed, try to get it explicitly
-      if (recipientPlatform == null) {
-        recipientPlatform =
-            await supabaseService.getUserPlatform(recipientUserId);
-      }
-
-      print('🔔 Detected platform: ${recipientPlatform ?? "UNKNOWN"}');
-      print(
-          '🔔 Token pattern: ${recipientToken?.substring(0, 20) ?? "NO TOKEN"}...');
-
-      // Send notification based on platform
-      if (recipientPlatform == 'ios' &&
-          recipientToken != null &&
-          !recipientToken.startsWith('venta_cuba_user_') &&
-          !recipientToken.startsWith('ntfy_user_')) {
-        // iOS: Use local notification system (Cuba-friendly)
-        print('🍎 Sending Cuba-friendly notification to iOS user');
-
-        // For Cuba, we'll use the ntfy system for iOS as well since Firebase is not available
-        final success = await NtfyPushService.sendNotification(
-          recipientUserId: recipientUserId,
-          title: senderName,
-          body: _formatMessageBody(message, messageType),
-          clickAction: 'myapp://chat/$chatId',
-          data: {
-            'chatId': chatId,
-            'senderId': senderId ?? _currentUserId ?? '',
-            'type': 'chat'
-          },
-        );
-
-        if (success) {
-          print('✅ Cuba-friendly notification sent successfully to iOS user');
-        } else {
-          print('❌ Cuba-friendly notification failed for iOS user');
-        }
+      if (success) {
+        print('✅ Cross-platform notification sent successfully');
       } else {
-        // Android: Use ntfy (default for Android or unknown)
-        print('🤖 Sending ntfy notification to Android user');
-
-        final success = await NtfyPushService.sendNotification(
-          recipientUserId: recipientUserId,
-          title: senderName,
-          body: _formatMessageBody(message, messageType),
-          clickAction: 'myapp://chat/$chatId',
-          data: {
-            'chatId': chatId,
-            'senderId': senderId ?? _currentUserId ?? '',
-            'type': 'chat'
-          },
-        );
-
-        if (success) {
-          print('✅ ntfy notification sent successfully to Android user');
-        } else {
-          print('❌ ntfy notification failed for Android user');
-        }
+        print('❌ Cross-platform notification failed');
       }
     } catch (e, stackTrace) {
       print('❌ Error in sendChatNotification: $e');

@@ -102,7 +102,8 @@ class _FrameScreenState extends State<FrameScreen> {
     if (await canLaunch(googleUrl)) {
       await launch(googleUrl);
     } else {
-      errorAlertToast("Could not open the map.");
+      // TODO: Handle map open failure
+      print("Could not open the map.");
       throw 'Could not open the map.';
     }
   }
@@ -973,7 +974,8 @@ class _FrameScreenState extends State<FrameScreen> {
                                           cont.isLoading = false;
                                           cont.update();
                                           if (isAddedF) {
-                                            errorAlertToast("Successfully".tr);
+                                            // TODO: Handle success message
+print("Successfully".tr);
                                             print(
                                                 "isSellerFavorite.............${cont.listingModel?.isSellerFavorite}");
                                             print(

@@ -43,7 +43,8 @@ class ApiChecker {
     print("status code: ${response.statusCode}");
     if (response == null) {
       if (showSystemError) {
-        errorAlertToast('Check your internet connection and try again');
+        // TODO: Handle network connection error
+        print('Check your internet connection and try again');
       }
     } else if (response.statusCode == 200) {
       return response;
@@ -51,9 +52,11 @@ class ApiChecker {
       if (showUserError) {
         // Handle cases where response.body might not be a Map (e.g., HTML error pages)
         if (response.body is Map && response.body['message'] != null) {
-          errorAlertToast(response.body['message']);
+          // TODO: Handle API response message
+          print(response.body['message']);
         } else {
-          errorAlertToast('Authentication failed. Please try again.'.tr);
+          // TODO: Handle authentication failure
+          print('Authentication failed. Please try again.'.tr);
         }
       }
     } else if (response.statusCode! >= 500) {
@@ -91,13 +94,16 @@ class ApiChecker {
         if (response.body is Map && response.body['message'] != null) {
           if (response.body['message'] == "Unauthorized") {
             _showCustomAlertDialog();
-            errorAlertToast("wrong email or password".tr);
+            // TODO: Handle wrong credentials
+            print("wrong email or password".tr);
           } else {
-            errorAlertToast("${response.body['message']}".tr);
+            // TODO: Handle API error message
+            print("${response.body['message']}".tr);
           }
         } else {
           // If response body is not a Map or doesn't have a message, show generic error
-          errorAlertToast('Request failed. Please try again.'.tr);
+          // TODO: Handle general request failure
+          print('Request failed. Please try again.'.tr);
         }
       }
     }

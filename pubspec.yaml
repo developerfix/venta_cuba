@@ -58,6 +58,7 @@ dependencies:
   photo_view: ^0.14.0
   path_provider: ^2.1.5
   share_plus: any
+  fluttertoast: ^8.2.2
   video_player: ^2.9.2
   supabase_flutter: ^2.9.1
   intl: ^0.20.2

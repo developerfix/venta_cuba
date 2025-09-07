@@ -253,14 +253,16 @@ class _LoginState extends State<Login> {
                                                         .isEmpty ||
                                                     !GetUtils.isEmail(
                                                         cont.emailCont.text)) {
-                                                  errorAlertToast(
+                                                  // TODO: Handle invalid email
+                                                  print(
                                                       "Please Enter Correct Email"
                                                           .tr);
                                                 } else if (cont.passCont.text
                                                         .isEmpty ||
                                                     cont.passCont.text.length <
                                                         8) {
-                                                  errorAlertToast(
+                                                  // TODO: Handle invalid password
+                                                  print(
                                                       "Please Enter Correct Password"
                                                           .tr);
                                                 } else {

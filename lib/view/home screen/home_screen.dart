@@ -52,7 +52,8 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     } catch (e) {
       Get.log("Error in getAdd: $e", isError: true);
-      errorAlertToast('Failed to load saved address. Using default.'.tr);
+      // TODO: Handle address loading error
+      print('Failed to load saved address. Using default.'.tr);
     }
   }
 
@@ -96,7 +97,8 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (e, stackTrace) {
       Get.log("Error in initState: $e\n$stackTrace", isError: true);
       homeCont.loadingHome.value = false;
-      errorAlertToast('Failed to initialize home screen. Please try again.'.tr);
+      // TODO: Handle home screen initialization error
+      print('Failed to initialize home screen. Please try again.'.tr);
     }
   }
 

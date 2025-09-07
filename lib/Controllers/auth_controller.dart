@@ -230,8 +230,7 @@ class AuthController extends GetxController {
       Get.back(); // Hide loading in both cases
 
       if (response.statusCode == 200) {
-        errorAlertToast(
-            "Email address already exists!. Please enter another one.".tr);
+        // Email address already exists
       } else {
         print('response.statusCode: ${response.statusCode}');
         await signUp(province, city);
@@ -239,7 +238,7 @@ class AuthController extends GetxController {
     } catch (e) {
       Get.back();
       print("validateEmailAndProceed error: $e");
-      errorAlertToast("Something went wrong while verifying email.");
+      // Something went wrong while verifying email
     }
   }
 
@@ -309,12 +308,11 @@ class AuthController extends GetxController {
           await chatCont.setUserOnline(user!.userId.toString()).timeout(
             const Duration(seconds: 10),
             onTimeout: () {
-              errorAlertToast(
-                  '🔥 AuthController: setUserOnline timed out, continuing...');
+              //
             },
           );
         } catch (e) {
-          errorAlertToast('🔥 AuthController: setUserOnline failed: $e');
+          //
         }
 
         // Set RLS user context for secure Supabase access
@@ -351,12 +349,11 @@ class AuthController extends GetxController {
           },
         );
       } catch (e) {
-        errorAlertToast(
-            '🔥 AuthController: Error initializing chat services: $e');
+        //
       }
     } catch (e) {
       print('🔥 AuthController: Error in getuserDetail: $e');
-      errorAlertToast('🔥 AuthController: Error in getuserDetail: $e');
+
       Get.offAll(() => const Login());
       rethrow; // Re-throw to let calling method handle the error
     }
@@ -430,11 +427,11 @@ class AuthController extends GetxController {
         Get.offAll(const Login());
       } else {
         print("signUp error body: ${response.body}");
-        errorAlertToast('Signup failed. Please check your info and try again!');
+        // Signup failed
       }
     } catch (e) {
       print("signUp exception: $e");
-      errorAlertToast("Something went wrong while signing up.");
+      // Something went wrong while signing up
     }
   }
 
@@ -608,12 +605,12 @@ class AuthController extends GetxController {
     Http.StreamedResponse response = await request.send();
     if (response.statusCode == 200) {
       print(await response.stream.bytesToString());
-      errorAlertToast("Email send successfully".tr);
+      // Email send successfully
     } else if (response.statusCode == 500) {
       print(await response.stream.bytesToString());
-      errorAlertToast("Unable to send password reset email".tr);
+      // Unable to send password reset email
     } else {
-      errorAlertToast("An account doesn't exist with that email address".tr);
+      // An account doesn't exist with that email address
       print(response.reasonPhrase);
     }
   }
@@ -646,7 +643,7 @@ class AuthController extends GetxController {
       onUpdateUserData(response.body);
       Get.offAll(Navigation_Bar());
     } else {
-      errorAlertToast('Something went wrong\nPlease try again!'.tr);
+      // Something went wrong
     }
   }
 
@@ -667,9 +664,9 @@ class AuthController extends GetxController {
       confirmPassCont.clear();
       passCont.clear();
       Get.back();
-      errorAlertToast('Password Changed Successfully'.tr);
+      // Password Changed Successfully
     } else {
-      errorAlertToast('Something went wrong\nPlease try again!'.tr);
+      // Something went wrong
     }
   }
 
@@ -695,7 +692,7 @@ class AuthController extends GetxController {
       onUpdateUserData(response.body);
       Get.back();
     } else {
-      errorAlertToast('Something went wrong\nPlease try again!'.tr);
+      // Something went wrong
     }
   }
 
@@ -718,9 +715,9 @@ class AuthController extends GetxController {
     if (response.statusCode == 200) {
       print("JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ");
       onUpdateUserData(response.body);
-      errorAlertToast('Image Update Successfully'.tr);
+      // Image Update Successfully
     } else {
-      errorAlertToast('Something went wrong\nPlease try again!'.tr);
+      // Something went wrong
     }
   }
 
@@ -750,11 +747,9 @@ class AuthController extends GetxController {
       onUpdateUserData(response.body);
 
       isBack ? Get.back() : update();
-      isBack
-          ? errorAlertToast('Changed Successfully'.tr)
-          : errorAlertToast('Image Update Successfully'.tr);
+      // Profile updated successfully
     } else {
-      errorAlertToast('Something went wrong\nPlease try again!'.tr);
+      // Something went wrong
     }
   }
 
@@ -773,9 +768,9 @@ class AuthController extends GetxController {
     if (response.statusCode == 200) {
       onUpdateUserData(response.body);
       Get.back();
-      errorAlertToast('Notification Setting Update Successfully'.tr);
+      // Notification Setting Update Successfully
     } else {
-      errorAlertToast('Something went wrong\nPlease try again!'.tr);
+      // Something went wrong
     }
   }
 
@@ -895,9 +890,9 @@ class AuthController extends GetxController {
     if (response.statusCode == 200) {
       onUpdateUserData(response.body);
       Get.back();
-      errorAlertToast('Media links Added successfully'.tr);
+      // Media links Added successfully
     } else {
-      errorAlertToast('Something went wrong\nPlease try again!'.tr);
+      // Something went wrong
     }
   }
 
@@ -917,9 +912,9 @@ class AuthController extends GetxController {
     if (response.statusCode == 200) {
       onUpdateUserData(response.body);
       Get.back();
-      errorAlertToast('Media links Added successfully'.tr);
+      // Media links Added successfully
     } else {
-      errorAlertToast('Something went wrong\nPlease try again!'.tr);
+      // Something went wrong
     }
   }
 
@@ -1092,7 +1087,7 @@ class AuthController extends GetxController {
 
       Get.offAll(() => const Login());
     } else {
-      errorAlertToast('Something went wrong\nPlease try again!'.tr);
+      // Something went wrong
     }
   }
 
