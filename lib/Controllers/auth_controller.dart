@@ -97,7 +97,9 @@ class AuthController extends GetxController {
     firstNameCont.clear();
     lastNameCont.clear();
     emailCont.clear();
-    prefs = await SharedPreferences.getInstance();
+
+    // Safe SharedPreferences initialization with retry logic
+    await _initializeSharedPreferences();
 
     // Initialize tokenMain early to prevent null token issues
     tokenMain = prefs.getString('token');
@@ -113,6 +115,44 @@ class AuthController extends GetxController {
     // Initialize unread message count
     unreadMessageCount.value = 0;
     hasUnreadMessages.value = false;
+  }
+
+  // Safe SharedPreferences initialization method
+  Future<void> _initializeSharedPreferences() async {
+    int retries = 3;
+    while (retries > 0) {
+      try {
+        prefs = await SharedPreferences.getInstance().timeout(
+          Duration(seconds: 10),
+          onTimeout: () => throw TimeoutException(
+              'SharedPreferences initialization timed out',
+              Duration(seconds: 10)),
+        );
+
+        // Test the connection with a simple operation
+        try {
+          await prefs.getString('test');
+        } catch (e) {
+          // If getString fails, try a simple operation
+          await prefs.setBool('init_test', true);
+          await prefs.remove('init_test');
+        }
+
+        print('✅ SharedPreferences initialized successfully');
+        return;
+      } catch (e) {
+        retries--;
+        print(
+            '⚠️ SharedPreferences initialization failed, retries left: $retries, error: $e');
+        if (retries > 0) {
+          // Exponential backoff with longer delays
+          await Future.delayed(Duration(milliseconds: 1000 * (4 - retries)));
+        } else {
+          throw Exception(
+              'Failed to initialize SharedPreferences after 3 attempts: $e');
+        }
+      }
+    }
   }
 
   void toggleCheckbox() {
@@ -416,6 +456,23 @@ class AuthController extends GetxController {
       isLoading.value = true;
       update();
 
+      // Ensure SharedPreferences is initialized before using it
+      try {
+        // Test if prefs is initialized by attempting to access it
+        prefs.getString('test');
+      } catch (e) {
+        print('🔥 Initializing SharedPreferences during login...');
+        try {
+          await _initializeSharedPreferences();
+        } catch (initError) {
+          print(
+              '🔥 Critical: SharedPreferences initialization failed completely: $initError');
+          errorAlertToast(
+              'Storage initialization failed. Please restart the app.');
+          return;
+        }
+      }
+
       // Add timeout to API call to prevent hanging
       Response response = await api.postData(
         "api/login",
@@ -485,6 +542,13 @@ class AuthController extends GetxController {
   // Handle login success with timeout protection
   Future<void> _handleLoginSuccess(Map<String, dynamic> responseBody) async {
     try {
+      // Ensure SharedPreferences is initialized
+      try {
+        prefs.getString('test');
+      } catch (e) {
+        await _initializeSharedPreferences();
+      }
+
       // Store user data first
       await prefs.setString("user_data", jsonEncode(responseBody));
       isBusinessAccount = false;

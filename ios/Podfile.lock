@@ -98,8 +98,6 @@ PODS:
     - Flutter
   - flutter_local_notifications (0.0.1):
     - Flutter
-  - fluttertoast (0.0.2):
-    - Flutter
   - geolocator_apple (1.2.0):
     - Flutter
   - Google-Maps-iOS-Utils (6.1.0):
@@ -206,7 +204,6 @@ DEPENDENCIES:
   - flutter_image_compress_common (from `.symlinks/plugins/flutter_image_compress_common/ios`)
   - flutter_keyboard_visibility (from `.symlinks/plugins/flutter_keyboard_visibility/ios`)
   - flutter_local_notifications (from `.symlinks/plugins/flutter_local_notifications/ios`)
-  - fluttertoast (from `.symlinks/plugins/fluttertoast/ios`)
   - geolocator_apple (from `.symlinks/plugins/geolocator_apple/ios`)
   - google_maps_flutter_ios (from `.symlinks/plugins/google_maps_flutter_ios/ios`)
   - image_gallery_saver_plus (from `.symlinks/plugins/image_gallery_saver_plus/ios`)
@@ -270,8 +267,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/flutter_keyboard_visibility/ios"
   flutter_local_notifications:
     :path: ".symlinks/plugins/flutter_local_notifications/ios"
-  fluttertoast:
-    :path: ".symlinks/plugins/fluttertoast/ios"
   geolocator_apple:
     :path: ".symlinks/plugins/geolocator_apple/ios"
   google_maps_flutter_ios:
@@ -321,7 +316,6 @@ SPEC CHECKSUMS:
   flutter_image_compress_common: 1697a328fd72bfb335507c6bca1a65fa5ad87df1
   flutter_keyboard_visibility: 4625131e43015dbbe759d9b20daaf77e0e3f6619
   flutter_local_notifications: 395056b3175ba4f08480a7c5de30cd36d69827e4
-  fluttertoast: 2c67e14dce98bbdb200df9e1acf610d7a6264ea1
   geolocator_apple: 1560c3c875af2a412242c7a923e15d0d401966ff
   Google-Maps-iOS-Utils: 0a484b05ed21d88c9f9ebbacb007956edd508a96
   google_maps_flutter_ios: 0291eb2aa252298a769b04d075e4a9d747ff7264

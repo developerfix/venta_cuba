@@ -43,7 +43,6 @@ dependencies:
   flutter_chat_ui: ^1.6.9
   introduction_screen: ^3.1.11
   lottie: ^2.7.0
-  fluttertoast: ^8.2.2
   shared_preferences: ^2.2.2
   country_list_pick: ^1.0.0+3
   cached_network_image: ^3.3.0

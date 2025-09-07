@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import '../main.dart';
 
@@ -18,13 +17,41 @@ showSnackBar({Color? color, String? title}) {
 }
 
 errorAlertToast(String error) {
-  Fluttertoast.showToast(
-      msg: error,
-      toastLength: Toast.LENGTH_LONG,
-      gravity: ToastGravity.TOP,
-      timeInSecForIosWeb: 2,
-      textColor: Colors.white,
-      fontSize: 16.0.sp);
+  try {
+    Get.snackbar("Error", error,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        duration: Duration(seconds: 3),
+        margin: EdgeInsets.all(10),
+        borderRadius: 5,
+        icon: Icon(Icons.error, color: Colors.white));
+  } catch (e) {
+    // Fallback to SnackBar if Fluttertoast fails
+    print('⚠️ Fluttertoast failed, using SnackBar fallback: $e');
+    _showSnackBarFallback(error);
+  }
+}
+
+// Fallback method using SnackBar when Fluttertoast fails
+void _showSnackBarFallback(String message) {
+  try {
+    scaffoldMessengerKey.currentState?.showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.red,
+        duration: Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.all(10),
+      ),
+    );
+  } catch (e) {
+    // Final fallback - just print to console
+    print('❌ All toast methods failed, message: $message');
+  }
 }
 
 showLoading() {
