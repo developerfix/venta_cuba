@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:venta_cuba/Utils/funcations.dart';
 import 'ntfy_push_service.dart';
 import '../Supabase/supabase_service.dart';
 import '../../Notification/firebase_messaging.dart';
@@ -15,8 +16,6 @@ class PlatformPushService {
   /// Initialize push service for current platform
   static Future<void> initialize(String userId) async {
     try {
-      print(
-          '🔔 Initializing Push Service for user: $userId on ${Platform.isAndroid ? "Android" : "iOS"}');
       _currentUserId = userId;
 
       if (Platform.isIOS) {
@@ -24,10 +23,8 @@ class PlatformPushService {
       } else if (Platform.isAndroid) {
         await _initializeAndroidPush(userId);
       }
-
-      print('✅ Push Service initialized successfully');
     } catch (e) {
-      print('❌ Error initializing Push Service: $e');
+      errorAlertToast('🔥 Platform Push Service initialization failed: $e');
       // Don't rethrow - handle gracefully
     }
   }
@@ -35,8 +32,6 @@ class PlatformPushService {
   /// Initialize iOS with FCM - FIXED VERSION
   static Future<void> _initializeIOSPush(String userId) async {
     try {
-      print('🍎 Starting iOS push initialization for user: $userId');
-
       final messaging = FirebaseMessaging.instance;
 
       // Request permissions first
@@ -47,12 +42,12 @@ class PlatformPushService {
       );
 
       if (settings.authorizationStatus != AuthorizationStatus.authorized) {
-        print(
+        errorAlertToast(
             '❌ iOS push notification permissions denied: ${settings.authorizationStatus}');
+
         return;
       }
 
-      print('🍎 Waiting for APNS token registration...');
       // Wait a bit longer for APNS token to be registered
       await Future.delayed(Duration(seconds: 3));
 
@@ -71,11 +66,14 @@ class PlatformPushService {
         );
       } else {
         print('⚠️ Could not get FCM token for iOS user: $userId');
+        errorAlertToast('⚠️ Could not get FCM token for iOS user: $userId');
+
         // Try again in background
         _retryIOSTokenInBackground(userId);
       }
     } catch (e) {
       print('❌ Error initializing iOS push: $e');
+      errorAlertToast('❌ Error initializing iOS push: $e');
       // Try again in background
       _retryIOSTokenInBackground(userId);
     }
@@ -87,65 +85,52 @@ class PlatformPushService {
     String? token;
     String errorDetails = '';
 
-    // Check APNS token first (Stack Overflow solution)
-    print('🔔 Checking APNS token availability...');
     String? apnsToken = await messaging.getAPNSToken();
-    
+
     if (apnsToken != null) {
-      print('✅ APNS token available immediately: ${apnsToken.substring(0, 20)}...');
       // Try to get FCM token now
       try {
         token = await messaging.getToken();
         if (token != null) {
-          print('✅ Got FCM token with APNS ready: ${token.substring(0, 20)}...');
           return token;
         }
       } catch (e) {
-        print('⚠️ FCM token failed despite APNS ready: $e');
         errorDetails = 'FCM failed with APNS ready: $e';
+        _showErrorDialog("FCM Token Error", errorDetails);
       }
     } else {
-      print('⚠️ APNS token not ready, waiting...');
-      // Wait and try again (Stack Overflow approach)
       await Future.delayed(Duration(seconds: 3));
-      
+
       apnsToken = await messaging.getAPNSToken();
       if (apnsToken != null) {
-        print('✅ APNS token available after delay: ${apnsToken.substring(0, 20)}...');
         try {
           token = await messaging.getToken();
           if (token != null) {
-            print('✅ Got FCM token after APNS delay: ${token.substring(0, 20)}...');
             return token;
           }
         } catch (e) {
-          print('⚠️ FCM token failed after APNS delay: $e');
           errorDetails = 'FCM failed after APNS delay: $e';
+          _showErrorDialog("FCM Token Error", errorDetails);
         }
       } else {
-        print('⚠️ APNS token still not ready after delay');
         errorDetails = 'APNS token not available after delay';
+        _showErrorDialog("APNS Token Error", errorDetails);
       }
     }
 
-    // Final retry loop if above approaches failed
-    print('🔄 Entering retry loop for APNS token...');
     for (int i = 0; i < 5; i++) {
       try {
         apnsToken = await messaging.getAPNSToken();
         if (apnsToken != null) {
-          print('✅ APNS token available on retry ${i + 1}: ${apnsToken.substring(0, 20)}...');
-          
-          // Try FCM token with APNS ready
           token = await messaging.getToken();
           if (token != null) {
-            print('✅ Got FCM token on retry ${i + 1}: ${token.substring(0, 20)}...');
             return token;
           }
         }
       } catch (e) {
         errorDetails += '\nRetry ${i + 1}: $e';
-        print('⚠️ Retry ${i + 1}/5 failed: $e');
+
+        _showErrorDialog("FCM Token Error", "Retry ${i + 1} failed: $e");
       }
 
       if (i < 4) {
@@ -154,8 +139,9 @@ class PlatformPushService {
     }
 
     // If we get here, everything failed
-    final msg = 'Failed to get FCM token after all attempts. Details: $errorDetails';
-    print('❌ $msg');
+    final msg =
+        'Failed to get FCM token after all attempts. Details: $errorDetails';
+
     _showErrorDialog("FCM Token Error", msg);
     throw Exception(msg);
   }

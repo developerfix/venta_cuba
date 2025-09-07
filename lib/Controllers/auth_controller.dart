@@ -234,9 +234,6 @@ class AuthController extends GetxController {
       tokenMain = prefss.getString('token');
       token = prefss.getString('token');
 
-      print('🔥 AuthController: Token retrieved: ${token ?? "NULL"}');
-      print('🔥 AuthController: tokenMain set to: ${tokenMain ?? "NULL"}');
-
       api.updateHeader(token ?? "");
 
       String? userDataString = prefss.getString("user_data");
@@ -257,7 +254,7 @@ class AuthController extends GetxController {
       // Firebase removed for Cuba compatibility
       // final fcmToken = await _firebaseMessagingService.getToken();
       final fcmToken = 'cuba-friendly-token';
-      if (fcmToken != null && user != null && user!.deviceToken != fcmToken) {
+      if (user != null && user!.deviceToken != fcmToken) {
         user!.deviceToken = fcmToken;
         await prefss.setString("user_data", jsonEncode(user!.toJson()));
         print('🔥 AuthController: Device token synced with Firebase');
@@ -273,38 +270,35 @@ class AuthController extends GetxController {
           await chatCont.setUserOnline(user!.userId.toString()).timeout(
             const Duration(seconds: 10),
             onTimeout: () {
-              print(
+              errorAlertToast(
                   '🔥 AuthController: setUserOnline timed out, continuing...');
             },
           );
-
-          // Set RLS user context for secure Supabase access
-          await RLSHelper.setUserContext(user!.userId.toString());
-          print(
-              '🔥 AuthController: RLS user context set for user: ${user!.userId}');
-
-          // Initialize Platform Push Service for this user with timeout protection
-          try {
-            await PlatformPushService.initialize(user!.userId.toString()).timeout(
-              Duration(seconds: 10),
-              onTimeout: () {
-                print('⚠️ Platform Push Service initialization timed out, will retry in background');
-                // Initialize in background without blocking login
-                _initializePushServiceInBackground(user!.userId.toString());
-              },
-            );
-            print('✅ Platform Push Service initialized for user: ${user!.userId}');
-          } catch (pushError) {
-            print('❌ Platform Push Service initialization failed: $pushError');
-            // Try to initialize in background
-            _initializePushServiceInBackground(user!.userId.toString());
-          }
         } catch (e) {
-          print('🔥 AuthController: Error setting user online: $e');
+          errorAlertToast('🔥 AuthController: setUserOnline failed: $e');
+        }
+
+        // Set RLS user context for secure Supabase access
+        await RLSHelper.setUserContext(user!.userId.toString());
+
+        // Initialize Platform Push Service for this user with timeout protection
+        try {
+          await PlatformPushService.initialize(user!.userId.toString()).timeout(
+            Duration(seconds: 10),
+            onTimeout: () {
+              // Initialize in background without blocking login
+              _initializePushServiceInBackground(user!.userId.toString());
+            },
+          );
+          print(
+              '✅ Platform Push Service initialized for user: ${user!.userId}');
+        } catch (pushError) {
+          errorAlertToast(
+              '🔥 AuthController: Platform Push Service initialization failed: $pushError');
+          // Try to initialize in background
+          _initializePushServiceInBackground(user!.userId.toString());
         }
       }
-
-      print('🔥 AuthController: User initialization completed');
 
       // Start chat listener (with timeout and error handling)
       try {
@@ -319,12 +313,13 @@ class AuthController extends GetxController {
             print('🔥 AuthController: updateUnreadMessageIndicators timed out');
           },
         );
-        print('🔥 AuthController: Chat services initialized');
       } catch (e) {
-        print('🔥 AuthController: Error initializing chat services: $e');
+        errorAlertToast(
+            '🔥 AuthController: Error initializing chat services: $e');
       }
     } catch (e) {
       print('🔥 AuthController: Error in getuserDetail: $e');
+      errorAlertToast('🔥 AuthController: Error in getuserDetail: $e');
       Get.offAll(() => const Login());
       rethrow; // Re-throw to let calling method handle the error
     }
@@ -356,8 +351,14 @@ class AuthController extends GetxController {
 
   Future<void> signUp(String province, String city) async {
     try {
-      // Get Firebase FCM token before signup
-      await refreshDeviceToken();
+      // Use placeholder token for signup - real token setup happens after successful signup
+      if (Platform.isIOS) {
+        deviceToken =
+            'ios-signup-placeholder-${DateTime.now().millisecondsSinceEpoch}';
+      } else {
+        deviceToken =
+            'android-signup-placeholder-${DateTime.now().millisecondsSinceEpoch}';
+      }
 
       Response response = await api.postData(
         "api/signUp",
@@ -414,9 +415,6 @@ class AuthController extends GetxController {
       // Set loading state to true
       isLoading.value = true;
       update();
-      
-      // Get basic device token before login (simplified, no hanging retries)
-      await _getBasicDeviceToken();
 
       // Add timeout to API call to prevent hanging
       Response response = await api.postData(
@@ -430,7 +428,8 @@ class AuthController extends GetxController {
         Duration(seconds: 10),
         onTimeout: () {
           print('❌ Login API call timed out');
-          throw Exception('Login API call timed out after 10 seconds. Please check your internet connection.');
+          throw Exception(
+              'Login API call timed out after 10 seconds. Please check your internet connection.');
         },
       );
 
@@ -454,61 +453,32 @@ class AuthController extends GetxController {
         return response.statusCode;
       } else if (response.statusCode! >= 400) {
         print('Login failed - incorrect credentials: ${response.statusCode}');
+        errorAlertToast('Invalid email or password. Please try again.'.tr);
       } else if (response.statusCode == 500) {
         print('Server error during login - Status Code: 500');
+        errorAlertToast('Server error. Please try again later.'.tr);
       } else {
         print('Login failed with status code: ${response.statusCode}');
+        errorAlertToast(
+            'Login failed. Please check your connection and try again.'.tr);
       }
-      print("Login failed with status code: ${response.statusCode}");
     } catch (e) {
       print('🔥 Login error: $e');
+
+      // Show appropriate error message to user
+      if (e.toString().contains('timeout')) {
+        errorAlertToast(
+            'Login timed out. Please check your internet connection and try again.'
+                .tr);
+      } else {
+        errorAlertToast(
+            'Login failed. Please check your internet connection and try again.'
+                .tr);
+      }
     } finally {
       // Always set loading state to false when done
       isLoading.value = false;
       update();
-    }
-  }
-
-  // Simplified device token fetching for login (no hanging retries)
-  Future<void> _getBasicDeviceToken() async {
-    try {
-      if (Platform.isIOS) {
-        // Simple FCM token request with timeout
-        final messaging = FirebaseMessaging.instance;
-        
-        // Request permissions first
-        await messaging.requestPermission(
-          alert: true,
-          badge: true,
-          sound: true,
-        );
-        
-        // Try to get token with timeout (no hanging retries)
-        String? token = await messaging.getToken().timeout(
-          Duration(seconds: 8),
-          onTimeout: () {
-            print('⚠️ FCM token request timed out during login');
-            return null;
-          },
-        );
-        
-        if (token != null) {
-          deviceToken = token;
-          print('✅ Basic iOS FCM token obtained: ${token.substring(0, 20)}...');
-        } else {
-          // Use a placeholder for login to proceed
-          deviceToken = 'ios-token-pending-${user?.userId ?? DateTime.now().millisecondsSinceEpoch}';
-          print('⚠️ Using placeholder iOS token for login: $deviceToken');
-        }
-      } else {
-        // For Android, use ntfy topic format
-        deviceToken = 'venta_cuba_user_${user?.userId ?? "pending"}';
-        print('✅ Basic Android token set: $deviceToken');
-      }
-    } catch (e) {
-      print('❌ Error getting basic device token: $e');
-      // Use fallback token to allow login to proceed
-      deviceToken = '${Platform.isIOS ? "ios" : "android"}-fallback-${DateTime.now().millisecondsSinceEpoch}';
     }
   }
 
@@ -520,21 +490,21 @@ class AuthController extends GetxController {
       isBusinessAccount = false;
       changeAccountType();
       fetchAccountType();
-      
+
       // Load user details with timeout
       await getuserDetail().timeout(
         Duration(seconds: 15),
         onTimeout: () {
-          print('⚠️ getuserDetail timed out during login');
+          errorAlertToast(
+              'Failed to load user details. Please try again later.'.tr);
         },
       );
 
       // Navigate to main screen regardless
       Get.offAll(Navigation_Bar());
-      
     } catch (e) {
       print('❌ Error in handleLoginSuccess: $e');
-      
+
       // Still navigate since login was successful
       Get.offAll(Navigation_Bar());
     }
@@ -544,11 +514,11 @@ class AuthController extends GetxController {
   void _initializePushServiceInBackground(String userId) {
     Future.delayed(Duration(seconds: 2), () async {
       try {
-        print('🔄 Retrying Platform Push Service initialization in background...');
+        errorAlertToast(
+            '🔄 Retrying Platform Push Service initialization in background...');
         await PlatformPushService.initialize(userId);
-        print('✅ Background Platform Push Service initialization completed');
       } catch (e) {
-        print('❌ Background Platform Push Service initialization failed: $e');
+        errorAlertToast('Push notifications may not work properly.'.tr);
       }
     });
   }
@@ -561,13 +531,13 @@ class AuthController extends GetxController {
         try {
           // Get actual FCM token with APNS handling
           print('🔔 Requesting FCM token with APNS check...');
-          
+
           // First ensure APNS token is available
           final messaging = FirebaseMessaging.instance;
           String? apnsToken;
           int maxRetries = 5;
           int retryCount = 0;
-          
+
           while (apnsToken == null && retryCount < maxRetries) {
             try {
               apnsToken = await messaging.getAPNSToken();
@@ -576,13 +546,14 @@ class AuthController extends GetxController {
                 break;
               }
             } catch (e) {
-              print('⚠️ APNS token not ready, attempt ${retryCount + 1}/$maxRetries: $e');
+              print(
+                  '⚠️ APNS token not ready, attempt ${retryCount + 1}/$maxRetries: $e');
             }
-            
+
             retryCount++;
             await Future.delayed(Duration(seconds: 2));
           }
-          
+
           if (apnsToken != null) {
             // Now try to get FCM token
             token = await PlatformPushService.getFCMToken();
@@ -594,15 +565,24 @@ class AuthController extends GetxController {
                 print('Error getting FCM token directly: $e');
               }
             }
-            
+
             if (token != null) {
               deviceToken = token;
               print('✅ Refreshed iOS FCM token: ${token.substring(0, 20)}...');
             } else {
-              print('⚠️ Could not get FCM token even after APNS token was available');
+              print(
+                  '⚠️ Could not get FCM token even after APNS token was available');
+              // Only show error if this is called explicitly by user action
+              errorAlertToast(
+                  'Failed to setup notifications. Please check your settings.'
+                      .tr);
             }
           } else {
-            print('❌ APNS token not available after retries, cannot get FCM token');
+            print(
+                '❌ APNS token not available after retries, cannot get FCM token');
+            errorAlertToast(
+                'iOS notification setup failed. Please enable notifications in Settings.'
+                    .tr);
           }
         } catch (e) {
           print('❌ Error in iOS token refresh: $e');
@@ -622,7 +602,8 @@ class AuthController extends GetxController {
   Future<void> saveDeviceTokenWithPlatform(String userId) async {
     // Prevent concurrent device token saves
     if (_savingDeviceToken) {
-      print('ℹ️ Device token save already in progress for user $userId, skipping');
+      print(
+          'ℹ️ Device token save already in progress for user $userId, skipping');
       return;
     }
 
@@ -630,12 +611,12 @@ class AuthController extends GetxController {
 
     try {
       final supabaseService = SupabaseService.instance;
-      
+
       if (Platform.isIOS) {
         // For iOS, try multiple approaches to get FCM token
         String? fcmToken;
         String? errorDetails;
-        
+
         // First try PlatformPushService
         try {
           fcmToken = await PlatformPushService.getFCMToken();
@@ -643,20 +624,21 @@ class AuthController extends GetxController {
           errorDetails = 'PlatformPushService error: $e';
           print('❌ $errorDetails');
         }
-        
+
         // If still null, try direct Firebase approach
         if (fcmToken == null) {
           try {
             final messaging = FirebaseMessaging.instance;
             fcmToken = await messaging.getToken();
             if (fcmToken != null) {
-              print('🔔 Got FCM token directly from Firebase: ${fcmToken.substring(0, 20)}...');
+              print(
+                  '🔔 Got FCM token directly from Firebase: ${fcmToken.substring(0, 20)}...');
             }
           } catch (e) {
-            errorDetails = (errorDetails != null ? '$errorDetails\n\n' : '') + 
-                          'Firebase direct error: $e';
+            errorDetails = (errorDetails != null ? '$errorDetails\n\n' : '') +
+                'Firebase direct error: $e';
             print('❌ Error getting FCM token directly: $e');
-            
+
             // Show error dialog for debugging
             Get.dialog(
               AlertDialog(
@@ -680,17 +662,18 @@ class AuthController extends GetxController {
             );
           }
         }
-        
+
         if (fcmToken != null && fcmToken.isNotEmpty) {
           bool success = await supabaseService.saveDeviceTokenWithPlatform(
             userId: userId,
             token: fcmToken,
             platform: 'ios',
           );
-          
+
           if (success) {
             deviceToken = fcmToken; // Update local token
-            print('✅ iOS FCM token saved to Supabase: ${fcmToken.substring(0, 20)}...');
+            print(
+                '✅ iOS FCM token saved to Supabase: ${fcmToken.substring(0, 20)}...');
           } else {
             print('❌ Failed to save FCM token to Supabase, will retry once');
             // Retry once after a delay
@@ -736,7 +719,7 @@ class AuthController extends GetxController {
           token: androidToken,
           platform: 'android',
         );
-        
+
         if (success) {
           deviceToken = androidToken; // Update local token
           print('✅ Android ntfy topic saved for user: $userId');
@@ -1144,8 +1127,9 @@ class AuthController extends GetxController {
               .from('device_tokens')
               .delete()
               .eq('user_id', user!.userId.toString());
-          
-          print('🔥 All device tokens cleared from Supabase for user: ${user!.userId}');
+
+          print(
+              '🔥 All device tokens cleared from Supabase for user: ${user!.userId}');
         } catch (e) {
           print('❌ Error clearing device tokens from Supabase: $e');
         }
