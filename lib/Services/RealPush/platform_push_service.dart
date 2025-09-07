@@ -16,11 +16,7 @@ class PlatformPushService {
     try {
       _currentUserId = userId;
 
-      if (Platform.isIOS) {
-        await _initializeIOSPush(userId);
-      } else if (Platform.isAndroid) {
-        await _initializeAndroidPush(userId);
-      }
+      await _initializePush(userId);
     } catch (e) {
       // Don't rethrow - handle gracefully
     }
@@ -58,7 +54,6 @@ class PlatformPushService {
       bool success = await supabase.saveDeviceTokenWithPlatform(
         userId: userId,
         token: token,
-        platform: platform,
       );
 
       if (success) {
@@ -71,7 +66,6 @@ class PlatformPushService {
         await supabase.saveDeviceTokenWithPlatform(
           userId: userId,
           token: token,
-          platform: platform,
         );
       }
     } catch (e) {
@@ -80,12 +74,11 @@ class PlatformPushService {
   }
 
   /// Initialize Android with ntfy
-  static Future<void> _initializeAndroidPush(String userId) async {
+  static Future<void> _initializePush(String userId) async {
     try {
       // Initialize ntfy service first
       await NtfyPushService.initialize(userId: userId);
 
-      // Save Android platform info to Supabase with ntfy topic
       final ntfyTopic = 'venta_cuba_user_$userId';
       await _saveTokenToSupabase(userId, ntfyTopic, 'android');
 
@@ -223,24 +216,7 @@ class PlatformPushService {
     _isChatScreenOpen = isOpen;
     _currentChatId = chatId;
 
-    if (Platform.isAndroid) {
-      NtfyPushService.setChatScreenStatus(isOpen: isOpen, chatId: chatId);
-    }
-  }
-
-  /// Get notification token (Cuba-friendly)
-  static Future<String?> getFCMToken() async {
-    try {
-      if (Platform.isIOS && _currentUserId != null) {
-        return _generateCubaIOSToken(_currentUserId!);
-      } else if (_currentUserId != null) {
-        return 'venta_cuba_user_$_currentUserId';
-      }
-      return null;
-    } catch (e) {
-      print('❌ Error getting notification token: $e');
-      return null;
-    }
+    NtfyPushService.setChatScreenStatus(isOpen: isOpen, chatId: chatId);
   }
 
   /// Stop listening
@@ -258,11 +234,7 @@ class PlatformPushService {
     try {
       print('🔔 Refreshing device token for user: $userId');
 
-      if (Platform.isIOS) {
-        await _initializeIOSPush(userId);
-      } else {
-        await _initializeAndroidPush(userId);
-      }
+      await _initializePush(userId);
 
       print('✅ Device token refreshed');
     } catch (e) {

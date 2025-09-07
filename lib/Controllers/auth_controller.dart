@@ -388,15 +388,6 @@ class AuthController extends GetxController {
 
   Future<void> signUp(String province, String city) async {
     try {
-      // Use placeholder token for signup - real token setup happens after successful signup
-      if (Platform.isIOS) {
-        deviceToken =
-            'ios-signup-placeholder-${DateTime.now().millisecondsSinceEpoch}';
-      } else {
-        deviceToken =
-            'android-signup-placeholder-${DateTime.now().millisecondsSinceEpoch}';
-      }
-
       Response response = await api.postData(
         "api/signUp",
         {
@@ -567,30 +558,8 @@ class AuthController extends GetxController {
     try {
       String? token;
 
-      if (Platform.isIOS) {
-        try {
-          // For Cuba-friendly notifications, use platform push service
-          try {
-            token = await PlatformPushService.getFCMToken();
-            if (token != null) {
-              deviceToken = token;
-              print(
-                  '✅ Refreshed iOS notification token: ${token.substring(0, 20)}...');
-            } else {
-              print('⚠️ Could not get notification token for iOS');
-            }
-          } catch (e) {
-            print('❌ Error getting iOS notification token: $e');
-          }
-        } catch (e) {
-          print('❌ Error in iOS token refresh: $e');
-        }
-      } else {
-        // For Android, use the ntfy topic identifier (consistent format)
-        token = 'venta_cuba_user_${user?.userId ?? "unknown"}';
-        deviceToken = token;
-        print('✅ Refreshed Android ntfy topic: $token');
-      }
+      token = 'venta_cuba_user_${user?.userId ?? "unknown"}';
+      deviceToken = token;
     } catch (e) {
       print('❌ Error refreshing device token: $e');
     }
@@ -610,117 +579,14 @@ class AuthController extends GetxController {
     try {
       final supabaseService = SupabaseService.instance;
 
-      if (Platform.isIOS) {
-        // For iOS, try multiple approaches to get FCM token
-        String? fcmToken;
-        String? errorDetails;
+      String token = 'venta_cuba_user_$userId';
+      bool success = await supabaseService.saveDeviceTokenWithPlatform(
+        userId: userId,
+        token: token,
+      );
 
-        // First try PlatformPushService
-        try {
-          fcmToken = await PlatformPushService.getFCMToken();
-        } catch (e) {
-          errorDetails = 'PlatformPushService error: $e';
-          print('❌ $errorDetails');
-        }
-
-        // If still null, try alternative approach
-        if (fcmToken == null) {
-          try {
-            // Use iOS-specific token generation for Cuba
-            fcmToken =
-                'ios_cuba_token_${userId}_${DateTime.now().millisecondsSinceEpoch}';
-            print(
-                '🔔 Generated Cuba-friendly iOS token: ${fcmToken.substring(0, 20)}...');
-          } catch (e) {
-            errorDetails = (errorDetails != null ? '$errorDetails\n\n' : '') +
-                'Token generation error: $e';
-            print('❌ Error generating iOS token: $e');
-
-            // Show error dialog for debugging
-            Get.dialog(
-              AlertDialog(
-                title: Text('iOS Notification Setup Error'),
-                content: SingleChildScrollView(
-                  child: Text(
-                    'Failed to get notification token.\n\n'
-                    'Technical details:\n$errorDetails\n\n'
-                    'Please screenshot this and send to support.',
-                    style: TextStyle(fontSize: 12),
-                  ),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Get.back(),
-                    child: Text('OK'),
-                  ),
-                ],
-              ),
-              barrierDismissible: false,
-            );
-          }
-        }
-
-        if (fcmToken != null && fcmToken.isNotEmpty) {
-          bool success = await supabaseService.saveDeviceTokenWithPlatform(
-            userId: userId,
-            token: fcmToken,
-            platform: 'ios',
-          );
-
-          if (success) {
-            deviceToken = fcmToken; // Update local token
-            print(
-                '✅ iOS FCM token saved to Supabase: ${fcmToken.substring(0, 20)}...');
-          } else {
-            print('❌ Failed to save FCM token to Supabase, will retry once');
-            // Retry once after a delay
-            await Future.delayed(Duration(seconds: 2));
-            success = await supabaseService.saveDeviceTokenWithPlatform(
-              userId: userId,
-              token: fcmToken,
-              platform: 'ios',
-            );
-            if (success) {
-              deviceToken = fcmToken;
-              print('✅ iOS FCM token saved to Supabase on retry');
-            } else {
-              // Show error if still failed after retry
-              Get.dialog(
-                AlertDialog(
-                  title: Text('Token Save Error'),
-                  content: Text(
-                    'Failed to save notification token to server.\n'
-                    'Token exists but cannot be saved.\n'
-                    'User ID: $userId\n'
-                    'Token: ${fcmToken.substring(0, 30)}...\n\n'
-                    'Please screenshot and send to support.',
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Get.back(),
-                      child: Text('OK'),
-                    ),
-                  ],
-                ),
-              );
-            }
-          }
-        } else {
-          print('⚠️ No FCM token available for iOS user: $userId');
-        }
-      } else {
-        // For Android, save ntfy topic identifier (consistent format)
-        String androidToken = 'venta_cuba_user_$userId';
-        bool success = await supabaseService.saveDeviceTokenWithPlatform(
-          userId: userId,
-          token: androidToken,
-          platform: 'android',
-        );
-
-        if (success) {
-          deviceToken = androidToken; // Update local token
-          print('✅ Android ntfy topic saved for user: $userId');
-        }
+      if (success) {
+        deviceToken = token; // Update local token
       }
     } catch (e) {
       print('❌ Error saving device token with platform: $e');

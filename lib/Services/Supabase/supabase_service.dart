@@ -69,7 +69,6 @@ class SupabaseService {
   Future<bool> saveDeviceTokenWithPlatform({
     required String userId,
     required String token,
-    required String platform,
   }) async {
     try {
       // First, delete any existing tokens for this user on this platform
@@ -77,18 +76,17 @@ class SupabaseService {
           .from('device_tokens')
           .delete()
           .eq('user_id', userId)
-          .eq('platform', platform);
+          .eq('platform', 'flutter');
 
       // Insert the new token (single token per user per platform)
       await client.from('device_tokens').insert({
         'user_id': userId,
         'device_token': token,
-        'platform': platform,
+        'platform': 'flutter',
         'is_active': true,
         'updated_at': DateTime.now().toIso8601String(),
       });
 
-      print('✅ Device token saved for $platform user: $userId');
       return true;
     } catch (e) {
       //
