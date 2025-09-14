@@ -13,6 +13,9 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.CAMERA" />
     
+    <!-- Notification permissions for Android 13+ (API 33+) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <!-- Background service permissions for ntfy -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />

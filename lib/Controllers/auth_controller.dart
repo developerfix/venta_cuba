@@ -24,6 +24,10 @@ import 'home_controller.dart';
 // Firebase removed for Cuba compatibility
 // import '../Services/Firebase/firebase_messaging_service.dart';
 import '../Services/RealPush/platform_push_service.dart';
+import '../Services/RealPush/android_background_service.dart';
+import '../Services/RealPush/ntfy_push_service.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 // FCM notifications are now handled directly in SupabaseChatController
 import '../Services/Supabase/rls_helper.dart';
 import '../Services/Supabase/supabase_service.dart';
@@ -87,6 +91,168 @@ class AuthController extends GetxController {
 
   // Firebase removed for Cuba compatibility
   // final FirebaseMessagingService _firebaseMessagingService = FirebaseMessagingService();
+
+  // Initialize push notifications with permission handling
+  Future<void> initializePushNotifications(String userId) async {
+    try {
+      print('🔔 === INITIALIZING PUSH NOTIFICATIONS FOR USER: $userId ===');
+
+      // Request notification permissions first
+      bool permissionsGranted = await requestNotificationPermissions();
+      if (!permissionsGranted) {
+        print('❌ Notification permissions not granted');
+        showSnackBar(
+            title: 'Please enable notifications in settings to receive messages'
+                .tr);
+      }
+
+      // Initialize ntfy service (works for both Android and iOS)
+      await NtfyPushService.initialize(
+        userId: userId,
+        customServerUrl: null, // Use default ntfy.sh server
+      );
+      print('✅ Ntfy push service initialized');
+
+      // On Android, also start the background service for persistent notifications
+      if (Platform.isAndroid) {
+        print('🤖 Starting Android background service...');
+        bool serviceStarted = await AndroidBackgroundService.startService(
+          userId: userId,
+          customServerUrl: null,
+        );
+
+        if (serviceStarted) {
+          print('✅ Android background service started successfully');
+        } else {
+          print('❌ Failed to start Android background service');
+        }
+      }
+
+      print('🔔 === PUSH NOTIFICATIONS INITIALIZATION COMPLETE ===');
+    } catch (e) {
+      print('❌ Error initializing push notifications: $e');
+      // Don't throw - allow app to continue without notifications
+    }
+  }
+
+  // Request notification permissions with proper handling
+  Future<bool> requestNotificationPermissions() async {
+    try {
+      print('📱 Requesting notification permissions...');
+
+      // For Android 13+ (API 33+)
+      if (Platform.isAndroid) {
+        final androidInfo = await DeviceInfoPlugin().androidInfo;
+        if (androidInfo.version.sdkInt >= 33) {
+          // Request POST_NOTIFICATIONS permission for Android 13+
+          final status = await Permission.notification.request();
+
+          if (status.isGranted) {
+            print('✅ Android notification permission granted');
+            return true;
+          } else if (status.isPermanentlyDenied) {
+            print('❌ Android notification permission permanently denied');
+            // Show dialog to open settings
+            Get.dialog(
+              AlertDialog(
+                title: Text('Enable Notifications'.tr),
+                content: Text(
+                    'Please enable notifications in settings to receive messages when the app is closed.'
+                        .tr),
+                actions: [
+                  TextButton(
+                    onPressed: () => Get.back(),
+                    child: Text('Later'.tr),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Get.back();
+                      openAppSettings();
+                    },
+                    child: Text('Open Settings'.tr),
+                  ),
+                ],
+              ),
+            );
+            return false;
+          } else {
+            print('❌ Android notification permission denied');
+            return false;
+          }
+        } else {
+          // For Android < 13, notifications are allowed by default
+          print('✅ Android < 13, notifications allowed by default');
+          return true;
+        }
+      }
+
+      // For iOS
+      if (Platform.isIOS) {
+        final status = await Permission.notification.request();
+
+        if (status.isGranted) {
+          print('✅ iOS notification permission granted');
+          return true;
+        } else if (status.isPermanentlyDenied) {
+          print('❌ iOS notification permission permanently denied');
+          // Show dialog to open settings
+          Get.dialog(
+            CupertinoAlertDialog(
+              title: Text('Enable Notifications'.tr),
+              content: Text(
+                  'Please enable notifications in settings to receive messages.'
+                      .tr),
+              actions: [
+                CupertinoDialogAction(
+                  onPressed: () => Get.back(),
+                  child: Text('Later'.tr),
+                ),
+                CupertinoDialogAction(
+                  onPressed: () {
+                    Get.back();
+                    openAppSettings();
+                  },
+                  child: Text('Open Settings'.tr),
+                ),
+              ],
+            ),
+          );
+          return false;
+        } else {
+          print('❌ iOS notification permission denied');
+          return false;
+        }
+      }
+
+      return false;
+    } catch (e) {
+      print('❌ Error requesting notification permissions: $e');
+      return false;
+    }
+  }
+
+  // Stop push notifications on logout
+  Future<void> stopPushNotifications() async {
+    try {
+      print('🛑 Stopping push notifications...');
+
+      // Stop Android background service
+      if (Platform.isAndroid) {
+        await AndroidBackgroundService.stopService();
+        print('✅ Android background service stopped');
+      }
+
+      // Dispose ntfy service
+      await NtfyPushService.dispose();
+      print('✅ Ntfy push service disposed');
+
+      // Stop platform push service
+      await PlatformPushService.stopListening();
+      print('✅ Platform push service stopped');
+    } catch (e) {
+      print('❌ Error stopping push notifications: $e');
+    }
+  }
 
   @override
   Future<void> onInit() async {
@@ -318,21 +484,9 @@ class AuthController extends GetxController {
         // Set RLS user context for secure Supabase access
         await RLSHelper.setUserContext(user!.userId.toString());
 
-        // Initialize Platform Push Service for this user with timeout protection
-        try {
-          await PlatformPushService.initialize(user!.userId.toString()).timeout(
-            Duration(seconds: 10),
-            onTimeout: () {
-              // Initialize in background without blocking login
-              _initializePushServiceInBackground(user!.userId.toString());
-            },
-          );
-          print(
-              '✅ Platform Push Service initialized for user: ${user!.userId}');
-        } catch (pushError) {
-          // Try to initialize in background
-          _initializePushServiceInBackground(user!.userId.toString());
-        }
+        // Initialize push notifications properly
+        await initializePushNotifications(user!.userId.toString());
+        print('✅ Push notifications initialized for user: ${user!.userId}');
       }
 
       // Start chat listener (with timeout and error handling)
@@ -341,15 +495,20 @@ class AuthController extends GetxController {
         final chatCont = Get.put(SupabaseChatController());
         chatCont.startListeningForChatUpdates();
 
-        // Add timeout for unread message indicators
-        await chatCont.updateUnreadMessageIndicators().timeout(
-          const Duration(seconds: 5),
-          onTimeout: () {
-            print('🔥 AuthController: updateUnreadMessageIndicators timed out');
-          },
-        );
+        // Update unread message indicators with timeout
+        try {
+          await chatCont.updateUnreadMessageIndicators().timeout(
+            const Duration(seconds: 5),
+            onTimeout: () {
+              print(
+                  '🔥 AuthController: updateUnreadMessageIndicators timed out');
+            },
+          );
+        } catch (e) {
+          print('🔥 AuthController: Error updating unread indicators: $e');
+        }
       } catch (e) {
-        //
+        print('🔥 AuthController: Error starting chat services: $e');
       }
     } catch (e) {
       print('🔥 AuthController: Error in getuserDetail: $e');
@@ -371,7 +530,14 @@ class AuthController extends GetxController {
         Get.offAll(() => Navigation_Bar());
 
         // Load user details after navigation (non-blocking)
-        getuserDetail().catchError((e) {
+        getuserDetail().then((_) async {
+          // After user details are loaded, initialize notifications
+          if (user?.userId != null) {
+            print(
+                '🔔 Auto-initializing notifications for returning user: ${user!.userId}');
+            await initializePushNotifications(user!.userId.toString());
+          }
+        }).catchError((e) {
           print('Error loading user details: $e');
         });
       } else {
@@ -489,8 +655,9 @@ class AuthController extends GetxController {
           // HomeController might not be initialized yet, that's ok
         }
 
-        // Call login success with timeout protection
-        await _handleLoginSuccess(response.body);
+        // Handle login success
+
+        await onLoginSuccess(response.body);
         return response.statusCode;
       } else if (response.statusCode! >= 400) {
         print('Login failed - incorrect credentials: ${response.statusCode}');
@@ -814,10 +981,10 @@ class AuthController extends GetxController {
         final chatController = Get.find<SupabaseChatController>();
         await chatController.setUserOffline(user!.userId.toString());
 
-        // Stop push notification service
-        await PlatformPushService.stopListening();
+        // Stop push notification services when going offline
+        await stopPushNotifications();
         print(
-            '🔥 AuthController: Platform push service stopped for offline user');
+            '🔥 AuthController: Push notification services stopped for offline user');
       }
     } catch (e) {
       print('🔥 Error setting user offline: $e');
@@ -918,7 +1085,7 @@ class AuthController extends GetxController {
     }
   }
 
-  void onLoginSuccess(Map<String, dynamic> value) async {
+  onLoginSuccess(Map<String, dynamic> value) async {
     await prefs.setString("user_data", jsonEncode(value));
     isBusinessAccount = false;
     changeAccountType();
@@ -935,13 +1102,9 @@ class AuthController extends GetxController {
         await RLSHelper.setUserContext(userId);
         print('✅ RLS user context set for secure chat access');
 
-        // Initialize push notifications with Platform Push Service
-        try {
-          await PlatformPushService.initialize(userId);
-          print('✅ Platform push service initialized for user: $userId');
-        } catch (e) {
-          print('❌ Error initializing platform push service: $e');
-        }
+        // Initialize push notifications properly
+        await initializePushNotifications(userId);
+        print('✅ Push notifications initialized for user: $userId');
 
         print('✅ All services initialized successfully');
       }
@@ -993,9 +1156,10 @@ class AuthController extends GetxController {
         }
       }
 
-      // Stop push service
-      await PlatformPushService.stopListening();
-      print('🔥 AuthController: Platform push service stopped on logout');
+      // Stop all push notification services
+      await stopPushNotifications();
+      print(
+          '🔥 AuthController: All push notification services stopped on logout');
 
       // Clear local device token
       deviceToken = "";

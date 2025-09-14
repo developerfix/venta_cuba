@@ -14,9 +14,7 @@ import 'package:venta_cuba/view/splash%20Screens/white_screen.dart';
 import 'package:venta_cuba/view/Chat/Controller/SupabaseChatController.dart';
 import 'package:venta_cuba/view/constants/theme_config.dart';
 
-
 String? deviceToken;
-
 
 // Global SharedPreferences instance
 SharedPreferences? globalPrefs;
@@ -66,7 +64,6 @@ void main() async {
 
   // Initialize SharedPreferences before anything else
   await initializeSharedPreferences();
-
 
   runApp(const MyApp());
 }
@@ -142,7 +139,6 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _initializeServicesInBackground() async {
-
     // SharedPreferences already initialized in main()
     if (globalPrefs == null) {
       // Try one more time if it failed in main
