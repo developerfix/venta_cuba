@@ -62,6 +62,9 @@ class SupabaseChatController extends GetxController {
   final Map<String, StreamController<List<Map<String, dynamic>>>>
       _messageStreams = {};
 
+  // Global chat refresh callbacks for manual triggering
+  final List<Function()> _globalChatRefreshCallbacks = [];
+
   // Realtime subscriptions
   RealtimeChannel? _chatChannel;
   RealtimeChannel? _messagesChannel;
@@ -87,6 +90,7 @@ class SupabaseChatController extends GetxController {
       }
     }
     _messageStreams.clear();
+    _globalChatRefreshCallbacks.clear();
 
     super.onClose();
   }
@@ -110,21 +114,25 @@ class SupabaseChatController extends GetxController {
 
   // Get all chats for the current user (where they are sender OR receiver)
   Stream<List<Map<String, dynamic>>> getAllChats(String userId) {
-    print('💬 Getting all chats for user: $userId');
+    print('💬 🔥 Creating fresh chat stream for user: $userId');
 
-    // Use a custom stream controller to manually manage the combined data
+    // Create a fresh stream controller each time to avoid caching issues
     final StreamController<List<Map<String, dynamic>>> controller =
         StreamController<List<Map<String, dynamic>>>.broadcast();
 
     // Function to combine and emit chat data
-    void combineAndEmitChats() async {
+    Future<void> combineAndEmitChats() async {
       try {
+        print('💬 📱 Fetching chat data for user: $userId');
+
         // Fetch both sender and receiver chats
         final senderChats =
             await _supabase.from('chats').select().eq('sender_id', userId);
 
         final receiverChats =
             await _supabase.from('chats').select().eq('send_to_id', userId);
+
+        print('💬 📱 Fetched - Sender: ${senderChats.length}, Receiver: ${receiverChats.length}');
 
         // Combine and deduplicate
         final Map<String, Map<String, dynamic>> uniqueChats = {};
@@ -138,70 +146,106 @@ class SupabaseChatController extends GetxController {
         }
 
         final result = uniqueChats.values.toList();
-        result.sort((a, b) =>
-            DateTime.parse(b['time']).compareTo(DateTime.parse(a['time'])));
 
-        print(
-            '💬 📱 Combined: ${senderChats.length} sender + ${receiverChats.length} receiver = ${result.length} total chats for user $userId');
-        for (var chat in result) {
-          print(
-              '💬 Chat: ${chat['id']} - Sender: ${chat['sender_id']} - Receiver: ${chat['send_to_id']}');
+        // Sort by time safely
+        result.sort((a, b) {
+          try {
+            final timeA = a['time'] != null ? DateTime.parse(a['time']) : DateTime(1970);
+            final timeB = b['time'] != null ? DateTime.parse(b['time']) : DateTime(1970);
+            return timeB.compareTo(timeA);
+          } catch (e) {
+            return 0;
+          }
+        });
+
+        print('💬 📱 Emitting ${result.length} total chats to stream');
+
+        // Emit data to stream
+        if (!controller.isClosed) {
+          controller.add(result);
         }
-
-        controller.add(result);
       } catch (e) {
-        print('❌ Error combining chats: $e');
-        controller.addError(e);
+        print('❌ Error fetching chats: $e');
+        if (!controller.isClosed) {
+          controller.add(<Map<String, dynamic>>[]);
+        }
       }
     }
+
+    // Register this stream's refresh function globally for manual triggers
+    _globalChatRefreshCallbacks.add(combineAndEmitChats);
 
     // Initial load
     combineAndEmitChats();
 
-    // Set up real-time listeners for both sender and receiver chats
-    final senderChannel = _supabase
-        .channel('user_sender_chats_$userId')
-        .onPostgresChanges(
-          event: PostgresChangeEvent.all,
-          schema: 'public',
-          table: 'chats',
-          filter: PostgresChangeFilter(
-            type: PostgresChangeFilterType.eq,
-            column: 'sender_id',
-            value: userId,
-          ),
-          callback: (payload) {
-            print('🔔 Sender chat changed for user $userId');
-            combineAndEmitChats();
-          },
-        )
-        .subscribe();
+    // Set up real-time subscriptions with simpler channel names
+    RealtimeChannel? senderChannel;
+    RealtimeChannel? receiverChannel;
 
-    final receiverChannel = _supabase
-        .channel('user_receiver_chats_$userId')
-        .onPostgresChanges(
-          event: PostgresChangeEvent.all,
-          schema: 'public',
-          table: 'chats',
-          filter: PostgresChangeFilter(
-            type: PostgresChangeFilterType.eq,
-            column: 'send_to_id',
-            value: userId,
-          ),
-          callback: (payload) {
-            print('🔔 Receiver chat changed for user $userId');
-            combineAndEmitChats();
-          },
-        )
-        .subscribe();
+    try {
+      senderChannel = _supabase
+          .channel('chats_sender_$userId')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'chats',
+            filter: PostgresChangeFilter(
+              type: PostgresChangeFilterType.eq,
+              column: 'sender_id',
+              value: userId,
+            ),
+            callback: (payload) {
+              print('🔔 Real-time: Sender chat ${payload.eventType} for user $userId');
+              combineAndEmitChats();
+            },
+          )
+          .subscribe();
 
-    // Clean up when controller is closed
+      receiverChannel = _supabase
+          .channel('chats_receiver_$userId')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'chats',
+            filter: PostgresChangeFilter(
+              type: PostgresChangeFilterType.eq,
+              column: 'send_to_id',
+              value: userId,
+            ),
+            callback: (payload) {
+              print('🔔 Real-time: Receiver chat ${payload.eventType} for user $userId');
+              combineAndEmitChats();
+            },
+          )
+          .subscribe();
+
+      print('✅ Real-time subscriptions setup for user: $userId');
+    } catch (e) {
+      print('❌ Error setting up real-time subscriptions: $e');
+    }
+
+    // Clean up when stream is canceled
     controller.onCancel = () {
-      senderChannel.unsubscribe();
-      receiverChannel.unsubscribe();
+      print('💬 🧹 Cleaning up chat stream for user: $userId');
+      senderChannel?.unsubscribe();
+      receiverChannel?.unsubscribe();
+      // Remove this refresh function from global callbacks
+      _globalChatRefreshCallbacks.remove(combineAndEmitChats);
     };
 
     return controller.stream;
+  }
+
+  // Method to manually refresh all active chat list streams
+  void refreshAllChatLists() {
+    print('💬 🔄 Manually refreshing ${_globalChatRefreshCallbacks.length} active chat streams');
+    for (final callback in _globalChatRefreshCallbacks) {
+      try {
+        callback();
+      } catch (e) {
+        print('💬 ⚠️ Error in chat refresh callback: $e');
+      }
+    }
   }
 
   // Get messages for a specific chat
@@ -534,16 +578,36 @@ class SupabaseChatController extends GetxController {
   // Delete a chat and all its messages
   Future<void> deleteChat(String chatId) async {
     try {
+      print('💬 🗑️ Deleting chat: $chatId');
+
       // Messages will be automatically deleted due to CASCADE
       await _supabase.from('chats').delete().eq('id', chatId);
 
-      // Unsubscribe from this chat's channel
+      // Unsubscribe from this chat's message channel
       if (_messageChannels.containsKey(chatId)) {
         await _messageChannels[chatId]?.unsubscribe();
         _messageChannels.remove(chatId);
       }
 
-      print('✅ Chat deleted successfully');
+      // Close the message stream for this chat if it exists
+      if (_messageStreams.containsKey(chatId)) {
+        if (!_messageStreams[chatId]!.isClosed) {
+          _messageStreams[chatId]!.close();
+        }
+        _messageStreams.remove(chatId);
+      }
+
+      // Manually trigger all chat list refreshes to ensure immediate UI update
+      // This provides a fallback in case real-time subscriptions are delayed
+      print('💬 🔄 Triggering manual refresh after chat deletion');
+      await Future.delayed(Duration(milliseconds: 100)); // Small delay to ensure DB changes are committed
+      refreshAllChatLists();
+
+      // Update unread counts since a chat was deleted
+      await updateBadgeCountFromChats();
+      await updateUnreadMessageIndicators();
+
+      print('✅ Chat deleted successfully - UI updated manually + real-time backup');
     } catch (e) {
       print('❌ Error deleting chat: $e');
       rethrow;

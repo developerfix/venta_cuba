@@ -54,7 +54,7 @@ class GroupTile extends StatefulWidget {
 class _GroupTileState extends State<GroupTile> {
   final authCont = Get.find<AuthController>();
   final chatCont = Get.find<SupabaseChatController>();
-  
+
   String _formatMessageTime(DateTime? messageTime) {
     if (messageTime != null) {
       try {
@@ -85,7 +85,7 @@ class _GroupTileState extends State<GroupTile> {
           userImage: widget.userImage,
           deviceToken: widget.deviceToken,
         ));
-        
+
     // Mark chat as read after navigation
     if (widget.userChatId != null && authCont.user?.userId != null) {
       await chatCont.markChatAsRead(
@@ -109,6 +109,7 @@ class _GroupTileState extends State<GroupTile> {
                 foregroundColor: Colors.white,
                 onPressed: (context) {
                   chatCont.deleteChat(widget.userChatId ?? "");
+
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text("Chat deleted".tr),
