@@ -182,4 +182,32 @@ class PlatformPushService {
       print('❌ Error refreshing device token: $e');
     }
   }
+
+  /// Cancel notifications for a specific chat
+  static Future<void> cancelChatNotifications(String chatId) async {
+    try {
+      print('🗑️ Canceling notifications for chat: $chatId');
+
+      // Use ntfy service to cancel local notifications
+      await NtfyPushService.cancelChatNotifications(chatId);
+
+      print('✅ Chat notifications canceled');
+    } catch (e) {
+      print('❌ Error canceling chat notifications: $e');
+    }
+  }
+
+  /// Cancel all notifications
+  static Future<void> cancelAllNotifications() async {
+    try {
+      print('🗑️ Canceling all notifications');
+
+      // Use ntfy service to cancel all local notifications
+      await NtfyPushService.cancelAllNotifications();
+
+      print('✅ All notifications canceled');
+    } catch (e) {
+      print('❌ Error canceling all notifications: $e');
+    }
+  }
 }

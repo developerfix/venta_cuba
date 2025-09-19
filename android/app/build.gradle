@@ -41,8 +41,8 @@ android {
     }
 defaultConfig {
     applicationId "com.ventacuba.highapp.venta_cuba"
-    minSdkVersion 24  // Consider raising from 23 to 24
-    targetSdkVersion 34
+    minSdkVersion 26  // Android 8 minimum
+    targetSdkVersion 35
     versionCode flutterVersionCode.toInteger()
     versionName flutterVersionName
     multiDexEnabled true

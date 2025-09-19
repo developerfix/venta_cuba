@@ -440,6 +440,76 @@ class NtfyPushService {
   static bool get isConnected => _isConnected;
   static RxBool get connectionStatus => _connectionStatus;
 
+  /// Cancel notifications for a specific chat
+  static Future<void> cancelChatNotifications(String chatId) async {
+    try {
+      print('🗑️ Canceling notifications for chat: $chatId');
+
+      // Get all pending notifications
+      final pendingNotifications = await _localNotifications.pendingNotificationRequests();
+      print('📋 Found ${pendingNotifications.length} pending notifications');
+
+      // Get active notifications (those already shown)
+      final activeNotifications = await _localNotifications.getActiveNotifications();
+      print('📋 Found ${activeNotifications.length} active notifications');
+
+      // Cancel pending notifications that match the chat ID
+      for (final notification in pendingNotifications) {
+        if (notification.payload != null) {
+          try {
+            final payload = json.decode(notification.payload!);
+            final action = payload['action']?.toString() ?? '';
+            if (action.contains('myapp://chat/$chatId')) {
+              await _localNotifications.cancel(notification.id);
+              print('🗑️ Canceled pending notification with ID: ${notification.id}');
+            }
+          } catch (e) {
+            // If payload can't be parsed, try simple string matching
+            if (notification.payload!.contains(chatId)) {
+              await _localNotifications.cancel(notification.id);
+              print('🗑️ Canceled pending notification with ID: ${notification.id} (fallback)');
+            }
+          }
+        }
+      }
+
+      // Cancel active notifications that match the chat ID
+      for (final notification in activeNotifications) {
+        if (notification.payload != null) {
+          try {
+            final payload = json.decode(notification.payload!);
+            final action = payload['action']?.toString() ?? '';
+            if (action.contains('myapp://chat/$chatId')) {
+              await _localNotifications.cancel(notification.id!);
+              print('🗑️ Canceled active notification with ID: ${notification.id}');
+            }
+          } catch (e) {
+            // If payload can't be parsed, try simple string matching
+            if (notification.payload!.contains(chatId)) {
+              await _localNotifications.cancel(notification.id!);
+              print('🗑️ Canceled active notification with ID: ${notification.id} (fallback)');
+            }
+          }
+        }
+      }
+
+      print('✅ Successfully canceled notifications for chat: $chatId');
+    } catch (e) {
+      print('❌ Error canceling chat notifications: $e');
+    }
+  }
+
+  /// Cancel all notifications from this app
+  static Future<void> cancelAllNotifications() async {
+    try {
+      print('🗑️ Canceling all notifications');
+      await _localNotifications.cancelAll();
+      print('✅ All notifications canceled');
+    } catch (e) {
+      print('❌ Error canceling all notifications: $e');
+    }
+  }
+
   /// Clean up resources
   static Future<void> dispose() async {
     _reconnectTimer?.cancel();

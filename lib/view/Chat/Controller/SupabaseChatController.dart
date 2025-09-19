@@ -583,6 +583,10 @@ class SupabaseChatController extends GetxController {
       // Messages will be automatically deleted due to CASCADE
       await _supabase.from('chats').delete().eq('id', chatId);
 
+      // Cancel all notifications for this chat
+      print('💬 🗑️ Canceling notifications for deleted chat');
+      await PlatformPushService.cancelChatNotifications(chatId);
+
       // Unsubscribe from this chat's message channel
       if (_messageChannels.containsKey(chatId)) {
         await _messageChannels[chatId]?.unsubscribe();
