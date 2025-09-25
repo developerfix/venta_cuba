@@ -15,6 +15,9 @@ import 'package:venta_cuba/view/Chat/custom_text.dart';
 import 'package:venta_cuba/view/Navigation%20bar/search.dart';
 import 'package:venta_cuba/view/category/select_category.dart';
 import 'package:venta_cuba/view/constants/Colors.dart';
+import 'package:venta_cuba/view/constants/premium_animations.dart';
+import 'package:venta_cuba/view/constants/premium_loading.dart';
+import 'package:venta_cuba/view/constants/premium_components.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:venta_cuba/view/frame/frame.dart';
 import 'package:venta_cuba/view/home%20screen/widgets/post_view.dart';
@@ -170,18 +173,17 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
-                                GestureDetector(
+                                PremiumComponents.premiumCard(
                                   onTap: () {
                                     cont.getFavouriteItems();
                                     toggleView(false);
                                   },
+                                  padding: EdgeInsets.all(8.w),
+                                  margin: EdgeInsets.zero,
+                                  borderRadius: BorderRadius.circular(20.r),
                                   child: Container(
                                     width: 40,
                                     height: 40,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(20),
-                                      // color: isListView ? Colors.transparent : AppColors.k0xFF0254B8,
-                                    ),
                                     child: Center(
                                         child: SvgPicture.asset(
                                             'assets/icons/heartadd.svg',
@@ -198,10 +200,15 @@ class _HomeScreenState extends State<HomeScreen> {
                           SizedBox(
                             height: 30.h,
                           ),
-                          Text(
-                            'Welcome Back'.tr,
-                            style: TextStyle(
-                                fontSize: 25, fontWeight: FontWeight.w600),
+                          PremiumAnimations.staggeredListItem(
+                            index: 0,
+                            child: Text(
+                              'Welcome Back'.tr,
+                              style: TextStyle(
+                                  fontSize: 25.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(context).textTheme.titleLarge?.color),
+                            ),
                           ),
                           SizedBox(
                             height: 20.h,
@@ -221,7 +228,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                       cont.selectedSubCategory = null;
                                       cont.selectedSubSubCategory = null;
 
-                                      Get.to(const Search())?.then((value) {
+                                      Navigator.push(
+                                        context,
+                                        PremiumPageTransitions.slideFromRight(const Search()),
+                                      ).then((value) {
                                         getAdd();
                                         cont.currentPage.value = 1;
                                         cont.hasMore.value = true;
@@ -260,7 +270,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           InkWell(
                             onTap: () {
-                              Get.to(SearchAndCurrentLocationPage())?.then((_) {
+                              Navigator.push(
+                                context,
+                                PremiumPageTransitions.slideFromRight(SearchAndCurrentLocationPage()),
+                              ).then((_) {
                                 setState(() {
                                   getAdd();
                                   // Always force shuffle when returning from location selection
@@ -338,8 +351,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                   cont.selectedCategory = null;
                                   cont.selectedSubCategory = null;
                                   cont.selectedSubSubCategory = null;
-                                  Get.to(const SelectCategories())
-                                      ?.then((value) {
+                                  Navigator.push(
+                                    context,
+                                    PremiumPageTransitions.slideFromRight(const SelectCategories()),
+                                  ).then((value) {
                                     cont.currentPage.value = 1;
                                     cont.hasMore.value = true;
                                     cont.listingModelList.clear();

@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:shimmer/shimmer.dart';
 
 /// Premium Optimized Image Widget for maximum performance
 class OptimizedImage extends StatelessWidget {
@@ -53,9 +54,11 @@ class OptimizedImage extends StatelessWidget {
       progressIndicatorBuilder: (context, url, progress) =>
         _buildProgressIndicator(progress),
 
-      // Fade animation for smooth transitions
-      fadeInDuration: const Duration(milliseconds: 300),
-      fadeOutDuration: const Duration(milliseconds: 100),
+      // Premium fade animations for ultra-smooth transitions
+      fadeInDuration: const Duration(milliseconds: 400),
+      fadeOutDuration: const Duration(milliseconds: 200),
+      fadeInCurve: Curves.easeOutCubic,
+      fadeOutCurve: Curves.easeInCubic,
     );
   }
 
@@ -80,24 +83,16 @@ class OptimizedImage extends StatelessWidget {
   }
 
   Widget _buildShimmerPlaceholder() {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment(-1.0, -0.3),
-          end: Alignment(1.0, 0.3),
-          colors: [
-            Colors.grey[300]!,
-            Colors.grey[100]!,
-            Colors.grey[300]!,
-          ],
-          stops: [0.4, 0.5, 0.6],
-        ),
-      ),
-      child: _AnimatedShimmer(
-        child: Container(
-          color: Colors.white.withValues(alpha: 0.6),
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      period: const Duration(milliseconds: 1200),
+      child: Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          color: Colors.grey[300],
+          borderRadius: BorderRadius.circular(8),
         ),
       ),
     );

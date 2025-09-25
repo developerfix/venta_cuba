@@ -7,6 +7,7 @@ import 'package:venta_cuba/Controllers/home_controller.dart';
 import 'package:venta_cuba/view/Navigation%20bar/post.dart';
 import 'package:venta_cuba/view/auth/login.dart';
 import 'package:venta_cuba/view/constants/Colors.dart';
+import 'package:venta_cuba/view/constants/premium_animations.dart';
 import 'package:venta_cuba/view/frame/frame.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -45,13 +46,18 @@ class ListingView extends StatelessWidget {
             return RepaintBoundary(
               // Isolate repaints for better performance
               child: GestureDetector(
-                onTap: () {
+                onTap: () async {
                   cont.isListing = 0;
                   cont.listingModel = item; // Use shuffled item
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const FrameScreen()));
+
+                  // Premium navigation with hero animation
+                  await Navigator.push(
+                    context,
+                    PremiumPageTransitions.slideFromRight(
+                      const FrameScreen(),
+                      settings: const RouteSettings(name: '/frame'),
+                    ),
+                  );
                 },
                 child: Stack(
                   children: [

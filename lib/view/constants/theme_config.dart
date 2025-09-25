@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class ThemeConfig {
   // Light Theme
@@ -13,16 +14,19 @@ class ThemeConfig {
       cardColor: const Color(0xFFFFFFFF),
       dividerColor: const Color(0xFFE0E0E0),
 
-      // AppBar Theme
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFFFFFFFF),
-        foregroundColor: Color(0xFF000000),
+      // Premium AppBar Theme with blur effect
+      appBarTheme: AppBarTheme(
+        backgroundColor: const Color(0xFFFFFFFF).withValues(alpha:0.95),
+        foregroundColor: const Color(0xFF000000),
         elevation: 0,
-        iconTheme: IconThemeData(color: Color(0xFF000000)),
+        shadowColor: Colors.black.withValues(alpha:0.1),
+        scrolledUnderElevation: 8,
+        iconTheme: const IconThemeData(color: Color(0xFF000000)),
         titleTextStyle: TextStyle(
-          color: Color(0xFF000000),
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
+          color: const Color(0xFF000000),
+          fontSize: 18.sp,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.5,
         ),
         systemOverlayStyle: SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
@@ -31,21 +35,32 @@ class ThemeConfig {
         ),
       ),
 
-      // Bottom Navigation Bar Theme
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      // Premium Bottom Navigation Bar Theme
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: Colors.white,
-        selectedItemColor: Color(0xFF0254B8),
-        unselectedItemColor: Colors.grey,
-        elevation: 8,
+        selectedItemColor: const Color(0xFF0254B8),
+        unselectedItemColor: Colors.grey[600],
+        elevation: 16,
+        type: BottomNavigationBarType.fixed,
+        selectedLabelStyle: TextStyle(
+          fontSize: 12.sp,
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelStyle: TextStyle(
+          fontSize: 11.sp,
+          fontWeight: FontWeight.w500,
+        ),
       ),
 
-      // Card Theme
+      // Premium Card Theme with advanced shadows
       cardTheme: CardTheme(
         color: Colors.white,
-        elevation: 2,
+        elevation: 8,
+        shadowColor: Colors.black.withValues(alpha:0.08),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(16.r),
         ),
+        margin: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
       ),
 
       // Text Theme
@@ -67,21 +82,39 @@ class ThemeConfig {
         labelSmall: TextStyle(color: Colors.black87),
       ),
 
-      // Input Decoration Theme
+      // Premium Input Decoration Theme
       inputDecorationTheme: InputDecorationTheme(
-        filled: false,
-        fillColor: Colors.transparent,
+        filled: true,
+        fillColor: Colors.grey[50],
+        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+          borderRadius: BorderRadius.circular(12.r),
+          borderSide: BorderSide(color: Colors.grey[300]!, width: 1.5),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+          borderRadius: BorderRadius.circular(12.r),
+          borderSide: BorderSide(color: Colors.grey[300]!, width: 1.5),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+          borderRadius: BorderRadius.circular(12.r),
+          borderSide: const BorderSide(color: Color(0xFF0254B8), width: 2.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.r),
+          borderSide: BorderSide(color: Colors.red[400]!, width: 2),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.r),
+          borderSide: BorderSide(color: Colors.red[400]!, width: 2.5),
+        ),
+        labelStyle: TextStyle(
+          fontSize: 14.sp,
+          fontWeight: FontWeight.w500,
+          color: Colors.grey[700],
+        ),
+        hintStyle: TextStyle(
+          fontSize: 14.sp,
+          color: Colors.grey[500],
         ),
       ),
 
@@ -90,32 +123,55 @@ class ThemeConfig {
         color: Color(0xFF6C6C6C),
       ),
 
-      // Elevated Button Theme
+      // Premium Elevated Button Theme
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF0254B8),
           foregroundColor: const Color(0xFFFFFFFF),
-          elevation: 2,
+          elevation: 8,
+          shadowColor: const Color(0xFF0254B8).withValues(alpha:0.3),
+          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
+          textStyle: TextStyle(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+          ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12.r),
           ),
         ),
       ),
 
-      // Dialog Theme
+      // Premium Dialog Theme
       dialogTheme: DialogTheme(
         backgroundColor: const Color(0xFFFFFFFF),
+        elevation: 24,
+        shadowColor: Colors.black.withValues(alpha:0.2),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(24.r),
+        ),
+        titleTextStyle: TextStyle(
+          fontSize: 20.sp,
+          fontWeight: FontWeight.w700,
+          color: Colors.black,
+        ),
+        contentTextStyle: TextStyle(
+          fontSize: 16.sp,
+          color: Colors.grey[700],
+          height: 1.5,
         ),
       ),
 
-      // Bottom Sheet Theme
-      bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: Color(0xFFFFFFFF),
+      // Premium Bottom Sheet Theme
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: const Color(0xFFFFFFFF),
+        elevation: 24,
+        modalElevation: 24,
+        shadowColor: Colors.black.withValues(alpha:0.2),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
         ),
+        modalBarrierColor: Colors.black.withValues(alpha:0.5),
       ),
     );
   }
@@ -131,16 +187,19 @@ class ThemeConfig {
       cardColor: const Color(0xFF1E1E1E),
       dividerColor: const Color(0xFF404040),
 
-      // AppBar Theme
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF1E1E1E),
-        foregroundColor: Color(0xFFFFFFFF),
+      // Premium Dark AppBar Theme
+      appBarTheme: AppBarTheme(
+        backgroundColor: const Color(0xFF1E1E1E).withValues(alpha:0.95),
+        foregroundColor: const Color(0xFFFFFFFF),
         elevation: 0,
-        iconTheme: IconThemeData(color: Color(0xFFFFFFFF)),
+        shadowColor: Colors.white.withValues(alpha:0.1),
+        scrolledUnderElevation: 8,
+        iconTheme: const IconThemeData(color: Color(0xFFFFFFFF)),
         titleTextStyle: TextStyle(
-          color: Color(0xFFFFFFFF),
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
+          color: const Color(0xFFFFFFFF),
+          fontSize: 18.sp,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.5,
         ),
         systemOverlayStyle: SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
@@ -157,13 +216,15 @@ class ThemeConfig {
         elevation: 8,
       ),
 
-      // Card Theme
+      // Premium Dark Card Theme
       cardTheme: CardTheme(
         color: const Color(0xFF2C2C2C),
-        elevation: 4,
+        elevation: 12,
+        shadowColor: Colors.black.withValues(alpha:0.3),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(16.r),
         ),
+        margin: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
       ),
 
       // Text Theme

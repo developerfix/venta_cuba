@@ -13,6 +13,7 @@ import 'package:venta_cuba/util/profile_list.dart';
 import 'package:venta_cuba/view/auth/vendor_screen.dart';
 import 'package:venta_cuba/view/constants/Colors.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:venta_cuba/view/constants/premium_animations.dart';
 
 import 'package:venta_cuba/view/profile/manage_account.dart';
 import 'package:venta_cuba/view/profile/notification_preferences.dart';
@@ -645,8 +646,8 @@ class _ProfileState extends State<Profile> {
                         onTap: () {
                           Navigator.push(
                               context,
-                              MaterialPageRoute(
-                                builder: (context) => const PersonalDetails(),
+                              PremiumPageTransitions.slideFromRight(
+                                const PersonalDetails(),
                               ));
                         },
                         child: ProfileList(text: 'Personal Details'.tr)),
@@ -658,8 +659,8 @@ class _ProfileState extends State<Profile> {
                         onTap: () {
                           Navigator.push(
                               context,
-                              MaterialPageRoute(
-                                builder: (context) => const DefaultLocation(),
+                              PremiumPageTransitions.slideFromRight(
+                                const DefaultLocation(),
                               ));
                         },
                         child: ProfileList(text: 'Default Location'.tr)),
@@ -670,8 +671,8 @@ class _ProfileState extends State<Profile> {
                         onTap: () {
                           Navigator.push(
                               context,
-                              MaterialPageRoute(
-                                builder: (context) => const SocialMediaLinks(),
+                              PremiumPageTransitions.slideFromRight(
+                                const SocialMediaLinks(),
                               ));
                         },
                         child: ProfileList(text: 'Social Media Links'.tr)),
@@ -701,8 +702,8 @@ class _ProfileState extends State<Profile> {
                         onTap: () {
                           Navigator.push(
                               context,
-                              MaterialPageRoute(
-                                builder: (context) => const ManageAccount(),
+                              PremiumPageTransitions.slideFromRight(
+                                const ManageAccount(),
                               ));
                         },
                         child: ProfileList(text: 'Manage Account'.tr)),
@@ -713,9 +714,8 @@ class _ProfileState extends State<Profile> {
                         onTap: () {
                           Navigator.push(
                               context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const NotificationPreferences(),
+                              PremiumPageTransitions.slideFromRight(
+                                const NotificationPreferences(),
                               ));
                         },
                         child:
@@ -827,7 +827,7 @@ class _ProfileState extends State<Profile> {
                     //     onTap: () {
                     //       Navigator.push(
                     //           context,
-                    //           MaterialPageRoute(
+                    //           PremiumPageTransitions.slideFromRight(
                     //             builder: (context) => const VendorScreen(),
                     //           ));
                     //     },

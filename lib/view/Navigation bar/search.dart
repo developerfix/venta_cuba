@@ -15,6 +15,7 @@ import '../../util/category_list.dart';
 import '../auth/login.dart';
 import '../frame/frame.dart';
 import '../widgets/scroll_to_top_button.dart';
+import 'package:venta_cuba/view/constants/premium_animations.dart';
 
 class Search extends StatefulWidget {
   final int isSearchFrom;
@@ -750,8 +751,8 @@ class _SearchState extends State<Search> {
           homeCont.listingModel = listing;
           Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (context) => const FrameScreen(),
+              PremiumPageTransitions.slideFromRight(
+                const FrameScreen(),
               ));
         },
         child: Stack(
@@ -962,8 +963,8 @@ class _SearchState extends State<Search> {
                 homeCont.listingModel = listingList[index];
                 Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => const FrameScreen(),
+                    PremiumPageTransitions.slideFromRight(
+                      const FrameScreen(),
                     ));
               },
               child: Stack(
@@ -1170,8 +1171,8 @@ class _SearchState extends State<Search> {
         homeCont.listingModel = listing;
         Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => const FrameScreen(),
+            PremiumPageTransitions.slideFromRight(
+              const FrameScreen(),
             ));
       },
       child: Stack(
@@ -1372,8 +1373,8 @@ class _SearchState extends State<Search> {
               homeCont.listingModel = listingList[index];
               Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => const FrameScreen(),
+                  PremiumPageTransitions.slideFromRight(
+                    const FrameScreen(),
                   ));
             },
             child: Stack(

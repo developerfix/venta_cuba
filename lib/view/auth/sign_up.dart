@@ -10,6 +10,7 @@ import '../../Controllers/home_controller.dart';
 import '../../Utils/funcations.dart';
 import '../../cities_list/cites_list.dart';
 import '../constants/Colors.dart';
+import 'package:venta_cuba/view/constants/premium_animations.dart';
 import '../privacy_policy/privacy_policy_screen.dart';
 import '../terms_of_use/terms_of_use_screen.dart';
 
@@ -1047,8 +1048,8 @@ class _SignUpState extends State<SignUp> {
                           onTap: () {
                             Navigator.push(
                                 context,
-                                MaterialPageRoute(
-                                  builder: (context) => const Login(),
+                                PremiumPageTransitions.slideFromRight(
+                                  const Login(),
                                 ));
                           },
                           child: Text(

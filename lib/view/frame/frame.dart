@@ -13,6 +13,7 @@ import 'package:lottie/lottie.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:venta_cuba/view/Chat/custom_text.dart';
 import 'package:venta_cuba/view/Navigation%20bar/post.dart';
+import 'package:venta_cuba/view/constants/premium_animations.dart';
 
 import 'package:venta_cuba/view/constants/Colors.dart';
 import '../../Controllers/auth_controller.dart';
@@ -929,7 +930,10 @@ class _FrameScreenState extends State<FrameScreen> {
                                         print(
                                             "object.............${cont.listingModel?.isSellerFavorite}");
                                         if (authCont.user?.email == "") {
-                                          Get.to(Login());
+                                          Navigator.push(
+                                            context,
+                                            PremiumPageTransitions.slideFromBottom(Login()),
+                                          );
                                         } else {
                                           cont.listingModel?.isSellerFavorite ==
                                                   "0"
@@ -1408,7 +1412,10 @@ print("Successfully".tr);
                                       ? InkWell(
                                           onTap: () async {
                                             if (authCont.user?.email == "") {
-                                              Get.to(Login());
+                                              Navigator.push(
+                                            context,
+                                            PremiumPageTransitions.slideFromBottom(Login()),
+                                          );
                                             } else {
                                               cont.listingId = cont
                                                   .listingModel?.id
@@ -1444,7 +1451,10 @@ print("Successfully".tr);
                                               onTap: () async {
                                                 if (authCont.user?.email ==
                                                     "") {
-                                                  Get.to(Login());
+                                                  Navigator.push(
+                                            context,
+                                            PremiumPageTransitions.slideFromBottom(Login()),
+                                          );
                                                 } else {
                                                   cont.listingModel
                                                               ?.isFavorite ==

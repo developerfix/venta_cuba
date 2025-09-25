@@ -46,6 +46,7 @@ import '../view/profile/favourite_listings.dart';
 import '../view/profile/favourite_seller.dart';
 import '../view/profile/my_public_page.dart';
 import '../view/subscription/Subscription.dart';
+import '../view/constants/premium_animations.dart';
 
 List<String> beforeData = [];
 
@@ -971,8 +972,8 @@ class HomeController extends GetxController {
     prefss.setString('listing_data', jsonEncode(data));
     Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (context) => Navigation_Bar(),
+        PremiumPageTransitions.slideFromRight(
+          Navigation_Bar(),
         ));
   }
 

@@ -12,6 +12,7 @@ import '../constants/Colors.dart';
 import 'package:flutter_svg/svg.dart';
 
 import '../frame/frame.dart';
+import 'package:venta_cuba/view/constants/premium_animations.dart';
 
 class ShowAllListingSub extends StatefulWidget {
   const ShowAllListingSub({super.key});
@@ -87,8 +88,8 @@ class _ShowAllListingSubState extends State<ShowAllListingSub> {
                               cont.listingModel = cont.listingModelList[index];
                               Navigator.push(
                                   context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const FrameScreen(),
+                                  PremiumPageTransitions.slideFromRight(
+                                    const FrameScreen(),
                                   ));
                             },
                             child: Stack(
@@ -249,7 +250,7 @@ class _ShowAllListingSubState extends State<ShowAllListingSub> {
                                   child: InkWell(
                                     onTap: () async {
                                       if (authCont.user?.email == "") {
-                                        Get.to(Login());
+                                        Navigator.push(context, PremiumPageTransitions.slideFromBottom(Login()));
                                       } else {
                                         cont.listingModel =
                                             cont.listingModelList[index];

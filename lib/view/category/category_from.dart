@@ -15,6 +15,7 @@ import '../constants/Colors.dart';
 import 'package:flutter_svg/svg.dart';
 
 import '../frame/frame.dart';
+import 'package:venta_cuba/view/constants/premium_animations.dart';
 
 class CategoryFrom extends StatefulWidget {
   const CategoryFrom({super.key});
@@ -103,8 +104,7 @@ class _CategoryFromState extends State<CategoryFrom> {
                                           cont.listingModelList[index];
                                       Navigator.push(
                                           context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
+                                          PremiumPageTransitions.slideFromRight(
                                                 const FrameScreen(),
                                           ));
                                     },

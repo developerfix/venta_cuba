@@ -9,6 +9,7 @@ import 'package:venta_cuba/view/Chat/custom_text.dart';
 import 'package:venta_cuba/view/Navigation%20bar/post.dart' show PriceFormatter;
 import 'package:venta_cuba/view/constants/Colors.dart';
 import '../frame/frame.dart';
+import 'package:venta_cuba/view/constants/premium_animations.dart';
 
 class MyPublicPage extends StatefulWidget {
   final String businessType;
@@ -571,10 +572,8 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                                                       ?.sellerAbout;
                                                               Navigator.push(
                                                                   context,
-                                                                  MaterialPageRoute(
-                                                                    builder:
-                                                                        (context) =>
-                                                                            const FrameScreen(),
+                                                                  PremiumPageTransitions.slideFromRight(
+                                                                    const FrameScreen(),
                                                                   ));
                                                             },
                                                             child: Center(

@@ -49,9 +49,22 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(do echo \"=== $file ===\")"
+      "Bash(do echo \"=== $file ===\")",
+        "WebFetch(domain:flutter.dev)",
+  "WebFetch(domain:pub.dev)",
+  "WebFetch(domain:dart.dev)",
+  "WebFetch(domain:material.io)",
+  "Bash(cp:*)",
+  "Bash(mv:*)",
+  "Bash(echo:*)",
+  "Bash(cat:*)",
+  "Read(**)",
+  "Write(**)",
+  "Edit(**)",
+  "MultiEdit(**)"
     ],
     "deny": [],
+    
     "defaultMode": "acceptEdits",
     "additionalDirectories": [
       "C:\\c\\Users\\DELL\\Downloads\\venta_cuba111"

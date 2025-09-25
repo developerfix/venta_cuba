@@ -11,6 +11,8 @@ import 'package:venta_cuba/Services/Supabase/supabase_service.dart';
 import 'package:venta_cuba/Services/notification_manager.dart';
 import 'package:venta_cuba/Services/push_service.dart';
 import 'package:venta_cuba/Utils/optimized_image.dart';
+import 'package:venta_cuba/view/constants/premium_error_handler.dart';
+import 'package:venta_cuba/view/constants/premium_performance.dart';
 import 'package:venta_cuba/config/app_config.dart';
 import 'package:venta_cuba/languages/languages.dart';
 import 'package:venta_cuba/view/splash%20Screens/white_screen.dart';
@@ -68,10 +70,14 @@ void main() async {
 
   print('🚀 === VENTA CUBA STARTUP - 2 - Flutter binding initialized ===');
 
+  // Initialize premium systems
+  PremiumErrorHandler.initialize();
+  PremiumPerformance.instance.initialize();
+
   // Initialize critical services only, others will load in background
   _initializeServicesInBackground();
 
-  print('🚀 === VENTA CUBA STARTUP - 3 - Background services initiated ===');
+  print('🚀 === VENTA CUBA STARTUP - 3 - Premium systems & background services initiated ===');
 
   // Start app immediately
   runApp(const MyApp());
@@ -120,6 +126,7 @@ Future<void> _initializePremiumFeatures() async {
       _initializeLazyRouting().timeout(const Duration(seconds: 2)),
       _setupOptimizations().timeout(const Duration(seconds: 2)),
       _initializeNotificationManager().timeout(const Duration(seconds: 10)),
+      _initializePremiumSystems().timeout(const Duration(seconds: 3)),
     ]).timeout(const Duration(seconds: 15));
 
     print('✅ Premium features initialized successfully');
@@ -127,6 +134,13 @@ Future<void> _initializePremiumFeatures() async {
     print('⚠️ Premium features initialization error (continuing anyway): $e');
     // Don't let initialization errors block the app
   }
+}
+
+/// Initialize premium performance and error handling systems
+Future<void> _initializePremiumSystems() async {
+  // Cache optimization on startup
+  await OptimizedCacheManager.optimizeOnStartup();
+  print('🏎️ Premium systems ready');
 }
 
 /// Optimize image cache for faster loading
@@ -341,9 +355,11 @@ class _MyAppState extends State<MyApp> {
             enableLog: false, // Disable logs in production
             logWriterCallback: null, // Remove log callbacks for performance
 
-            // Optimized transitions
+            // Premium optimized transitions
             defaultTransition: Transition.cupertino,
-            transitionDuration: const Duration(milliseconds: 250),
+            transitionDuration: const Duration(milliseconds: 300),
+            customTransition: null, // Will be handled by our premium transitions
+            defaultGlobalState: true, // Enable state preservation
 
             home: const WhiteScreen(),
           );

@@ -8,6 +8,7 @@ import 'package:venta_cuba/view/auth/sign_up.dart';
 
 import '../constants/Colors.dart';
 import 'forget_password_screen.dart';
+import 'package:venta_cuba/view/constants/premium_animations.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -327,7 +328,7 @@ class _LoginState extends State<Login> {
                                     GestureDetector(
                                       onTap: () {
                                         cont.forgetPasswordCont.clear();
-                                        Get.to(() => ForgetPasswordScreen());
+                                        Navigator.push(context, PremiumPageTransitions.slideFromBottom(ForgetPasswordScreen()));
                                       },
                                       child: CustomText(
                                         text: 'Forget Password?'.tr,
@@ -342,8 +343,7 @@ class _LoginState extends State<Login> {
                                       onTap: () {
                                         Navigator.push(
                                             context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
+                                            PremiumPageTransitions.slideFromRight(
                                                   const SignUp(),
                                             ));
                                       },

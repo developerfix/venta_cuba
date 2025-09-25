@@ -10,6 +10,7 @@ import 'package:venta_cuba/view/Navigation%20bar/post.dart';
 import 'package:venta_cuba/view/constants/Colors.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:venta_cuba/view/profile/become_vendor.dart';
+import 'package:venta_cuba/view/constants/premium_animations.dart';
 
 import '../../Controllers/auth_controller.dart';
 import '../../Utils/funcations.dart';
@@ -219,8 +220,7 @@ class _ListingsState extends State<Listings> {
                                               onTap: () {
                                                 showDialog(
                                                   context: context,
-                                                  builder: (context) =>
-                                                      deleteAllListingsDialog(),
+                                                  builder: (context) => deleteAllListingsDialog(),
                                                 );
                                               },
                                               child: Container(
@@ -495,8 +495,8 @@ class _ListingsState extends State<Listings> {
                                                                               cont.userListingModelList[index];
                                                                           Navigator.push(
                                                                               context,
-                                                                              MaterialPageRoute(
-                                                                                builder: (context) => Post(
+                                                                              PremiumPageTransitions.slideFromRight(
+                                                                                Post(
                                                                                   isUpdate: true,
                                                                                 ),
                                                                               ));
@@ -567,9 +567,7 @@ class _ListingsState extends State<Listings> {
                                                                 onTap: () {
                                                                   Navigator.push(
                                                                       context,
-                                                                      MaterialPageRoute(
-                                                                        builder:
-                                                                            (context) =>
+                                                                      PremiumPageTransitions.slideFromRight(
                                                                                 const BecomeVendor(),
                                                                       ));
                                                                 },
@@ -600,8 +598,7 @@ class _ListingsState extends State<Listings> {
                                                                               index];
                                                                       Navigator.push(
                                                                           context,
-                                                                          MaterialPageRoute(
-                                                                            builder: (context) =>
+                                                                          PremiumPageTransitions.slideFromRight(
                                                                                 const FrameScreen(),
                                                                           ));
                                                                     },
@@ -711,8 +708,7 @@ class _ListingsState extends State<Listings> {
                                               onTap: () {
                                                 showDialog(
                                                   context: context,
-                                                  builder: (context) =>
-                                                      deleteAllListingsDialog(),
+                                                  builder: (context) => deleteAllListingsDialog(),
                                                 );
                                               },
                                               child: Container(
@@ -975,9 +971,8 @@ class _ListingsState extends State<Listings> {
                                                                     onTap: () {
                                                                       Navigator.push(
                                                                           context,
-                                                                          MaterialPageRoute(
-                                                                            builder: (context) =>
-                                                                                const BecomeVendor(),
+                                                                          PremiumPageTransitions.slideFromRight(
+                                                                                                                                                            const BecomeVendor(),
                                                                           ));
                                                                     },
                                                                     child:
@@ -1006,8 +1001,8 @@ class _ListingsState extends State<Listings> {
                                                                               cont.userListingModelList[index];
                                                                           Navigator.push(
                                                                               context,
-                                                                              MaterialPageRoute(
-                                                                                builder: (context) => const FrameScreen(),
+                                                                              PremiumPageTransitions.slideFromRight(
+                                                                                const FrameScreen(),
                                                                               ));
                                                                         },
                                                                         child:
@@ -1154,8 +1149,7 @@ class _ListingsState extends State<Listings> {
                                               onTap: () {
                                                 showDialog(
                                                   context: context,
-                                                  builder: (context) =>
-                                                      deleteAllListingsDialog(),
+                                                  builder: (context) => deleteAllListingsDialog(),
                                                 );
                                               },
                                               child: Container(
@@ -1417,9 +1411,8 @@ class _ListingsState extends State<Listings> {
                                                                     onTap: () {
                                                                       Navigator.push(
                                                                           context,
-                                                                          MaterialPageRoute(
-                                                                            builder: (context) =>
-                                                                                const BecomeVendor(),
+                                                                          PremiumPageTransitions.slideFromRight(
+                                                                                                                                                            const BecomeVendor(),
                                                                           ));
                                                                     },
                                                                     child:
@@ -1448,8 +1441,8 @@ class _ListingsState extends State<Listings> {
                                                                               cont.userListingModelList[index];
                                                                           Navigator.push(
                                                                               context,
-                                                                              MaterialPageRoute(
-                                                                                builder: (context) => const FrameScreen(),
+                                                                              PremiumPageTransitions.slideFromRight(
+                                                                                const FrameScreen(),
                                                                               ));
                                                                         },
                                                                         child:

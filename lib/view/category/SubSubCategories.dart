@@ -15,6 +15,7 @@ import 'package:flutter_svg/svg.dart';
 
 import '../frame/frame.dart';
 import 'ShowAllListingSub.dart';
+import 'package:venta_cuba/view/constants/premium_animations.dart';
 
 class SubSubCategories extends StatefulWidget {
   const SubSubCategories({super.key});
@@ -114,8 +115,7 @@ class _SubSubCategoriesState extends State<SubSubCategories> {
                                               cont.listingModelList[index];
                                           Navigator.push(
                                               context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
+                                              PremiumPageTransitions.slideFromRight(
                                                     const FrameScreen(),
                                               ));
                                         },
@@ -335,7 +335,7 @@ class _SubSubCategoriesState extends State<SubSubCategories> {
                                                   onTap: () async {
                                                     if (authCont.user?.email ==
                                                         "") {
-                                                      Get.to(Login());
+                                                      Navigator.push(context, PremiumPageTransitions.slideFromBottom(Login()));
                                                     } else {
                                                       cont.listingModel =
                                                           cont.listingModelList[
@@ -423,7 +423,7 @@ class _SubSubCategoriesState extends State<SubSubCategories> {
                                           // cont.getListing();
                                           cont.getListingSearch();
                                           cont.listingModelList.clear();
-                                          Get.to(ShowAllListingSub());
+                                          Navigator.push(context, PremiumPageTransitions.slideFromRight(ShowAllListingSub()));
                                         },
                                         child: ProfileList(
                                             text: cont.subSubCategoriesModel
