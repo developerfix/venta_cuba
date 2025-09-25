@@ -20,7 +20,6 @@ class _PersonalDetailsState extends State<PersonalDetails> {
 
   @override
   void initState() {
-    // TODO: implement initState
     authCont.firstNameCont.text = authCont.user?.firstName ?? "";
     authCont.lastNameCont.text = authCont.user?.lastName ?? "";
     authCont.businessNameCont.text = authCont.user?.businessName ?? "";

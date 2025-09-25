@@ -44,8 +44,6 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
       switchState6 = authCont.user?.reviewsNotification.toString() == "1";
     }
 
-    // TODO: implement initState
-
     super.initState();
   }
 
@@ -227,7 +225,7 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                         value: switchState3,
                         onChanged: (newValue) async {
                           setState(() {
-                            switchState3 = newValue!;
+                            switchState3 = newValue;
                           });
                           // Add custom logic for Row 5 here.
                         },
@@ -281,7 +279,7 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                         // enabledTrackColor: AppColors.k0xFF0254B8.withValues(alpha: 0.5),
                         onChanged: (newValue) async {
                           setState(() {
-                            switchState4 = newValue!;
+                            switchState4 = newValue;
                           });
                           // Add custom logic for Row 5 here.
                         },
@@ -339,7 +337,7 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                         // enabledTrackColor: AppColors.k0xFF0254B8.withValues(alpha: 0.5),
                         onChanged: (newValue) async {
                           setState(() {
-                            switchState5 = newValue!;
+                            switchState5 = newValue;
                           });
                           // Add custom logic for Row 5 here.
                         },
@@ -394,7 +392,7 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                         // duration: Duration(milliseconds: 200),
                         onChanged: (newValue) async {
                           setState(() {
-                            switchState6 = newValue!;
+                            switchState6 = newValue;
                           });
                           // Add custom logic for Row 5 here.
                         },

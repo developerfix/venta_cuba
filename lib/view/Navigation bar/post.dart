@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
-import 'dart:typed_data';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dotted_border/dotted_border.dart';
@@ -31,7 +30,6 @@ import '../Chat/custom_text.dart';
 import 'package:venta_cuba/Models/CategoriesModel.dart' as cta;
 import 'package:venta_cuba/Models/SubCategoriesModel.dart' as sub;
 import 'package:venta_cuba/Models/SubSubCategoriesModel.dart' as subSub;
-import 'package:flutter_image_compress/flutter_image_compress.dart';
 
 import '../terms_of_use/terms_of_use_screen.dart';
 
@@ -439,7 +437,6 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
     _scrollController = ScrollController();
     if (authCont.user?.province != null && authCont.user?.city != null)
 
-      // TODO: implement initState
       _controller = AnimationController(
         duration: Duration(milliseconds: 700),
         vsync: this,

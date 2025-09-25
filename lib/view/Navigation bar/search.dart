@@ -1,5 +1,4 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -11,7 +10,6 @@ import 'package:venta_cuba/view/constants/Colors.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../Controllers/auth_controller.dart';
 import '../../Models/ListingModel.dart';
-import '../../Models/SelectedCategoryModel.dart';
 import '../../cities_list/cites_list.dart';
 import '../../util/category_list.dart';
 import '../auth/login.dart';
@@ -320,9 +318,10 @@ class _SearchState extends State<Search> {
                                         padding: EdgeInsets.all(12),
                                         child: SvgPicture.asset(
                                             'assets/icons/search.svg',
-                                            color: Theme.of(context)
-                                                .iconTheme
-                                                .color),
+                                            colorFilter: ColorFilter.mode(
+                                              Theme.of(context).iconTheme.color ?? Colors.grey,
+                                              BlendMode.srcIn,
+                                            )),
                                       ),
                                     ),
                                     suffixIcon: cont
@@ -435,9 +434,10 @@ class _SearchState extends State<Search> {
                                           child: Center(
                                             child: SvgPicture.asset(
                                               'assets/icons/drop.svg',
-                                              color: Theme.of(context)
-                                                  .iconTheme
-                                                  .color,
+                                              colorFilter: ColorFilter.mode(
+                                                Theme.of(context).iconTheme.color ?? Colors.grey,
+                                                BlendMode.srcIn,
+                                              ),
                                             ),
                                           ),
                                         ),
@@ -571,14 +571,12 @@ class _SearchState extends State<Search> {
                                                     ),
                                                     child: SvgPicture.asset(
                                                       'assets/icons/category.svg',
-                                                      color: isListView
-                                                          ? Theme.of(context)
-                                                              .textTheme
-                                                              .bodyLarge
-                                                              ?.color
-                                                          : Theme.of(context)
-                                                              .colorScheme
-                                                              .onPrimary,
+                                                      colorFilter: ColorFilter.mode(
+                                                        isListView
+                                                            ? (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.grey)
+                                                            : Theme.of(context).colorScheme.onPrimary,
+                                                        BlendMode.srcIn,
+                                                      ),
                                                     ),
                                                   ),
                                                 ),
@@ -607,14 +605,12 @@ class _SearchState extends State<Search> {
                                                     ),
                                                     child: SvgPicture.asset(
                                                       'assets/icons/list1.svg',
-                                                      color: isListView
-                                                          ? Theme.of(context)
-                                                              .colorScheme
-                                                              .onPrimary
-                                                          : Theme.of(context)
-                                                              .textTheme
-                                                              .bodyLarge
-                                                              ?.color,
+                                                      colorFilter: ColorFilter.mode(
+                                                        isListView
+                                                            ? Theme.of(context).colorScheme.onPrimary
+                                                            : (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.grey),
+                                                        BlendMode.srcIn,
+                                                      ),
                                                     ),
                                                   ),
                                                 ),
@@ -930,11 +926,14 @@ class _SearchState extends State<Search> {
                       borderRadius: BorderRadius.circular(21.5..r)),
                   child: SvgPicture.asset(
                     'assets/icons/heart1.svg',
-                    color: homeCont.listingModelSearchList.isNotEmpty &&
-                            homeCont.listingModelSearchList[index].isFavorite ==
-                                '0'
-                        ? Theme.of(context).unselectedWidgetColor
-                        : Colors.red,
+                    colorFilter: ColorFilter.mode(
+                      homeCont.listingModelSearchList.isNotEmpty &&
+                              homeCont.listingModelSearchList[index].isFavorite ==
+                                  '0'
+                          ? Theme.of(context).unselectedWidgetColor
+                          : Colors.red,
+                      BlendMode.srcIn,
+                    ),
                   ),
                 ),
               ),
@@ -1144,12 +1143,15 @@ class _SearchState extends State<Search> {
                             borderRadius: BorderRadius.circular(21.5..r)),
                         child: SvgPicture.asset(
                           'assets/icons/heart1.svg',
-                          color: homeCont.listingModelSearchList.isNotEmpty &&
-                                  homeCont.listingModelSearchList[index]
-                                          .isFavorite ==
-                                      '0'
-                              ? Theme.of(context).unselectedWidgetColor
-                              : Colors.red,
+                          colorFilter: ColorFilter.mode(
+                            homeCont.listingModelSearchList.isNotEmpty &&
+                                    homeCont.listingModelSearchList[index]
+                                            .isFavorite ==
+                                        '0'
+                                ? Theme.of(context).unselectedWidgetColor
+                                : Colors.red,
+                            BlendMode.srcIn,
+                          ),
                         ),
                       ),
                     ),
@@ -1337,11 +1339,14 @@ class _SearchState extends State<Search> {
                     borderRadius: BorderRadius.circular(21.5..r)),
                 child: SvgPicture.asset(
                   'assets/icons/heart1.svg',
-                  color: homeCont.listingModelSearchList.isNotEmpty &&
-                          homeCont.listingModelSearchList[index].isFavorite ==
-                              '0'
-                      ? Theme.of(context).unselectedWidgetColor
-                      : Colors.red,
+                  colorFilter: ColorFilter.mode(
+                    homeCont.listingModelSearchList.isNotEmpty &&
+                            homeCont.listingModelSearchList[index].isFavorite ==
+                                '0'
+                        ? Theme.of(context).unselectedWidgetColor
+                        : Colors.red,
+                    BlendMode.srcIn,
+                  ),
                 ),
               ),
             ),
@@ -1508,12 +1513,15 @@ class _SearchState extends State<Search> {
                           borderRadius: BorderRadius.circular(21.5..r)),
                       child: SvgPicture.asset(
                         'assets/icons/heart1.svg',
-                        color: homeCont.listingModelSearchList.isNotEmpty &&
-                                homeCont.listingModelSearchList[index]
-                                        .isFavorite ==
-                                    '0'
-                            ? Theme.of(context).unselectedWidgetColor
-                            : Colors.red,
+                        colorFilter: ColorFilter.mode(
+                          homeCont.listingModelSearchList.isNotEmpty &&
+                                  homeCont.listingModelSearchList[index]
+                                          .isFavorite ==
+                                      '0'
+                              ? Theme.of(context).unselectedWidgetColor
+                              : Colors.red,
+                          BlendMode.srcIn,
+                        ),
                       ),
                     ),
                   ),

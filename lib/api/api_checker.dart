@@ -42,7 +42,6 @@ class ApiChecker {
     print("status code: ${response.statusCode}");
     if (response == null) {
       if (showSystemError) {
-        // TODO: Handle network connection error
         print('Check your internet connection and try again');
       }
     } else if (response.statusCode == 200) {
@@ -51,10 +50,8 @@ class ApiChecker {
       if (showUserError) {
         // Handle cases where response.body might not be a Map (e.g., HTML error pages)
         if (response.body is Map && response.body['message'] != null) {
-          // TODO: Handle API response message
           print(response.body['message']);
         } else {
-          // TODO: Handle authentication failure
           print('Authentication failed. Please try again.'.tr);
         }
       }
@@ -93,15 +90,12 @@ class ApiChecker {
         if (response.body is Map && response.body['message'] != null) {
           if (response.body['message'] == "Unauthorized") {
             _showCustomAlertDialog();
-            // TODO: Handle wrong credentials
             print("wrong email or password".tr);
           } else {
-            // TODO: Handle API error message
             print("${response.body['message']}".tr);
           }
         } else {
           // If response body is not a Map or doesn't have a message, show generic error
-          // TODO: Handle general request failure
           print('Request failed. Please try again.'.tr);
         }
       }

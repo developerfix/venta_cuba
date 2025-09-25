@@ -12,8 +12,6 @@
 
 class AppConfig {
   // Supabase Configuration
-  // TODO: Replace with your actual Supabase credentials
-  // For now, using dummy values to prevent initialization errors
   static const String supabaseUrl = 'https://ztgansmmpxkzmskzpfqy.supabase.co';
   static const String supabaseAnonKey =
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0Z2Fuc21tcHhrem1za3pwZnF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyMjYzMjEsImV4cCI6MjA2OTgwMjMyMX0.7gmzShGWJ05tEW2dwzfEPt5jkq4B1dQw5MYU-C7Gt-0';

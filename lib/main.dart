@@ -134,13 +134,6 @@ Future<void> _optimizeImageCache() async {
   await OptimizedCacheManager.optimizeOnStartup();
 
   // Preload critical images
-  final criticalImages = [
-    'assets/images/splash1.png',
-    'assets/images/1024.png',
-    'assets/icons/provinces.png',
-  ];
-
-  // Convert to URLs if needed and preload
   print('🖼️ Image cache optimized');
 }
 

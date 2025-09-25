@@ -5,7 +5,6 @@ import 'package:share_plus/share_plus.dart';
 import 'package:venta_cuba/Controllers/home_controller.dart';
 
 import '../../Models/AllPromoCodesModel.dart';
-import '../constants/Colors.dart';
 import '../payment/payment_next.dart';
 
 class PromoCodeScreen extends StatefulWidget {
@@ -207,11 +206,14 @@ class PromoCodeCard extends StatelessWidget {
     );
   }
 
-  void _sharePromoCode(PromoCode? promoCode) {
+  void _sharePromoCode(PromoCode? promoCode) async {
     String message =
         '${"Check out this promo code:".tr} ${promoCode?.promoCode} - ${"${promoCode?.status}".tr}';
 
-    Share.share(message,
-        subject: '${"Promo Code:".tr} ${promoCode?.promoCode}');
+    final params = ShareParams(
+      text: message,
+      subject: '${"Promo Code:".tr} ${promoCode?.promoCode}',
+    );
+    await SharePlus.instance.share(params);
   }
 }

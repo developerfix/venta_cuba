@@ -23,7 +23,6 @@ class LocationController extends GetxController {
 
   @override
   Future<void> onInit() async {
-    // TODO: implement onInit
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     isLocationOn = sharedPreferences.getBool('isLocationOn') ?? false;
     super.onInit();

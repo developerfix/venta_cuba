@@ -375,11 +375,10 @@ class SupabaseChatController extends GetxController {
               ),
               callback: (payload) {
                 // Handle real-time updates
-                if (payload.eventType == PostgresChangeEvent.insert &&
-                    payload.newRecord != null) {
+                if (payload.eventType == PostgresChangeEvent.insert) {
                   // Check if this is not a duplicate of a message we already have
                   if (_messageCache.containsKey(chatId)) {
-                    final newMessage = payload.newRecord!;
+                    final newMessage = payload.newRecord;
 
                     // More robust duplicate detection
                     bool isDuplicate = _messageCache[chatId]!.any((msg) =>
@@ -417,12 +416,11 @@ class SupabaseChatController extends GetxController {
                   }
                 } else if (payload.eventType == PostgresChangeEvent.update) {
                   // Update existing message in cache
-                  if (_messageCache.containsKey(chatId) &&
-                      payload.newRecord != null) {
+                  if (_messageCache.containsKey(chatId)) {
                     int index = _messageCache[chatId]!.indexWhere(
-                        (msg) => msg['id'] == payload.newRecord!['id']);
+                        (msg) => msg['id'] == payload.newRecord['id']);
                     if (index != -1) {
-                      _messageCache[chatId]![index] = payload.newRecord!;
+                      _messageCache[chatId]![index] = payload.newRecord;
                       // Emit updated cache
                       if (_messageStreams.containsKey(chatId) &&
                           !_messageStreams[chatId]!.isClosed) {
@@ -433,10 +431,9 @@ class SupabaseChatController extends GetxController {
                   }
                 } else if (payload.eventType == PostgresChangeEvent.delete) {
                   // Remove deleted message from cache
-                  if (_messageCache.containsKey(chatId) &&
-                      payload.oldRecord != null) {
+                  if (_messageCache.containsKey(chatId)) {
                     _messageCache[chatId]!.removeWhere(
-                        (msg) => msg['id'] == payload.oldRecord!['id']);
+                        (msg) => msg['id'] == payload.oldRecord['id']);
                     // Emit updated cache
                     if (_messageStreams.containsKey(chatId) &&
                         !_messageStreams[chatId]!.isClosed) {
@@ -705,22 +702,6 @@ class SupabaseChatController extends GetxController {
     }
   }
 
-  // Helper method to format message body for notifications with translations
-  String _formatMessageBody(String message, String messageType) {
-    switch (messageType) {
-      case 'image':
-        return '📷 Photo'.tr;
-      case 'video':
-        return '📹 Video'.tr;
-      case 'file':
-        return '📎 File'.tr;
-      default:
-        if (message.length > 100) {
-          return message.substring(0, 97) + '...';
-        }
-        return message;
-    }
-  }
 
   // OPTIMIZED: Delete chat with better performance
   Future<void> deleteChat(String chatId) async {
@@ -969,7 +950,7 @@ class SupabaseChatController extends GetxController {
         print('Supabase connected with session');
       }
 
-      final testQuery = await _supabase.from('chats').select('count').limit(1);
+      await _supabase.from('chats').select('count').limit(1);
       print('Connection test successful');
 
       return true;
@@ -1267,7 +1248,7 @@ class SupabaseChatController extends GetxController {
       final fileName = 'chat_${DateTime.now().millisecondsSinceEpoch}.jpg';
       final bytes = await imageFile.readAsBytes();
 
-      final response = await _supabase.storage
+      await _supabase.storage
           .from('chat-images')
           .uploadBinary(fileName, bytes);
 

@@ -217,7 +217,7 @@ class Languages extends Translations {
 
           "Click the title of the category if you want to see all publications within that category. Click on the arrow if you want to see publications from a specific subcategory.":
               "Click the title of the category if you want to see all publications within that category. Click on the arrow if you want to see publications from a specific subcategory.",
-          "Successfully": "Successfully",
+          'Successfully_2': "Successfully",
           "Select a Category From": "Select a Category From",
           "Sign in to an  existing account": "Sign in to an  existing account",
           "Already have an account?": "Already have an account?",
@@ -356,7 +356,7 @@ class Languages extends Translations {
           "Please Enter Post Images": "Please Enter Post Images",
           "Update": "Update",
           "Please Enter  Address": "Please Enter  Address",
-          "Please Enter Title": "Please Enter Title",
+          'Please Enter Title_2': "Please Enter Title",
           "Video link (Optional)": "Video link (Optional)",
           "Add a YouTube video": "Add a YouTube video",
           "Payment (Optional)": "Payment (Optional)",
@@ -589,7 +589,7 @@ class Languages extends Translations {
               "I understand and agree to VentaCuba's ",
           "I understand and agree that my personal information will be processed in according with VentaCuba's":
               "I understand and agree that my personal information will be processed according to the",
-          " Privacy Policy": " Privacy Policy",
+          ' Privacy Policy_2': " Privacy Policy",
           "acknowledg":
               " I acknowledge that VentaCuba will use my information to create my account deliver its services and keep its website safe and secure.",
           "Please read and accept the terms of use to proceed your signup":
@@ -600,7 +600,7 @@ class Languages extends Translations {
           "Photos: ": "Photos: ",
           "/20 Select your cover photo first, include picture with different angles and details":
               "/20 Select your cover photo first, include picture with different angles and details",
-          "Submit": "Submit",
+          'Submit_2': "Submit",
           "Forgot Password": "Forgot Password",
           "Remember Me": "Remember Me",
           "VentaCuba Terms of Use": "VentaCuba Terms of Use",
@@ -919,8 +919,8 @@ It is not allowed to use our member-to-member communication resources to send sp
           "new pass cannot be same":
               "New password cannot be same as old password",
           "please enter new password": "Please enter new your new password",
-          "days": "days",
-          "ago": "ago",
+          'days_2': "days",
+          'ago_2': "ago",
           "please select": "Please select somthing from list",
           "Your VentaCuba Otp code is": "Your VentaCuba Otp code is",
           'Click here to enter a location to see publications near you.':
@@ -956,18 +956,18 @@ It is not allowed to use our member-to-member communication resources to send sp
               "Failed to delete some listings. Please try again.",
           // Chat interface translations
           'OK': 'OK',
-          'Delete': 'Delete',
+          'Delete_2': 'Delete',
           'Chat deleted': 'Chat deleted',
           'Failed to send message': 'Failed to send message',
           '📷 Photo': '📷 Photo',
           '📹 Video': '📹 Video',
           '📎 File': '📎 File',
           'Save': 'Save',
-          'Saved': 'Saved',
-          'No Name': 'No Name',
-          'Image': 'Image',
-          'No Image': 'No Image',
-          'Type Message': 'Type Message',
+          'Saved_2': 'Saved',
+          'No Name_2': 'No Name',
+          'Image_2': 'Image',
+          'No Image_2': 'No Image',
+          'Type Message_2': 'Type Message',
           'Initializing chat...': 'Initializing chat...',
           'Error loading messages': 'Error loading messages',
           'Retry': 'Retry',
@@ -975,7 +975,7 @@ It is not allowed to use our member-to-member communication resources to send sp
           'Try Again': 'Try Again',
           'No messages yet': 'No messages yet',
           'Start the conversation!': 'Start the conversation!',
-          'Message': 'Message',
+          'Message_2': 'Message',
           'No Chat': 'No Chat',
           'Listing': 'Listing',
           'Failed to upload image': 'Failed to upload image',
@@ -995,9 +995,9 @@ It is not allowed to use our member-to-member communication resources to send sp
           'Please select a location first': 'Please select a location first',
           'Choose Location': 'Choose Location',
           'Yesterday': 'Yesterday',
-          'Set Location': 'Set Location',
+          'Set Location_2': 'Set Location',
           'Selected Location': 'Selected Location',
-          'Image': 'Image',
+          'Image_3': 'Image',
           'Video': 'Video',
         },
         "es_ES": {
@@ -1046,8 +1046,8 @@ It is not allowed to use our member-to-member communication resources to send sp
           "email exists":
               "La dirección de correo electrónico ya existe. Por favor, ingrese otra.",
           "updated": "actualizada",
-          "days": "días",
-          "ago": "hace",
+          'days_2': "días",
+          'ago_2': "hace",
 
           "wrong email or password":
               "Correo electrónico o contraseña incorrectos",
@@ -1666,7 +1666,7 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
           "Sell Products": "Vender productos",
           "List Products": "Listar productos",
           "Buy Products": "Comprar productos",
-          "Submit": "Entregar",
+          'Submit_2': "Entregar",
           "Select Place first.": "Seleccione Colocar primero.",
           "Search Range": "Rango de búsqueda",
           "First of all, enter your credentials to sign in":
@@ -1674,7 +1674,7 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
           "Enter Email Address":
               "Introducir la dirección de correo electrónico",
           "Enter your Password": "Ingresa tu contraseña",
-          "Please Enter Correct Email":
+          'Please Enter Correct Email_2':
               "Por favor ingrese el correo electrónico correcto",
           "Please Enter Correct Password":
               "Por favor ingrese la contraseña correcta",
@@ -1816,7 +1816,7 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
               "Por favor ingrese las imágenes de la publicación",
           "Update": "Actualizar",
           "Please Enter  Address": "Por favor ingrese la dirección",
-          "Please Enter Title": "Por favor ingrese el título",
+          'Please Enter Title_2': "Por favor ingrese el título",
           "Video link (Optional)": "Enlace de vídeo (opcional)",
           "Add a YouTube video": "Añadir un vídeo de YouTube",
           "Payment (Optional)": "Pago (Opcional)",
@@ -1861,7 +1861,7 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
           "Add to Wishlist": "Añadir a la lista de deseos",
           "Total Price": "Precio total",
           "Description": "Descripción",
-          "Payment": "Pago",
+          'Payment_2': "Pago",
           "PickUp Location": "Lugar de recogida",
           "Fulfillment": "Cumplimiento",
           "Condition": "Condición",
@@ -1887,7 +1887,7 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
 
           "Click the title of the category if you want to see all publications within that category. Click on the arrow if you want to see publications from a specific subcategory.":
               "Haz clic en el título de la categoría si quieres ver todas las publicaciones dentro de esa categoría. Haz clic en la flecha si quieres ver publicaciones de una subcategoría específica.",
-          "Successfully": "exitosamente",
+          'Successfully_2': "exitosamente",
           "Sign in to an existing account":
               "Iniciar sesión en una cuenta existente",
           "Already have an account?": "¿Ya tienes una cuenta?",
@@ -1899,7 +1899,7 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
           "Please Enter Business City": "Por favor ingrese la ciudad comercial",
           "Please Enter Business Address":
               "Por favor ingrese la dirección comercial",
-          "Please Enter Business Name": "Por favor ingrese el nombre comercial",
+          'Please Enter Business Name_2': "Por favor ingrese el nombre comercial",
           "Maximum 50mb Size": "Tamaño máximo de 50 MB",
           "Upload Your Image Here": "Sube tu imagen aquí",
           "Processing images...": "Procesando imágenes...",
@@ -1924,7 +1924,7 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
           "Search Address": "Buscar dirección",
           "Business Address": "Dirección de Negocios",
           "i.e NEWTECH": "Ingresa un nombre",
-          "Business Name": "Nombre del Negocio",
+          'Business Name_2': "Nombre del Negocio",
           "Please Complete your details to proceed Further":
               "Complete sus datos para continuar",
           "Complete Your Details": "Completa tus datos",
@@ -2016,18 +2016,18 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
               'No se pudo detener el servicio en segundo plano',
           // Chat interface translations
           'OK': 'Aceptar',
-          'Delete': 'Eliminar',
+          'Delete_2': 'Eliminar',
           'Chat deleted': 'Chat eliminado',
           'Failed to send message': 'Error al enviar mensaje',
           '📷 Photo': '📷 Foto',
           '📹 Video': '📹 Video',
           '📎 File': '📎 Archivo',
           'Save': 'Guardar',
-          'Saved': 'Guardado',
-          'No Name': 'Sin nombre',
-          'Image': 'Imagen',
-          'No Image': 'Sin imagen',
-          'Type Message': 'Escribe un mensaje',
+          'Saved_2': 'Guardado',
+          'No Name_2': 'Sin nombre',
+          'Image_2': 'Imagen',
+          'No Image_2': 'Sin imagen',
+          'Type Message_2': 'Escribe un mensaje',
           'Initializing chat...': 'Inicializando chat...',
           'Error loading messages': 'Error al cargar mensajes',
           'Retry': 'Reintentar',
@@ -2035,7 +2035,7 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
           'Try Again': 'Intentar de nuevo',
           'No messages yet': 'Aún no hay mensajes',
           'Start the conversation!': '¡Inicia la conversación!',
-          'Message': 'Mensaje',
+          'Message_2': 'Mensaje',
           'No Chat': 'Sin chat',
           'Listing': 'Anuncio',
           'Failed to upload image': 'Error al subir imagen',
@@ -2055,9 +2055,9 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
           'Please select a location first':
               'Por favor selecciona una ubicación primero',
           'Choose Location': 'Elegir ubicación',
-          'Set Location': 'Establecer ubicación',
+          'Set Location_2': 'Establecer ubicación',
           'Selected Location': 'Ubicación seleccionada',
-          'Image': 'Imagen',
+          'Image_3': 'Imagen',
           'Video': 'Video',
         }
       };

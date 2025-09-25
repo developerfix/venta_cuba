@@ -117,15 +117,9 @@ class _VendorScreenState extends State<VendorScreen> {
   final FocusNode _focusNodeCity = FocusNode();
   final FocusNode _focusNodeProvince = FocusNode();
   final FocusNode _focusNodeAddress = FocusNode();
-  void _closeKeyboard() {
-    _focusNodeCity.unfocus();
-    _focusNodeProvince.unfocus();
-    _focusNodeAddress.unfocus();
-  }
 
   @override
   void dispose() {
-    // TODO: implement dispose
     _focusNodeProvince.dispose();
     _focusNodeCity.dispose();
     _focusNodeAddress.dispose();

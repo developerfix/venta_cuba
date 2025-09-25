@@ -27,7 +27,6 @@
 
 //   @override
 //   void initState() {
-//     // TODO: implement initState
 //     authCont.getSmsCode();
 //     super.initState();
 //   }

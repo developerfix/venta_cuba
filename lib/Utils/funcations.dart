@@ -27,26 +27,6 @@ errorAlertToast(String error) {
       fontSize: 16.0.sp);
 }
 
-// Fallback method using SnackBar when Fluttertoast fails
-void _showSnackBarFallback(String message) {
-  try {
-    scaffoldMessengerKey.currentState?.showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Colors.red,
-        duration: Duration(seconds: 3),
-        behavior: SnackBarBehavior.floating,
-        margin: EdgeInsets.all(10),
-      ),
-    );
-  } catch (e) {
-    // Final fallback - just print to console
-    print('❌ All toast methods failed, message: $message');
-  }
-}
 
 showLoading() {
   showDialog(

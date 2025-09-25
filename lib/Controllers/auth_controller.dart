@@ -697,51 +697,6 @@ class AuthController extends GetxController {
     }
   }
 
-  // Handle login success with timeout protection
-  Future<void> _handleLoginSuccess(Map<String, dynamic> responseBody) async {
-    try {
-      // Ensure SharedPreferences is initialized
-      try {
-        prefs.getString('test');
-      } catch (e) {
-        await _initializeSharedPreferences();
-      }
-
-      // Store user data first
-      await prefs.setString("user_data", jsonEncode(responseBody));
-      isBusinessAccount = false;
-      changeAccountType();
-      fetchAccountType();
-
-      // Load user details with timeout
-      await getuserDetail().timeout(
-        Duration(seconds: 15),
-        onTimeout: () {},
-      );
-
-      // Navigate to main screen regardless
-      Get.offAll(Navigation_Bar());
-    } catch (e) {
-      print('❌ Error in handleLoginSuccess: $e');
-
-      // Still navigate since login was successful
-      Get.offAll(Navigation_Bar());
-    }
-  }
-
-  // Initialize push service in background (non-blocking)
-  void _initializePushServiceInBackground(String userId) {
-    Future.delayed(Duration(seconds: 2), () async {
-      try {
-        await PushService.initialize(
-          userId: userId,
-        );
-      } catch (e) {
-        //
-      }
-    });
-  }
-
   Future<void> refreshDeviceToken() async {
     try {
       String? token;
@@ -1033,7 +988,7 @@ class AuthController extends GetxController {
           .or('sender_id.eq.$currentUserId,send_to_id.eq.$currentUserId');
 
       // Update device token in each chat
-      for (var chat in chats) {
+      for (var _ in chats) {
         await chatController.updateDeviceTokenInChat(
           currentUserId,
           newToken,

@@ -18,25 +18,10 @@ class RLSHelper {
 
       print('✅ RLS ready for user: $userId');
     } catch (e) {
-      // TODO: Handle RLS context error
       print(' ❌ Error setting RLS user context: $e');
     }
   }
 
-  /// Verify that the user context was set correctly
-  static Future<void> _verifyUserContext(String expectedUserId) async {
-    try {
-      final currentUserId = await _client.rpc('get_current_user_id');
-      if (currentUserId == expectedUserId) {
-        print('✅ User context verified: $currentUserId');
-      } else {
-        print(
-            '⚠️ User context mismatch. Expected: $expectedUserId, Got: $currentUserId');
-      }
-    } catch (e) {
-      print('❌ Error verifying user context: $e');
-    }
-  }
 
   /// Clear the user context (call on logout)
   static Future<void> clearUserContext() async {
@@ -85,23 +70,4 @@ class RLSHelper {
     }
   }
 
-  /// Create the set_config function if it doesn't exist
-  static Future<void> _createSetConfigFunction() async {
-    try {
-      // This function might need to be created in Supabase SQL editor
-      print(
-          '⚠️ set_config function not found. Please create it in Supabase SQL editor:');
-      print('''
-      CREATE OR REPLACE FUNCTION set_config(setting_name text, new_value text, is_local boolean)
-      RETURNS text AS \$\$
-      BEGIN
-        PERFORM set_config(setting_name, new_value, is_local);
-        RETURN new_value;
-      END;
-      \$\$ LANGUAGE plpgsql SECURITY DEFINER;
-      ''');
-    } catch (e) {
-      print('❌ Error creating set_config function info: $e');
-    }
-  }
 }

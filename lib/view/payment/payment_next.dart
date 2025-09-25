@@ -1169,11 +1169,8 @@ class _PaymentNextState extends State<PaymentNext> {
                             if (Platform.isIOS) {
                               cont.isCheckedList[3] = true;
                             }
-                            bool isReturn = false;
-
                             cont.isCheckedList.forEach((element) {
                               if (element == false) {
-                                isReturn = true;
                                 return;
                               }
                             });

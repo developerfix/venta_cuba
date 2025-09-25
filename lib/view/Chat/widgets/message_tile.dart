@@ -1,14 +1,11 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:venta_cuba/Utils/funcations.dart';
@@ -210,22 +207,6 @@ Future<void> saveImageToGallery(String imageUrl) async {
   }
 }
 
-final _transformationController = TransformationController();
-TapDownDetails? _doubleTapDetails;
-void _handleDoubleTap() {
-  if (_transformationController.value != Matrix4.identity()) {
-    _transformationController.value = Matrix4.identity();
-  } else {
-    final position = _doubleTapDetails?.localPosition;
-    // For a 3x zoom
-    _transformationController.value = Matrix4.identity()
-      ..translate(-position!.dx * 2, -position.dy * 2)
-      ..scale(3.0);
-    // Fox a 2x zoom
-    // ..translate(-position.dx, -position.dy)
-    // ..scale(2.0);
-  }
-}
 
 class ImageView extends StatefulWidget {
   final String? image;
@@ -336,10 +317,17 @@ class _ImageViewState extends State<ImageView>
                             await cacheManager.getSingleFile(widget.image!);
                         file = fileFetched;
                       }
-                      await Share.shareXFiles([XFile(file.path)], text: '');
+                      final params = ShareParams(
+                        files: [XFile(file.path)],
+                        text: '',
+                      );
+                      await SharePlus.instance.share(params);
                     } catch (e) {
                       // fallback: share the image URL if file fails
-                      await Share.share(widget.image!);
+                      final params = ShareParams(
+                        text: widget.image!,
+                      );
+                      await SharePlus.instance.share(params);
                     }
                     setState(() {
                       isSharingImage = false;

@@ -7,7 +7,6 @@ import 'package:venta_cuba/Controllers/location_controller.dart';
 import 'package:venta_cuba/view/Search_Places_Screen/search_places_screen.dart';
 
 import '../../Controllers/home_controller.dart';
-import '../constants/Colors.dart';
 
 class SearchAndCurrentLocationPage extends StatefulWidget {
   const SearchAndCurrentLocationPage({super.key});

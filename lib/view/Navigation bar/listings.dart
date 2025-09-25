@@ -7,8 +7,6 @@ import 'package:venta_cuba/Controllers/home_controller.dart';
 import 'package:venta_cuba/util/my_button.dart';
 import 'package:venta_cuba/view/Chat/custom_text.dart';
 import 'package:venta_cuba/view/Navigation%20bar/post.dart';
-import 'package:venta_cuba/view/Navigation%20bar/selecct_category_post.dart';
-import 'package:venta_cuba/view/auth/vendor_screen.dart';
 import 'package:venta_cuba/view/constants/Colors.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:venta_cuba/view/profile/become_vendor.dart';
@@ -38,7 +36,6 @@ class _ListingsState extends State<Listings> {
     homeCont.soldStatus = null;
 
     homeCont.getSellerListingByStatus();
-    // TODO: implement initState
     super.initState();
   }
 
@@ -47,7 +44,6 @@ class _ListingsState extends State<Listings> {
     homeCont.listingLoading = true;
     homeCont.status = "active";
     homeCont.soldStatus = null;
-    // TODO: implement dispose
     super.dispose();
   }
 
@@ -72,7 +68,10 @@ class _ListingsState extends State<Listings> {
                       },
                       child: SvgPicture.asset(
                         'assets/icons/heartSimple.svg',
-                        color: Theme.of(context).iconTheme.color,
+                        colorFilter: ColorFilter.mode(
+                          Theme.of(context).iconTheme.color ?? Colors.grey,
+                          BlendMode.srcIn,
+                        ),
                       ),
                     ),
                     SizedBox(

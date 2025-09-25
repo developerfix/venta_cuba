@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -8,7 +7,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:venta_cuba/Controllers/home_controller.dart';
 import '../../Controllers/location_controller.dart';
 import '../Chat/custom_text.dart';
-import 'package:http/http.dart' as http;
 
 class SearchPlacesScreen extends StatefulWidget {
   final bool isShowRadius;
@@ -36,7 +34,6 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
 
   @override
   void initState() {
-    // TODO: implement initState
     initialCameraPosition = CameraPosition(
         target: LatLng(locationCont.lat!, locationCont.lng!), zoom: 14.0);
     //   markOnCurrentLocation();

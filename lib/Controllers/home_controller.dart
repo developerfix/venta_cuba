@@ -264,7 +264,6 @@ class HomeController extends GetxController {
       }
     } catch (e, stackTrace) {
       Get.log("Error in homeData: $e\n$stackTrace", isError: true);
-      // TODO: Handle home data loading error
       print('Failed to load data. Please try again.'.tr);
     } finally {
       loadingHome = false.obs;
@@ -405,12 +404,10 @@ class HomeController extends GetxController {
       } else {
         Get.log("API error: ${response.statusCode}, ${response.body}",
             isError: true);
-        // TODO: Handle API error for fetching listings
         print('Failed to fetch listings. Please try again.'.tr);
       }
     } catch (e, stackTrace) {
       Get.log("Error in getListing: $e\n$stackTrace", isError: true);
-      // TODO: Handle general listing error
       print('Something went wrong. Please try again.'.tr);
     } finally {
       isPostLoading.value = false;
@@ -530,7 +527,6 @@ class HomeController extends GetxController {
       allPackagesModel = AllPackagesModel.fromJson(response.body);
       Get.to(SubscriptionScreen());
     } else {
-      // TODO: Handle getAllPackages error
       print('Something went wrong\nPlease try again!'.tr);
     }
   }
@@ -571,7 +567,6 @@ class HomeController extends GetxController {
             file: videoFile,
           ));
         } else {
-          // TODO: Handle large video file error
           print("Please select a video less than 20MB".tr);
         }
       }
@@ -636,16 +631,13 @@ class HomeController extends GetxController {
       Get.offAll(Navigation_Bar());
       if (response.body['message'] ==
           "Your package is already active, you cannot purchase another package.") {
-        // TODO: Handle active package error
         print(
             "Your package is already active, you cannot purchase another package."
                 .tr);
       } else if (response.body['message'] == "Invalid promo code") {
-        // TODO: Handle invalid promo code
         print("Invalid promo code".tr);
       }
       if (isEnterPromoCode) {
-        // TODO: Handle promo add success
         print(
             "Promo add successfully.Please Wait for admin approval.".tr);
       } else if (type == "Other") {
@@ -659,7 +651,6 @@ class HomeController extends GetxController {
                 "Package buy successfully.Please Wait for admin approval.".tr));
       }
     } else {
-      // TODO: Handle generic error
       print('Something went wrong\nPlease try again!'.tr);
     }
   }
@@ -690,10 +681,8 @@ class HomeController extends GetxController {
         showdialog: true);
     if (response.statusCode == 200) {
       Get.back();
-      // TODO: Handle reporting success
       print("Reporting List Successfully.".tr);
     } else {
-      // TODO: Handle generic error
       print('Something went wrong\nPlease try again!'.tr);
     }
   }
@@ -710,7 +699,6 @@ class HomeController extends GetxController {
     if (response.statusCode == 200) {
       allPromoCodesModel = AllPromoCodesModel.fromJson(response.body);
     } else {
-      // TODO: Handle generic error
       print('Something went wrong\nPlease try again!'.tr);
     }
   }
@@ -733,10 +721,8 @@ class HomeController extends GetxController {
         },
         showdialog: false);
     if (response.statusCode == 200) {
-      // TODO: Handle add success
       print("Add successfully".tr);
     } else {
-      // TODO: Handle generic error
       print('Something went wrong\nPlease try again!'.tr);
     }
   }
@@ -763,7 +749,6 @@ class HomeController extends GetxController {
       }
       if (response.body["message"] == "Your package has expired" ||
           response.body["message"] == "Tu paquete ha caducado") {
-        // TODO: Handle expired package
         print('Your package has expired'.tr);
       }
       if (response.body["listing_count"] != null &&
@@ -774,7 +759,6 @@ class HomeController extends GetxController {
 
       // }else if(response.body["data"]['status']=="pending"){
     } else {
-      // TODO: Handle generic error
       print('Something went wrong\nPlease try again!'.tr);
     }
   }
@@ -825,7 +809,6 @@ class HomeController extends GetxController {
     if (response.statusCode == 200) {
       checkUserPackageModel = CheckUserPackageModel.fromJson(response.body);
     } else {
-      // TODO: Handle generic error
       print('Something went wrong\nPlease try again!'.tr);
     }
   }
@@ -843,11 +826,9 @@ class HomeController extends GetxController {
         },
         showdialog: false);
     if (response.statusCode == 200) {
-      // TODO: Handle listing deletion success
       print('Listing Delete Successfully'.tr);
       return true;
     } else {
-      // TODO: Handle generic error
       print('Something went wrong\nPlease try again!'.tr);
       return false;
     }
@@ -940,10 +921,8 @@ class HomeController extends GetxController {
         showdialog: true);
     if (response.statusCode == 200) {
       Get.offAll(Navigation_Bar());
-      // TODO: Handle mark sold success
       print('Mark a Sold Successfully'.tr);
     } else {
-      // TODO: Handle generic error
       print('Something went wrong\nPlease try again!'.tr);
     }
   }
@@ -1094,7 +1073,6 @@ class HomeController extends GetxController {
 
       if (authCont.user?.accessToken == null ||
           authCont.user?.accessToken == "") {
-        // TODO: Handle authentication error
         print('Authentication error. Please login again.');
         return;
       }
@@ -1139,7 +1117,6 @@ class HomeController extends GetxController {
             await ImageUploadHelper.processImagesForUpload(postImages);
 
         if (processedImages.isEmpty) {
-          // TODO: Handle image processing failure
           print('Failed to process images. Please try again.');
           return;
         }
@@ -1174,7 +1151,6 @@ class HomeController extends GetxController {
         }
       } catch (e) {
         print('❌ Error during image upload: $e');
-        // TODO: Handle image upload failure
         print(
             'Failed to upload images. Please check your connection and try again.');
         return;
@@ -1222,11 +1198,9 @@ class HomeController extends GetxController {
         await getSellerListingByStatus();
 
         Get.offAll(Navigation_Bar());
-        // TODO: Handle post add success
         print('Post Add Successfully'.tr);
       }
     } else {
-      // TODO: Handle generic error
       print('Something went wrong\nPlease try again!'.tr);
     }
   }
@@ -1308,7 +1282,6 @@ class HomeController extends GetxController {
             await ImageUploadHelper.processImagesForUpload(postImages);
 
         if (processedImages.isEmpty) {
-          // TODO: Handle image processing failure
           print('Failed to process images. Please try again.');
           return;
         }
@@ -1343,7 +1316,6 @@ class HomeController extends GetxController {
         }
       } catch (e) {
         print('❌ Error during image upload: $e');
-        // TODO: Handle image upload failure
         print(
             'Failed to upload images. Please check your connection and try again.');
         return;
@@ -1380,10 +1352,8 @@ class HomeController extends GetxController {
       await getSellerListingByStatus();
 
       Get.offAll(Navigation_Bar());
-      // TODO: Handle post update success
       print('Post Updated Successfully'.tr);
     } else {
-      // TODO: Handle generic error
       print('Something went wrong\nPlease try again!'.tr);
     }
   }
@@ -1413,7 +1383,6 @@ class HomeController extends GetxController {
       } else {
         Get.log("No coordinates found for address: $latestAddress",
             isError: true);
-        // TODO: Handle location fetch error
         print(
             'Unable to fetch location. Using default coordinates.'.tr);
         lat = "23.124792615936276"; // Fallback default
@@ -1422,7 +1391,6 @@ class HomeController extends GetxController {
     } catch (e, stackTrace) {
       Get.log("Error in getCoordinatesFromAddress: $e\n$stackTrace",
           isError: true);
-      // TODO: Handle coordinates error
       print(
           'Failed to get coordinates. Using default coordinates.'.tr);
       lat = "23.124792615936276"; // Fallback default
@@ -1541,7 +1509,6 @@ class HomeController extends GetxController {
         ));
       }
     } else {
-      // TODO: Handle generic error
       print('Something went wrong\nPlease try again!'.tr);
     }
   }
@@ -1562,7 +1529,6 @@ class HomeController extends GetxController {
       sellerDetailsModel = SellerDetailsModel.fromJson(jsonDecode(data));
     } else {
       await response.stream.bytesToString();
-      // TODO: Handle generic error
       print('Something went wrong\nPlease try again!'.tr);
     }
   }
@@ -1597,7 +1563,6 @@ class HomeController extends GetxController {
         currentPage++;
         hasMore = currentPage <= (body['last_page'] ?? 1);
       } else {
-        // TODO: Handle error
         print('Something went wrong\nPlease try again!');
         hasMore = false;
       }
@@ -1629,7 +1594,6 @@ class HomeController extends GetxController {
 
       Get.to(FavouriteSeller());
     } else {
-      // TODO: Handle generic error
       print('Something went wrong\nPlease try again!'.tr);
     }
   }
@@ -1710,11 +1674,9 @@ class HomeController extends GetxController {
         listingLoading = false;
         update();
       } else {
-        // TODO: Handle generic error
       print('Something went wrong\nPlease try again!'.tr);
       }
     } catch (e) {
-      // TODO: Handle generic error
       print('Something went wrong\nPlease try again!'.tr);
     } finally {
       _isLoadingListings = false;
@@ -1846,12 +1808,10 @@ class HomeController extends GetxController {
       } else {
         Get.log("API Error: ${response.statusCode}, ${response.body}",
             isError: true);
-        // TODO: Handle generic error
       print('Something went wrong\nPlease try again!'.tr);
       }
     } catch (e, stackTrace) {
       Get.log("Error in getListingSearch: $e\n$stackTrace", isError: true);
-      // TODO: Handle error
       print('Something went wrong. Please try again.'.tr);
     } finally {
       isSearchLoading.value = false;
@@ -2045,7 +2005,6 @@ class HomeController extends GetxController {
       // Validate listingId
       if (listingId.isEmpty || listingId == "null") {
         if (showDialog) {
-          // TODO: Handle invalid listing ID
           print('Invalid listing ID'.tr);
         }
         return;
@@ -2098,7 +2057,6 @@ class HomeController extends GetxController {
         } else {
           // Don't show toast for chat screen (showDialog = false) to avoid annoying users
           if (showDialog) {
-            // TODO: Handle no listing data
             print('No listing data found'.tr);
           }
         }
@@ -2113,12 +2071,10 @@ class HomeController extends GetxController {
         // Don't show toast for chat screen (showDialog = false) to avoid annoying users
         if (showDialog) {
           if (response.statusCode == 500) {
-            // TODO: Handle listing not found
 print('Listing not found or has been removed.'.tr);
             // Go back if this was opened from a direct action
             Get.back();
           } else {
-            // TODO: Handle generic error
       print('Something went wrong\nPlease try again!'.tr);
           }
         }
@@ -2128,7 +2084,6 @@ print('Listing not found or has been removed.'.tr);
       listingModel = null;
       update();
       if (showDialog) {
-        // TODO: Handle listing not found
 print('Listing not found or has been removed.'.tr);
         // Go back if this was opened from a direct action
         Get.back();
@@ -2158,7 +2113,6 @@ print('Listing not found or has been removed.'.tr);
       isFavouriteScreen = false;
       return true;
     } else {
-      // TODO: Handle generic error
       print('Something went wrong\nPlease try again!'.tr);
       return false;
     }
@@ -2368,7 +2322,6 @@ print('Listing not found or has been removed.'.tr);
       _updateLocalFavoriteSellersList();
       return true;
     } else {
-      // TODO: Handle generic error
       print('Something went wrong\nPlease try again!'.tr);
       return false;
     }
@@ -2599,7 +2552,6 @@ print('Listing not found or has been removed.'.tr);
       categoriesModel = CategoriesModel.fromJson(response.body);
       isType = 0;
     } else {
-      // TODO: Handle generic error
       print('Something went wrong\nPlease try again!'.tr);
     }
   }
@@ -2654,7 +2606,6 @@ print('Listing not found or has been removed.'.tr);
                 };
         }
       } else {
-        // TODO: Handle generic error
       print('Something went wrong\nPlease try again!'.tr);
       }
     } catch (e) {
@@ -2681,7 +2632,6 @@ print('Listing not found or has been removed.'.tr);
         Get.to(CategoryFromBottom());
       }
     } else {
-      // TODO: Handle generic error
       print('Something went wrong\nPlease try again!'.tr);
     }
   }
@@ -2729,7 +2679,6 @@ print('Listing not found or has been removed.'.tr);
         update();
       }
     } else {
-      // TODO: Handle generic error
       print('Something went wrong\nPlease try again!'.tr);
     }
   }
@@ -2797,7 +2746,6 @@ print('Listing not found or has been removed.'.tr);
               };
       }
     } else {
-      // TODO: Handle generic error
       print('Something went wrong\nPlease try again!'.tr);
     }
   }

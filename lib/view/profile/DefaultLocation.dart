@@ -18,7 +18,6 @@ class _DefaultLocationState extends State<DefaultLocation> {
 
   @override
   void initState() {
-    // TODO: implement initState
     print(authCont.user?.province);
     authCont.firstNameCont.text = authCont.user?.firstName ?? "";
     authCont.lastNameCont.text = authCont.user?.lastName ?? "";

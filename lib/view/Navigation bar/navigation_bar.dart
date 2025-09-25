@@ -124,9 +124,12 @@ class _Navigation_BarState extends State<Navigation_Bar> {
               BottomNavigationBarItem(
                 icon: SvgPicture.asset(
                   'assets/icons/home.svg',
-                  color: cont.currentIndexBottomAppBar == 0
-                      ? AppColors.k0xFF0254B8
-                      : Theme.of(context).unselectedWidgetColor,
+                  colorFilter: ColorFilter.mode(
+                    cont.currentIndexBottomAppBar == 0
+                        ? AppColors.k0xFF0254B8
+                        : Theme.of(context).unselectedWidgetColor,
+                    BlendMode.srcIn,
+                  ),
                 ),
                 label: 'Home'.tr,
               ),
@@ -139,9 +142,12 @@ class _Navigation_BarState extends State<Navigation_Bar> {
                     children: [
                       SvgPicture.asset(
                         'assets/icons/messenger.svg',
-                        color: cont.currentIndexBottomAppBar == 1
-                            ? AppColors.k0xFF0254B8
-                            : Theme.of(context).unselectedWidgetColor,
+                        colorFilter: ColorFilter.mode(
+                          cont.currentIndexBottomAppBar == 1
+                              ? AppColors.k0xFF0254B8
+                              : Theme.of(context).unselectedWidgetColor,
+                          BlendMode.srcIn,
+                        ),
                       ),
                       if (authCont.unreadMessageCount.value > 0) // Show badge with count if there are unread messages
                           Positioned(
@@ -162,7 +168,7 @@ class _Navigation_BarState extends State<Navigation_Bar> {
                                     width: 2),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.2),
+                                    color: Colors.black.withValues(alpha: 0.2),
                                     blurRadius: 3,
                                     offset: Offset(0, 1),
                                   ),
@@ -192,27 +198,36 @@ class _Navigation_BarState extends State<Navigation_Bar> {
               BottomNavigationBarItem(
                 icon: SvgPicture.asset(
                   'assets/icons/camera.svg',
-                  color: cont.currentIndexBottomAppBar == 2
-                      ? AppColors.k0xFF0254B8
-                      : Theme.of(context).unselectedWidgetColor,
+                  colorFilter: ColorFilter.mode(
+                    cont.currentIndexBottomAppBar == 2
+                        ? AppColors.k0xFF0254B8
+                        : Theme.of(context).unselectedWidgetColor,
+                    BlendMode.srcIn,
+                  ),
                 ),
                 label: 'Post'.tr,
               ),
               BottomNavigationBarItem(
                 icon: SvgPicture.asset(
                   'assets/icons/tag.svg',
-                  color: cont.currentIndexBottomAppBar == 3
-                      ? AppColors.k0xFF0254B8
-                      : Theme.of(context).unselectedWidgetColor,
+                  colorFilter: ColorFilter.mode(
+                    cont.currentIndexBottomAppBar == 3
+                        ? AppColors.k0xFF0254B8
+                        : Theme.of(context).unselectedWidgetColor,
+                    BlendMode.srcIn,
+                  ),
                 ),
                 label: 'Listings'.tr,
               ),
               BottomNavigationBarItem(
                 icon: SvgPicture.asset(
                   'assets/icons/profile.svg',
-                  color: cont.currentIndexBottomAppBar == 4
-                      ? AppColors.k0xFF0254B8
-                      : Theme.of(context).unselectedWidgetColor,
+                  colorFilter: ColorFilter.mode(
+                    cont.currentIndexBottomAppBar == 4
+                        ? AppColors.k0xFF0254B8
+                        : Theme.of(context).unselectedWidgetColor,
+                    BlendMode.srcIn,
+                  ),
                 ),
                 label: 'Profile'.tr,
               ),

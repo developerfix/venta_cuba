@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -8,14 +7,7 @@ import 'package:venta_cuba/Models/SelectedCategoryModel.dart';
 import 'package:venta_cuba/util/profile_list.dart';
 import 'package:venta_cuba/view/Navigation%20bar/post.dart';
 
-import '../../Utils/funcations.dart';
-import '../Chat/custom_text.dart';
-import '../Navigation bar/search.dart';
-import '../auth/login.dart';
 import '../constants/Colors.dart';
-import 'package:flutter_svg/svg.dart';
-
-import '../frame/frame.dart';
 
 class CategoryFromBottom extends StatefulWidget {
   const CategoryFromBottom({super.key});

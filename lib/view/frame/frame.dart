@@ -11,8 +11,6 @@ import 'package:google_maps_flutter/google_maps_flutter.dart' as map;
 
 import 'package:lottie/lottie.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:venta_cuba/Controllers/theme_controller.dart';
-import 'package:venta_cuba/view/Chat/Controller/SupabaseChatController.dart';
 import 'package:venta_cuba/view/Chat/custom_text.dart';
 import 'package:venta_cuba/view/Navigation%20bar/post.dart';
 
@@ -73,7 +71,6 @@ class _FrameScreenState extends State<FrameScreen> {
       _updateSellerFavoriteStatus();
     });
 
-    // TODO: implement initState
     // center =
     //     map.LatLng(double.parse(home.listingModel!.latitude!), double.parse(home.listingModel!.longitude!));
     super.initState();
@@ -99,10 +96,9 @@ class _FrameScreenState extends State<FrameScreen> {
   static Future<void> openMap(double latitude, double longitude) async {
     String googleUrl =
         'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude';
-    if (await canLaunch(googleUrl)) {
-      await launch(googleUrl);
+    if (await canLaunchUrl(Uri.parse(googleUrl))) {
+      await launchUrl(Uri.parse(googleUrl));
     } else {
-      // TODO: Handle map open failure
       print("Could not open the map.");
       throw 'Could not open the map.';
     }
@@ -949,7 +945,6 @@ class _FrameScreenState extends State<FrameScreen> {
                                           cont.isLoading = false;
                                           cont.update();
                                           if (isAddedF) {
-                                            // TODO: Handle success message
 print("Successfully".tr);
                                             print(
                                                 "isSellerFavorite.............${cont.listingModel?.isSellerFavorite}");
@@ -1322,10 +1317,11 @@ print("Successfully".tr);
                                             imageUrl.isNotEmpty) {
                                           shareContent += "\n$imageUrl";
                                         }
-                                        Share.share(
-                                          shareContent,
+                                        final params = ShareParams(
+                                          text: shareContent,
                                           subject: title,
                                         );
+                                        SharePlus.instance.share(params);
                                       },
                                       child: Row(
                                         children: [
@@ -1532,8 +1528,6 @@ print("Successfully".tr);
                                   "${authCont.user?.userId}_${cont.listingModel?.userId}";
                               // Navigate to chat with the listing owner
                               try {
-                                final chatController =
-                                    Get.find<SupabaseChatController>();
                                 // For now, just navigate to chat page directly
                                 print(
                                     'Starting chat with user: ${cont.listingModel?.userId}');

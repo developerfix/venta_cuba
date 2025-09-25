@@ -152,7 +152,6 @@ class _ChatPageState extends State<ChatPage> {
   // Initialize listing data for this specific chat
   void _initializeListingData() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-
       homeCont.listingModel = null;
       homeCont.update();
 
@@ -160,8 +159,7 @@ class _ChatPageState extends State<ChatPage> {
           widget.listingId!.isNotEmpty &&
           widget.listingId != "null") {
         homeCont.getListingDetails(widget.listingId!, showDialog: false);
-      } else {
-      }
+      } else {}
     });
   }
 
@@ -183,8 +181,7 @@ class _ChatPageState extends State<ChatPage> {
         // Update unread indicators after marking as read
         await chatCont.updateUnreadMessageIndicators();
       }
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   void _scrollToBottom({bool animated = false}) {
@@ -214,8 +211,7 @@ class _ChatPageState extends State<ChatPage> {
   void _testSupabaseBeforeChat() async {
     try {
       await chatCont.testSupabaseConnection();
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   Future<bool> saveFile() async {
@@ -275,7 +271,6 @@ class _ChatPageState extends State<ChatPage> {
       String? id = widget.chatId ?? widget.createChatid;
 
       if (id != null && id.isNotEmpty && id != 'null') {
-
         // Force clear any existing stream to ensure fresh data
         chatCont.clearChatStream(id);
 
@@ -737,7 +732,6 @@ class _ChatPageState extends State<ChatPage> {
                                     ),
                                     onPressed: () async {
                                       // Immediate UI feedback - disable button temporarily
-                                      final sendButton = cont;
                                       sendMessage('text');
                                       cont.update();
                                     },
@@ -796,7 +790,6 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   chatMessages() {
-
     if (messagesStream == null) {
       return Center(
         child: Column(
@@ -813,7 +806,6 @@ class _ChatPageState extends State<ChatPage> {
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: messagesStream,
       builder: (context, AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
-
         if (snapshot.hasError) {
           return Center(
             child: Column(
@@ -895,7 +887,6 @@ class _ChatPageState extends State<ChatPage> {
             ),
           );
         }
-
 
         // Schedule scroll to bottom after the widget tree is built
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1056,7 +1047,6 @@ class _ChatPageState extends State<ChatPage> {
   Future<void> sendNotificationToRecipient(
       String message, String messageType) async {
     try {
-
       // CRITICAL CHECK: Are you sending to yourself?
       if ("${authCont.user?.userId}" == widget.remoteUid) {
         return;
@@ -1240,8 +1230,7 @@ class _ChatPageState extends State<ChatPage> {
             .from('chats')
             .update(chatUpdateData)
             .eq('id', id);
-      } catch (e) {
-      }
+      } catch (e) {}
     }
   }
 
@@ -1267,7 +1256,6 @@ class _ChatPageState extends State<ChatPage> {
     try {
       showLoading();
 
-      String fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
       String? imageUrl = await chatCont.uploadImage(pickedFile);
 
       Get.back(); // Hide loading
@@ -1275,9 +1263,7 @@ class _ChatPageState extends State<ChatPage> {
       if (imageUrl != null) {
         // Send image message
         await sendImageMessage(imageUrl);
-      } else {
-        // TODO: Handle image upload failure
-      }
+      } else {}
     } catch (error) {
       Get.back(); // Hide loading
 
@@ -1291,7 +1277,6 @@ class _ChatPageState extends State<ChatPage> {
         // Permission denied for image upload
       }
 
-      // TODO: Handle upload error
     }
   }
 
@@ -1329,7 +1314,6 @@ class _ChatPageState extends State<ChatPage> {
 
       // Firebase notifications are sent automatically by SupabaseChatController
     } catch (e) {
-      // TODO: Handle failed image send
     }
   }
 

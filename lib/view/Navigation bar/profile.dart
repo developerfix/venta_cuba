@@ -3,10 +3,8 @@ import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
 import 'package:venta_cuba/Controllers/home_controller.dart';
 import 'package:venta_cuba/Controllers/location_controller.dart';
@@ -34,16 +32,10 @@ class Profile extends StatefulWidget {
 }
 
 class _ProfileState extends State<Profile> {
-  int _selectedStars = 4;
   final homeCont = Get.put(HomeController());
   final locationCont = Get.put(LocationController());
   final themeController = Get.put(ThemeController());
 
-  void _setRating(int rating) {
-    setState(() {
-      _selectedStars = rating;
-    });
-  }
 
   List<Widget> _buildStarRating(double rating) {
     List<Widget> stars = [];
@@ -272,7 +264,6 @@ class _ProfileState extends State<Profile> {
   @override
   void initState() {
     authCont.fetchAccountType();
-    // TODO: implement initState
     super.initState();
   }
 
@@ -423,7 +414,10 @@ class _ProfileState extends State<Profile> {
                                     width: 30..w,
                                     child: SvgPicture.asset(
                                       'assets/icons/reload.svg',
-                                      color: Theme.of(context).iconTheme.color,
+                                      colorFilter: ColorFilter.mode(
+                                        Theme.of(context).iconTheme.color ?? Colors.grey,
+                                        BlendMode.srcIn,
+                                      ),
                                     )),
                               )
                             ],
@@ -506,7 +500,10 @@ class _ProfileState extends State<Profile> {
                               width: 20..w,
                               child: SvgPicture.asset(
                                 'assets/icons/person.svg',
-                                color: Theme.of(context).iconTheme.color,
+                                colorFilter: ColorFilter.mode(
+                                  Theme.of(context).iconTheme.color ?? Colors.grey,
+                                  BlendMode.srcIn,
+                                ),
                               ),
                             ),
                             SizedBox(
@@ -607,7 +604,10 @@ class _ProfileState extends State<Profile> {
                                 width: 25..w,
                                 child: SvgPicture.asset(
                                   'assets/icons/heartSimple.svg',
-                                  color: Theme.of(context).iconTheme.color,
+                                  colorFilter: ColorFilter.mode(
+                                    Theme.of(context).iconTheme.color ?? Colors.grey,
+                                    BlendMode.srcIn,
+                                  ),
                                 ),
                               ),
                               SizedBox(width: 7..w),

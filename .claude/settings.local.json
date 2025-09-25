@@ -46,7 +46,10 @@
       "Bash(del:*)",
       "Bash(adb shell:*)",
       "Bash(gradlew.bat assembleDebug:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(do echo \"=== $file ===\")"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",

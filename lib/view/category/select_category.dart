@@ -3,10 +3,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:venta_cuba/Controllers/home_controller.dart';
 import 'package:venta_cuba/util/category_list.dart';
-import 'package:venta_cuba/view/Chat/custom_text.dart';
-import 'package:venta_cuba/view/category/category_from.dart';
-import 'package:venta_cuba/view/constants/Colors.dart';
-import 'package:flutter_svg/svg.dart';
 
 class SelectCategories extends StatefulWidget {
   const SelectCategories({super.key});
@@ -20,7 +16,6 @@ class _SelectCategoriesState extends State<SelectCategories> {
   @override
   void dispose() {
     homeCont.selectedSubCategory = null;
-    // TODO: implement dispose
     super.dispose();
   }
 

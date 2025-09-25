@@ -52,7 +52,6 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     } catch (e) {
       Get.log("Error in getAdd: $e", isError: true);
-      // TODO: Handle address loading error
       print('Failed to load saved address. Using default.'.tr);
     }
   }
@@ -186,9 +185,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                     child: Center(
                                         child: SvgPicture.asset(
                                             'assets/icons/heartadd.svg',
-                                            color: Theme.of(context)
-                                                .iconTheme
-                                                .color)),
+                                            colorFilter: ColorFilter.mode(
+                                              Theme.of(context).iconTheme.color ?? Colors.grey,
+                                              BlendMode.srcIn,
+                                            ))),
                                   ),
                                 ),
                                 // Notification icon removed
@@ -282,7 +282,10 @@ class _HomeScreenState extends State<HomeScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 SvgPicture.asset('assets/icons/location.svg',
-                                    color: Theme.of(context).iconTheme.color),
+                                    colorFilter: ColorFilter.mode(
+                                      Theme.of(context).iconTheme.color ?? Colors.grey,
+                                      BlendMode.srcIn,
+                                    )),
                                 SizedBox(
                                   width: 5.w,
                                 ),

@@ -3,7 +3,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
-import 'package:venta_cuba/Utils/funcations.dart';
 import 'package:venta_cuba/view/Chat/custom_text.dart';
 import 'package:venta_cuba/view/auth/sign_up.dart';
 
@@ -253,7 +252,6 @@ class _LoginState extends State<Login> {
                                                         .isEmpty ||
                                                     !GetUtils.isEmail(
                                                         cont.emailCont.text)) {
-                                                  // TODO: Handle invalid email
                                                   print(
                                                       "Please Enter Correct Email"
                                                           .tr);
@@ -261,7 +259,6 @@ class _LoginState extends State<Login> {
                                                         .isEmpty ||
                                                     cont.passCont.text.length <
                                                         8) {
-                                                  // TODO: Handle invalid password
                                                   print(
                                                       "Please Enter Correct Password"
                                                           .tr);
