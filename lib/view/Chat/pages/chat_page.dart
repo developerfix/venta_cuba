@@ -18,7 +18,7 @@ import '../../../Controllers/home_controller.dart';
 // import '../../../Services/Firebase/firebase_messaging_service.dart';
 import '../../../Utils/global_variabel.dart';
 import '../Controller/SupabaseChatController.dart';
-import '../../../Services/RealPush/supabase_push_service.dart';
+import '../../../Services/push_service.dart';
 import '../custom_text.dart';
 import '../widgets/message_tile.dart';
 
@@ -78,7 +78,6 @@ class _ChatPageState extends State<ChatPage> {
 
     // Mark chat as read when user leaves the chat page
     if (widget.chatId != null && authCont.user?.userId != null) {
-      print('💬 🚪 User leaving chat page, marking as read...');
       chatCont.markChatAsRead(
         widget.chatId!,
         authCont.user!.userId.toString(),
@@ -86,8 +85,7 @@ class _ChatPageState extends State<ChatPage> {
     }
 
     // Set chat screen as closed when leaving
-    print('🔴 CHAT PAGE: Setting chat screen CLOSED');
-    SupabasePushService.setChatScreenStatus(isOpen: false, chatId: null);
+    PushService.setChatScreenStatus(false, null);
 
     super.dispose();
   }
@@ -105,16 +103,15 @@ class _ChatPageState extends State<ChatPage> {
   void initState() {
     super.initState();
 
-    print("🔥 === CHAT PAGE INIT STATE ===");
-    print("🔥 Chat ID: ${widget.chatId}");
-    print("🔥 Create Chat ID: ${widget.createChatid}");
-    print("🔥 User Name: ${widget.userName}");
-    print("🔥 Listing ID: ${widget.listingId}");
-    print("🔥 Remote UID: ${widget.remoteUid}");
-    print("🔥 Sender ID: ${widget.senderId}");
-    print("🔥 Current User ID: ${authCont.user?.userId}");
-
     focusNode = FocusNode();
+
+    // Set chat screen status immediately
+    PushService.setChatScreenStatus(true, widget.chatId);
+
+    // Set user as online when entering chat
+    if (authCont.user?.userId != null) {
+      chatCont.setUserOnline(authCont.user!.userId.toString());
+    }
 
     // Test Supabase connection before setting up chat
     _testSupabaseBeforeChat();
@@ -122,19 +119,16 @@ class _ChatPageState extends State<ChatPage> {
     getChat();
     saveFile();
 
+    // Preload chat data for instant loading
+    if (widget.chatId != null) {
+      chatCont.prewarmChatData(widget.chatId!);
+    }
+
     // Update device tokens when chat is opened
     updateDeviceTokensOnChatOpen();
 
     // Initialize listing data for this specific chat
     _initializeListingData();
-
-    // Delay setting chat screen status to ensure push service is initialized
-    Future.delayed(const Duration(milliseconds: 500), () {
-      print(
-          'testing 🔴 CHAT PAGE: Setting chat screen OPEN for chatId: ${widget.chatId}');
-      SupabasePushService.setChatScreenStatus(
-          isOpen: true, chatId: widget.chatId);
-    });
 
     // Improved scroll listener with better logic
     chatCont.scrollController.addListener(() {
@@ -158,10 +152,6 @@ class _ChatPageState extends State<ChatPage> {
   // Initialize listing data for this specific chat
   void _initializeListingData() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      print("🔥 📋 INITIALIZING LISTING DATA");
-      print("🔥 📋 Widget listing ID: ${widget.listingId}");
-      print("🔥 📋 Widget listing name: ${widget.listingName}");
-      print("🔥 📋 Widget listing image: ${widget.listingImage}");
 
       homeCont.listingModel = null;
       homeCont.update();
@@ -169,12 +159,8 @@ class _ChatPageState extends State<ChatPage> {
       if (widget.listingId != null &&
           widget.listingId!.isNotEmpty &&
           widget.listingId != "null") {
-        print("🔥 📋 Fetching listing details for ID: ${widget.listingId}");
         homeCont.getListingDetails(widget.listingId!, showDialog: false);
       } else {
-        print("🔥 📋 No valid listing ID provided, using widget data");
-        print(
-            "🔥 📋 Fallback data - Name: ${widget.listingName}, Price: ${widget.listingPrice}");
       }
     });
   }
@@ -183,9 +169,7 @@ class _ChatPageState extends State<ChatPage> {
   Future<void> updateDeviceTokensOnChatOpen() async {
     try {
       if (widget.chatId != null && authCont.user?.userId != null) {
-        print("🔥 📱 Updating device token on chat open...");
         await chatCont.updateDeviceTokenInChat(
-          widget.chatId!,
           authCont.user!.userId.toString(),
           deviceToken,
         );
@@ -200,7 +184,6 @@ class _ChatPageState extends State<ChatPage> {
         await chatCont.updateUnreadMessageIndicators();
       }
     } catch (e) {
-      print("🔥 ❌ Error updating device token on chat open: $e");
     }
   }
 
@@ -230,18 +213,8 @@ class _ChatPageState extends State<ChatPage> {
   // Test Supabase connection before initializing chat
   void _testSupabaseBeforeChat() async {
     try {
-      print("🔥 🧪 Testing Supabase connection before chat...");
-      final connectionOk = await chatCont.testSupabaseConnection();
-      print("🔥 🧪 Supabase connection test result: $connectionOk");
-
-      if (!connectionOk) {
-        print("🔥 ❌ Supabase connection failed - chat may not work properly");
-      } else {
-        print(
-            "🔥 ✅ Supabase connection successful - proceeding with chat setup");
-      }
+      await chatCont.testSupabaseConnection();
     } catch (e) {
-      print("🔥 ❌ Error testing Supabase connection: $e");
     }
   }
 
@@ -300,12 +273,8 @@ class _ChatPageState extends State<ChatPage> {
   getChat() {
     try {
       String? id = widget.chatId ?? widget.createChatid;
-      print(
-          "💬 🔥 getChat() called with chatId: '${widget.chatId}', createChatid: '${widget.createChatid}'");
-      print("💬 🔥 Final id to use: '$id'");
 
       if (id != null && id.isNotEmpty && id != 'null') {
-        print("💬 🔥 Setting up message stream for chat: $id");
 
         // Force clear any existing stream to ensure fresh data
         chatCont.clearChatStream(id);
@@ -313,34 +282,26 @@ class _ChatPageState extends State<ChatPage> {
         setState(() {
           messagesStream = chatCont.getChatMessages(id);
         });
-        print("💬 ✅ Message stream initialized for chat: $id");
 
         // Test the stream immediately
         messagesStream!.listen(
           (data) {
-            print("💬 🔥 Stream received data: ${data.length} messages");
-            if (data.isNotEmpty) {
-              print(
-                  "💬 🔥 First message: ${data.first['message']} by ${data.first['send_by']}");
-            }
+            // Stream data received
           },
           onError: (error) {
-            print("💬 ❌ Stream error: $error");
+            // Stream error occurred
           },
           onDone: () {
-            print("💬 ❌ Stream done/closed unexpectedly");
+            // Stream closed
           },
         );
       } else {
-        print("💬 ❌ Invalid chat ID: '$id' - cannot load messages");
         // Set an empty stream to prevent null issues
         setState(() {
           messagesStream = Stream.value(<Map<String, dynamic>>[]);
         });
       }
-    } catch (e, stackTrace) {
-      print("❌ CRITICAL ERROR in getChat: $e");
-      print("❌ Stack trace: $stackTrace");
+    } catch (e) {
       // Set an error stream
       setState(() {
         messagesStream = Stream.error(e);
@@ -399,7 +360,6 @@ class _ChatPageState extends State<ChatPage> {
                       strokeWidth: 2,
                     ))),
                 errorWidget: (context, url, error) {
-                  print("🔥 Profile image load error: $error for URL: $url");
                   return Container(
                     height: 50.h,
                     width: 50.w,
@@ -435,8 +395,8 @@ class _ChatPageState extends State<ChatPage> {
                   SizedBox(height: 2.h),
                   // Show last active time or online status
                   if (widget.remoteUid != null)
-                    StreamBuilder<Map<String, dynamic>?>(
-                      stream: chatCont.getUserPresence(widget.remoteUid!),
+                    FutureBuilder<Map<String, dynamic>>(
+                      future: chatCont.getUserPresence(widget.remoteUid!),
                       builder: (context, snapshot) {
                         if (snapshot.hasData && snapshot.data != null) {
                           Map<String, dynamic> presenceData = snapshot.data!;
@@ -542,8 +502,6 @@ class _ChatPageState extends State<ChatPage> {
                                       ),
                                     ),
                                     errorWidget: (context, url, error) {
-                                      print(
-                                          "🔥 Listing image load error: $error for URL: $url");
                                       return Container(
                                         height: 50,
                                         width: 50,
@@ -778,7 +736,9 @@ class _ChatPageState extends State<ChatPage> {
                                           : Theme.of(context).iconTheme.color,
                                     ),
                                     onPressed: () async {
-                                      await sendMessage('text');
+                                      // Immediate UI feedback - disable button temporarily
+                                      final sendButton = cont;
+                                      sendMessage('text');
                                       cont.update();
                                     },
                                   ),
@@ -836,11 +796,8 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   chatMessages() {
-    print(
-        '💬 🔥 chatMessages() called - messagesStream: ${messagesStream != null ? 'NOT NULL' : 'NULL'}');
 
     if (messagesStream == null) {
-      print('💬 ❌ messagesStream is null, returning loading state');
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -856,15 +813,8 @@ class _ChatPageState extends State<ChatPage> {
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: messagesStream,
       builder: (context, AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
-        print('💬 🔥 StreamBuilder called:');
-        print('💬   - connectionState: ${snapshot.connectionState}');
-        print('💬   - hasData: ${snapshot.hasData}');
-        print('💬   - hasError: ${snapshot.hasError}');
-        print('💬   - data length: ${snapshot.data?.length ?? 'null'}');
-        print('💬   - error: ${snapshot.error}');
 
         if (snapshot.hasError) {
-          print('💬 ❌ StreamBuilder error: ${snapshot.error}');
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -879,7 +829,6 @@ class _ChatPageState extends State<ChatPage> {
                 SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () {
-                    print('💬 🔄 User requested chat reload');
                     getChat(); // Retry loading
                   },
                   child: Text('Retry'.tr),
@@ -892,7 +841,6 @@ class _ChatPageState extends State<ChatPage> {
         // Handle different connection states with timeout
         switch (snapshot.connectionState) {
           case ConnectionState.none:
-            print('💬 ⏳ StreamBuilder: Connection state NONE');
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -903,7 +851,6 @@ class _ChatPageState extends State<ChatPage> {
                   SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {
-                      print('💬 🔄 User requested manual refresh');
                       getChat();
                     },
                     child: Text('Try Again'.tr),
@@ -912,8 +859,6 @@ class _ChatPageState extends State<ChatPage> {
               ),
             );
           case ConnectionState.waiting:
-            print(
-                '💬 ⏳ StreamBuilder: Connection state WAITING - showing loading');
             // Show loading indicator while waiting for initial data
             return Center(
               child: Column(
@@ -927,8 +872,6 @@ class _ChatPageState extends State<ChatPage> {
             );
           case ConnectionState.active:
           case ConnectionState.done:
-            print(
-                '💬 ✅ StreamBuilder: Connection state ${snapshot.connectionState}');
             break;
         }
 
@@ -937,7 +880,6 @@ class _ChatPageState extends State<ChatPage> {
         final messages =
             snapshot.hasData ? snapshot.data! : <Map<String, dynamic>>[];
         if (messages.isEmpty) {
-          print('💬 📭 StreamBuilder: Data is empty, showing empty state');
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -954,8 +896,6 @@ class _ChatPageState extends State<ChatPage> {
           );
         }
 
-        print(
-            '💬 ✅ StreamBuilder: Displaying ${snapshot.data!.length} messages');
 
         // Schedule scroll to bottom after the widget tree is built
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -964,7 +904,6 @@ class _ChatPageState extends State<ChatPage> {
           // Mark chat as read when messages are displayed and user scrolls to bottom
           if (widget.chatId != null && authCont.user?.userId != null) {
             Future.delayed(Duration(milliseconds: 1000), () {
-              print('💬 👀 Messages displayed, marking chat as read...');
               chatCont.markChatAsRead(
                 widget.chatId!,
                 authCont.user!.userId.toString(),
@@ -1057,11 +996,10 @@ class _ChatPageState extends State<ChatPage> {
   Future sendMessage(String messageType) async {
     try {
       if (chatCont.messageController.text.isNotEmpty) {
-        print(
-            "🔥 💬 TRYING TO SEND MESSAGE: ${chatCont.messageController.text}");
-        print("🔥 💬 Chat ID: ${widget.chatId ?? widget.createChatid}");
-
+        // Capture message and clear input immediately for better UX
         String message = chatCont.messageController.text;
+        chatCont.messageController.clear();
+
         String? id = widget.chatId ?? widget.createChatid;
 
         Map<String, dynamic> chatMessageData = {
@@ -1086,24 +1024,25 @@ class _ChatPageState extends State<ChatPage> {
           "listingLocation": widget.listingLocation,
         };
 
-        print("🔥 💬 Sending to Supabase...");
-        await chatCont.sendMessage(id ?? "", chatMessageData);
-        print("🔥 ✅ Message sent to Supabase successfully!");
-
-        // Clear the message controller first
-        chatCont.messageController.clear();
-
-        // Scroll to bottom with a slight delay to ensure message is added
-        Future.delayed(Duration(milliseconds: 500), () {
-          _scrollToBottom(animated: true);
+        // Send message without blocking UI
+        chatCont.sendMessage(id ?? "", chatMessageData).catchError((e) {
+          // Show error if send fails
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Failed to send message".tr),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 2),
+            ),
+          );
         });
+
+        // Scroll to bottom immediately
+        _scrollToBottom(animated: true);
 
         // Notifications are sent automatically by SupabaseChatController
         // No need for additional notification calls
       }
     } catch (e) {
-      print("🔥 ❌ ERROR SENDING MESSAGE: $e");
-      print("🔥 ❌ Error details: ${e.toString()}");
       // Show error to user
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1117,31 +1056,15 @@ class _ChatPageState extends State<ChatPage> {
   Future<void> sendNotificationToRecipient(
       String message, String messageType) async {
     try {
-      print("🔥 === NOTIFICATION SENDING DEBUG ===");
-      print("🔥 Current user ID: ${authCont.user?.userId}");
-      print(
-          "🔥 Current user name: ${authCont.user?.firstName} ${authCont.user?.lastName}");
-      print("🔥 Recipient UID: ${widget.remoteUid}");
-      print("🔥 Device token from chat: ${widget.deviceToken}");
-      print("🔥 Message: $message");
-      print("🔥 Message type: $messageType");
 
       // CRITICAL CHECK: Are you sending to yourself?
       if ("${authCont.user?.userId}" == widget.remoteUid) {
-        print(
-            "🔥 🚨 WARNING: You are trying to send notification to YOURSELF!");
-        print("🔥 🚨 Current user ID: ${authCont.user?.userId}");
-        print("🔥 🚨 Remote user ID: ${widget.remoteUid}");
-        print(
-            "🔥 🚨 This should NOT happen - there's a bug in the chat logic!");
         return;
       }
 
       // Update sender's device token in chat document before sending notification
       if (widget.chatId != null && authCont.user?.userId != null) {
-        print("🔥 📱 Updating sender's device token in chat document...");
         await chatCont.updateDeviceTokenInChat(
-          widget.chatId!,
           authCont.user!.userId.toString(),
           deviceToken,
         );
@@ -1152,22 +1075,15 @@ class _ChatPageState extends State<ChatPage> {
 
       // Validate device token
       if (deviceTokenToUse == null || deviceTokenToUse.isEmpty) {
-        print("🔥 ❌ Device token from chat is null/empty");
-        print("🔥 ❌ Notification will not be sent");
         return;
       }
 
       // Basic validation of device token format
       if (deviceTokenToUse.length < 50) {
-        print(
-            "🔥 ⚠️ Device token seems too short (${deviceTokenToUse.length} chars): $deviceTokenToUse");
-      } else {
-        print(
-            "🔥 ✅ Device token looks valid (${deviceTokenToUse.length} chars)");
+        // Token seems short but proceed anyway
       }
 
       // Send the notification
-      print("🔥 📤 Sending FCM notification...");
       bool notificationSent = await sendNotificationWithRetry(
         deviceTokenToUse,
         messageType,
@@ -1175,12 +1091,12 @@ class _ChatPageState extends State<ChatPage> {
       );
 
       if (notificationSent) {
-        print("🔥 ✅ Notification sent successfully to ${widget.remoteUid}");
+        // Notification sent successfully
       } else {
-        print("🔥 ❌ Failed to send notification to ${widget.remoteUid}");
+        // Failed to send notification
       }
     } catch (e) {
-      print("🔥 ❌ Error sending notification: $e");
+      // Error sending notification
     }
   }
 
@@ -1191,7 +1107,6 @@ class _ChatPageState extends State<ChatPage> {
       // This method is kept for compatibility but returns the fallback token
       return widget.deviceToken;
     } catch (e) {
-      print("🔥 ❌ Error getting recipient device token: $e");
       return widget.deviceToken; // Fallback to original token
     }
   }
@@ -1201,11 +1116,8 @@ class _ChatPageState extends State<ChatPage> {
     try {
       // Notifications are now handled automatically by SupabaseChatController
       // This method is kept for compatibility but notifications are sent elsewhere
-      print(
-          "🔔 Notification will be sent by SupabaseChatController automatically");
       return true; // Always return true since notifications are handled elsewhere
     } catch (e) {
-      print("🔥 ❌ Error in notification retry: $e");
       return false;
     }
   }
@@ -1329,7 +1241,6 @@ class _ChatPageState extends State<ChatPage> {
             .update(chatUpdateData)
             .eq('id', id);
       } catch (e) {
-        print("❌ Error updating image: $e");
       }
     }
   }
@@ -1357,7 +1268,7 @@ class _ChatPageState extends State<ChatPage> {
       showLoading();
 
       String fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
-      String? imageUrl = await chatCont.uploadImage(pickedFile.path, fileName);
+      String? imageUrl = await chatCont.uploadImage(pickedFile);
 
       Get.back(); // Hide loading
 
@@ -1365,29 +1276,22 @@ class _ChatPageState extends State<ChatPage> {
         // Send image message
         await sendImageMessage(imageUrl);
       } else {
-        print("❌ Image upload failed - no URL returned");
         // TODO: Handle image upload failure
-        print("❌ Image upload failed. Storage bucket may not be configured.");
       }
     } catch (error) {
       Get.back(); // Hide loading
-      print("❌ Error uploading image: $error");
 
-      String errorMessage = "Failed to upload image".tr;
       if (error.toString().contains('Bucket not found')) {
-        errorMessage = "Image storage not configured. Contact support.".tr;
+        // Image storage not configured
       } else if (error.toString().contains('row-level security policy') ||
           error.toString().contains('Unauthorized') ||
           error.toString().contains('403')) {
-        errorMessage =
-            "Image upload not authorized. Storage policies need configuration."
-                .tr;
+        // Image upload not authorized
       } else if (error.toString().contains('permission')) {
-        errorMessage = "Permission denied for image upload".tr;
+        // Permission denied for image upload
       }
 
       // TODO: Handle upload error
-      print("❌ Upload error: $errorMessage");
     }
   }
 
@@ -1425,9 +1329,7 @@ class _ChatPageState extends State<ChatPage> {
 
       // Firebase notifications are sent automatically by SupabaseChatController
     } catch (e) {
-      print("❌ Error sending image message: $e");
       // TODO: Handle failed image send
-      print("❌ Failed to send image: $e");
     }
   }
 

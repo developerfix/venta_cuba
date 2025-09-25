@@ -447,7 +447,7 @@ class _ProfileState extends State<Profile> {
                                     BoxShadow(
                                       color: Theme.of(context)
                                           .shadowColor
-                                          .withOpacity(.05),
+                                          .withValues(alpha: .05),
                                       blurRadius: 10,
                                     )
                                   ]),
@@ -493,7 +493,7 @@ class _ProfileState extends State<Profile> {
                               BoxShadow(
                                 color: Theme.of(context)
                                     .shadowColor
-                                    .withOpacity(.4),
+                                    .withValues(alpha: .4),
                                 blurRadius: 5,
                               )
                             ],
@@ -543,7 +543,7 @@ class _ProfileState extends State<Profile> {
                                 BoxShadow(
                                   color: Theme.of(context)
                                       .shadowColor
-                                      .withOpacity(.4),
+                                      .withValues(alpha: .4),
                                   blurRadius: 5,
                                 )
                               ],
@@ -594,7 +594,7 @@ class _ProfileState extends State<Profile> {
                                 BoxShadow(
                                   color: Theme.of(context)
                                       .shadowColor
-                                      .withOpacity(.4),
+                                      .withValues(alpha: .4),
                                   blurRadius: 5,
                                 )
                               ],
@@ -770,7 +770,7 @@ class _ProfileState extends State<Profile> {
                                           .unselectedWidgetColor,
                                       inactiveTrackColor: Theme.of(context)
                                           .unselectedWidgetColor
-                                          .withOpacity(0.3),
+                                          .withValues(alpha: 0.3),
                                     )),
                               ],
                             ),

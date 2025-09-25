@@ -13,12 +13,12 @@ import '../Share Preferences/Share Preferences.dart';
 import 'home_controller.dart';
 
 class LocationController extends GetxController {
-  final authCont = Get.put(
-    AuthController(),
-  );
-  final homeCont = Get.put(
-    HomeController(),
-  );
+  // Lazy initialization to avoid circular dependencies
+  AuthController? _authCont;
+  HomeController? _homeCont;
+
+  AuthController get authCont => _authCont ??= Get.find<AuthController>();
+  HomeController get homeCont => _homeCont ??= Get.find<HomeController>();
   bool isLocationOn = false;
 
   @override
@@ -211,7 +211,7 @@ class LocationController extends GetxController {
 
   Future<void> getLocation() async {
     LocationPermission permission;
-    bool servicesEnabled = await Geolocator.isLocationServiceEnabled();
+    await Geolocator.isLocationServiceEnabled();
 
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {

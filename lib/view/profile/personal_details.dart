@@ -148,7 +148,7 @@ class _PersonalDetailsState extends State<PersonalDetails> {
                               borderRadius: BorderRadius.circular(5.0),
                               // Adjust the border radius as needed
                               borderSide: BorderSide(
-                                color: AppColors.black.withOpacity(.2),
+                                color: AppColors.black.withValues(alpha: .2),
                                 // Adjust the border color as needed
                                 width: 1.0, // Adjust the border width as needed
                               ),
@@ -157,7 +157,7 @@ class _PersonalDetailsState extends State<PersonalDetails> {
                               borderRadius: BorderRadius.circular(5.0),
                               // Adjust the border radius as needed
                               borderSide: BorderSide(
-                                color: AppColors.black.withOpacity(.2),
+                                color: AppColors.black.withValues(alpha: .2),
                                 // Adjust the border color as needed
                                 width: 1.0, // Adjust the border width as needed
                               ),
@@ -190,7 +190,7 @@ class _PersonalDetailsState extends State<PersonalDetails> {
                                   borderRadius: BorderRadius.circular(5.0),
                                   // Adjust the border radius as needed
                                   borderSide: BorderSide(
-                                    color: AppColors.black.withOpacity(.2),
+                                    color: AppColors.black.withValues(alpha: .2),
                                     // Adjust the border color as needed
                                     width:
                                         1.0, // Adjust the border width as needed
@@ -200,7 +200,7 @@ class _PersonalDetailsState extends State<PersonalDetails> {
                                   borderRadius: BorderRadius.circular(5.0),
                                   // Adjust the border radius as needed
                                   borderSide: BorderSide(
-                                    color: AppColors.black.withOpacity(.2),
+                                    color: AppColors.black.withValues(alpha: .2),
                                     // Adjust the border color as needed
                                     width:
                                         1.0, // Adjust the border width as needed
@@ -232,7 +232,7 @@ class _PersonalDetailsState extends State<PersonalDetails> {
                                   borderRadius: BorderRadius.circular(5.0),
                                   // Adjust the border radius as needed
                                   borderSide: BorderSide(
-                                    color: AppColors.black.withOpacity(.2),
+                                    color: AppColors.black.withValues(alpha: .2),
                                     // Adjust the border color as needed
                                     width:
                                         1.0, // Adjust the border width as needed
@@ -242,7 +242,7 @@ class _PersonalDetailsState extends State<PersonalDetails> {
                                   borderRadius: BorderRadius.circular(5.0),
                                   // Adjust the border radius as needed
                                   borderSide: BorderSide(
-                                    color: AppColors.black.withOpacity(.2),
+                                    color: AppColors.black.withValues(alpha: .2),
                                     // Adjust the border color as needed
                                     width:
                                         1.0, // Adjust the border width as needed
@@ -337,7 +337,7 @@ class _PersonalDetailsState extends State<PersonalDetails> {
                               borderRadius: BorderRadius.circular(5.0),
                               // Adjust the border radius as needed
                               borderSide: BorderSide(
-                                color: AppColors.black.withOpacity(.2),
+                                color: AppColors.black.withValues(alpha: .2),
                                 // Adjust the border color as needed
                                 width: 1.0, // Adjust the border width as needed
                               ),
@@ -346,7 +346,7 @@ class _PersonalDetailsState extends State<PersonalDetails> {
                               borderRadius: BorderRadius.circular(5.0),
                               // Adjust the border radius as needed
                               borderSide: BorderSide(
-                                color: AppColors.black.withOpacity(.2),
+                                color: AppColors.black.withValues(alpha: .2),
                                 // Adjust the border color as needed
                                 width: 1.0, // Adjust the border width as needed
                               ),
@@ -389,7 +389,7 @@ class _PersonalDetailsState extends State<PersonalDetails> {
                               borderRadius: BorderRadius.circular(5.0),
                               // Adjust the border radius as needed
                               borderSide: BorderSide(
-                                color: AppColors.black.withOpacity(.2),
+                                color: AppColors.black.withValues(alpha: .2),
                                 // Adjust the border color as needed
                                 width: 1.0, // Adjust the border width as needed
                               ),
@@ -398,7 +398,7 @@ class _PersonalDetailsState extends State<PersonalDetails> {
                               borderRadius: BorderRadius.circular(5.0),
                               // Adjust the border radius as needed
                               borderSide: BorderSide(
-                                color: AppColors.black.withOpacity(.2),
+                                color: AppColors.black.withValues(alpha: .2),
                                 // Adjust the border color as needed
                                 width: 1.0, // Adjust the border width as needed
                               ),

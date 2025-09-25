@@ -86,7 +86,7 @@ class ListingModel {
     status = json['status'].toString();
     soldStatus = json['sold_status'].toString();
     isFavorite = json['isFavorite'].toString();
-    isSellerFavorite = json['isFavoriteSeller'].toString() ?? "0";
+    isSellerFavorite = json['isFavoriteSeller']?.toString() ?? "0";
     user = json['user'] != null ? new User.fromJson(json['user']) : null;
     category = json['category'] != null
         ? new Category.fromJson(json['category'])

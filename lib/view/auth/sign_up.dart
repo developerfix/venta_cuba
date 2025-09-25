@@ -579,7 +579,7 @@ class _SignUpState extends State<SignUp> {
                         //                   ? 40
                         //                   : height1,
                         //   margin: const EdgeInsets.only(left: 10, right: 10.0, bottom: 0),
-                        //   color: Colors.white.withOpacity(0.9),
+                        //   color: Colors.white.withValues(alpha: 0.9),
                         //   child: SingleChildScrollView(
                         //     child: Column(
                         //       children: List.generate(

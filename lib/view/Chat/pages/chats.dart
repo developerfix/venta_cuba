@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -21,6 +22,7 @@ class _ChatsState extends State<Chats> {
   String email = "";
   Stream<List<Map<String, dynamic>>>? chats;
   TextEditingController textEditingController = TextEditingController();
+  Timer? _refreshTimer;
 
   @override
   void initState() {
@@ -32,6 +34,28 @@ class _ChatsState extends State<Chats> {
       chatCont.updateBadgeCountFromChats();
       chatCont.updateUnreadMessageIndicators();
     });
+
+    // Start periodic refresh for real-time unread count updates
+    _refreshTimer = Timer.periodic(Duration(seconds: 30), (_) {
+      if (mounted) {
+        chatCont.updateUnreadMessageIndicators();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(Chats oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Refresh unread indicators when widget updates
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      chatCont.updateUnreadMessageIndicators();
+    });
   }
 
   String getName(String res) {
@@ -40,15 +64,12 @@ class _ChatsState extends State<Chats> {
 
   gettingUserData() async {
     try {
-      print("🔥 📋 LOADING CHATS LIST FROM SUPABASE...");
       if (authCont.user?.userId != null) {
         setState(() {
           chats = chatCont.getAllChats(authCont.user!.userId.toString());
         });
-        print("🔥 ✅ CHATS LIST STREAM INITIALIZED!");
       }
     } catch (e) {
-      print("🔥 ❌ ERROR LOADING CHATS LIST: $e");
     }
   }
 
@@ -101,16 +122,12 @@ class _ChatsState extends State<Chats> {
             color: Theme.of(context).primaryColor),
       );
     }
-    
-    return GetBuilder<SupabaseChatController>(
-      builder: (chatController) {
-        return StreamBuilder<List<Map<String, dynamic>>>(
-          stream: chats,
-          builder: (context, AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
-        print("🔥 📋 StreamBuilder state: hasData=${snapshot.hasData}, hasError=${snapshot.hasError}");
-        
+
+    return GetBuilder<AuthController>(
+      builder: (authController) => StreamBuilder<List<Map<String, dynamic>>>(
+        stream: chats,
+        builder: (context, AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
         if (snapshot.hasError) {
-          print("🔥 ❌ StreamBuilder error: ${snapshot.error}");
           return Center(
             child: Container(
               padding: EdgeInsets.all(20),
@@ -138,7 +155,6 @@ class _ChatsState extends State<Chats> {
         // make some checks
         if (snapshot.hasData) {
           if (snapshot.data != null) {
-            print("${snapshot.data!.length} chats found");
             if (snapshot.data!.length != 0) {
               // Filter and sort chats
               List<Map<String, dynamic>> chatDocs = snapshot.data!
@@ -178,8 +194,28 @@ class _ChatsState extends State<Chats> {
                       chat['send_to_id'] == currentUserId) {
                     
                     // Calculate unread status for this chat
-                    bool isUnread = chatCont.hasUnreadMessages(
-                        chat, currentUserId);
+                    bool isUnread = false;
+
+                    // Check if there are unread messages based on read times
+                    if (chat['send_by'] != currentUserId) { // Last message wasn't sent by current user
+                      final isCurrentUserSender = chat['sender_id'] == currentUserId;
+                      final lastReadTime = isCurrentUserSender
+                          ? chat['sender_last_read_time']
+                          : chat['recipient_last_read_time'];
+                      final lastMessageTime = chat['time'];
+
+                      // Message is unread if no read time or message is newer than read time
+                      if (lastReadTime == null ||
+                          (lastMessageTime != null &&
+                           DateTime.parse(lastMessageTime).isAfter(DateTime.parse(lastReadTime)))) {
+                        isUnread = true;
+                      }
+                    }
+
+                    // Also check the unread_count field if available
+                    if (chat['unread_count'] != null && chat['unread_count'] > 0) {
+                      isUnread = true;
+                    }
 
                     // Determine which user is the "other" user
                     bool isCurrentUserSender = chat['sender_id'] == currentUserId;
@@ -233,8 +269,7 @@ class _ChatsState extends State<Chats> {
           );
         }
           },
-        );
-      },
+        ),
     );
   }
 

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../Controllers/auth_controller.dart';
+import '../auth/login.dart';
 
 class WhiteScreen extends StatefulWidget {
   const WhiteScreen({super.key});
@@ -26,8 +27,14 @@ class _WhiteScreenState extends State<WhiteScreen> {
 
   Future<void> _checkAuth() async {
     try {
-      // Check user login status immediately - no delays
-      await authCont.checkUserLoggedIn();
+      // Check user login status with timeout to prevent hanging
+      await authCont.checkUserLoggedIn().timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          print('Auth check timeout, redirecting to login');
+          Get.offAll(() => const Login());
+        },
+      );
     } catch (e) {
       print('Error during auth check: $e');
     }

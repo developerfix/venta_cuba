@@ -122,7 +122,7 @@ class _PaymentNextState extends State<PaymentNext> {
                         ),
                         Center(
                           child: Image.asset(
-                            'assets/images/bank.png',
+                            'assets/images/notImage.jpg',
                             height: 200.h,
                             width: 200.w,
                           ),
@@ -383,7 +383,7 @@ class _PaymentNextState extends State<PaymentNext> {
 
                                   SizedBox(height: 20..h),
                                   Image.asset(
-                                    "assets/images/messageBank.png",
+                                    "assets/images/messageBank_opt.jpg",
                                     height: 150.h,
                                   ),
                                   SizedBox(height: 10),
@@ -572,7 +572,7 @@ class _PaymentNextState extends State<PaymentNext> {
                                             boxShadow: [
                                               BoxShadow(
                                                   color: AppColors.black
-                                                      .withOpacity(.25),
+                                                      .withValues(alpha: .25),
                                                   blurRadius: 2)
                                             ]),
                                         child: TextField(
@@ -606,7 +606,7 @@ class _PaymentNextState extends State<PaymentNext> {
                                               BoxShadow(
                                                   color: Theme.of(context)
                                                       .shadowColor
-                                                      .withOpacity(.25),
+                                                      .withValues(alpha: .25),
                                                   blurRadius: 2)
                                             ]),
                                         child: Center(
@@ -655,7 +655,7 @@ class _PaymentNextState extends State<PaymentNext> {
                                                   boxShadow: [
                                                     BoxShadow(
                                                         color: AppColors.black
-                                                            .withOpacity(.25),
+                                                            .withValues(alpha: .25),
                                                         blurRadius: 2)
                                                   ]),
                                               child: Center(
@@ -698,7 +698,7 @@ class _PaymentNextState extends State<PaymentNext> {
                                                   boxShadow: [
                                                     BoxShadow(
                                                         color: AppColors.black
-                                                            .withOpacity(.25),
+                                                            .withValues(alpha: .25),
                                                         blurRadius: 2)
                                                   ]),
                                               child: Center(
@@ -741,7 +741,7 @@ class _PaymentNextState extends State<PaymentNext> {
                                             boxShadow: [
                                               BoxShadow(
                                                   color: AppColors.black
-                                                      .withOpacity(.25),
+                                                      .withValues(alpha: .25),
                                                   blurRadius: 2)
                                             ]),
                                         child: Center(
@@ -786,7 +786,7 @@ class _PaymentNextState extends State<PaymentNext> {
                                               BoxShadow(
                                                   color: Theme.of(context)
                                                       .shadowColor
-                                                      .withOpacity(.25),
+                                                      .withValues(alpha: .25),
                                                   blurRadius: 2)
                                             ]),
                                         child: Center(
@@ -837,7 +837,7 @@ class _PaymentNextState extends State<PaymentNext> {
                                               BoxShadow(
                                                   color: Theme.of(context)
                                                       .shadowColor
-                                                      .withOpacity(.25),
+                                                      .withValues(alpha: .25),
                                                   blurRadius: 2)
                                             ]),
                                         child: Center(
@@ -897,7 +897,7 @@ class _PaymentNextState extends State<PaymentNext> {
                                                     BoxShadow(
                                                         color: Theme.of(context)
                                                             .shadowColor
-                                                            .withOpacity(.25),
+                                                            .withValues(alpha: .25),
                                                         blurRadius: 2)
                                                   ]),
                                               child: Center(

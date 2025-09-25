@@ -69,36 +69,59 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    // Initialize UI immediately, load data in background
+    _initializeAsync();
+  }
+
+  // Non-blocking initialization
+  void _initializeAsync() async {
+    try {
+      // Quick state reset
+      homeCont.selectedCategory = null;
+      homeCont.selectedSubCategory = null;
+      homeCont.selectedSubSubCategory = null;
+
+      // Heavy operations in background
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await _loadDataInBackground();
+      });
+    } catch (e, stackTrace) {
+      Get.log("Error in initState: $e\n$stackTrace", isError: true);
+      homeCont.loadingHome.value = false;
+      print('Failed to initialize home screen. Please try again.'.tr);
+    }
+  }
+
+  // Background data loading
+  Future<void> _loadDataInBackground() async {
     try {
       if (Get.previousRoute == "/login" ||
           Get.previousRoute != "/SearchAndCurrentLocationPage") {
-        homeCont.fetchAccountType();
-        getAdd();
-        getSaveHistory();
-        homeCont.selectedCategory = null;
-        homeCont.selectedSubCategory = null;
-        homeCont.selectedSubSubCategory = null;
+        // Run operations in parallel where possible
+        await Future.wait<void>([
+          homeCont.fetchAccountType(),
+          getAdd(),
+          getSaveHistory(),
+        ]);
+
         if (homeCont.shouldFetchData.value ||
             homeCont.listingModelList.isEmpty) {
-          homeCont.homeData();
+          await homeCont.homeData();
         }
       } else {
-        Get.log(
-            'Coming from SearchAndCurrentLocationPage, checking for changes');
+        Get.log('Coming from SearchAndCurrentLocationPage, checking for changes');
         homeCont.shouldFetchData.value = true;
-        getAdd();
+        await getAdd();
+
         if (homeCont.hasLocationOrRadiusChanged()) {
           homeCont.listingModelList.clear();
           homeCont.currentPage.value = 1;
           homeCont.hasMore.value = true;
-          homeCont.homeData();
+          await homeCont.homeData();
         }
       }
-    } catch (e, stackTrace) {
-      Get.log("Error in initState: $e\n$stackTrace", isError: true);
-      homeCont.loadingHome.value = false;
-      // TODO: Handle home screen initialization error
-      print('Failed to initialize home screen. Please try again.'.tr);
+    } catch (e) {
+      Get.log("Error loading background data: $e", isError: true);
     }
   }
 
@@ -173,7 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           SizedBox(
-                            height: 30..h,
+                            height: 30.h,
                           ),
                           Text(
                             'Welcome Back'.tr,
@@ -181,10 +204,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                 fontSize: 25, fontWeight: FontWeight.w600),
                           ),
                           SizedBox(
-                            height: 20..h,
+                            height: 20.h,
                           ),
                           Container(
-                            height: 54..h,
+                            height: 54.h,
                             width: MediaQuery.of(context).size.width,
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -207,7 +230,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       });
                                     },
                                     child: Container(
-                                      height: 54..h,
+                                      height: 54.h,
                                       decoration: BoxDecoration(
                                         color: AppColors.k0xFFF0F1F1,
                                         borderRadius:
@@ -233,7 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           SizedBox(
-                            height: 20..h,
+                            height: 20.h,
                           ),
                           InkWell(
                             onTap: () {
@@ -261,7 +284,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 SvgPicture.asset('assets/icons/location.svg',
                                     color: Theme.of(context).iconTheme.color),
                                 SizedBox(
-                                  width: 5..w,
+                                  width: 5.w,
                                 ),
                                 SizedBox(
                                   width: 290.w,
@@ -272,7 +295,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                               .tr,
                                           // overflow: TextOverflow.clip,
                                           style: TextStyle(
-                                              fontSize: 14..sp,
+                                              fontSize: 14.sp,
                                               fontWeight: FontWeight.w500,
                                               color: AppColors.k0xFF403C3C),
                                         )
@@ -283,7 +306,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                                           // overflow: TextOverflow.clip,
                                           style: TextStyle(
-                                              fontSize: 17..sp,
+                                              fontSize: 17.sp,
                                               fontWeight: FontWeight.w500,
                                               color: AppColors.k0xFF403C3C),
                                         ),
@@ -291,7 +314,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ],
                             ),
                           ),
-                          SizedBox(height: 25..h),
+                          SizedBox(height: 25.h),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -299,7 +322,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 child: Text(
                                   'Category'.tr,
                                   style: TextStyle(
-                                      fontSize: 16..sp,
+                                      fontSize: 16.sp,
                                       fontWeight: FontWeight.w600,
                                       color: Theme.of(context)
                                           .textTheme
@@ -323,7 +346,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 child: Text(
                                   'View all'.tr,
                                   style: TextStyle(
-                                      fontSize: 15..sp,
+                                      fontSize: 15.sp,
                                       fontWeight: FontWeight.w500,
                                       color: Theme.of(context)
                                           .textTheme
@@ -334,10 +357,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ),
                           SizedBox(
-                            height: 20..h,
+                            height: 20.h,
                           ),
                           Container(
-                            height: 62..h,
+                            height: 62.h,
                             width: MediaQuery.of(context).size.width,
                             child: ListView.builder(
                               scrollDirection: Axis.horizontal,
@@ -365,7 +388,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           SizedBox(
-                            height: 35..h,
+                            height: 35.h,
                           ),
                           ListingView()
                         ],

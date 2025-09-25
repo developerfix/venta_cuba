@@ -25,13 +25,62 @@ class _Navigation_BarState extends State<Navigation_Bar> {
   final authCont = Get.put(AuthController());
   final home = Get.put(HomeController());
 
+  // Pre-create screens for better performance
+  late final List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      HomeScreen(),
+      Chats(),
+      SelectCategoriesPost(),
+      Listings(),
+      Profile(),
+    ];
+
+    // Initialize unread message count when navigation bar loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeUnreadCount();
+    });
+  }
+
+  void _initializeUnreadCount() async {
+    try {
+      print('🔴 NAVIGATION: Starting unread count initialization');
+      print('🔴 NAVIGATION: Current unread count = ${authCont.unreadMessageCount.value}');
+
+      if (authCont.user?.userId != null) {
+        try {
+          final chatController = Get.find<SupabaseChatController>();
+          await chatController.updateUnreadMessageIndicators();
+          print('🔴 NAVIGATION: After update, unread count = ${authCont.unreadMessageCount.value}');
+        } catch (e) {
+          print('🔴 NAVIGATION: SupabaseChatController not found: $e');
+          // Try to create it
+          final chatController = Get.put(SupabaseChatController());
+          await chatController.updateUnreadMessageIndicators();
+          print('🔴 NAVIGATION: Created controller and updated count = ${authCont.unreadMessageCount.value}');
+        }
+      }
+
+      // Badge will update automatically based on real unread messages
+
+    } catch (e) {
+      print('🔴 NAVIGATION ERROR: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return GetBuilder<AuthController>(
       builder: (cont) {
         return Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          body: _buildScreen(cont.currentIndexBottomAppBar),
+          body: IndexedStack(
+            index: cont.currentIndexBottomAppBar,
+            children: _screens,
+          ),
           bottomNavigationBar: BottomNavigationBar(
             enableFeedback: false,
             backgroundColor:
@@ -55,14 +104,16 @@ class _Navigation_BarState extends State<Navigation_Bar> {
                   if (index == 1) {
                     // Update unread count when entering chat screen
                     try {
-                      final chatCont = Get.find<SupabaseChatController>();
-                      // Update unread message indicators if methods exist
-                      print('🔥 Switched to chat tab');
+                      final chatController = Get.find<SupabaseChatController>();
+                      chatController.updateUnreadMessageIndicators();
+                      print('🔥 Switched to chat tab, current unread count: ${authCont.unreadMessageCount.value}');
                     } catch (e) {
-                      print(
-                          '🔥 SupabaseChatController not found when switching to chat tab');
+                      print('🔥 SupabaseChatController not found when switching to chat tab');
                     }
                   }
+
+                  // Debug: Print current unread count
+                  print('🔥 Navigation - Current unread count: ${authCont.unreadMessageCount.value}');
 
                   cont.currentIndexBottomAppBar = index;
                   cont.update();
@@ -80,43 +131,52 @@ class _Navigation_BarState extends State<Navigation_Bar> {
                 label: 'Home'.tr,
               ),
               BottomNavigationBarItem(
-                icon: Obx(() => Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        SvgPicture.asset(
-                          'assets/icons/messenger.svg',
-                          color: cont.currentIndexBottomAppBar == 1
-                              ? AppColors.k0xFF0254B8
-                              : Theme.of(context).unselectedWidgetColor,
-                        ),
-                        if (cont.unreadMessageCount.value >
-                            0) // Show badge with count if there are unread messages
+                icon: Obx(() {
+                  print('🔴 BADGE CHECK: unread count = ${authCont.unreadMessageCount.value}');
+                  print('🔴 BADGE CHECK: hasUnread = ${authCont.hasUnreadMessages.value}');
+                  return Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      SvgPicture.asset(
+                        'assets/icons/messenger.svg',
+                        color: cont.currentIndexBottomAppBar == 1
+                            ? AppColors.k0xFF0254B8
+                            : Theme.of(context).unselectedWidgetColor,
+                      ),
+                      if (authCont.unreadMessageCount.value > 0) // Show badge with count if there are unread messages
                           Positioned(
-                            right: -6,
-                            top: -6,
+                            right: -8,
+                            top: -8,
                             child: Container(
                               constraints: BoxConstraints(
-                                minWidth: 16,
-                                minHeight: 16,
+                                minWidth: 18,
+                                minHeight: 18,
                               ),
-                              padding: EdgeInsets.symmetric(horizontal: 4),
+                              padding: EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                               decoration: BoxDecoration(
-                                color: Colors.red,
-                                borderRadius: BorderRadius.circular(8),
+                                color: Colors.red[600],
+                                borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
                                     color: Theme.of(context)
                                         .scaffoldBackgroundColor,
-                                    width: 1),
+                                    width: 2),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.2),
+                                    blurRadius: 3,
+                                    offset: Offset(0, 1),
+                                  ),
+                                ],
                               ),
                               child: Center(
                                 child: Text(
-                                  cont.unreadMessageCount.value > 99
+                                  authCont.unreadMessageCount.value > 99
                                       ? '99+'
-                                      : cont.unreadMessageCount.value
+                                      : authCont.unreadMessageCount.value
                                           .toString(),
                                   style: TextStyle(
                                     color: Colors.white,
-                                    fontSize: 10,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.bold,
                                   ),
                                   textAlign: TextAlign.center,
@@ -124,8 +184,9 @@ class _Navigation_BarState extends State<Navigation_Bar> {
                               ),
                             ),
                           ),
-                      ],
-                    )),
+                    ],
+                  );
+                }),
                 label: 'Chat'.tr,
               ),
               BottomNavigationBarItem(
@@ -162,23 +223,4 @@ class _Navigation_BarState extends State<Navigation_Bar> {
     );
   }
 
-  Widget _buildScreen(int index) {
-    switch (index) {
-      case 0:
-        return HomeScreen();
-      case 1:
-        return Chats();
-      case 2:
-        return SelectCategoriesPost();
-      //   Post(
-      //   isUpdate: false,
-      // );
-      case 3:
-        return Listings();
-      case 4:
-        return Profile();
-      default:
-        return Container(); // Handle other cases as needed
-    }
-  }
 }

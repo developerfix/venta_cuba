@@ -38,6 +38,10 @@ class MainActivity: FlutterActivity() {
                     requestBatteryOptimization()
                     result.success(true)
                 }
+                "restoreNotification" -> {
+                    restoreServiceNotification()
+                    result.success(true)
+                }
                 else -> {
                     result.notImplemented()
                 }
@@ -61,6 +65,13 @@ class MainActivity: FlutterActivity() {
     private fun stopBackgroundService() {
         val intent = Intent(this, NtfyBackgroundService::class.java).apply {
             action = NtfyBackgroundService.ACTION_STOP_SERVICE
+        }
+        startService(intent)
+    }
+
+    private fun restoreServiceNotification() {
+        val intent = Intent(this, NtfyBackgroundService::class.java).apply {
+            action = NtfyBackgroundService.ACTION_RESTORE_NOTIFICATION
         }
         startService(intent)
     }

@@ -125,8 +125,8 @@ class _GroupTileState extends State<GroupTile> {
             color: Colors.transparent,
             child: InkWell(
               onTap: _navigateToChat,
-              splashColor: Colors.grey.withOpacity(0.3),
-              highlightColor: Colors.grey.withOpacity(0.1),
+              splashColor: Colors.grey.withValues(alpha: 0.3),
+              highlightColor: Colors.grey.withValues(alpha: 0.1),
               child: Container(
                 width: double.infinity,
                 height: 60.h,
@@ -178,8 +178,8 @@ class _GroupTileState extends State<GroupTile> {
                               ),
                               // Online status indicator
                               if (widget.remoteUserId != null)
-                                StreamBuilder<Map<String, dynamic>?>(
-                                  stream: chatCont
+                                FutureBuilder<Map<String, dynamic>>(
+                                  future: chatCont
                                       .getUserPresence(widget.remoteUserId!),
                                   builder: (context, snapshot) {
                                     if (snapshot.hasData &&

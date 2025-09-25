@@ -33,7 +33,7 @@ class ListingView extends StatelessWidget {
           shrinkWrap: true,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            childAspectRatio: 0.50.r,
+            childAspectRatio: 0.50,
             mainAxisSpacing: 15,
             crossAxisSpacing: 10,
           ),
@@ -43,8 +43,9 @@ class ListingView extends StatelessWidget {
                   ? Center(child: CircularProgressIndicator())
                   : SizedBox.shrink();
             }
-            final item = shuffledList[index]; // Use shuffled item
-            return GestureDetector(
+            final item = shuffledList[index];
+            return RepaintBoundary( // Isolate repaints for better performance
+              child: GestureDetector(
               onTap: () {
                 cont.isListing = 0;
                 cont.listingModel = item; // Use shuffled item
@@ -222,6 +223,7 @@ class ListingView extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
             );
           },
         );

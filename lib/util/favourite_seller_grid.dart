@@ -20,7 +20,7 @@ class SellerList extends StatelessWidget {
           Container(
             height: 180..h,
             width: MediaQuery.of(context).size.width,
-            child: Image.asset('assets/images/realstate.png',
+            child: Image.asset('assets/images/notImage.jpg',
               fit: BoxFit.fill,
             ),
           ),

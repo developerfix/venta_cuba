@@ -1,6 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:venta_cuba/Services/Supabase/supabase_service.dart';
-import 'package:venta_cuba/Utils/funcations.dart';
 
 /// Helper class for managing RLS (Row Level Security) with custom authentication
 /// Works with existing tables: chats, messages, user_presence

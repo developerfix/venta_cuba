@@ -30,14 +30,14 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () {
-        authCont.currentIndexBottomAppBar = 0;
-        authCont.update();
-        Get.offAll(Navigation_Bar());
-
-        //  Get.back();
-        return Future(() => false);
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          authCont.currentIndexBottomAppBar = 0;
+          authCont.update();
+          Get.offAll(Navigation_Bar());
+        }
       },
       child: DefaultTabController(
         length: 3,
@@ -114,7 +114,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                                       color: Theme.of(context).cardColor,
                                       border: Border.all(
                                         color: AppColors.k0xFF0254B8
-                                            .withOpacity(0.5),
+                                            .withValues(alpha: 0.5),
                                       )),
                                   child: Row(
                                     mainAxisAlignment:
@@ -345,7 +345,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                                               BoxShadow(
                                                   color: Theme.of(context)
                                                       .shadowColor
-                                                      .withOpacity(.25),
+                                                      .withValues(alpha: .25),
                                                   blurRadius: 2)
                                             ]),
                                         child: Center(

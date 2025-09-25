@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
@@ -9,13 +8,11 @@ import 'package:venta_cuba/Controllers/home_controller.dart';
 import 'package:venta_cuba/view/Chat/custom_text.dart';
 import 'package:venta_cuba/view/Navigation%20bar/post.dart' show PriceFormatter;
 import 'package:venta_cuba/view/constants/Colors.dart';
-import '../../Models/ListingModel.dart';
 import '../frame/frame.dart';
-import 'become_vendor.dart';
 
 class MyPublicPage extends StatefulWidget {
-  String businessType;
-  int onScreen;
+  final String businessType;
+  final int onScreen;
 
   MyPublicPage({super.key, this.businessType = "0", required this.onScreen});
 

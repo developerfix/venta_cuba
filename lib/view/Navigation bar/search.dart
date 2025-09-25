@@ -382,7 +382,7 @@ class _SearchState extends State<Search> {
                                   padding: EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                       color:
-                                          AppColors.k0xFF0254B8.withOpacity(.2),
+                                          AppColors.k0xFF0254B8.withValues(alpha: .2),
                                       borderRadius: BorderRadius.circular(60)),
                                   child: Center(
                                     child: SvgPicture.asset(
@@ -405,7 +405,7 @@ class _SearchState extends State<Search> {
                                     // width: 98..w,
                                     decoration: BoxDecoration(
                                         color: AppColors.k0xFFD9D9D9
-                                            .withOpacity(.5),
+                                            .withValues(alpha: .5),
                                         borderRadius:
                                             BorderRadius.circular(60)),
                                     child: Row(

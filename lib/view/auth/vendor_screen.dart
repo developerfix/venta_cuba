@@ -211,7 +211,7 @@ class _VendorScreenState extends State<VendorScreen> {
                             color: Colors.transparent,
                             borderRadius: BorderRadius.circular(5),
                             border: Border.all(
-                                color: AppColors.k0xFFA9ABAC.withOpacity(.33))),
+                                color: AppColors.k0xFFA9ABAC.withValues(alpha: .33))),
                         child: TextField(
                           controller: cont.businessNameCont,
                           inputFormatters: [
@@ -249,7 +249,7 @@ class _VendorScreenState extends State<VendorScreen> {
                       //     decoration: BoxDecoration(
                       //         color: Colors.transparent,
                       //         borderRadius: BorderRadius.circular(5),
-                      //         border: Border.all(color: AppColors.k0xFFA9ABAC.withOpacity(.33))),
+                      //         border: Border.all(color: AppColors.k0xFFA9ABAC.withValues(alpha: .33))),
                       //     child: Center(
                       //       child: DropdownButtonHideUnderline(
                       //         child: DropdownButton2<CustomCitiesList>(
@@ -339,7 +339,7 @@ class _VendorScreenState extends State<VendorScreen> {
                       //     Obx(
                       //       () => Container(
                       //         margin: const EdgeInsets.only(left: 10, right: 90.0, bottom: 0),
-                      //         color: Colors.white.withOpacity(0.9),
+                      //         color: Colors.white.withValues(alpha: 0.9),
                       //         child: Visibility(
                       //           visible: locationCont.isTextFiled == 3 &&
                       //               locationCont.showOrHideLocationsList.value,
@@ -395,7 +395,7 @@ class _VendorScreenState extends State<VendorScreen> {
                               borderRadius: BorderRadius.circular(5),
                               border: Border.all(
                                   color:
-                                      AppColors.k0xFFA9ABAC.withOpacity(.33))),
+                                      AppColors.k0xFFA9ABAC.withValues(alpha: .33))),
                           child: Center(
                             child: DropdownButtonHideUnderline(
                               child: DropdownButton2<CustomProvinceNameList>(
@@ -495,7 +495,7 @@ class _VendorScreenState extends State<VendorScreen> {
                       //     Obx(
                       //       () => Container(
                       //         margin: const EdgeInsets.only(left: 10, right: 90.0, bottom: 0),
-                      //         color: Colors.white.withOpacity(0.9),
+                      //         color: Colors.white.withValues(alpha: 0.9),
                       //         child: Visibility(
                       //           visible: locationCont.isTextFiled == 2 &&
                       //               locationCont.showOrHideLocationsList.value,
@@ -549,7 +549,7 @@ class _VendorScreenState extends State<VendorScreen> {
                               borderRadius: BorderRadius.circular(5),
                               border: Border.all(
                                   color:
-                                      AppColors.k0xFFA9ABAC.withOpacity(.33))),
+                                      AppColors.k0xFFA9ABAC.withValues(alpha: .33))),
                           child: Center(
                             child: DropdownButtonHideUnderline(
                               child: DropdownButton2<CustomCitiesList>(
@@ -646,7 +646,7 @@ class _VendorScreenState extends State<VendorScreen> {
                       //     Obx(
                       //       () => Container(
                       //         margin: const EdgeInsets.only(left: 10, right: 90.0, bottom: 0),
-                      //         color: Colors.white.withOpacity(0.9),
+                      //         color: Colors.white.withValues(alpha: 0.9),
                       //         child: Visibility(
                       //           visible: locationCont.isTextFiled == 1 &&
                       //               locationCont.showOrHideLocationsList.value,

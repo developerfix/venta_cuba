@@ -46,19 +46,18 @@ defaultConfig {
     versionCode flutterVersionCode.toInteger()
     versionName flutterVersionName
     multiDexEnabled true
-    ndk {
-            abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86_64'
-        }
+    // ndk filters removed to avoid conflict with splits
         
 }
+  // Enable splits for smaller APK sizes in production
   splits {
-        abi {
-            enable true
-            reset()
-            include "armeabi-v7a", "arm64-v8a", "x86_64"
-            universalApk true
-        }
-    }
+      abi {
+          enable true
+          reset()
+          include "arm64-v8a", "armeabi-v7a"
+          universalApk true // Re-enable universal APK as requested
+      }
+  }
     signingConfigs {
         release {
             keyAlias keystoreProperties['keyAlias']
@@ -71,6 +70,27 @@ defaultConfig {
     buildTypes {
         release {
             signingConfig signingConfigs.release
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+
+            // Performance optimizations
+            debuggable false
+            jniDebuggable false
+            renderscriptDebuggable false
+            pseudoLocalesEnabled false
+            zipAlignEnabled true
+
+            // Additional optimizations
+            ndk {
+                debugSymbolLevel 'NONE'
+            }
+        }
+
+        debug {
+            minifyEnabled false
+            shrinkResources false
+            debuggable true
         }
     }
 }

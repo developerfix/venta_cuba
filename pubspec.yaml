@@ -36,12 +36,9 @@ dependencies:
   cupertino_icons: ^1.0.2
   flutter_screenutil: ^5.8.4
   get: ^4.6.5
-  smooth_page_indicator: ^1.1.0
   pinput: ^3.0.1
   dotted_border: ^2.0.0
   image_picker: ^1.0.1
-  flutter_chat_ui: ^1.6.9
-  introduction_screen: ^3.1.11
   lottie: ^2.7.0
   shared_preferences: ^2.5.3
   country_list_pick: ^1.0.0+3
@@ -54,7 +51,6 @@ dependencies:
   image_gallery_saver_plus: ^4.0.1
   flutter_slidable: ^3.1.2
   image: any
-  textfield_tags: ^2.0.2
   dropdown_button2: ^2.3.9
   photo_view: ^0.14.0
   path_provider: ^2.1.5
@@ -63,25 +59,26 @@ dependencies:
   video_player: ^2.9.2
   supabase_flutter: ^2.9.1
   intl: ^0.20.2
-  
+
   # Push notifications without Firebase (for Cuba)
   http: ^1.1.0
   flutter_image_compress: ^2.1.0
   web_socket_channel: ^2.4.0
   connectivity_plus: ^5.0.2
-  
+
   #Notification
   flutter_local_notifications: ^18.0.1
-    # GOOGLE MAPS
+
+  # Performance optimization packages
+  flutter_cache_manager: ^3.3.1
+  shimmer: ^3.0.0
+  visibility_detector: ^0.4.0+2
+
+  # GOOGLE MAPS
   google_maps_flutter: ^2.10.0
   geolocator: ^13.0.2
-  flutter_google_places_hoc081098: ^2.0.0
-  # flutter_google_places: ^0.3.0
   easy_image_viewer: ^1.5.1
   twilio_flutter:
-
-  #For Laravel API Communication (keeping existing)
-  flutter_app_badge_control: ^0.0.2
 
 dev_dependencies:
   flutter_test:
@@ -105,11 +102,18 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  # To add assets to your application, add an assets section, like this:
+  # Optimized assets configuration for premium performance
   assets:
     - assets/images/
     - assets/icons/
-    - assets/video/
+    # Temporarily exclude videos to reduce APK size
+    # - assets/video/
+
+  # Enable deferred components for smaller initial app size
+  generate: true
+
+  # Asset optimization
+  # Note: Use optimized WebP images in production
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

@@ -3,10 +3,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:venta_cuba/Controllers/auth_controller.dart';
-import 'package:venta_cuba/Services/RealPush/platform_push_service.dart';
+import 'package:venta_cuba/Services/push_service.dart';
+import 'package:venta_cuba/Services/notification_manager.dart';
 import 'package:venta_cuba/Services/Supabase/supabase_service.dart';
 import 'package:venta_cuba/Services/Supabase/rls_helper.dart';
+import 'package:venta_cuba/Controllers/auth_controller.dart';
 
 class SupabaseChatController extends GetxController {
   String? path;
@@ -21,42 +22,27 @@ class SupabaseChatController extends GetxController {
 
   final SupabaseClient _supabase = SupabaseService.client;
 
+  // Connection pre-warming for instant messaging
+  Timer? _connectionKeepAliveTimer;
+  DateTime? _lastConnectionCheck;
+
   // Getter for Supabase client
   SupabaseClient get supabaseClient => _supabase;
 
-  // Debug method to test Supabase connection and authentication
-  Future<bool> testSupabaseConnection() async {
-    try {
-      print('💬 🔥 Testing Supabase connection and authentication...');
+  // PERFORMANCE OPTIMIZATION: Message cache for faster loading
+  final Map<String, List<Map<String, dynamic>>> _messageCache = {};
 
-      // Test 1: Check if client is initialized
-      print('💬 🔥 Supabase client initialized: ${_supabase.runtimeType}');
+  // PERFORMANCE OPTIMIZATION: Debouncing for message loading
+  Timer? _loadDebounceTimer;
 
-      // Test 2: Check authentication
-      final session = _supabase.auth.currentSession;
-      print('💬 🔥 Current session: ${session != null ? 'EXISTS' : 'NULL'}');
-      if (session != null) {
-        print('💬 🔥 User ID: ${session.user.id}');
-        print('💬 🔥 Session expires: ${session.expiresAt}');
-      }
+  // PERFORMANCE OPTIMIZATION: Batch message sending queue
+  final List<Map<String, dynamic>> _messageQueue = [];
+  Timer? _messageQueueTimer;
+  bool _isProcessingQueue = false;
 
-      // Test 3: Try a simple query
-      final testQuery = await _supabase.from('chats').select('count').limit(1);
-      print('💬 🔥 Test query result: $testQuery');
-
-      // Test 4: Check messages table
-      final messageCount =
-          await _supabase.from('messages').select('count').limit(1);
-      print('💬 🔥 Messages table test: $messageCount');
-
-      print('💬 ✅ Supabase connection test passed!');
-      return true;
-    } catch (e, stackTrace) {
-      print('💬 ❌ Supabase connection test failed: $e');
-      print('💬 ❌ Stack trace: $stackTrace');
-      return false;
-    }
-  }
+  // Connection pool for better performance
+  static const int _maxRetries = 2;
+  static const Duration _retryDelay = Duration(milliseconds: 500);
 
   // Message streams cache
   final Map<String, StreamController<List<Map<String, dynamic>>>>
@@ -71,9 +57,18 @@ class SupabaseChatController extends GetxController {
   final Map<String, RealtimeChannel> _messageChannels = {};
 
   @override
+  void onInit() {
+    super.onInit();
+    // Start connection keep-alive
+    _startConnectionKeepAlive();
+  }
+
+  @override
   void onClose() {
-    print(
-        '💬 🔥 SupabaseChatController onClose called - cleaning up resources');
+    _loadDebounceTimer?.cancel();
+    _messageQueueTimer?.cancel();
+    _connectionKeepAliveTimer?.cancel();
+    _processMessageQueue(); // Process any remaining messages
 
     // Clean up subscriptions
     _chatChannel?.unsubscribe();
@@ -84,13 +79,13 @@ class SupabaseChatController extends GetxController {
 
     // Clean up stream controllers
     for (var entry in _messageStreams.entries) {
-      print('💬 🔥 Closing stream controller for chat: ${entry.key}');
       if (!entry.value.isClosed) {
         entry.value.close();
       }
     }
     _messageStreams.clear();
     _globalChatRefreshCallbacks.clear();
+    _messageCache.clear();
 
     super.onClose();
   }
@@ -98,7 +93,6 @@ class SupabaseChatController extends GetxController {
   // Method to clear specific chat stream (for testing/debugging)
   void clearChatStream(String chatId) {
     if (_messageStreams.containsKey(chatId)) {
-      print('💬 🔥 Manually clearing stream for chat: $chatId');
       if (!_messageStreams[chatId]!.isClosed) {
         _messageStreams[chatId]!.close();
       }
@@ -106,131 +100,121 @@ class SupabaseChatController extends GetxController {
     }
 
     if (_messageChannels.containsKey(chatId)) {
-      print('💬 🔥 Manually clearing channel for chat: $chatId');
       _messageChannels[chatId]?.unsubscribe();
       _messageChannels.remove(chatId);
     }
+
+    // Clear cache
+    _messageCache.remove(chatId);
   }
 
-  // Get all chats for the current user (where they are sender OR receiver)
+  // OPTIMIZED: Get all chats with unread calculation
   Stream<List<Map<String, dynamic>>> getAllChats(String userId) {
-    print('💬 🔥 Creating fresh chat stream for user: $userId');
-
     // Create a fresh stream controller each time to avoid caching issues
     final StreamController<List<Map<String, dynamic>>> controller =
         StreamController<List<Map<String, dynamic>>>.broadcast();
 
-    // Function to combine and emit chat data
-    Future<void> combineAndEmitChats() async {
-      try {
-        print('💬 📱 Fetching chat data for user: $userId');
+    // PERFORMANCE: Use single query with OR condition and retry logic
+    Future<void> loadChats() async {
+      int retryCount = 0;
 
-        // Fetch both sender and receiver chats
-        final senderChats =
-            await _supabase.from('chats').select().eq('sender_id', userId);
+      while (retryCount < _maxRetries) {
+        try {
+          // Single optimized query to get all chats
+          final allChats = await _supabase
+              .from('chats')
+              .select()
+              .or('sender_id.eq.$userId,send_to_id.eq.$userId')
+              .order('time', ascending: false)
+              .limit(50); // Limit to recent chats for better performance
 
-        final receiverChats =
-            await _supabase.from('chats').select().eq('send_to_id', userId);
+          final result = List<Map<String, dynamic>>.from(allChats);
 
-        print('💬 📱 Fetched - Sender: ${senderChats.length}, Receiver: ${receiverChats.length}');
+          // Calculate unread count for each chat
+          for (var chat in result) {
+            final isUserSender = chat['sender_id'] == userId;
+            final lastReadTime = isUserSender
+                ? chat['sender_last_read_time']
+                : chat['recipient_last_read_time'];
+            final lastMessageTime = chat['time'];
+            final lastMessageSender = chat['send_by'];
 
-        // Combine and deduplicate
-        final Map<String, Map<String, dynamic>> uniqueChats = {};
+            // Calculate unread count for this chat
+            int unreadCount = 0;
+            if (lastMessageSender != userId) {
+              if (lastReadTime == null ||
+                  (lastMessageTime != null &&
+                      DateTime.parse(lastMessageTime)
+                          .isAfter(DateTime.parse(lastReadTime)))) {
+                // Count unread messages for this specific chat
+                final unreadMessages = await _supabase
+                    .from('messages')
+                    .select('id')
+                    .eq('chat_id', chat['id'])
+                    .neq('send_by', userId)
+                    .gt('time', lastReadTime ?? '1970-01-01T00:00:00Z');
 
-        for (var chat in senderChats) {
-          uniqueChats[chat['id']] = chat;
-        }
+                unreadCount = unreadMessages.length;
+              }
+            }
 
-        for (var chat in receiverChats) {
-          uniqueChats[chat['id']] = chat;
-        }
-
-        final result = uniqueChats.values.toList();
-
-        // Sort by time safely
-        result.sort((a, b) {
-          try {
-            final timeA = a['time'] != null ? DateTime.parse(a['time']) : DateTime(1970);
-            final timeB = b['time'] != null ? DateTime.parse(b['time']) : DateTime(1970);
-            return timeB.compareTo(timeA);
-          } catch (e) {
-            return 0;
+            // Add unread count to chat data
+            chat['unread_count'] = unreadCount;
           }
-        });
 
-        print('💬 📱 Emitting ${result.length} total chats to stream');
+          // Emit data to stream
+          if (!controller.isClosed) {
+            controller.add(result);
+          }
 
-        // Emit data to stream
-        if (!controller.isClosed) {
-          controller.add(result);
-        }
-      } catch (e) {
-        print('❌ Error fetching chats: $e');
-        if (!controller.isClosed) {
-          controller.add(<Map<String, dynamic>>[]);
+          // Update overall unread count
+          updateUnreadMessageIndicators();
+
+          break; // Success, exit retry loop
+        } catch (e) {
+          retryCount++;
+          if (retryCount >= _maxRetries) {
+            print('Failed to load chats after retries: $e');
+            if (!controller.isClosed) {
+              controller.add(<Map<String, dynamic>>[]);
+            }
+            break;
+          }
+          await Future.delayed(_retryDelay);
         }
       }
     }
 
     // Register this stream's refresh function globally for manual triggers
-    _globalChatRefreshCallbacks.add(combineAndEmitChats);
+    _globalChatRefreshCallbacks.add(loadChats);
 
     // Initial load
-    combineAndEmitChats();
+    loadChats();
 
-    // Set up real-time subscriptions with simpler channel names
-    RealtimeChannel? senderChannel;
-    RealtimeChannel? receiverChannel;
-
+    // OPTIMIZED: Single channel for all chat updates
     try {
-      senderChannel = _supabase
-          .channel('chats_sender_$userId')
+      _chatChannel?.unsubscribe();
+      _chatChannel = _supabase
+          .channel('all_chats_$userId')
           .onPostgresChanges(
             event: PostgresChangeEvent.all,
             schema: 'public',
             table: 'chats',
-            filter: PostgresChangeFilter(
-              type: PostgresChangeFilterType.eq,
-              column: 'sender_id',
-              value: userId,
-            ),
             callback: (payload) {
-              print('🔔 Real-time: Sender chat ${payload.eventType} for user $userId');
-              combineAndEmitChats();
+              // Debounce the refresh to avoid too many updates
+              _loadDebounceTimer?.cancel();
+              _loadDebounceTimer =
+                  Timer(Duration(milliseconds: 300), loadChats);
             },
           )
           .subscribe();
-
-      receiverChannel = _supabase
-          .channel('chats_receiver_$userId')
-          .onPostgresChanges(
-            event: PostgresChangeEvent.all,
-            schema: 'public',
-            table: 'chats',
-            filter: PostgresChangeFilter(
-              type: PostgresChangeFilterType.eq,
-              column: 'send_to_id',
-              value: userId,
-            ),
-            callback: (payload) {
-              print('🔔 Real-time: Receiver chat ${payload.eventType} for user $userId');
-              combineAndEmitChats();
-            },
-          )
-          .subscribe();
-
-      print('✅ Real-time subscriptions setup for user: $userId');
     } catch (e) {
-      print('❌ Error setting up real-time subscriptions: $e');
+      print('Error setting up chat subscription: $e');
     }
 
     // Clean up when stream is canceled
     controller.onCancel = () {
-      print('💬 🧹 Cleaning up chat stream for user: $userId');
-      senderChannel?.unsubscribe();
-      receiverChannel?.unsubscribe();
-      // Remove this refresh function from global callbacks
-      _globalChatRefreshCallbacks.remove(combineAndEmitChats);
+      _globalChatRefreshCallbacks.remove(loadChats);
     };
 
     return controller.stream;
@@ -238,161 +222,148 @@ class SupabaseChatController extends GetxController {
 
   // Method to manually refresh all active chat list streams
   void refreshAllChatLists() {
-    print('💬 🔄 Manually refreshing ${_globalChatRefreshCallbacks.length} active chat streams');
     for (final callback in _globalChatRefreshCallbacks) {
       try {
         callback();
       } catch (e) {
-        print('💬 ⚠️ Error in chat refresh callback: $e');
+        print('Error in chat refresh callback: $e');
       }
     }
   }
 
-  // Get messages for a specific chat
+  // OPTIMIZED: Get messages with instant loading and caching
   Stream<List<Map<String, dynamic>>> getChatMessages(String chatId) {
-    print('💬 🔥 getChatMessages called for chat: $chatId');
-
     // Validate chat ID
     if (chatId.isEmpty || chatId == 'null') {
-      print('💬 ❌ Invalid chat ID: $chatId');
-      // Return a stream with empty data
       return Stream.value(<Map<String, dynamic>>[]);
     }
 
     // Create or get existing stream controller for this chat
     if (!_messageStreams.containsKey(chatId) ||
         _messageStreams[chatId]!.isClosed) {
-      print('💬 🔥 Creating new stream controller for chat: $chatId');
       _messageStreams[chatId] =
           StreamController<List<Map<String, dynamic>>>.broadcast();
 
-      // Set up real-time subscription first
+      // Check cache first and emit immediately
+      if (_messageCache.containsKey(chatId) &&
+          _messageCache[chatId]!.isNotEmpty) {
+        // Emit cached data immediately for instant display
+        _messageStreams[chatId]!.add(List.from(_messageCache[chatId]!));
+
+        // Load fresh data in background to update cache
+        Future.microtask(() => _loadMessagesForChat(chatId, useCache: false));
+      } else {
+        // No cache, emit empty list first for instant UI update
+        _messageStreams[chatId]!.add(<Map<String, dynamic>>[]);
+
+        // Load data immediately
+        _loadMessagesForChat(chatId).catchError((error) {
+          if (_messageStreams.containsKey(chatId) &&
+              !_messageStreams[chatId]!.isClosed) {
+            _messageStreams[chatId]!.add(<Map<String, dynamic>>[]);
+          }
+        });
+      }
+
+      // Set up real-time subscription
       _setupRealtimeSubscription(chatId);
-      
-      // Load initial data only when creating new stream
-      _loadMessagesForChat(chatId).catchError((error) {
-        print('💬 ❌ Error in initial data load: $error');
-        // Add empty data to prevent infinite loading
-        if (_messageStreams.containsKey(chatId) &&
-            !_messageStreams[chatId]!.isClosed) {
-          _messageStreams[chatId]!.add(<Map<String, dynamic>>[]);
-        }
-      });
     } else {
-      print('💬 🔥 Using existing real-time stream for chat: $chatId');
-      // Still set up subscription if it doesn't exist (in case it was lost)
+      // Stream already exists, ensure subscription is active
       if (!_messageChannels.containsKey(chatId)) {
-        print('💬 🔥 Re-setting up real-time subscription for existing stream');
         _setupRealtimeSubscription(chatId);
+      }
+
+      // Always emit current cache state
+      if (_messageCache.containsKey(chatId)) {
+        _messageStreams[chatId]!.add(List.from(_messageCache[chatId]!));
+      } else {
+        _messageStreams[chatId]!.add(<Map<String, dynamic>>[]);
       }
     }
 
     return _messageStreams[chatId]!.stream;
   }
 
-  // Load messages from database
-  Future<void> _loadMessagesForChat(String chatId) async {
-    print('💬 🔥 _loadMessagesForChat called for chat: $chatId');
-
+  // OPTIMIZED: Load messages with pagination for better performance
+  Future<void> _loadMessagesForChat(String chatId,
+      {int limit = 100, bool useCache = true}) async {
     try {
-      // Skip connection test for faster loading - we'll handle errors as they come
-      print('💬 🔥 Loading messages directly from database...');
-
-      print('💬 🔄 Loading messages from database for chat: $chatId');
-
-      // Try to load messages with comprehensive error handling
-      final response = await _supabase
-          .from('messages')
-          .select('*')
-          .eq('chat_id', chatId)
-          .order('time', ascending: true);
-
-      print('💬 🔥 Raw response from database: $response');
-      print('💬 🔥 Response type: ${response.runtimeType}');
-
-      final messages = List<Map<String, dynamic>>.from(response);
-
-      print(
-          '💬 📊 Loaded ${messages.length} messages from database for chat: $chatId');
-
-      // Debug: Log each message
-      for (int i = 0; i < messages.length && i < 5; i++) {
-        var msg = messages[i];
-        print(
-            '💬 Message $i: ${msg['message']} by ${msg['send_by']} at ${msg['time']} type: ${msg['message_type']}');
-      }
-
-      // If no messages found, check if chat exists and sample database
-      if (messages.isEmpty) {
-        print('💬 🔍 No messages found for chat $chatId, investigating...');
-
-        // Check if chat exists
-        try {
-          final chatExists = await _supabase
-              .from('chats')
-              .select('id')
-              .eq('id', chatId)
-              .maybeSingle();
-          print(
-              '💬 🔍 Chat exists in database: ${chatExists != null ? 'YES' : 'NO'}');
-        } catch (e) {
-          print('💬 ❌ Error checking chat existence: $e');
-        }
-
-        // Sample all messages in database
-        try {
-          final allMessages = await _supabase
-              .from('messages')
-              .select('chat_id, message, send_by')
-              .limit(10);
-          print('💬 🔍 Sample messages in database: ${allMessages.length}');
-          for (var msg in allMessages) {
-            print(
-                '💬 Sample: chat_id=${msg['chat_id']}, message=${msg['message']}, sender=${msg['send_by']}');
+      // Return early if we have fresh cache and useCache is true
+      if (useCache &&
+          _messageCache.containsKey(chatId) &&
+          _messageCache[chatId]!.isNotEmpty) {
+        final lastMessage = _messageCache[chatId]!.last;
+        if (lastMessage['time'] != null) {
+          final messageTime = DateTime.tryParse(lastMessage['time']);
+          if (messageTime != null) {
+            final timeDiff = DateTime.now().difference(messageTime);
+            // If cache is less than 30 seconds old, skip refresh
+            if (timeDiff.inSeconds < 30) {
+              return;
+            }
           }
+        }
+      }
+
+      // Load messages with retry logic for better reliability
+      List<Map<String, dynamic>> messages = [];
+      int retryCount = 0;
+
+      while (retryCount < _maxRetries) {
+        try {
+          final response = await _supabase
+              .from('messages')
+              .select('*')
+              .eq('chat_id', chatId)
+              .order('time', ascending: false)
+              .limit(limit);
+
+          messages = List<Map<String, dynamic>>.from(response);
+          break; // Success, exit retry loop
         } catch (e) {
-          print('💬 ❌ Error getting sample messages: $e');
+          retryCount++;
+          if (retryCount >= _maxRetries) {
+            throw e;
+          }
+          await Future.delayed(_retryDelay);
         }
       }
 
-      // CRITICAL: Always add data to stream, even if empty
+      // Reverse to get chronological order
+      messages = messages.reversed.toList();
+
+      // Update cache
+      _messageCache[chatId] = messages;
+
+      // Always add data to stream
       if (_messageStreams.containsKey(chatId) &&
           !_messageStreams[chatId]!.isClosed) {
-        print(
-            '💬 🔥 Adding ${messages.length} messages to stream for chat: $chatId');
-        _messageStreams[chatId]!.add(messages);
-        print('💬 ✅ Messages successfully added to stream for chat: $chatId');
+        _messageStreams[chatId]!.add(List.from(messages));
+      }
+    } catch (e) {
+      print('Error loading messages after retries: $e');
+      // Use cached data if available on error
+      if (_messageCache.containsKey(chatId)) {
+        if (_messageStreams.containsKey(chatId) &&
+            !_messageStreams[chatId]!.isClosed) {
+          _messageStreams[chatId]!.add(List.from(_messageCache[chatId]!));
+        }
       } else {
-        print('💬 ❌ Stream controller issue for chat: $chatId');
-        print('💬 Stream exists: ${_messageStreams.containsKey(chatId)}');
-        if (_messageStreams.containsKey(chatId)) {
-          print('💬 Stream closed: ${_messageStreams[chatId]!.isClosed}');
+        // Add empty data to prevent infinite loading
+        if (_messageStreams.containsKey(chatId) &&
+            !_messageStreams[chatId]!.isClosed) {
+          _messageStreams[chatId]!.add(<Map<String, dynamic>>[]);
         }
       }
-    } catch (e, stackTrace) {
-      print('❌ CRITICAL ERROR loading messages for chat $chatId: $e');
-      print('❌ Stack trace: $stackTrace');
-
-      // CRITICAL: Add empty data to prevent infinite loading
-      if (_messageStreams.containsKey(chatId) &&
-          !_messageStreams[chatId]!.isClosed) {
-        print('💬 🔥 Adding empty data due to error');
-        _messageStreams[chatId]!.add(<Map<String, dynamic>>[]);
-      }
-
-      // Re-throw so calling code can handle
-      rethrow;
     }
   }
 
-  // Set up real-time subscription for a chat
+  // OPTIMIZED: Real-time subscription with better error handling
   void _setupRealtimeSubscription(String chatId) {
     if (!_messageChannels.containsKey(chatId)) {
-      print('💬 Setting up real-time subscription for chat: $chatId');
-
       try {
         _messageChannels[chatId] = _supabase
-            .channel('messages_$chatId')
+            .channel('msg_$chatId')
             .onPostgresChanges(
               event: PostgresChangeEvent.all,
               schema: 'public',
@@ -403,64 +374,185 @@ class SupabaseChatController extends GetxController {
                 value: chatId,
               ),
               callback: (payload) {
-                print('🔔 Real-time change detected for chat $chatId');
-                print('🔔 Event: ${payload.eventType}');
-                print('🔔 Payload: $payload');
+                // Handle real-time updates
+                if (payload.eventType == PostgresChangeEvent.insert &&
+                    payload.newRecord != null) {
+                  // Check if this is not a duplicate of a message we already have
+                  if (_messageCache.containsKey(chatId)) {
+                    final newMessage = payload.newRecord!;
 
-                // ALWAYS reload on any change to ensure real-time updates work
-                print('🔄 Reloading messages for real-time update...');
-                _loadMessagesForChat(chatId);
+                    // More robust duplicate detection
+                    bool isDuplicate = _messageCache[chatId]!.any((msg) =>
+                        // Check by actual database ID first
+                        msg['id'] == newMessage['id'] ||
+                        // Then check by content, sender and time (for real messages)
+                        (msg['_optimistic'] !=
+                                true && // Only check against real messages
+                            msg['message'] == newMessage['message'] &&
+                            msg['send_by'] == newMessage['send_by'] &&
+                            msg['time'] == newMessage['time']));
 
-                // Update unread indicators
-                updateUnreadMessageIndicators();
+                    // Also check if we have a pending optimistic message that matches
+                    bool hasOptimistic = _messageCache[chatId]!.any((msg) =>
+                        msg['_optimistic'] == true &&
+                        msg['message'] == newMessage['message'] &&
+                        msg['send_by'] == newMessage['send_by']);
+
+                    if (!isDuplicate && !hasOptimistic) {
+                      // Safe to add new message from real-time update
+                      _messageCache[chatId]!.add(newMessage);
+                      print(
+                          '📡 Added real-time message: ${newMessage['message']?.substring(0, 20)}...');
+
+                      // Emit updated cache
+                      if (_messageStreams.containsKey(chatId) &&
+                          !_messageStreams[chatId]!.isClosed) {
+                        _messageStreams[chatId]!
+                            .add(List.from(_messageCache[chatId]!));
+                      }
+                    } else {
+                      print(
+                          '📡 Skipped duplicate real-time message: ${newMessage['message']?.substring(0, 20)}...');
+                    }
+                  }
+                } else if (payload.eventType == PostgresChangeEvent.update) {
+                  // Update existing message in cache
+                  if (_messageCache.containsKey(chatId) &&
+                      payload.newRecord != null) {
+                    int index = _messageCache[chatId]!.indexWhere(
+                        (msg) => msg['id'] == payload.newRecord!['id']);
+                    if (index != -1) {
+                      _messageCache[chatId]![index] = payload.newRecord!;
+                      // Emit updated cache
+                      if (_messageStreams.containsKey(chatId) &&
+                          !_messageStreams[chatId]!.isClosed) {
+                        _messageStreams[chatId]!
+                            .add(List.from(_messageCache[chatId]!));
+                      }
+                    }
+                  }
+                } else if (payload.eventType == PostgresChangeEvent.delete) {
+                  // Remove deleted message from cache
+                  if (_messageCache.containsKey(chatId) &&
+                      payload.oldRecord != null) {
+                    _messageCache[chatId]!.removeWhere(
+                        (msg) => msg['id'] == payload.oldRecord!['id']);
+                    // Emit updated cache
+                    if (_messageStreams.containsKey(chatId) &&
+                        !_messageStreams[chatId]!.isClosed) {
+                      _messageStreams[chatId]!
+                          .add(List.from(_messageCache[chatId]!));
+                    }
+                  }
+                }
+
+                // Update unread indicators in background
+                Future.microtask(() => updateUnreadMessageIndicators());
               },
             )
             .subscribe();
-            
-        print('✅ Real-time subscription created for chat: $chatId');
-        
       } catch (e) {
-        print('❌ Error setting up real-time subscription: $e');
+        print('Error setting up real-time subscription: $e');
       }
     }
   }
-  
-  // Removed polling fallback - real-time is working now
 
-  // Removed manual refresh - using real-time subscription only
-
-  // Send a message
+  // OPTIMIZED: Send message with better performance
   Future<void> sendMessage(
     String chatId,
     Map<String, dynamic> chatMessageData,
   ) async {
     try {
-      print('💬 Sending message to chat: $chatId');
-      
+      // Create optimistic message with all required fields
+      final timestamp = DateTime.now().toUtc();
+      final optimisticId =
+          'temp_${timestamp.millisecondsSinceEpoch}_${chatMessageData['message'].hashCode.abs()}';
+      final optimisticMessage = {
+        'id': optimisticId,
+        'chat_id': chatId,
+        'message': chatMessageData['message'],
+        'send_by': chatMessageData['sendBy'],
+        'sender_name': chatMessageData['senderName'],
+        'image': chatMessageData['image'],
+        'message_type': chatMessageData['messageType'] ?? 'text',
+        'time': timestamp.toIso8601String(),
+        '_optimistic': true, // Mark as optimistic
+        '_optimistic_id': optimisticId, // Unique ID for this optimistic message
+        '_timestamp':
+            timestamp.millisecondsSinceEpoch, // For duplicate detection
+      };
+
+      print(
+          '🚀 Adding optimistic message: ${optimisticId.substring(0, 20)}...');
+
+      // Initialize cache if doesn't exist
+      if (!_messageCache.containsKey(chatId)) {
+        _messageCache[chatId] = [];
+        // Also initialize stream if needed
+        if (!_messageStreams.containsKey(chatId) ||
+            _messageStreams[chatId]!.isClosed) {
+          _messageStreams[chatId] =
+              StreamController<List<Map<String, dynamic>>>.broadcast();
+        }
+      }
+
+      // Add to cache immediately for instant display
+      _messageCache[chatId]!.add(optimisticMessage);
+
+      // Emit updated cache immediately for instant UI update
+      if (_messageStreams.containsKey(chatId) &&
+          !_messageStreams[chatId]!.isClosed) {
+        _messageStreams[chatId]!.add(List.from(_messageCache[chatId]!));
+      }
+
       // Ensure RLS context is set for the current user
       final senderId = chatMessageData['sendBy'];
       if (senderId != null) {
-        await RLSHelper.setUserContext(senderId.toString());
+        // Set context asynchronously to avoid blocking
+        RLSHelper.setUserContext(senderId.toString());
       }
 
-      // First, ensure the chat exists before inserting the message
-      final chatExists = await _supabase
-          .from('chats')
-          .select('id')
-          .eq('id', chatId)
-          .maybeSingle();
+      // Quick chat existence check - use cache first to avoid DB call
+      bool chatExists = _messageCache.containsKey(chatId) &&
+          _messageCache[chatId]!
+              .where((msg) => msg['_optimistic'] != true)
+              .isNotEmpty;
 
+      // Only check DB if we don't have cached messages
+      if (!chatExists) {
+        final chatCheck = await _supabase
+            .from('chats')
+            .select('id')
+            .eq('id', chatId)
+            .maybeSingle();
+        chatExists = chatCheck != null;
+      }
+
+      // Prepare data for parallel execution
+      final messageTime = DateTime.now().toUtc().toIso8601String();
       final chatUpdateData = {
         'message': chatMessageData['message'],
-        'time': DateTime.now().toUtc().toIso8601String(), // Explicitly use UTC
+        'time': messageTime,
         'send_by': chatMessageData['sendBy'],
         'is_messaged': true,
         'message_type': chatMessageData['messageType'] ?? 'text',
       };
 
-      if (chatExists == null) {
-        // Create new chat first
-        print('💬 Creating new chat: $chatId');
+      final messageData = {
+        'chat_id': chatId,
+        'message': chatMessageData['message'],
+        'send_by': chatMessageData['sendBy'],
+        'sender_name': chatMessageData['senderName'],
+        'image': chatMessageData['image'],
+        'message_type': chatMessageData['messageType'] ?? 'text',
+        'time': messageTime,
+      };
+
+      // Execute database operations in parallel for better performance
+      late final Map<String, dynamic> insertedMessage;
+
+      if (!chatExists) {
+        // Create new chat and insert message in parallel
         final newChatData = {
           'id': chatId,
           'sender_id': chatMessageData['senderId'],
@@ -471,7 +563,6 @@ class SupabaseChatController extends GetxController {
           'send_to_image': chatMessageData['sendToImage'],
           'user_device_token': chatMessageData['userDeviceToken'],
           'send_to_device_token': chatMessageData['sendToDeviceToken'],
-          // Store listing information when creating new chat
           'listing_id': chatMessageData['listingId'],
           'listing_name': chatMessageData['listingName'],
           'listing_image': chatMessageData['listingImage'],
@@ -480,94 +571,150 @@ class SupabaseChatController extends GetxController {
           ...chatUpdateData,
         };
 
-        await _supabase.from('chats').insert(newChatData);
-        print('💬 ✅ New chat created successfully with listing data');
+        // Execute both operations in parallel
+        final results = await Future.wait<dynamic>([
+          _supabase.from('chats').insert(newChatData),
+          _supabase.from('messages').insert(messageData).select().single(),
+        ]);
+        insertedMessage = results[1] as Map<String, dynamic>;
       } else {
-        // Update existing chat
-        print('💬 Updating existing chat: $chatId');
-        await _supabase.from('chats').update(chatUpdateData).eq('id', chatId);
+        // Update chat and insert message in parallel
+        final results = await Future.wait<dynamic>([
+          _supabase.from('chats').update(chatUpdateData).eq('id', chatId),
+          _supabase.from('messages').insert(messageData).select().single(),
+        ]);
+        insertedMessage = results[1] as Map<String, dynamic>;
       }
 
-      // Now add the message to messages table
-      final messageData = {
-        'chat_id': chatId,
-        'message': chatMessageData['message'],
-        'send_by': chatMessageData['sendBy'],
-        'sender_name': chatMessageData['senderName'],
-        'image': chatMessageData['image'],
-        'message_type': chatMessageData['messageType'] ?? 'text',
-        'time': DateTime.now().toUtc().toIso8601String(), // Explicitly use UTC
-      };
+      // Replace optimistic message with real one
+      if (_messageCache.containsKey(chatId)) {
+        // Find the most recent optimistic message with matching content and sender
+        int optimisticIndex = -1;
+        for (int i = _messageCache[chatId]!.length - 1; i >= 0; i--) {
+          final msg = _messageCache[chatId]![i];
+          if (msg['_optimistic'] == true &&
+              msg['message'] == chatMessageData['message'] &&
+              msg['send_by'] == chatMessageData['sendBy']) {
+            optimisticIndex = i;
+            print(
+                '🔄 Found optimistic message to replace: ${msg['_optimistic_id']}');
+            break;
+          }
+        }
 
-      print('💬 Inserting message into messages table...');
-      print('💬 Message type: ${messageData['message_type']}');
-      print('💬 Message content: ${messageData['message']}');
-      await _supabase.from('messages').insert(messageData);
-      print('💬 ✅ Message inserted successfully');
+        if (optimisticIndex != -1) {
+          // Replace the specific optimistic message with the real one
+          _messageCache[chatId]![optimisticIndex] = insertedMessage;
+          print(
+              '🔄 Replaced optimistic message at index $optimisticIndex with real message');
+        } else {
+          // If not found, remove all matching optimistic messages and add real message
+          _messageCache[chatId]!.removeWhere((msg) =>
+              msg['_optimistic'] == true &&
+              msg['message'] == chatMessageData['message'] &&
+              msg['send_by'] == chatMessageData['sendBy']);
+          _messageCache[chatId]!.add(insertedMessage);
+          print('🔄 Removed optimistic messages and added real message');
+        }
 
-      // Real-time subscription will automatically update the stream
-      // No need to manually refresh - Supabase real-time handles this
+        // Emit updated cache immediately
+        if (_messageStreams.containsKey(chatId) &&
+            !_messageStreams[chatId]!.isClosed) {
+          _messageStreams[chatId]!.add(List.from(_messageCache[chatId]!));
+        }
+      }
 
-      // Send ntfy notification to recipient
-      // Add chatId to the notification data
-      final notificationData = Map<String, dynamic>.from(chatMessageData);
-      notificationData['chatId'] = chatId;
-      await _sendChatNotification(notificationData);
+      // Queue operations for background processing
+      _queueBackgroundOperations(chatMessageData, chatId);
 
-      // Update unread count after sending message
-      Future.delayed(const Duration(milliseconds: 500), () {
-        updateUnreadMessageIndicators();
+      // Trigger immediate unread count update for real-time badge updates
+      Future.microtask(() => updateUnreadMessageIndicators());
+
+      // Clean up any remaining optimistic messages after a short delay
+      Future.delayed(Duration(seconds: 2), () {
+        if (_messageCache.containsKey(chatId)) {
+          final beforeCount = _messageCache[chatId]!.length;
+          _messageCache[chatId]!
+              .removeWhere((msg) => msg['_optimistic'] == true);
+          final afterCount = _messageCache[chatId]!.length;
+
+          if (beforeCount != afterCount) {
+            print(
+                '🧩 Cleaned up ${beforeCount - afterCount} lingering optimistic messages');
+            // Update stream with cleaned cache
+            if (_messageStreams.containsKey(chatId) &&
+                !_messageStreams[chatId]!.isClosed) {
+              _messageStreams[chatId]!.add(List.from(_messageCache[chatId]!));
+            }
+          }
+        }
       });
-
-      print('✅ Message sent successfully');
     } catch (e) {
-      print('❌ Error sending message: $e');
+      // Remove optimistic message on error
+      if (_messageCache.containsKey(chatId)) {
+        _messageCache[chatId]!.removeWhere((msg) => msg['_optimistic'] == true);
+
+        // Update UI
+        if (_messageStreams.containsKey(chatId) &&
+            !_messageStreams[chatId]!.isClosed) {
+          _messageStreams[chatId]!.add(List.from(_messageCache[chatId]!));
+        }
+      }
       rethrow;
     }
   }
 
-  // Send push notification for chat message - UNIFIED APPROACH
-  Future<void> _sendChatNotification(
-      Map<String, dynamic> chatMessageData) async {
+  // OPTIMIZED: Send notifications asynchronously
+  Future<void> _sendChatNotificationAsync(
+      Map<String, dynamic> chatMessageData, String chatId) async {
     try {
       final senderId = chatMessageData['senderId'];
       final sendToId = chatMessageData['sendToId'];
-      final chatId = chatMessageData['chatId'] ?? '';
 
       // Don't send notification to yourself
       if (senderId == sendToId) {
-        print('💬 Not sending notification to yourself');
         return;
       }
 
-      print('💬 Sending cross-platform notification to user: $sendToId');
-      
-      // Use unified platform push service for cross-platform notifications
-      await PlatformPushService.sendChatNotification(
-        recipientUserId: sendToId,
-        senderName: chatMessageData['senderName'] ?? 'New Message'.tr,
-        message: chatMessageData['message'] ?? 'New message'.tr,
-        messageType: chatMessageData['messageType'] ?? 'text',
-        chatId: chatId,
-        senderId: senderId,
-      );
-
+      // Send notifications without blocking
+      Future.microtask(() async {
+        try {
+          await Future.wait([
+            NotificationManager.instance.showChatNotification(
+              chatId: chatId,
+              senderId: senderId,
+              senderName: chatMessageData['senderName'] ?? 'New Message'.tr,
+              message: chatMessageData['message'] ?? 'New message'.tr,
+              messageType: chatMessageData['messageType'] ?? 'text',
+            ),
+            PushService.sendChatNotification(
+              recipientUserId: sendToId,
+              senderName: chatMessageData['senderName'] ?? 'New Message'.tr,
+              message: chatMessageData['message'] ?? 'New message'.tr,
+              messageType: chatMessageData['messageType'] ?? 'text',
+              chatId: chatId,
+              senderId: senderId,
+            ),
+          ]);
+        } catch (e) {
+          print('Error sending notifications: $e');
+        }
+      });
     } catch (e) {
-      print('❌ Error sending chat notification: $e');
+      print('Error sending chat notification: $e');
     }
   }
-  
-  // Helper method to format message body for notifications
+
+  // Helper method to format message body for notifications with translations
   String _formatMessageBody(String message, String messageType) {
     switch (messageType) {
       case 'image':
-        return '📷 Photo';
+        return '📷 Photo'.tr;
       case 'video':
-        return '📹 Video';
+        return '📹 Video'.tr;
       case 'file':
-        return '📎 File';
+        return '📎 File'.tr;
       default:
-        // Truncate long messages for notification
         if (message.length > 100) {
           return message.substring(0, 97) + '...';
         }
@@ -575,25 +722,31 @@ class SupabaseChatController extends GetxController {
     }
   }
 
-  // Delete a chat and all its messages
+  // OPTIMIZED: Delete chat with better performance
   Future<void> deleteChat(String chatId) async {
     try {
-      print('💬 🗑️ Deleting chat: $chatId');
+      // Remove from cache immediately
+      _messageCache.remove(chatId);
 
-      // Messages will be automatically deleted due to CASCADE
+      // Update UI immediately
+      if (_messageStreams.containsKey(chatId)) {
+        if (!_messageStreams[chatId]!.isClosed) {
+          _messageStreams[chatId]!.add([]);
+        }
+      }
+
+      // Delete from database
       await _supabase.from('chats').delete().eq('id', chatId);
 
-      // Cancel all notifications for this chat
-      print('💬 🗑️ Canceling notifications for deleted chat');
-      await PlatformPushService.cancelChatNotifications(chatId);
+      // Cancel notifications
+      await PushService.cancelChatNotifications(chatId);
 
-      // Unsubscribe from this chat's message channel
+      // Cleanup subscriptions
       if (_messageChannels.containsKey(chatId)) {
         await _messageChannels[chatId]?.unsubscribe();
         _messageChannels.remove(chatId);
       }
 
-      // Close the message stream for this chat if it exists
       if (_messageStreams.containsKey(chatId)) {
         if (!_messageStreams[chatId]!.isClosed) {
           _messageStreams[chatId]!.close();
@@ -601,28 +754,420 @@ class SupabaseChatController extends GetxController {
         _messageStreams.remove(chatId);
       }
 
-      // Manually trigger all chat list refreshes to ensure immediate UI update
-      // This provides a fallback in case real-time subscriptions are delayed
-      print('💬 🔄 Triggering manual refresh after chat deletion');
-      await Future.delayed(Duration(milliseconds: 100)); // Small delay to ensure DB changes are committed
+      // Refresh chat lists
       refreshAllChatLists();
 
-      // Update unread counts since a chat was deleted
+      // Update badge counts
       await updateBadgeCountFromChats();
       await updateUnreadMessageIndicators();
-
-      print('✅ Chat deleted successfully - UI updated manually + real-time backup');
     } catch (e) {
-      print('❌ Error deleting chat: $e');
+      print('Error deleting chat: $e');
       rethrow;
     }
   }
 
-  // Mark chat as read
+  // OPTIMIZED: Mark chat as read using proper schema
   Future<void> markChatAsRead(String chatId, String userId) async {
     try {
-      print('💬 🔄 Marking chat as read: $chatId for user $userId');
+      // Update cache immediately
+      if (_messageCache.containsKey(chatId)) {
+        for (var msg in _messageCache[chatId]!) {
+          if (msg['send_by'] != userId) {
+            // Mark as read in cache
+            msg['_read_by_user'] = true;
+          }
+        }
+      }
 
+      // Get chat info to determine which read time field to update
+      final chat = await _supabase
+          .from('chats')
+          .select('sender_id, send_to_id')
+          .eq('id', chatId)
+          .single();
+
+      final now = DateTime.now().toUtc().toIso8601String();
+      Map<String, dynamic> updateData = {};
+
+      // Update the appropriate read time field based on user role
+      if (chat['sender_id'] == userId) {
+        updateData['sender_last_read_time'] = now;
+      } else if (chat['send_to_id'] == userId) {
+        updateData['recipient_last_read_time'] = now;
+      }
+
+      if (updateData.isNotEmpty) {
+        await _supabase.from('chats').update(updateData).eq('id', chatId);
+      }
+
+      // Update badge count and unread indicators IMMEDIATELY
+      await updateBadgeCountFromChats();
+      await updateUnreadMessageIndicators();
+
+      // Update PushService badge count for system-level badges
+      await PushService.updateBadgeCount();
+
+      // Force immediate UI update
+      try {
+        final authController = Get.find<AuthController>();
+        authController.update();
+        print('🔴 MARK READ: Forced AuthController update after marking read');
+      } catch (e) {
+        print('🔴 MARK READ ERROR: Could not force update: $e');
+      }
+    } catch (e) {
+      print('Error marking chat as read: $e');
+    }
+  }
+
+  // Add method for loading more messages (pagination)
+  Future<void> loadMoreMessages(String chatId, {int offset = 0}) async {
+    try {
+      final response = await _supabase
+          .from('messages')
+          .select('*')
+          .eq('chat_id', chatId)
+          .order('time', ascending: false)
+          .range(offset, offset + 50);
+
+      var newMessages = List<Map<String, dynamic>>.from(response);
+      newMessages = newMessages.reversed.toList();
+
+      // Prepend to cache
+      if (_messageCache.containsKey(chatId)) {
+        _messageCache[chatId]!.insertAll(0, newMessages);
+
+        // Update stream
+        if (_messageStreams.containsKey(chatId) &&
+            !_messageStreams[chatId]!.isClosed) {
+          _messageStreams[chatId]!.add(List.from(_messageCache[chatId]!));
+        }
+      }
+    } catch (e) {
+      print('Error loading more messages: $e');
+    }
+  }
+
+  // Update unread message indicators using proper schema
+  Future<void> updateUnreadMessageIndicators() async {
+    try {
+      // Get current user from Supabase auth OR AuthController
+      String? userId;
+      final user = _supabase.auth.currentUser;
+      if (user != null) {
+        userId = user.id;
+      } else {
+        // Try to get user ID from AuthController
+        try {
+          final authController = Get.find<AuthController>();
+          userId = authController.user?.userId?.toString();
+        } catch (e) {
+          print(
+              '🔴 BADGE ERROR: No authenticated user and no AuthController: $e');
+        }
+      }
+
+      if (userId == null) {
+        print('🔴 BADGE ERROR: No user ID found');
+        // Set count to 0 when no user
+        try {
+          final authController = Get.find<AuthController>();
+          authController.unreadMessageCount.value = 0;
+          authController.hasUnreadMessages.value = false;
+          authController.update();
+        } catch (e) {}
+        return;
+      }
+
+      print('🔴 BADGE: Starting unread count calculation for user $userId');
+
+      // Count unread messages by comparing message times with read times
+      final chatsQuery = await _supabase
+          .from('chats')
+          .select(
+              'id, sender_id, send_to_id, sender_last_read_time, recipient_last_read_time, time, send_by')
+          .or('sender_id.eq.$userId,send_to_id.eq.$userId')
+          .order('time', ascending: false);
+
+      int totalUnread = 0;
+
+      for (var chat in chatsQuery) {
+        final currentUserId = userId;
+        final isUserSender = chat['sender_id'] == currentUserId;
+        final lastReadTime = isUserSender
+            ? chat['sender_last_read_time']
+            : chat['recipient_last_read_time'];
+        final lastMessageTime = chat['time'];
+        final lastMessageSender = chat['send_by'];
+
+        // Only count as unread if the last message was not sent by current user
+        if (lastMessageSender != currentUserId) {
+          // If no read time or message is newer than read time, count as unread
+          if (lastReadTime == null ||
+              (lastMessageTime != null &&
+                  DateTime.parse(lastMessageTime)
+                      .isAfter(DateTime.parse(lastReadTime)))) {
+            // Count actual unread messages for this chat
+            final unreadMessages = await _supabase
+                .from('messages')
+                .select('id')
+                .eq('chat_id', chat['id'])
+                .neq('send_by', currentUserId)
+                .gt('time', lastReadTime ?? '1970-01-01T00:00:00Z');
+
+            totalUnread += unreadMessages.length;
+            print(
+                '🔴 CHAT ${chat['id']}: Found ${unreadMessages.length} unread messages');
+          }
+        }
+      }
+
+      print('Unread messages count: $totalUnread');
+
+      // Update AuthController with the count - FORCE UPDATE
+      try {
+        // Use Get.find first, but fallback to Get.put to ensure we get the right instance
+        AuthController authController;
+        try {
+          authController = Get.find<AuthController>();
+        } catch (e) {
+          authController = Get.put(AuthController());
+        }
+
+        // Force update with logging
+        print(
+            '🔴 BEFORE UPDATE: AuthController unread = ${authController.unreadMessageCount.value}');
+        authController.unreadMessageCount.value = totalUnread;
+        authController.hasUnreadMessages.value = totalUnread > 0;
+        authController.update(); // Force UI update
+        print('🔴 AFTER UPDATE: Set unread count to $totalUnread');
+        print(
+            '🔴 AFTER UPDATE: AuthController unread = ${authController.unreadMessageCount.value}');
+        print(
+            '🔴 AFTER UPDATE: hasUnread = ${authController.hasUnreadMessages.value}');
+      } catch (e) {
+        print('🔴 BADGE FATAL ERROR: Could not update AuthController: $e');
+      }
+    } catch (e) {
+      print('Error updating unread indicators: $e');
+    }
+  }
+
+  Future<void> updateBadgeCountFromChats() async {
+    try {
+      await updateUnreadMessageIndicators();
+    } catch (e) {
+      print('Error updating badge count: $e');
+    }
+  }
+
+  // Test Supabase connection
+  Future<bool> testSupabaseConnection() async {
+    try {
+      final session = _supabase.auth.currentSession;
+      if (session != null) {
+        print('Supabase connected with session');
+      }
+
+      final testQuery = await _supabase.from('chats').select('count').limit(1);
+      print('Connection test successful');
+
+      return true;
+    } catch (e) {
+      print('Connection test failed: $e');
+      return false;
+    }
+  }
+
+  // Set user online status using proper schema
+  Future<void> setUserOnline(String userId) async {
+    try {
+      await _supabase.from('user_presence').upsert({
+        'user_id': userId,
+        'is_online': true,
+        'last_active_time': DateTime.now().toUtc().toIso8601String(),
+      }).eq('user_id', userId);
+    } catch (e) {
+      print('Error setting user online: $e');
+    }
+  }
+
+  // Set user offline status using proper schema
+  Future<void> setUserOffline(String userId) async {
+    try {
+      await _supabase.from('user_presence').upsert({
+        'user_id': userId,
+        'is_online': false,
+        'last_active_time': DateTime.now().toUtc().toIso8601String(),
+      }).eq('user_id', userId);
+    } catch (e) {
+      print('Error setting user offline: $e');
+    }
+  }
+
+  // Start listening for chat updates
+  void startListeningForChatUpdates() {
+    // Already handled in getAllChats and message subscriptions
+    print('Chat update listeners already active');
+  }
+
+  // Stop listening for chat updates
+  void stopListeningForChatUpdates() {
+    _chatChannel?.unsubscribe();
+    _messagesChannel?.unsubscribe();
+    for (var channel in _messageChannels.values) {
+      channel.unsubscribe();
+    }
+    print('Stopped listening for chat updates');
+  }
+
+  // Update device token using proper schema
+  Future<void> updateDeviceTokenInChat(
+      String userId, String deviceToken) async {
+    try {
+      // Update or insert device token in device_tokens table
+      await _supabase.from('device_tokens').upsert({
+        'user_id': userId,
+        'device_token': deviceToken,
+        'platform': 'android', // or detect platform
+        'is_active': true,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+
+      // Also update existing chat records for backward compatibility
+      Future.wait([
+        _supabase
+            .from('chats')
+            .update({'user_device_token': deviceToken}).eq('sender_id', userId),
+        _supabase.from('chats').update(
+            {'send_to_device_token': deviceToken}).eq('send_to_id', userId),
+      ]);
+    } catch (e) {
+      print('Error updating device token: $e');
+    }
+  }
+
+  // Get user presence using proper schema
+  Future<Map<String, dynamic>> getUserPresence(String userId) async {
+    try {
+      final response = await _supabase
+          .from('user_presence')
+          .select('is_online, last_active_time')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      if (response != null) {
+        return {
+          'is_online': response['is_online'] ?? false,
+          'last_active': response['last_active_time']
+        };
+      }
+
+      // If no presence record, assume offline
+      return {'is_online': false, 'last_active': null};
+    } catch (e) {
+      print('Error getting user presence: $e');
+      return {'is_online': false, 'last_active': null};
+    }
+  }
+
+  // Check if user is online
+  bool isUserOnline(Map<String, dynamic> presence) {
+    if (presence['is_online'] == true) {
+      return true;
+    }
+
+    // Check last active time - consider online if active within last 5 minutes
+    if (presence['last_active'] != null) {
+      try {
+        final lastActive = DateTime.parse(presence['last_active']);
+        final now = DateTime.now().toUtc();
+        final difference = now.difference(lastActive);
+        return difference.inMinutes < 5;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    return false;
+  }
+
+  // Format last active time with proper translations
+  String formatLastActiveTime(DateTime? lastActive) {
+    if (lastActive == null) return 'Offline'.tr;
+
+    final now = DateTime.now();
+    final difference = now.difference(lastActive);
+
+    if (difference.inMinutes < 1) {
+      return 'Just now'.tr;
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes} ${'min ago'.tr}';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours} ${'hours ago'.tr}';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} ${'days ago'.tr}';
+    } else {
+      return 'Offline'.tr;
+    }
+  }
+
+  // Queue background operations for batch processing
+  void _queueBackgroundOperations(
+      Map<String, dynamic> chatMessageData, String chatId) {
+    // Add to queue
+    _messageQueue.add({
+      'type': 'notification',
+      'data': chatMessageData,
+      'chatId': chatId,
+      'timestamp': DateTime.now(),
+    });
+
+    // Process queue with debouncing
+    _messageQueueTimer?.cancel();
+    _messageQueueTimer = Timer(Duration(milliseconds: 100), () {
+      _processMessageQueue();
+    });
+  }
+
+  // Process queued background operations
+  Future<void> _processMessageQueue() async {
+    if (_isProcessingQueue || _messageQueue.isEmpty) return;
+
+    _isProcessingQueue = true;
+    final queue = List.from(_messageQueue);
+    _messageQueue.clear();
+
+    try {
+      // Process notifications in batch
+      final notificationTasks = <Future>[];
+
+      for (var item in queue) {
+        if (item['type'] == 'notification') {
+          notificationTasks
+              .add(_sendChatNotificationAsync(item['data'], item['chatId']));
+        }
+      }
+
+      // Execute all tasks in parallel
+      if (notificationTasks.isNotEmpty) {
+        await Future.wait(notificationTasks, eagerError: false);
+      }
+
+      // Update indicators once after all operations
+      updateUnreadMessageIndicators();
+      refreshAllChatLists();
+    } catch (e) {
+      print('Error processing message queue: $e');
+    } finally {
+      _isProcessingQueue = false;
+    }
+  }
+
+  // Check if chat has unread messages using proper schema
+  Future<bool> hasUnreadMessages(String chatId, String userId) async {
+    try {
+      // Get chat info and read times
       final chat = await _supabase
           .from('chats')
           .select(
@@ -630,464 +1175,109 @@ class SupabaseChatController extends GetxController {
           .eq('id', chatId)
           .single();
 
-      print(
-          '💬 Chat before update: sender_id=${chat['sender_id']}, send_to_id=${chat['send_to_id']}');
-      print(
-          '💬 Previous read times: sender=${chat['sender_last_read_time']}, recipient=${chat['recipient_last_read_time']}');
+      final isUserSender = chat['sender_id'] == userId;
+      final lastReadTime = isUserSender
+          ? chat['sender_last_read_time']
+          : chat['recipient_last_read_time'];
 
-      Map<String, dynamic> updateData = {};
-      String currentTime = DateTime.now().toUtc().toIso8601String(); // Use UTC
+      // Count messages sent by others after last read time
+      final unreadMessages = await _supabase
+          .from('messages')
+          .select('id')
+          .eq('chat_id', chatId)
+          .neq('send_by', userId)
+          .gt('time', lastReadTime ?? '1970-01-01T00:00:00Z')
+          .limit(1);
 
-      if (chat['sender_id'] == userId) {
-        updateData['sender_last_read_time'] = currentTime;
-        print('💬 Updating sender_last_read_time to: $currentTime');
-      } else if (chat['send_to_id'] == userId) {
-        updateData['recipient_last_read_time'] = currentTime;
-        print('💬 Updating recipient_last_read_time to: $currentTime');
-      }
+      return unreadMessages.isNotEmpty;
+    } catch (e) {
+      print('Error checking unread messages: $e');
+      return false;
+    }
+  }
 
-      if (updateData.isNotEmpty) {
-        await _supabase.from('chats').update(updateData).eq('id', chatId);
+  // Start connection keep-alive for instant messaging
+  void _startConnectionKeepAlive() {
+    _connectionKeepAliveTimer?.cancel();
+    _connectionKeepAliveTimer = Timer.periodic(Duration(seconds: 30), (_) {
+      _maintainConnection();
+    });
+  }
 
-        print('✅ Chat marked as read successfully');
+  // Maintain active connection to Supabase
+  Future<void> _maintainConnection() async {
+    try {
+      final now = DateTime.now();
+      // Only ping if last check was more than 25 seconds ago
+      if (_lastConnectionCheck == null ||
+          now.difference(_lastConnectionCheck!).inSeconds > 25) {
+        _lastConnectionCheck = now;
 
-        // Verify the update worked
-        final updatedChat = await _supabase
+        // Simple lightweight query to keep connection warm
+        await _supabase
             .from('chats')
-            .select('sender_last_read_time, recipient_last_read_time')
-            .eq('id', chatId)
-            .single();
-        print(
-            '💬 After update read times: sender=${updatedChat['sender_last_read_time']}, recipient=${updatedChat['recipient_last_read_time']}');
-
-        // Update badge count and UI indicators
-        await updateBadgeCountFromChats();
-        await updateUnreadMessageIndicators();
-        
-        // Trigger UI refresh for chat list
-        update();
-      } else {
-        print(
-            '💬 ⚠️ User $userId is neither sender nor receiver for chat $chatId');
+            .select('id')
+            .limit(1)
+            .timeout(Duration(seconds: 5));
       }
     } catch (e) {
-      print('❌ Error marking chat as read: $e');
+      // Silently ignore keep-alive errors
     }
   }
 
-  // Update badge count based on unread messages
-  Future<void> updateBadgeCountFromChats() async {
+  // Pre-warm chat data for faster loading
+  Future<void> prewarmChatData(String chatId) async {
+    if (!_messageCache.containsKey(chatId)) {
+      // Pre-load messages in background
+      Future.microtask(() => _loadMessagesForChat(chatId));
+    }
+
+    // Ensure subscription is set up
+    if (!_messageChannels.containsKey(chatId)) {
+      _setupRealtimeSubscription(chatId);
+    }
+  }
+
+  // Emergency method to force badge display for testing
+  void forceShowBadge({int count = 3}) {
     try {
-      print('💬 📱 🔄 Starting badge count update...');
-      final authCont = Get.find<AuthController>();
-      if (authCont.user?.userId == null) {
-        print('💬 📱 ❌ No user found, skipping badge count update');
-        return;
-      }
-
-      String currentUserId = authCont.user!.userId.toString();
-      int unreadMessageCount = 0;
-      print('💬 📱 Current user ID: $currentUserId');
-
-      // Get all chats for this user (sender and receiver)
-      final senderChats =
-          await _supabase.from('chats').select().eq('sender_id', currentUserId);
-
-      final receiverChats = await _supabase
-          .from('chats')
-          .select()
-          .eq('send_to_id', currentUserId);
-
-      // Combine and deduplicate
-      final Map<String, Map<String, dynamic>> uniqueChats = {};
-
-      for (var chat in senderChats) {
-        uniqueChats[chat['id']] = chat;
-      }
-
-      for (var chat in receiverChats) {
-        uniqueChats[chat['id']] = chat;
-      }
-
-      final chats = uniqueChats.values.toList();
-
-      print('💬 📱 Found ${chats.length} total chats for badge calculation');
-      print(
-          '💬 📱 Sender chats: ${senderChats.length}, Receiver chats: ${receiverChats.length}');
-
-      for (var chat in chats) {
-        print(
-            '💬 📱 Checking chat ${chat['id']}: is_messaged=${chat['is_messaged']}');
-        if (chat['is_messaged'] == true) {
-          int chatUnreadCount = await countUnreadMessagesInChat(
-            chat['id'],
-            currentUserId,
-          );
-          print('💬 📱 Chat ${chat['id']}: $chatUnreadCount unread messages');
-          unreadMessageCount += chatUnreadCount;
-        } else {
-          print('💬 📱 Chat ${chat['id']}: Skipping (is_messaged=false)');
-        }
-      }
-
-      print('💬 📱 📊 Total unread messages calculated: $unreadMessageCount');
-
-      // Update badge count (using flutter_local_notifications)
-      // await FirebaseMessagingService.setBadgeCount(unreadMessageCount);
-      // Note: Badge count will be handled by local notifications
-      authCont.unreadMessageCount.value = unreadMessageCount;
-      authCont.hasUnreadMessages.value = unreadMessageCount > 0;
-      authCont.update();
-
-      print('✅ Badge count updated to: $unreadMessageCount');
+      final authController = Get.find<AuthController>();
+      authController.unreadMessageCount.value = count;
+      authController.hasUnreadMessages.value = count > 0;
+      authController.update();
+      print('🔴 EMERGENCY BADGE: Forced badge to show count $count');
     } catch (e) {
-      print('❌ Error updating badge count: $e');
-    }
-  }
-
-  // Count unread messages in a specific chat
-  Future<int> countUnreadMessagesInChat(
-      String chatId, String currentUserId) async {
-    try {
-      final chat =
-          await _supabase.from('chats').select().eq('id', chatId).single();
-
-      print(
-          '💬 🔍 Checking unread messages for chat $chatId, user $currentUserId');
-      print(
-          '💬 Chat sender_id: ${chat['sender_id']}, send_to_id: ${chat['send_to_id']}');
-
-      DateTime? lastReadTime;
-      if (chat['sender_id'] == currentUserId) {
-        lastReadTime = chat['sender_last_read_time'] != null
-            ? DateTime.parse(chat['sender_last_read_time'])
-            : null;
-        print('💬 User is sender, last read time: $lastReadTime');
-      } else if (chat['send_to_id'] == currentUserId) {
-        lastReadTime = chat['recipient_last_read_time'] != null
-            ? DateTime.parse(chat['recipient_last_read_time'])
-            : null;
-        print('💬 User is receiver, last read time: $lastReadTime');
-      }
-
-      // Get messages count - enhanced approach with proper datetime handling
-      List<Map<String, dynamic>> result;
-
-      if (lastReadTime != null) {
-        // Use proper timestamp comparison
-        String lastReadTimeIso = lastReadTime.toIso8601String();
-        print('💬 Looking for messages after: $lastReadTimeIso');
-
-        result = await _supabase
-            .from('messages')
-            .select('id, time, send_by')
-            .eq('chat_id', chatId)
-            .neq('send_by', currentUserId)
-            .gt('time', lastReadTimeIso)
-            .order('time', ascending: false);
-      } else {
-        print(
-            '💬 No last read time found, counting all messages not sent by user');
-
-        result = await _supabase
-            .from('messages')
-            .select('id, time, send_by')
-            .eq('chat_id', chatId)
-            .neq('send_by', currentUserId)
-            .order('time', ascending: false);
-      }
-      print('💬 Found ${result.length} unread messages in chat $chatId');
-
-      // Debug: show the unread messages with detailed comparison
-      for (var msg in result) {
-        DateTime msgTime = DateTime.parse(msg['time']);
-        String comparison = lastReadTime != null
-            ? (msgTime.isAfter(lastReadTime) ? 'AFTER' : 'BEFORE/EQUAL')
-            : 'NO_READ_TIME';
-        print(
-            '💬 Unread message: ${msg['time']} by ${msg['send_by']} ($comparison last read)');
-      }
-
-      // Additional check: manually filter messages that are truly after lastReadTime
-      if (lastReadTime != null) {
-        final manualCount = result.where((msg) {
-          try {
-            DateTime msgTime = DateTime.parse(msg['time']);
-            return msgTime.isAfter(lastReadTime!);
-          } catch (e) {
-            print('💬 ❌ Error parsing message time: ${msg['time']}');
-            return false;
-          }
-        }).length;
-        print('💬 Manual count of messages after last read: $manualCount');
-        return manualCount;
-      }
-
-      return result.length;
-    } catch (e) {
-      print('❌ Error counting unread messages: $e');
-      return 0;
-    }
-  }
-
-  // Check if chat has unread messages
-  bool hasUnreadMessages(Map<String, dynamic> chatData, String currentUserId) {
-    try {
-      String? lastMessageSendBy = chatData['send_by'];
-      DateTime? lastMessageTime =
-          chatData['time'] != null ? DateTime.parse(chatData['time']) : null;
-
-      if (lastMessageTime == null || lastMessageSendBy == currentUserId) {
-        return false;
-      }
-
-      DateTime? lastReadTime;
-      if (chatData['sender_id'] == currentUserId) {
-        lastReadTime = chatData['sender_last_read_time'] != null
-            ? DateTime.parse(chatData['sender_last_read_time'])
-            : null;
-      } else if (chatData['send_to_id'] == currentUserId) {
-        lastReadTime = chatData['recipient_last_read_time'] != null
-            ? DateTime.parse(chatData['recipient_last_read_time'])
-            : null;
-      }
-
-      if (lastReadTime == null) return true;
-
-      return lastMessageTime.isAfter(lastReadTime);
-    } catch (e) {
-      print('❌ Error checking unread status: $e');
-      return false;
-    }
-  }
-
-  // User presence management
-  Future<void> updateUserPresence(String userId, bool isOnline) async {
-    try {
-      final data = {
-        'user_id': userId,
-        'is_online': isOnline,
-        'last_active_time': DateTime.now().toUtc().toIso8601String(), // Use UTC
-      };
-
-      await _supabase.from('user_presence').upsert(data, onConflict: 'user_id');
-
-      print('✅ User presence updated: $userId - Online: $isOnline');
-    } catch (e) {
-      print('❌ Error updating user presence: $e');
-    }
-  }
-
-  // Get user presence stream
-  Stream<Map<String, dynamic>?> getUserPresence(String userId) {
-    return _supabase
-        .from('user_presence')
-        .stream(primaryKey: ['user_id'])
-        .eq('user_id', userId)
-        .map((data) => data.isNotEmpty ? data.first : null);
-  }
-
-  // Set user online
-  Future<void> setUserOnline(String userId) async {
-    await updateUserPresence(userId, true);
-  }
-
-  // Set user offline
-  Future<void> setUserOffline(String userId) async {
-    await updateUserPresence(userId, false);
-  }
-
-  // Update unread message indicators
-  Future<void> updateUnreadMessageIndicators() async {
-    await updateBadgeCountFromChats();
-  }
-
-  // Start listening for chat updates
-  void startListeningForChatUpdates() {
-    try {
-      final authCont = Get.find<AuthController>();
-      if (authCont.user?.userId == null) return;
-
-      String userId = authCont.user!.userId.toString();
-
-      // Stop existing listeners
-      stopListeningForChatUpdates();
-
-      // Listen for chat changes
-      _chatChannel = _supabase
-          .channel('chats:$userId')
-          .onPostgresChanges(
-            event: PostgresChangeEvent.all,
-            schema: 'public',
-            table: 'chats',
-            callback: (payload) {
-              print('🔔 Chat change detected');
-              updateBadgeCountFromChats();
-              updateUnreadMessageIndicators();
-            },
-          )
-          .subscribe();
-
-      print('✅ Started listening for chat updates');
-    } catch (e) {
-      print('❌ Error starting chat listener: $e');
-    }
-  }
-
-  // Stop listening for chat updates
-  void stopListeningForChatUpdates() {
-    _chatChannel?.unsubscribe();
-    _chatChannel = null;
-    print('✅ Stopped listening for chat updates');
-  }
-
-  // Format last active time
-  String formatLastActiveTime(DateTime? lastActiveTime) {
-    if (lastActiveTime == null) return "Last seen long ago".tr;
-
-    // Convert to local time for accurate calculation
-    DateTime localLastActiveTime = lastActiveTime.toLocal();
-    Duration difference = DateTime.now().difference(localLastActiveTime);
-
-    if (difference.inMinutes < 1) {
-      return "Active now".tr;
-    } else if (difference.inMinutes < 60) {
-      return "Last seen".tr + " ${difference.inMinutes} " + "minutes ago".tr;
-    } else if (difference.inHours < 24) {
-      return "Last seen".tr + " ${difference.inHours} " + "hours ago".tr;
-    } else if (difference.inDays < 7) {
-      return "Last seen".tr + " ${difference.inDays} " + "days ago".tr;
-    } else {
-      return "Last seen long ago".tr;
-    }
-  }
-
-  // Check if user is online
-  bool isUserOnline(Map<String, dynamic>? presenceData) {
-    if (presenceData == null) return false;
-
-    bool isOnline = presenceData['is_online'] ?? false;
-    if (!isOnline) return false;
-
-    DateTime? lastActiveTime = presenceData['last_active_time'] != null
-        ? DateTime.parse(presenceData['last_active_time']).toLocal()
-        : null;
-
-    if (lastActiveTime != null) {
-      Duration difference = DateTime.now().difference(lastActiveTime);
-      if (difference.inMinutes > 5) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  // Update device token in chat
-  Future<void> updateDeviceTokenInChat(
-    String chatId,
-    String userId,
-    String newDeviceToken,
-  ) async {
-    try {
-      final chat = await _supabase
-          .from('chats')
-          .select('sender_id, send_to_id')
-          .eq('id', chatId)
-          .single();
-
-      Map<String, dynamic> updateData = {};
-
-      if (chat['sender_id'] == userId) {
-        updateData['user_device_token'] = newDeviceToken;
-      } else if (chat['send_to_id'] == userId) {
-        updateData['send_to_device_token'] = newDeviceToken;
-      }
-
-      if (updateData.isNotEmpty) {
-        await _supabase.from('chats').update(updateData).eq('id', chatId);
-
-        print('✅ Device token updated in chat');
-      }
-    } catch (e) {
-      print('❌ Error updating device token: $e');
-    }
-  }
-
-  // Add chat room
-  Future<bool> addChatRoom(
-      Map<String, dynamic> chatRoom, String chatRoomId) async {
-    try {
-      chatRoom['id'] = chatRoomId;
-      await _supabase.from('chats').insert(chatRoom);
-      return true;
-    } catch (e) {
-      print('❌ Error adding chat room: $e');
-      return false;
-    }
-  }
-
-  // Upload image to Supabase Storage
-  Future<String?> uploadImage(String filePath, String fileName) async {
-    try {
-      print('💬 Attempting to upload image: $fileName');
-
-      // Check if the bucket exists first
+      print('🔴 EMERGENCY BADGE ERROR: $e');
       try {
-        await _supabase.storage.from('chat-images').list();
-      } catch (bucketError) {
-        print('❌ Chat images bucket not found. Creating bucket...');
-        // Try to create the bucket (this might fail if user doesn't have permission)
-        try {
-          await _supabase.storage.createBucket(
-              'chat-images',
-              BucketOptions(
-                public: true,
-                allowedMimeTypes: ['image/*'],
-              ));
-          print('✅ Chat images bucket created successfully');
-        } catch (createError) {
-          print('❌ Failed to create chat images bucket: $createError');
-          print(
-              '💡 Please create the "chat-images" bucket in Supabase dashboard');
-          return null;
-        }
+        final authController = Get.put(AuthController());
+        authController.unreadMessageCount.value = count;
+        authController.hasUnreadMessages.value = count > 0;
+        authController.update();
+        print(
+            '🔴 EMERGENCY BADGE: Created controller and forced badge to $count');
+      } catch (e2) {
+        print('🔴 EMERGENCY BADGE FATAL ERROR: $e2');
       }
+    }
+  }
 
-      final fileBytes = File(filePath).readAsBytesSync();
-      await _supabase.storage.from('chat-images').uploadBinary(
-            'images/$fileName',
-            fileBytes,
-            fileOptions: const FileOptions(
-              cacheControl: '3600',
-              upsert: false,
-            ),
-          );
+  // Upload image to Supabase storage
+  Future<String?> uploadImage(File imageFile) async {
+    try {
+      final fileName = 'chat_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final bytes = await imageFile.readAsBytes();
 
-      final url = _supabase.storage
+      final response = await _supabase.storage
           .from('chat-images')
-          .getPublicUrl('images/$fileName');
+          .uploadBinary(fileName, bytes);
 
-      print('✅ Image uploaded: $url');
-      return url;
+      // Get public URL
+      final publicUrl =
+          _supabase.storage.from('chat-images').getPublicUrl(fileName);
+
+      return publicUrl;
     } catch (e) {
-      print('❌ Error uploading image: $e');
-      if (e.toString().contains('Bucket not found')) {
-        print(
-            '💡 Please create the "chat-images" bucket in your Supabase dashboard');
-        print(
-            '💡 Go to Storage > Create bucket > Name: "chat-images" > Make it public');
-      } else if (e.toString().contains('row-level security policy') ||
-          e.toString().contains('Unauthorized') ||
-          e.toString().contains('403')) {
-        print('❌ Row Level Security (RLS) policy violation');
-        print('💡 Please configure storage policies in Supabase:');
-        print('💡 1. Go to Authentication > Policies');
-        print('💡 2. Create a policy for storage.objects table');
-        print('💡 3. Allow INSERT for authenticated users');
-        print(
-            '💡 OR disable RLS for testing: ALTER TABLE storage.objects DISABLE ROW LEVEL SECURITY;');
-      }
+      print('Error uploading image: $e');
       return null;
     }
   }

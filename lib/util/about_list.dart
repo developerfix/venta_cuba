@@ -16,7 +16,7 @@ required this.text
       height: 45..h,
       decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(60),
-          color: AppColors.k0xFFC4C4C4.withOpacity(.10)
+          color: AppColors.k0xFFC4C4C4.withValues(alpha: .10)
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

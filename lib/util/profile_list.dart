@@ -63,7 +63,7 @@ class ProfileList2 extends StatelessWidget {
       width: MediaQuery.of(context).size.width,
       decoration: BoxDecoration(boxShadow: [
         BoxShadow(
-          color: AppColors.black.withOpacity(.4),
+          color: AppColors.black.withValues(alpha: .4),
           blurRadius: 5,
         )
       ], borderRadius: BorderRadius.circular(5), color: AppColors.white),

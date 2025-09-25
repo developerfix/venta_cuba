@@ -4,7 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 class CustomImageView extends StatelessWidget {
-  String image;
+  final String image;
   CustomImageView({super.key,required this.image});
 
   @override

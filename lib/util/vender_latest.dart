@@ -17,12 +17,12 @@ class VendorLatest extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
           color: AppColors.cardColor,
           border: Border.all(
-            color: AppColors.textSecondary.withOpacity(.1),
+            color: AppColors.textSecondary.withValues(alpha: .1),
           ),
           boxShadow: [
             BoxShadow(
               blurRadius: 3,
-              color: AppColors.textSecondary.withOpacity(.1),
+              color: AppColors.textSecondary.withValues(alpha: .1),
             )
           ]),
       child: Column(
@@ -42,7 +42,7 @@ class VendorLatest extends StatelessWidget {
                 height: 30..h,
                 width: 30..w,
                 decoration: BoxDecoration(shape: BoxShape.circle),
-                child: Image.asset('assets/images/profile1.png'),
+                child: Image.asset('assets/images/notImage.jpg'),
               )
             ],
           ),

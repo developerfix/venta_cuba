@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:get/get_connect/http/src/request/request.dart';
 import 'package:http/http.dart' as http;
 import '../Controllers/auth_controller.dart';
-import '../Utils/funcations.dart';
 import 'package:flutter/material.dart';
 
 import '../view/auth/sign_up.dart';

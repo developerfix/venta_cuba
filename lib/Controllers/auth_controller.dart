@@ -23,9 +23,8 @@ import '../view/Chat/Controller/SupabaseChatController.dart';
 import 'home_controller.dart';
 // Firebase removed for Cuba compatibility
 // import '../Services/Firebase/firebase_messaging_service.dart';
-import '../Services/RealPush/platform_push_service.dart';
+import '../Services/push_service.dart';
 import '../Services/RealPush/android_background_service.dart';
-import '../Services/RealPush/ntfy_push_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 // FCM notifications are now handled directly in SupabaseChatController
@@ -106,12 +105,12 @@ class AuthController extends GetxController {
                 .tr);
       }
 
-      // Initialize ntfy service (works for both Android and iOS)
-      await NtfyPushService.initialize(
+      // Initialize enhanced push service (works for both Android and iOS)
+      await PushService.initialize(
         userId: userId,
-        customServerUrl: null, // Use default ntfy.sh server
       );
-      print('✅ Ntfy push service initialized');
+      print(
+          '✅ Enhanced push service initialized with ultra-fast notifications');
 
       // On Android, also start the background service for persistent notifications
       if (Platform.isAndroid) {
@@ -242,13 +241,9 @@ class AuthController extends GetxController {
         print('✅ Android background service stopped');
       }
 
-      // Dispose ntfy service
-      await NtfyPushService.dispose();
-      print('✅ Ntfy push service disposed');
-
-      // Stop platform push service
-      await PlatformPushService.stopListening();
-      print('✅ Platform push service stopped');
+      // Stop push service
+      await PushService.dispose();
+      print('✅ Push service stopped');
     } catch (e) {
       print('❌ Error stopping push notifications: $e');
     }
@@ -350,6 +345,26 @@ class AuthController extends GetxController {
     } catch (e) {
       print('🔥 ❌ Error refreshing unread message count: $e');
     }
+  }
+
+  // Test method to manually set unread count (for debugging)
+  void setTestUnreadCount(int count) {
+    print('🔴 TEST: Setting unread count to $count');
+    unreadMessageCount.value = count;
+    hasUnreadMessages.value = count > 0;
+    update(); // Trigger UI update
+    print(
+        '🔴 TEST: After setting - unreadMessageCount.value = ${unreadMessageCount.value}');
+    print(
+        '🔴 TEST: After setting - hasUnreadMessages.value = ${hasUnreadMessages.value}');
+  }
+
+  // Force show badge for immediate testing
+  void showBadgeNow() {
+    print('🔴 FORCE BADGE: Showing badge with count 5');
+    unreadMessageCount.value = 5;
+    hasUnreadMessages.value = true;
+    update();
   }
 
   final TwilioFlutter twilioFlutter = TwilioFlutter(
@@ -484,16 +499,23 @@ class AuthController extends GetxController {
         // Set RLS user context for secure Supabase access
         await RLSHelper.setUserContext(user!.userId.toString());
 
-        // Initialize push notifications properly
-        await initializePushNotifications(user!.userId.toString());
-        print('✅ Push notifications initialized for user: ${user!.userId}');
+        // Initialize PREMIUM push notifications with enhanced service
+        await PushService.initialize(
+          userId: user!.userId.toString(),
+        );
+        print(
+            '✅ PREMIUM Push notifications initialized with ultra-fast delivery for user: ${user!.userId}');
       }
 
       // Start chat listener (with timeout and error handling)
       try {
         print('🔥 AuthController: Starting chat services...');
-        final chatCont = Get.put(SupabaseChatController());
-        chatCont.startListeningForChatUpdates();
+        // Safe get with fallback
+        final chatCont = Get.isRegistered<SupabaseChatController>()
+            ? Get.find<SupabaseChatController>()
+            : Get.put(SupabaseChatController(), permanent: true);
+        chatCont
+            .startListeningForChatUpdates(); // Will skip if already initialized
 
         // Update unread message indicators with timeout
         try {
@@ -711,7 +733,9 @@ class AuthController extends GetxController {
   void _initializePushServiceInBackground(String userId) {
     Future.delayed(Duration(seconds: 2), () async {
       try {
-        await PlatformPushService.initialize(userId);
+        await PushService.initialize(
+          userId: userId,
+        );
       } catch (e) {
         //
       }
@@ -1011,7 +1035,6 @@ class AuthController extends GetxController {
       // Update device token in each chat
       for (var chat in chats) {
         await chatController.updateDeviceTokenInChat(
-          chat['id'],
           currentUserId,
           newToken,
         );

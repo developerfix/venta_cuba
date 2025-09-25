@@ -13,10 +13,12 @@ import java.util.concurrent.TimeUnit
 class NtfyBackgroundService : Service() {
     
     companion object {
-        const val CHANNEL_ID = "venta_cuba_background"
+        const val CHANNEL_ID = "venta_cuba_background"  // For sticky service notification
+        const val CHAT_CHANNEL_ID = "venta_cuba_background_chat"  // For background chat notifications
         const val NOTIFICATION_ID = 1001
         const val ACTION_STOP_SERVICE = "STOP_SERVICE"
-        
+        const val ACTION_RESTORE_NOTIFICATION = "RESTORE_NOTIFICATION"
+
         var isRunning = false
             private set
     }
@@ -44,17 +46,22 @@ class NtfyBackgroundService : Service() {
                 stopSelf()
                 return START_NOT_STICKY
             }
+            ACTION_RESTORE_NOTIFICATION -> {
+                // Called when app resumes - restore original sticky notification
+                restoreServiceNotification()
+                return START_STICKY
+            }
             else -> {
                 userId = intent?.getStringExtra("userId")
                 ntfyServerUrl = intent?.getStringExtra("serverUrl") ?: "https://ntfy.sh"
-                
+
                 if (userId != null) {
                     startForegroundService()
                     connectToNtfy()
                 }
             }
         }
-        
+
         // START_STICKY = restart service if killed (perfect for older phones)
         return START_STICKY
     }
@@ -135,42 +142,43 @@ class NtfyBackgroundService : Service() {
     }
     
     private fun handleMessage(message: String) {
+        // FIRST CHECK: Is app running (foreground/background)? If yes, let temp service handle it
+        if (isAppRunning()) {
+            println("🔇 STICKY SERVICE: App is running (foreground/background) - letting temp service handle notification")
+            return // Exit early - temp service will show the notification
+        }
+
+        // Only process if app is COMPLETELY TERMINATED
+        println("📨 STICKY SERVICE: App is TERMINATED - sticky service will handle notification")
         try {
             val json = JSONObject(message)
-            
+
             // Filter out system messages and connection confirmations
             val messageType = json.optString("event", "")
             if (messageType == "open" || messageType == "keepalive") {
                 println("🔇 BACKGROUND: Skipping system message: $messageType")
                 return
             }
-            
+
             // Only process messages that have actual content
             val title = json.optString("title", "")
             val body = json.optString("message", "")
-            
+
             // Skip if no title or body (system messages)
             if (title.isEmpty() || body.isEmpty()) {
                 println("🔇 BACKGROUND: Skipping message without content")
                 return
             }
-            
+
             // Skip if this is not a chat message (check for chat ID in click action)
             val clickAction = json.optString("click", "")
             if (clickAction.isEmpty() || !clickAction.startsWith("myapp://chat/")) {
                 println("🔇 BACKGROUND: Skipping non-chat message")
                 return
             }
-            
-            println("🔴 BACKGROUND SERVICE: Received notification for chat")
-            
-            // Check if app is in foreground - if so, don't show notification
-            if (isAppInForeground()) {
-                println("🔇 BACKGROUND: App is in foreground, skipping notification")
-                return
-            }
-            
-            // Show notification only when app is in background/terminated
+
+            // App is TERMINATED - sticky service shows notification
+            println("📨 STICKY SERVICE: Showing notification (app terminated)")
             showChatNotification(title, body, clickAction)
             
         } catch (e: Exception) {
@@ -180,39 +188,68 @@ class NtfyBackgroundService : Service() {
     
     private fun showChatNotification(title: String, body: String, clickAction: String) {
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        
+
         // Create intent for when notification is tapped
         val intent = Intent().apply {
             action = Intent.ACTION_VIEW
             data = android.net.Uri.parse(clickAction.ifEmpty { "myapp://home" })
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
-        
+
         val pendingIntent = PendingIntent.getActivity(
-            this, 
+            this,
             System.currentTimeMillis().toInt(),
             intent,
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0
         )
-        
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle(title)
+
+        // UPDATE the existing sticky notification with chat message
+        // This shows the message IN the sticky notification (not separate)
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)  // Use SAME channel as sticky
+            .setContentTitle("VentaCuba: $title")  // Include app name
             .setContentText(body)
             .setSmallIcon(R.drawable.ic_notification)
-            .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setDefaults(NotificationCompat.DEFAULT_ALL)
+            .setOngoing(true)  // Keep sticky
+            .setShowWhen(true)  // Show timestamp for messages
             .build()
-        
-        notificationManager.notify(System.currentTimeMillis().toInt(), notification)
+
+        // Update the SAME notification ID to replace sticky with message
+        notificationManager.notify(NOTIFICATION_ID, notification)
+
+        // DO NOT auto-restore - keep showing the message until app resumes
+        // The message will stay visible while app is terminated
+        println("📨 Sticky notification updated with message - will persist until app resumes")
+    }
+
+    private fun restoreServiceNotification() {
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle(getString(R.string.service_title))
+            .setContentText(getString(R.string.service_text))
+            .setSmallIcon(R.drawable.ic_notification)
+            .setPriority(NotificationCompat.PRIORITY_MIN)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setShowWhen(false)
+            .setOngoing(true)
+            .setSound(null)
+            .setVibrate(null)
+            .setLights(0, 0, 0)
+            .build()
+
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify(NOTIFICATION_ID, notification)
     }
     
     // Removed updateNotification - keeping persistent notification static and minimal
     
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+            // 1. Service channel for sticky "VentaCuba Active" notification
+            val serviceChannel = NotificationChannel(
                 CHANNEL_ID,
                 getString(R.string.channel_name), // Localized channel name
                 NotificationManager.IMPORTANCE_MIN // Minimal importance
@@ -224,20 +261,125 @@ class NtfyBackgroundService : Service() {
                 setSound(null, null) // No sound
                 lockscreenVisibility = Notification.VISIBILITY_SECRET // Hide from lock screen
             }
-            
-            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
+
+            // 2. Chat channel for background chat notifications (dismissible)
+            val chatChannel = NotificationChannel(
+                CHAT_CHANNEL_ID,
+                "Background Chat Messages", // Separate channel for chat
+                NotificationManager.IMPORTANCE_HIGH // High importance for chat
+            ).apply {
+                description = "Chat notifications when app is in background"
+                setShowBadge(true) // Show badge for chat notifications
+                enableLights(true) // LED for chat
+                enableVibration(true) // Vibration for chat
+                setSound(android.provider.Settings.System.DEFAULT_NOTIFICATION_URI, null) // Default sound
+                lockscreenVisibility = Notification.VISIBILITY_PRIVATE // Show on lock screen
+            }
+
+            notificationManager.createNotificationChannel(serviceChannel)
+            notificationManager.createNotificationChannel(chatChannel)
         }
     }
     
-    private fun isAppInForeground(): Boolean {
+    private fun isAppRunning(): Boolean {
         val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-        val runningProcesses = activityManager.runningAppProcesses
-        
-        runningProcesses?.forEach { processInfo ->
-            if (processInfo.processName == packageName) {
-                return processInfo.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
+
+        // Check if any activities are running (not just the service)
+        val runningTasks = try {
+            @Suppress("DEPRECATION")
+            activityManager.getRunningTasks(1)
+        } catch (e: Exception) {
+            null
+        }
+
+        // If we can get running tasks and there's an active task from our app
+        if (!runningTasks.isNullOrEmpty()) {
+            val topTask = runningTasks[0]
+            if (topTask.baseActivity?.packageName == packageName) {
+                println("🔍 STICKY SERVICE: App has active task - SKIP notification")
+                return true
             }
+        }
+
+        // Alternative check: Look at running app processes
+        val runningProcesses = activityManager.runningAppProcesses
+
+        // If no running processes, app is definitely terminated
+        if (runningProcesses.isNullOrEmpty()) {
+            println("🔍 STICKY SERVICE: No running processes - app is TERMINATED")
+            return false
+        }
+
+        runningProcesses.forEach { processInfo ->
+            if (processInfo.processName == packageName) {
+                // Only consider the app "running" if it's in foreground or visible state
+                // SERVICE state alone means only the sticky service is running
+                val isRunning = when (processInfo.importance) {
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND -> {
+                        println("🔍 STICKY SERVICE: App is in FOREGROUND - SKIP notification")
+                        true
+                    }
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE -> {
+                        println("🔍 STICKY SERVICE: App is VISIBLE - SKIP notification")
+                        true
+                    }
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE -> {
+                        // This might be just our sticky service - need to check further
+                        // Check if MainActivity is alive
+                        if (isMainActivityRunning()) {
+                            println("🔍 STICKY SERVICE: App has MainActivity running - SKIP notification")
+                            true
+                        } else {
+                            println("🔍 STICKY SERVICE: Only sticky service running - app TERMINATED")
+                            false
+                        }
+                    }
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE -> {
+                        // Just service running (likely our sticky service) - app is terminated
+                        println("🔍 STICKY SERVICE: Only SERVICE running (app terminated) - SHOW notification")
+                        false
+                    }
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_BACKGROUND -> {
+                        println("🔍 STICKY SERVICE: App is in BACKGROUND - SKIP notification")
+                        true
+                    }
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_TOP_SLEEPING -> {
+                        println("🔍 STICKY SERVICE: App is TOP_SLEEPING - SKIP notification")
+                        true
+                    }
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED -> {
+                        // App might be cached but check if activities are alive
+                        println("🔍 STICKY SERVICE: App is CACHED - checking MainActivity")
+                        isMainActivityRunning()
+                    }
+                    else -> {
+                        println("🔍 STICKY SERVICE: App importance: ${processInfo.importance} - app TERMINATED")
+                        false
+                    }
+                }
+                return isRunning
+            }
+        }
+
+        println("🔍 STICKY SERVICE: App process not found - app is TERMINATED")
+        return false // App is terminated
+    }
+
+    private fun isMainActivityRunning(): Boolean {
+        // Additional check to see if MainActivity specifically is running
+        try {
+            val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+            @Suppress("DEPRECATION")
+            val runningTasks = activityManager.getRunningTasks(100)
+
+            runningTasks.forEach { task ->
+                if (task.baseActivity?.packageName == packageName &&
+                    task.baseActivity?.className?.contains("MainActivity") == true) {
+                    return true
+                }
+            }
+        } catch (e: Exception) {
+            println("🔍 Could not check MainActivity status: ${e.message}")
         }
         return false
     }

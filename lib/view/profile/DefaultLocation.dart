@@ -2,10 +2,7 @@ import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:pinput/pinput.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
-import 'package:venta_cuba/Utils/funcations.dart';
 import 'package:venta_cuba/cities_list/cites_list.dart';
 import 'package:venta_cuba/view/constants/Colors.dart';
 
@@ -113,7 +110,7 @@ class _DefaultLocationState extends State<DefaultLocation> {
                                     borderRadius: BorderRadius.circular(5),
                                     border: Border.all(
                                         color: AppColors.k0xFFA9ABAC
-                                            .withOpacity(.33))),
+                                            .withValues(alpha: .33))),
                                 child: DropdownButtonHideUnderline(
                                   child:
                                       DropdownButton2<CustomProvinceNameList>(
@@ -220,7 +217,7 @@ class _DefaultLocationState extends State<DefaultLocation> {
                                     borderRadius: BorderRadius.circular(5),
                                     border: Border.all(
                                         color: AppColors.k0xFFA9ABAC
-                                            .withOpacity(.33))),
+                                            .withValues(alpha: .33))),
                                 child: DropdownButtonHideUnderline(
                                   child: DropdownButton2<CustomCitiesList>(
                                     isExpanded: true,

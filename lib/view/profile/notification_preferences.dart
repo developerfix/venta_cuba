@@ -94,7 +94,7 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                   width: MediaQuery.of(context).size.width,
                   decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
-                      color: AppColors.k0xFFC4C4C4.withOpacity(.1)),
+                      color: AppColors.k0xFFC4C4C4.withValues(alpha: 0.1)),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -113,7 +113,7 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                       ),
                       Switch(
                         // enabledThumbColor: AppColors.k0xFF0254B8,
-                        // enabledTrackColor: AppColors.k0xFF0254B8.withOpacity(0.5),
+                        // enabledTrackColor: AppColors.k0xFF0254B8.withValues(alpha: 0.5),
                         value: switchState1,
                         onChanged: (newValue) {
                           setState(() {
@@ -139,7 +139,7 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                   width: MediaQuery.of(context).size.width,
                   decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
-                      color: AppColors.k0xFFC4C4C4.withOpacity(.1)),
+                      color: AppColors.k0xFFC4C4C4.withValues(alpha: 0.1)),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -171,7 +171,7 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                       ),
                       Switch(
                         // enabledThumbColor: AppColors.k0xFF0254B8,
-                        // enabledTrackColor: AppColors.k0xFF0254B8.withOpacity(0.5),
+                        // enabledTrackColor: AppColors.k0xFF0254B8.withValues(alpha: 0.5),
                         value: switchState2,
                         onChanged: (newValue) {
                           setState(() {
@@ -191,7 +191,7 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                   width: MediaQuery.of(context).size.width,
                   decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
-                      color: AppColors.k0xFFC4C4C4.withOpacity(.1)),
+                      color: AppColors.k0xFFC4C4C4.withValues(alpha: 0.1)),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -223,7 +223,7 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                       ),
                       Switch(
                         // enabledThumbColor: AppColors.k0xFF0254B8,
-                        // enabledTrackColor: AppColors.k0xFF0254B8.withOpacity(0.5),
+                        // enabledTrackColor: AppColors.k0xFF0254B8.withValues(alpha: 0.5),
                         value: switchState3,
                         onChanged: (newValue) async {
                           setState(() {
@@ -245,7 +245,7 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                   width: MediaQuery.of(context).size.width,
                   decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
-                      color: AppColors.k0xFFC4C4C4.withOpacity(.1)),
+                      color: AppColors.k0xFFC4C4C4.withValues(alpha: 0.1)),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -278,7 +278,7 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                       Switch(
                         value: switchState4,
                         // enabledThumbColor: AppColors.k0xFF0254B8,
-                        // enabledTrackColor: AppColors.k0xFF0254B8.withOpacity(0.5),
+                        // enabledTrackColor: AppColors.k0xFF0254B8.withValues(alpha: 0.5),
                         onChanged: (newValue) async {
                           setState(() {
                             switchState4 = newValue!;
@@ -299,7 +299,7 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                   width: MediaQuery.of(context).size.width,
                   decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
-                      color: AppColors.k0xFFC4C4C4.withOpacity(.1)),
+                      color: AppColors.k0xFFC4C4C4.withValues(alpha: 0.1)),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -336,7 +336,7 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                       Switch(
                         value: switchState5,
                         // enabledThumbColor: AppColors.k0xFF0254B8,
-                        // enabledTrackColor: AppColors.k0xFF0254B8.withOpacity(0.5),
+                        // enabledTrackColor: AppColors.k0xFF0254B8.withValues(alpha: 0.5),
                         onChanged: (newValue) async {
                           setState(() {
                             switchState5 = newValue!;
@@ -357,7 +357,7 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                   width: MediaQuery.of(context).size.width,
                   decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
-                      color: AppColors.k0xFFC4C4C4.withOpacity(.1)),
+                      color: AppColors.k0xFFC4C4C4.withValues(alpha: 0.1)),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -389,7 +389,7 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                       ),
                       Switch(
                         // enabledThumbColor: AppColors.k0xFF0254B8,
-                        // enabledTrackColor: AppColors.k0xFF0254B8.withOpacity(0.5),
+                        // enabledTrackColor: AppColors.k0xFF0254B8.withValues(alpha: 0.5),
                         value: switchState6,
                         // duration: Duration(milliseconds: 200),
                         onChanged: (newValue) async {
@@ -625,7 +625,7 @@ class _GFToggleState extends State<GFToggle> with TickerProviderStateMixin {
                         : widget.disabledThumbColor ?? Colors.white,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.16),
+                        color: Colors.black.withValues(alpha: 0.16),
                         blurRadius: 6,
                         spreadRadius: 0,
                       ),

@@ -72,7 +72,7 @@ class _LoginState extends State<Login> {
                                     // ClipRRect(
                                     //   borderRadius: BorderRadius.circular(10),
                                     //   child: Image.asset(
-                                    //     "assets/images/1024.png",
+                                    //     "assets/images/1024_opt.jpg",
                                     //     height: 90,
                                     //     width: 90,
                                     //   ),
@@ -299,7 +299,7 @@ class _LoginState extends State<Login> {
                                           decoration: BoxDecoration(
                                             color: cont.isLoading.value
                                                 ? AppColors.k0xFF0254B8
-                                                    .withOpacity(0.7)
+                                                    .withValues(alpha: 0.7)
                                                 : AppColors.k0xFF0254B8,
                                             borderRadius:
                                                 BorderRadius.circular(50),

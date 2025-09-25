@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
 import 'package:venta_cuba/Controllers/home_controller.dart';
 import 'package:venta_cuba/Utils/funcations.dart';
-import 'package:venta_cuba/util/favourite_seller_grid.dart';
 import 'package:flutter_svg/svg.dart';
 
 import 'package:venta_cuba/view/auth/login.dart';

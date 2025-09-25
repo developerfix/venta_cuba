@@ -748,31 +748,6 @@ class _FrameScreenState extends State<FrameScreen> {
                                               child:
                                                   CircularProgressIndicator(),
                                             ),
-                                          // Debug overlay for maps
-                                          Positioned(
-                                            top: 5,
-                                            left: 5,
-                                            child: Container(
-                                              padding: EdgeInsets.symmetric(
-                                                  horizontal: 8, vertical: 4),
-                                              decoration: BoxDecoration(
-                                                color:
-                                                    Colors.red.withOpacity(0.8),
-                                                borderRadius:
-                                                    BorderRadius.circular(4),
-                                              ),
-                                              child: Text(
-                                                _isMapLoading
-                                                    ? "🔥 Maps: LOADING..."
-                                                    : "🔥 Maps: LOADED ✅",
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
                                         ],
                                       ),
                                     ),
