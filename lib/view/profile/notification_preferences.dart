@@ -386,7 +386,7 @@ class _NotificationPreferencesState extends State<NotificationPreferences> {
                         ],
                       ),
                       Switch(
-                        // enabledThumbColor: AppColors.k0xFF0254B8,
+                        // enadledThumbColor: AppColors.k0xFF0254B8,
                         // enabledTrackColor: AppColors.k0xFF0254B8.withValues(alpha: 0.5),
                         value: switchState6,
                         // duration: Duration(milliseconds: 200),
