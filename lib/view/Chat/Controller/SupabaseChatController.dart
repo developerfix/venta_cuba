@@ -400,8 +400,10 @@ class SupabaseChatController extends GetxController {
                     if (!isDuplicate && !hasOptimistic) {
                       // Safe to add new message from real-time update
                       _messageCache[chatId]!.add(newMessage);
-                      print(
-                          '📡 Added real-time message: ${newMessage['message']?.substring(0, 20)}...');
+                      final messagePreview = newMessage['message'] != null && newMessage['message'].length > 0
+                          ? newMessage['message'].substring(0, newMessage['message'].length > 20 ? 20 : newMessage['message'].length)
+                          : '';
+                      print('📡 Added real-time message: $messagePreview...');
 
                       // Emit updated cache
                       if (_messageStreams.containsKey(chatId) &&
@@ -410,8 +412,10 @@ class SupabaseChatController extends GetxController {
                             .add(List.from(_messageCache[chatId]!));
                       }
                     } else {
-                      print(
-                          '📡 Skipped duplicate real-time message: ${newMessage['message']?.substring(0, 20)}...');
+                      final messagePreview = newMessage['message'] != null && newMessage['message'].length > 0
+                          ? newMessage['message'].substring(0, newMessage['message'].length > 20 ? 20 : newMessage['message'].length)
+                          : '';
+                      print('📡 Skipped duplicate real-time message: $messagePreview...');
                     }
                   }
                 } else if (payload.eventType == PostgresChangeEvent.update) {
@@ -668,8 +672,11 @@ class SupabaseChatController extends GetxController {
       final senderId = chatMessageData['senderId'];
       final sendToId = chatMessageData['sendToId'];
 
+      // Send notification to recipient
+
       // Don't send notification to yourself
       if (senderId == sendToId) {
+        print('🔕 Skipping self-notification');
         return;
       }
 
@@ -787,6 +794,10 @@ class SupabaseChatController extends GetxController {
 
       // Update PushService badge count for system-level badges
       await PushService.updateBadgeCount();
+
+      // Clear notifications for this chat when marked as read
+      await PushService.cancelChatNotifications(chatId);
+      print('🧼 Chat marked as read - cleared notifications for: $chatId');
 
       // Force immediate UI update
       try {

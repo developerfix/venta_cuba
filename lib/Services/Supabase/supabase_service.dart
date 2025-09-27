@@ -69,25 +69,41 @@ class SupabaseService {
     required String token,
   }) async {
     try {
+      print('🔍 [SupabaseService] Starting token save for user: $userId');
+      print('🔍 [SupabaseService] Token to save: $token');
+
       // First, delete any existing tokens for this user on this platform
+      print('🔍 [SupabaseService] Deleting existing tokens...');
       await client
           .from('device_tokens')
           .delete()
           .eq('user_id', userId)
           .eq('platform', 'flutter');
+      print('🔍 [SupabaseService] Delete complete');
 
       // Insert the new token (single token per user per platform)
-      await client.from('device_tokens').insert({
+      print('🔍 [SupabaseService] Inserting new token...');
+      final insertData = {
         'user_id': userId,
         'device_token': token,
         'platform': 'flutter',
         'is_active': true,
         'updated_at': DateTime.now().toIso8601String(),
-      });
+      };
+      print('🔍 [SupabaseService] Insert data: $insertData');
+
+      await client.from('device_tokens').insert(insertData);
+      print('✅ [SupabaseService] Token insert successful!');
 
       return true;
     } catch (e) {
-      //
+      print('❌ [SupabaseService] Error saving token: $e');
+      print('🔴 [SupabaseService] Error type: ${e.runtimeType}');
+      if (e is PostgrestException) {
+        print('🔴 [SupabaseService] Postgrest error details: ${e.message}');
+        print('🔴 [SupabaseService] Postgrest error code: ${e.code}');
+        print('🔴 [SupabaseService] Postgrest error hint: ${e.hint}');
+      }
       return false;
     }
   }

@@ -50,6 +50,9 @@ class PushService {
   static final Set<String> _recentMessageIds = {};
   static Timer? _deduplicationTimer;
 
+  // Track active notifications by chat ID for easy cleanup
+  static final Map<String, Set<int>> _activeNotificationsByChatId = {};
+
   // OPTIMIZATION: Offline message queue
   static final List<Map<String, dynamic>> _offlineQueue = [];
   static const int _maxQueueSize = 100;
@@ -86,10 +89,12 @@ class PushService {
       // Initialize local notifications with high priority
       await _initializeLocalNotifications();
 
-      // Start sticky foreground service on Android
-      if (Platform.isAndroid) {
-        await _startForegroundService();
-      }
+      // Clear any old chat notifications when app starts up
+      // (Keep the VentaCuba Active service notification)
+      await _clearOldChatNotifications();
+
+      // The Android background service handles notifications when app is terminated
+      // No need for Flutter sticky notification
 
       // Connect to WebSocket with retry logic
       await _connectWebSocket();
@@ -145,7 +150,7 @@ class PushService {
         importance: Importance.max,
         playSound: true,
         enableVibration: true,
-        enableLights: true,
+        enableLights: false, // Fix: Disable LED lights to prevent NullPointerException
       );
 
       await _localNotifications
@@ -169,32 +174,24 @@ class PushService {
     }
   }
 
-  /// Start Android foreground service for persistent connection
-  static Future<void> _startForegroundService() async {
-    if (!Platform.isAndroid) return;
-    
-    const androidDetails = AndroidNotificationDetails(
-      'venta_cuba_service',
-      'Background Service',
-      channelDescription: 'Keeps the app running for instant messages',
-      importance: Importance.low,
-      priority: Priority.min,
-      ongoing: true,
-      autoCancel: false,
-      showWhen: false,
-      enableVibration: false,
-      playSound: false,
-      onlyAlertOnce: true,
-    );
 
-    const notificationDetails = NotificationDetails(android: androidDetails);
+  /// Clear old chat notifications when app starts up
+  static Future<void> _clearOldChatNotifications() async {
+    try {
+      print('🧼 Clearing old chat notifications on app startup...');
 
-    await _localNotifications.show(
-      0,
-      'Venta Cuba',
-      'Ready to receive messages',
-      notificationDetails,
-    );
+      // When the app is opened, the user is now actively using it
+      // Clear all chat notifications since they can now see their messages
+      // The VentaCuba Active service notification will remain via the background service
+
+      await _localNotifications.cancelAll();
+      _activeNotificationsByChatId.clear();
+      _recentMessageIds.clear();
+
+      print('✅ All chat notifications cleared - user is now active');
+    } catch (e) {
+      print('❌ Error clearing old notifications: $e');
+    }
   }
 
   /// Connect to WebSocket with enhanced error handling and retry logic
@@ -234,7 +231,8 @@ class PushService {
       _retryCount = 0;
       _lastConnectedTime = DateTime.now();
 
-      print('✅ Premium WebSocket connected');
+      print('✅ Premium WebSocket connected to: $uri');
+      print('🔔 Ready to receive notifications for topic: $_userTopic');
       
       // Process any offline messages
       await _processOfflineQueue();
@@ -249,25 +247,51 @@ class PushService {
   static void _handleMessage(dynamic message) {
     try {
       final data = json.decode(message.toString()) as Map<String, dynamic>;
+      print('📨 Received notification: ${data['id'] ?? 'unknown'}');
+      print('🔍 Raw message data: $data');
 
       // Skip system messages
       final messageType = data['event'];
-      if (messageType == 'open' || messageType == 'keepalive') return;
+      print('🔍 Message type: $messageType');
+      if (messageType == 'open' || messageType == 'keepalive') {
+        print('🔕 Skipping system message: $messageType');
+        return; // Skip system messages
+      }
 
       final messageId = data['id'] ?? DateTime.now().millisecondsSinceEpoch.toString();
-      
+      print('🔍 Message ID: $messageId');
+
       // Premium deduplication
       if (_recentMessageIds.contains(messageId)) {
         print('🔇 Duplicate blocked: $messageId');
         return;
       }
       _recentMessageIds.add(messageId);
+      print('🔍 Added to deduplication cache');
 
-      final title = data['title'] as String?;
-      final body = data['message'] as String?;
-      final clickAction = data['click'] as String?;
+      // The actual notification data is nested in the 'message' field
+      final nestedMessage = data['message'];
+      print('🔍 Nested message: $nestedMessage');
 
-      if (title == null || title.isEmpty || body == null || body.isEmpty) return;
+      if (nestedMessage == null) {
+        print('❌ No nested message found');
+        return;
+      }
+
+      // Parse the nested message
+      final notificationData = json.decode(nestedMessage) as Map<String, dynamic>;
+      print('🔍 Parsed notification data: $notificationData');
+
+      final title = notificationData['title'] as String?;
+      final body = notificationData['message'] as String?;
+      final clickAction = notificationData['click'] as String?;
+
+      print('🔍 Title: $title, Body: $body, Click: $clickAction');
+
+      if (title == null || title.isEmpty || body == null || body.isEmpty) {
+        print('❌ Missing title or body');
+        return;
+      }
       
       // Extract chat ID from click action
       String? chatId;
@@ -275,15 +299,25 @@ class PushService {
         chatId = clickAction.split('/').last;
       }
 
-      // Check if chat is currently open
-      if (_isChatScreenOpen && chatId == _currentChatId) return;
+      print('🔍 NOTIFICATION DECISION: Chat open: $_isChatScreenOpen, Current chat: $_currentChatId, Incoming chat: $chatId');
 
-      // Global deduplication check
-      if (!NotificationManager.shouldShowNotificationGlobally(
-          chatId ?? '', 'unknown', body, 'text')) {
+      // Check if chat is currently open
+      if (_isChatScreenOpen && chatId == _currentChatId) {
+        print('🔕 BLOCKED: Same chat is currently open');
         return;
       }
 
+      // Global deduplication check
+      final shouldShow = NotificationManager.shouldShowNotificationGlobally(
+          chatId ?? '', 'unknown', body, 'text');
+      print('🔍 Global deduplication check: $shouldShow');
+
+      if (!shouldShow) {
+        print('🔕 BLOCKED: Global deduplication check failed');
+        return;
+      }
+
+      print('✅ SHOWING NOTIFICATION: $title - $body');
       // Show notification with premium features
       _showPremiumNotification(
         title: title,
@@ -303,7 +337,9 @@ class PushService {
     String? chatId,
     required String messageId,
   }) async {
-    final notificationId = messageId.hashCode.abs() % 100000;
+    try {
+      print('📢 _showPremiumNotification called: $title - $body');
+      final notificationId = messageId.hashCode.abs() % 100000;
 
     const androidDetails = AndroidNotificationDetails(
       'venta_cuba_chat_messages',
@@ -313,9 +349,7 @@ class PushService {
       priority: Priority.max,
       showWhen: true,
       enableVibration: true,
-      enableLights: true,
-      ledOnMs: 1000,
-      ledOffMs: 500,
+      enableLights: false, // Fix: Disable LED lights to prevent NullPointerException
       autoCancel: true,
       groupKey: 'com.venta.cuba.CHAT_MESSAGES',
       category: AndroidNotificationCategory.message,
@@ -345,6 +379,17 @@ class PushService {
       details,
       payload: chatId != null ? json.encode({'chatId': chatId}) : null,
     );
+
+    // Track this notification for the chat
+    if (chatId != null) {
+      _activeNotificationsByChatId.putIfAbsent(chatId, () => <int>{});
+      _activeNotificationsByChatId[chatId]!.add(notificationId);
+    }
+
+    print('✅ Premium notification displayed successfully: ID=$notificationId');
+    } catch (e) {
+      print('❌ Error in _showPremiumNotification: $e');
+    }
   }
 
   /// Handle disconnection with auto-reconnection
@@ -474,13 +519,39 @@ class PushService {
   /// Save token to Supabase
   static Future<void> _saveTokenToSupabase(String userId) async {
     try {
-      // Save ntfy topic for user
+      // Save device token to device_tokens table
+      final token = 'venta_cuba_user_$userId';
+
+      // First, delete any existing tokens for this user
       await SupabaseService.client
-          .from('users')
-          .update({'ntfy_topic': _userTopic})
-          .eq('user_id', userId);
+          .from('device_tokens')
+          .delete()
+          .eq('user_id', userId)
+          .eq('platform', 'flutter');
+
+      // Insert the new token
+      await SupabaseService.client.from('device_tokens').insert({
+        'user_id': userId,
+        'device_token': token,
+        'platform': 'flutter',
+        'is_active': true,
+        'updated_at': DateTime.now().toIso8601String(),
+      });
+
+      print('✅ Device token saved to Supabase from PushService: $token');
+
+      // Also save ntfy topic for user (optional, for backward compatibility)
+      try {
+        await SupabaseService.client
+            .from('users')
+            .update({'ntfy_topic': _userTopic})
+            .eq('user_id', userId);
+      } catch (e) {
+        // This might fail if users table doesn't have ntfy_topic column
+        print('⚠️ Could not update ntfy_topic in users table: $e');
+      }
     } catch (e) {
-      print('Error saving token: $e');
+      print('❌ Error saving token to Supabase: $e');
     }
   }
 
@@ -492,6 +563,10 @@ class PushService {
         final chatId = data['chatId'];
         
         if (chatId != null) {
+          // Clear notifications for this chat when tapped
+          print('💆 Notification tapped for chat $chatId - clearing notifications');
+          cancelChatNotifications(chatId);
+
           // Navigate to chat screen
           Get.toNamed('/chat', arguments: {'chatId': chatId});
         }
@@ -517,6 +592,8 @@ class PushService {
     required String senderId,
   }) async {
     try {
+      print('📨 Sending notification: $senderId → $recipientUserId (Chat: $chatId)');
+
       // CRITICAL: Don't send notifications to yourself
       try {
         final authCont = Get.find<AuthController>();
@@ -525,6 +602,9 @@ class PushService {
           return;
         }
       } catch (e) {}
+
+      // Skip notification preferences check for now since it's handled via API
+      // and we don't have direct access to user notification settings in Supabase
 
       // Format message based on type
       String formattedMessage = message;
@@ -578,9 +658,9 @@ class PushService {
           headers: {'Content-Type': 'application/json'},
           body: json.encode(payload),
         ).timeout(Duration(seconds: 5));
-        
+
         if (response.statusCode == 200) {
-          print('✅ Remote notification sent successfully with badge: $badgeCount');
+          print('✅ Notification sent successfully to $recipientTopic (badge: $badgeCount)');
 
           // Also show local notification for immediate display (covers all states)
           await _showLocalNotificationForRecipient(
@@ -591,6 +671,8 @@ class PushService {
             badgeCount: badgeCount,
           );
         } else {
+          print('❌ ntfy server returned status: ${response.statusCode}');
+          print('❌ Response body: ${response.body}');
           throw Exception('Failed with status: ${response.statusCode}');
         }
       } else {
@@ -618,17 +700,49 @@ class PushService {
     }
   }
 
-  /// Cancel notifications for a specific chat
+  /// Cancel ALL notifications for a specific chat
   static Future<void> cancelChatNotifications(String chatId) async {
-    // Cancel local notifications for this chat
-    final notificationId = chatId.hashCode.abs() % 100000;
-    await _localNotifications.cancel(notificationId);
+    try {
+      print('🧼 Canceling all notifications for chat: $chatId');
+
+      // 1. Cancel all tracked notifications for this chat
+      if (_activeNotificationsByChatId.containsKey(chatId)) {
+        final notificationIds = _activeNotificationsByChatId[chatId]!;
+        print('🧼 Found ${notificationIds.length} tracked notifications for chat $chatId');
+
+        for (final notificationId in notificationIds) {
+          await _localNotifications.cancel(notificationId);
+          print('✅ Canceled notification ID: $notificationId');
+        }
+
+        // Remove from tracking
+        _activeNotificationsByChatId.remove(chatId);
+      }
+
+      // 2. Also try common notification ID patterns (fallback)
+      final baseNotificationId = chatId.hashCode.abs() % 100000;
+      await _localNotifications.cancel(baseNotificationId);
+
+      // 3. Clear from deduplication cache for this chat
+      _recentMessageIds.removeWhere((id) => id.contains(chatId));
+
+      print('✅ All notifications canceled for chat: $chatId');
+
+    } catch (e) {
+      print('❌ Error canceling chat notifications: $e');
+    }
   }
 
-  /// Set active chat to prevent notifications
+  /// Set active chat to prevent notifications and clear existing ones
   static void setActiveChat(String? chatId) {
     _currentChatId = chatId;
     _isChatScreenOpen = chatId != null;
+
+    // When opening a chat, clear all notifications from that chat
+    if (chatId != null) {
+      print('📤 Opening chat $chatId - clearing notifications');
+      cancelChatNotifications(chatId);
+    }
   }
 
   /// Set chat screen status for notification management
@@ -636,6 +750,12 @@ class PushService {
     _isChatScreenOpen = isOpen;
     if (chatId != null) {
       _currentChatId = chatId;
+
+      // When opening a chat screen, clear all notifications from that chat
+      if (isOpen) {
+        print('📤 Opening chat screen for $chatId - clearing notifications');
+        cancelChatNotifications(chatId);
+      }
     }
   }
 
@@ -661,13 +781,11 @@ class PushService {
     
     await _closeWebSocket();
     
-    // Cancel persistent notification on Android
-    if (Platform.isAndroid) {
-      await _localNotifications.cancel(0);
-    }
+    // No persistent notification to cancel anymore
     
     _offlineQueue.clear();
     _recentMessageIds.clear();
+    _activeNotificationsByChatId.clear();
   }
 
   /// Update badge count for recipient user
@@ -695,13 +813,33 @@ class PushService {
   /// Get unread message count for a specific user
   static Future<int> _getUnreadCountForUser(String userId) async {
     try {
-      final response = await SupabaseService.client
-          .from('messages')
-          .select('id')
-          .eq('receiver_id', userId)
-          .eq('is_read', false);
+      // Get all chats where the user is involved
+      final userChats = await SupabaseService.client
+          .from('chats')
+          .select('id, sender_id, send_to_id, sender_last_read_time, recipient_last_read_time')
+          .or('sender_id.eq.$userId,send_to_id.eq.$userId');
 
-      return response.length;
+      int totalUnread = 0;
+
+      for (final chat in userChats) {
+        // Determine if user is sender or recipient
+        final isUserSender = chat['sender_id'] == userId;
+        final lastReadTime = isUserSender
+            ? chat['sender_last_read_time']
+            : chat['recipient_last_read_time'];
+
+        // Get unread messages for this chat
+        final unreadMessages = await SupabaseService.client
+            .from('messages')
+            .select('id')
+            .eq('chat_id', chat['id'])
+            .neq('send_by', userId)
+            .gt('time', lastReadTime ?? '1970-01-01T00:00:00Z');
+
+        totalUnread += unreadMessages.length;
+      }
+
+      return totalUnread;
     } catch (e) {
       print('❌ Error getting unread count: $e');
       return 0;
@@ -717,11 +855,21 @@ class PushService {
     required int badgeCount,
   }) async {
     try {
+      // Check if notification should be shown
+
       // Only show if this is for the current user on this device
-      if (_currentUserId != recipientUserId) return;
+      if (_currentUserId != recipientUserId) {
+        print('🔕 Skipping: Not for current user (recipient: $recipientUserId, current: $_currentUserId)');
+        return;
+      }
+
+      // Will show local notification
 
       // Skip if chat is currently open for this chat
-      if (_isChatScreenOpen && _currentChatId == chatId) return;
+      if (_isChatScreenOpen && _currentChatId == chatId) {
+        print('🔕 Skipping: Chat is currently open');
+        return;
+      }
 
       final notificationId = DateTime.now().millisecondsSinceEpoch % 100000;
 
@@ -733,9 +881,7 @@ class PushService {
         priority: Priority.max,
         showWhen: true,
         enableVibration: true,
-        enableLights: true,
-        ledOnMs: 1000,
-        ledOffMs: 500,
+        enableLights: false, // Fix: Disable LED lights to prevent NullPointerException
         autoCancel: true,
         groupKey: 'com.venta.cuba.CHAT_MESSAGES',
         category: AndroidNotificationCategory.message,
@@ -773,6 +919,11 @@ class PushService {
         }),
       );
 
+      // Track this notification for the chat
+      _activeNotificationsByChatId.putIfAbsent(chatId, () => <int>{});
+      _activeNotificationsByChatId[chatId]!.add(notificationId);
+
+      print('📢 LOCAL NOTIFICATION SHOWN: ID=$notificationId, Title=$senderName, Body=$message');
       print('📢 Local notification shown for recipient with badge: $badgeCount');
     } catch (e) {
       print('❌ Error showing local notification: $e');
@@ -827,5 +978,23 @@ class PushService {
     print('🔄 Manual reconnection requested');
     _retryCount = 0;
     await _connectWebSocket();
+  }
+
+  /// Test notification to yourself
+  static Future<void> sendTestNotification() async {
+    if (_currentUserId == null) {
+      print('❌ No current user ID for test notification');
+      return;
+    }
+
+    print('🧪 SENDING TEST NOTIFICATION TO SELF...');
+    await sendChatNotification(
+      recipientUserId: _currentUserId!,
+      senderName: 'Test',
+      message: 'This is a test notification',
+      messageType: 'text',
+      chatId: 'test_chat',
+      senderId: _currentUserId!,
+    );
   }
 }
