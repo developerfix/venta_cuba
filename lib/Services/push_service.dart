@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -42,9 +43,10 @@ class PushService {
   static const int _maxRetries = 10;
   static DateTime? _lastConnectedTime;
 
-  // Chat state (prevent notifications when chat is open)
+  // Chat state (prevent notifications when chat is open AND app in foreground)
   static bool _isChatScreenOpen = false;
   static String? _currentChatId;
+  static bool _isAppInForeground = true; // Track app lifecycle state
 
   // Notification management with deduplication
   static final Set<String> _recentMessageIds = {};
@@ -156,7 +158,23 @@ class PushService {
       await _localNotifications
           .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(androidChannel);
-      
+
+      // Create badge update channel for Android
+      const androidBadgeUpdateChannel = AndroidNotificationChannel(
+        'venta_cuba_badge_update',
+        'Badge Updates',
+        description: 'Silent notifications to update badge count',
+        importance: Importance.min,
+        playSound: false,
+        enableVibration: false,
+        enableLights: false,
+        showBadge: true,
+      );
+
+      await _localNotifications
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(androidBadgeUpdateChannel);
+
       // Request permissions
       await _localNotifications
           .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
@@ -182,15 +200,35 @@ class PushService {
 
       // When the app is opened, the user is now actively using it
       // Clear all chat notifications since they can now see their messages
-      // The VentaCuba Active service notification will remain via the background service
+      // Keep the VentaCuba Active service notification and badge notifications
 
-      await _localNotifications.cancelAll();
+      // Get all active notifications
+      final activeNotifications = await _localNotifications.getActiveNotifications();
+
+      for (final notification in activeNotifications) {
+        // Don't cancel badge notifications (-1) or service notifications
+        // Only cancel chat message notifications
+        if (notification.id != -1 &&
+            notification.id != 1001 && // Service notification ID (NtfyBackgroundService)
+            notification.id != 999999) { // Legacy badge notification ID
+          await _localNotifications.cancel(notification.id!);
+        }
+      }
+
       _activeNotificationsByChatId.clear();
       _recentMessageIds.clear();
 
-      print('✅ All chat notifications cleared - user is now active');
+      print('✅ Chat notifications cleared - user is now active');
     } catch (e) {
       print('❌ Error clearing old notifications: $e');
+      // Fallback: cancel all except badge and service notifications
+      try {
+        await _localNotifications.cancelAll();
+        _activeNotificationsByChatId.clear();
+        _recentMessageIds.clear();
+      } catch (e2) {
+        print('❌ Fallback clear also failed: $e2');
+      }
     }
   }
 
@@ -244,7 +282,7 @@ class PushService {
   }
 
   /// Handle incoming messages with deduplication
-  static void _handleMessage(dynamic message) {
+  static Future<void> _handleMessage(dynamic message) async {
     try {
       final data = json.decode(message.toString()) as Map<String, dynamic>;
       print('📨 Received notification: ${data['id'] ?? 'unknown'}');
@@ -299,12 +337,18 @@ class PushService {
         chatId = clickAction.split('/').last;
       }
 
-      print('🔍 NOTIFICATION DECISION: Chat open: $_isChatScreenOpen, Current chat: $_currentChatId, Incoming chat: $chatId');
+      print('🔍 NOTIFICATION DECISION: Chat open: $_isChatScreenOpen, Current chat: $_currentChatId, Incoming chat: $chatId, App in foreground: $_isAppInForeground');
 
-      // Check if chat is currently open
-      if (_isChatScreenOpen && chatId == _currentChatId) {
-        print('🔕 BLOCKED: Same chat is currently open');
+      // CRITICAL: Only block notifications if chat is open AND app is in foreground
+      // If app is in background, ALWAYS show notifications regardless of which chat was open
+      if (_isChatScreenOpen && chatId == _currentChatId && _isAppInForeground) {
+        print('🔕 BLOCKED: Same chat is currently open AND app in foreground');
         return;
+      }
+
+      // If app is in background, always allow notifications
+      if (!_isAppInForeground) {
+        print('✅ ALLOWING: App is in background - showing notification regardless of chat state');
       }
 
       // Global deduplication check
@@ -317,13 +361,15 @@ class PushService {
         return;
       }
 
-      print('✅ SHOWING NOTIFICATION: $title - $body');
-      // Show notification with premium features
-      _showPremiumNotification(
+      // Show normal notifications when app is running (foreground or background)
+      // The sticky service will handle when app is terminated
+      print('✅ SHOWING NORMAL NOTIFICATION: $title - $body');
+      await _showPremiumNotification(
         title: title,
         body: body,
         chatId: chatId,
         messageId: messageId,
+        badgeCount: null, // Will calculate for current user
       );
     } catch (e) {
       print('❌ Error handling message: $e');
@@ -336,12 +382,30 @@ class PushService {
     required String body,
     String? chatId,
     required String messageId,
+    int? badgeCount,
   }) async {
     try {
       print('📢 _showPremiumNotification called: $title - $body');
-      final notificationId = messageId.hashCode.abs() % 100000;
 
-    const androidDetails = AndroidNotificationDetails(
+      // CRITICAL FIX: Use SAME notification ID to replace previous notification
+      // This prevents badge accumulation
+      const int SINGLE_NOTIFICATION_ID = 2001;
+
+      // Always recalculate badge for current user
+      if (_currentUserId != null) {
+        badgeCount = await _getUnreadCountForUser(_currentUserId!);
+        print('📊 FRESH badge count calculated: $badgeCount');
+      } else {
+        badgeCount = 0;
+      }
+
+    // Cancel previous notification to ensure only ONE exists
+    await _localNotifications.cancel(SINGLE_NOTIFICATION_ID);
+
+    final int safeBadgeCount = badgeCount ?? 0;
+    print('🔴 REPLACING notification with badge: $safeBadgeCount');
+
+    final androidDetails = AndroidNotificationDetails(
       'venta_cuba_chat_messages',
       'Chat Messages',
       channelDescription: 'Instant chat message notifications',
@@ -349,31 +413,34 @@ class PushService {
       priority: Priority.max,
       showWhen: true,
       enableVibration: true,
-      enableLights: false, // Fix: Disable LED lights to prevent NullPointerException
-      autoCancel: true,
-      groupKey: 'com.venta.cuba.CHAT_MESSAGES',
+      enableLights: false,
+      autoCancel: false, // Keep notification to maintain badge
+      ongoing: false,
       category: AndroidNotificationCategory.message,
-      fullScreenIntent: true,
+      fullScreenIntent: false,
       visibility: NotificationVisibility.public,
+      number: safeBadgeCount, // This is the TOTAL count, not incremental
+      setAsGroupSummary: false,
     );
 
-    const iosDetails = DarwinNotificationDetails(
+    final iosDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
       sound: 'default',
-      badgeNumber: 1,
+      badgeNumber: badgeCount,
       threadIdentifier: 'chat_messages',
       interruptionLevel: InterruptionLevel.timeSensitive,
     );
 
-    const details = NotificationDetails(
+    final details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
     );
 
+    // Use the SAME notification ID to replace previous
     await _localNotifications.show(
-      notificationId,
+      SINGLE_NOTIFICATION_ID,
       title,
       body,
       details,
@@ -383,10 +450,11 @@ class PushService {
     // Track this notification for the chat
     if (chatId != null) {
       _activeNotificationsByChatId.putIfAbsent(chatId, () => <int>{});
-      _activeNotificationsByChatId[chatId]!.add(notificationId);
+      _activeNotificationsByChatId[chatId]!.clear(); // Clear old tracking
+      _activeNotificationsByChatId[chatId]!.add(SINGLE_NOTIFICATION_ID);
     }
 
-    print('✅ Premium notification displayed successfully: ID=$notificationId');
+    print('✅ Notification REPLACED with badge: $safeBadgeCount (ID=$SINGLE_NOTIFICATION_ID)');
     } catch (e) {
       print('❌ Error in _showPremiumNotification: $e');
     }
@@ -618,15 +686,25 @@ class PushService {
         formattedMessage = message.substring(0, 97) + '...';
       }
 
-      // Update badge count for recipient
-      await _updateRecipientBadgeCount(recipientUserId);
+      // Get current badge count for recipient (only once)
+      // CRITICAL: This should be the TOTAL unread count, not incremental
+      int badgeCount = await _getUnreadCountForUser(recipientUserId);
+      print('🚨 NOTIFICATION BADGE: Setting badge to EXACTLY $badgeCount for recipient $recipientUserId');
+      print('🚨 This is NOT adding to existing badge, it\'s REPLACING it');
+
+      // IMPORTANT: Only update badge if this is truly for the recipient
+      // The sender should never get their badge updated when sending
+      if (_currentUserId == recipientUserId) {
+        print('🚨 Recipient is on this device, updating local badge to: $badgeCount');
+        // Force clear any existing badge first
+        await clearBadgeCount();
+        // Then set new badge count
+        await updateBadgeCount();
+      }
 
       // Try to send via ntfy for remote notifications
       final recipientTopic = 'venta_cuba_user_$recipientUserId';
       final url = Uri.parse('$_serverUrl/$recipientTopic');
-      
-      // Get current badge count for recipient
-      int badgeCount = await _getUnreadCountForUser(recipientUserId);
 
       final payload = {
         'id': '${chatId}_${DateTime.now().millisecondsSinceEpoch}',
@@ -660,16 +738,14 @@ class PushService {
         ).timeout(Duration(seconds: 5));
 
         if (response.statusCode == 200) {
-          print('✅ Notification sent successfully to $recipientTopic (badge: $badgeCount)');
+          print('✅ Remote notification sent to $recipientTopic (badge: $badgeCount)');
 
-          // Also show local notification for immediate display (covers all states)
-          await _showLocalNotificationForRecipient(
-            recipientUserId: recipientUserId,
-            senderName: senderName,
-            message: formattedMessage,
-            chatId: chatId,
-            badgeCount: badgeCount,
-          );
+          // ONLY update badge for current user - NO local notification
+          // The background service or WebSocket will handle showing notifications
+          if (_currentUserId == recipientUserId) {
+            print('🎯 Updating badge for current user to: $badgeCount');
+            await updateBadgeCount();
+          }
         } else {
           print('❌ ntfy server returned status: ${response.statusCode}');
           print('❌ Response body: ${response.body}');
@@ -757,6 +833,26 @@ class PushService {
         cancelChatNotifications(chatId);
       }
     }
+    print('🔄 Chat screen status: open=$isOpen, chatId=$chatId, appInForeground=$_isAppInForeground');
+  }
+
+  /// Set app lifecycle state for notification management
+  static void setAppLifecycleState(bool isInForeground) {
+    final wasInBackground = !_isAppInForeground;
+    _isAppInForeground = isInForeground;
+    print('🔄 App lifecycle state changed: inForeground=$isInForeground');
+
+    if (!isInForeground) {
+      print('📱 App backgrounded - notifications will now be allowed for all chats');
+    } else {
+      print('📱 App foregrounded - notifications will be filtered based on active chat');
+
+      // If app was in background and now is in foreground, clear notifications
+      if (wasInBackground) {
+        print('📱 App came to foreground - clearing notifications and badge');
+        Future.microtask(() => onAppResumed());
+      }
+    }
   }
 
   /// Get connection status
@@ -788,36 +884,20 @@ class PushService {
     _activeNotificationsByChatId.clear();
   }
 
-  /// Update badge count for recipient user
-  static Future<void> _updateRecipientBadgeCount(String recipientUserId) async {
-    try {
-      // Get unread message count for this user
-      final unreadCount = await _getUnreadCountForUser(recipientUserId);
 
-      // Update badge count in system
-      if (Platform.isIOS) {
-        // iOS badge count is managed through notification payload system
-        // Modern iOS handles badge counts via notification content
-        print('📱 iOS badge count updated via notification payload: $unreadCount');
-      } else if (Platform.isAndroid) {
-        // Android doesn't have native badge support, but some launchers do
-        // We'll rely on the notification channel to handle badge display
-      }
-
-      print('📱 Updated badge count to $unreadCount for user: $recipientUserId');
-    } catch (e) {
-      print('❌ Error updating badge count: $e');
-    }
-  }
-
-  /// Get unread message count for a specific user
+  /// Get unread message count for a specific user - FIXED ACCUMULATION
   static Future<int> _getUnreadCountForUser(String userId) async {
     try {
+      print('\n🔴🔴🔴 BADGE CALCULATION START 🔴🔴🔴');
+      print('🔴 Calculating for user: $userId');
+
       // Get all chats where the user is involved
       final userChats = await SupabaseService.client
           .from('chats')
           .select('id, sender_id, send_to_id, sender_last_read_time, recipient_last_read_time')
           .or('sender_id.eq.$userId,send_to_id.eq.$userId');
+
+      print('🔴 Found ${userChats.length} chats for user');
 
       int totalUnread = 0;
 
@@ -828,20 +908,27 @@ class PushService {
             ? chat['sender_last_read_time']
             : chat['recipient_last_read_time'];
 
-        // Get unread messages for this chat
+        // Count unread messages for this chat
         final unreadMessages = await SupabaseService.client
             .from('messages')
             .select('id')
             .eq('chat_id', chat['id'])
-            .neq('send_by', userId)
+            .neq('send_by', userId)  // Messages NOT sent by this user
             .gt('time', lastReadTime ?? '1970-01-01T00:00:00Z');
 
-        totalUnread += unreadMessages.length;
+        final chatUnreadCount = unreadMessages.length;
+
+        if (chatUnreadCount > 0) {
+          print('🔴 Chat ${chat['id']}: $chatUnreadCount unread');
+          totalUnread += chatUnreadCount;
+        }
       }
 
+      print('🔴 FINAL BADGE COUNT: $totalUnread');
+      print('🔴🔴🔴 BADGE CALCULATION END 🔴🔴🔴\n');
       return totalUnread;
     } catch (e) {
-      print('❌ Error getting unread count: $e');
+      print('❌ Badge calculation error: $e');
       return 0;
     }
   }
@@ -865,13 +952,23 @@ class PushService {
 
       // Will show local notification
 
-      // Skip if chat is currently open for this chat
-      if (_isChatScreenOpen && _currentChatId == chatId) {
-        print('🔕 Skipping: Chat is currently open');
+      // CRITICAL: Only skip if chat is currently open AND app is in foreground
+      // If app is in background, ALWAYS show notifications
+      if (_isChatScreenOpen && _currentChatId == chatId && _isAppInForeground) {
+        print('🔕 Skipping: Chat is currently open AND app in foreground');
         return;
       }
 
+      // If app is in background, always allow local notifications
+      if (!_isAppInForeground) {
+        print('✅ ALLOWING LOCAL: App is in background - showing notification');
+      }
+
       final notificationId = DateTime.now().millisecondsSinceEpoch % 100000;
+
+      // CRITICAL FIX: Ensure badge is set to exact count, not accumulated
+      print('🚨 LOCAL NOTIFICATION: Badge count should be EXACTLY: $badgeCount');
+      print('🚨 If seeing accumulation, launcher may be buggy');
 
       final androidDetails = AndroidNotificationDetails(
         'venta_cuba_chat_messages',
@@ -887,8 +984,9 @@ class PushService {
         category: AndroidNotificationCategory.message,
         fullScreenIntent: true,
         visibility: NotificationVisibility.public,
-        // Add badge support for compatible launchers
+        // CRITICAL: This sets EXACT count, not adds to existing
         number: badgeCount,
+        setAsGroupSummary: false,
       );
 
       final iosDetails = DarwinNotificationDetails(
@@ -933,43 +1031,170 @@ class PushService {
   /// Clear badge count when messages are read
   static Future<void> clearBadgeCount() async {
     try {
+      print('🧹 Clearing badge count...');
+
       if (Platform.isIOS) {
-        // iOS badge clearing is handled via notification system
-        // Modern iOS manages badge counts through notification payload
-        print('🧹 iOS badge count cleared via notification system');
+        // Clear iOS badge directly
+        await _setIOSBadgeNumber(0);
+        print('🧹 iOS badge cleared');
+      } else if (Platform.isAndroid) {
+        // Clear any weird badge notifications
+        await _localNotifications.cancel(-1);
+        print('🧹 Android badge notifications cleared');
       }
-      print('🧹 Badge count cleared');
     } catch (e) {
-      print('❌ Error clearing badge count: $e');
+      print('❌ Error clearing badge: $e');
     }
   }
 
-  /// Update badge count based on current unread messages
+  /// Update badge count - SIMPLIFIED
   static Future<void> updateBadgeCount() async {
     if (_currentUserId == null) return;
 
     try {
       final unreadCount = await _getUnreadCountForUser(_currentUserId!);
+      print('🎯 Setting badge to: $unreadCount');
 
       if (Platform.isIOS) {
-        // iOS badge count is managed through notification payload system
-        // Modern iOS handles badge counts via notification content
-        print('🔄 iOS badge count managed via notification payload: $unreadCount');
+        await _setIOSBadgeNumber(unreadCount);
+      } else if (Platform.isAndroid) {
+        await _forceSetAndroidBadge(unreadCount);
       }
-
-      print('🔄 Badge count updated to: $unreadCount');
     } catch (e) {
-      print('❌ Error updating badge count: $e');
+      print('❌ Error updating badge: $e');
     }
   }
 
-  /// Handle when app comes to foreground - update badge counts
+  /// Set iOS badge number directly
+  static Future<void> _setIOSBadgeNumber(int count) async {
+    if (!Platform.isIOS) return;
+
+    try {
+      print('🎯 Attempting to set iOS badge to: $count');
+
+      // First ensure permissions are granted
+      final iosImplementation = _localNotifications
+          .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
+
+      if (iosImplementation == null) {
+        print('❌ iOS notifications plugin not available');
+        return;
+      }
+
+      // Request badge permissions explicitly
+      final permissions = await iosImplementation.requestPermissions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
+      print('🔔 Badge permission granted: ${permissions}');
+
+      if (permissions != true) {
+        print('❌ Badge permissions not granted');
+        return;
+      }
+
+      // METHOD 1: Try using a visible notification with badge
+      final iosDetails = DarwinNotificationDetails(
+        presentAlert: true,  // Make it visible for testing
+        presentBadge: true,
+        presentSound: false,
+        badgeNumber: count,
+        threadIdentifier: 'badge_update',
+        categoryIdentifier: 'BADGE_UPDATE',
+        interruptionLevel: InterruptionLevel.passive,
+      );
+
+      await _localNotifications.show(
+        999, // Unique ID for badge updates
+        'Badge Test', // Visible title for debugging
+        'Badge count: $count', // Visible body for debugging
+        NotificationDetails(iOS: iosDetails),
+        payload: null,
+      );
+
+      print('🎯 iOS badge notification sent with count: $count');
+
+      // METHOD 2: Also try to cancel the visible notification after a delay
+      Future.delayed(Duration(seconds: 2), () async {
+        await _localNotifications.cancel(999);
+        print('🧹 Cleared badge test notification');
+      });
+
+    } catch (e) {
+      print('❌ Error setting iOS badge number: $e');
+      print('❌ Stack trace: ${e.toString()}');
+    }
+  }
+
+  /// Update Android badge count - NO WEIRD NOTIFICATIONS
+  static Future<void> _forceSetAndroidBadge(int count) async {
+    if (!Platform.isAndroid) return;
+
+    try {
+      print('🤖 Android badge update to: $count (no notification)');
+
+      // Clear any existing badge notifications first
+      await _localNotifications.cancel(-1);
+
+      // DON'T create separate badge notifications - they show up weird in status bar
+      // Let the regular chat notifications handle badge counts with their 'number' field
+      // This prevents the weird silent notifications in status bar
+
+      print('🤖 Badge logic handled by chat notifications');
+    } catch (e) {
+      print('❌ Error updating Android badge: $e');
+    }
+  }
+
+  /// Legacy method - redirects to force set
+  static Future<void> _updateAndroidBadge(int count) async {
+    await _forceSetAndroidBadge(count);
+  }
+
+
+  /// Handle when app comes to foreground - clear notifications and update badge
   static Future<void> onAppResumed() async {
-    await updateBadgeCount();
+    print('📱 App resumed - clearing notifications and updating badge');
+
+    // Clear all chat notifications when app opens
+    await clearChatNotificationsOnAppOpen();
+
+    // Clear badge since user is now actively using the app
+    await clearBadgeCount();
 
     // Reconnect if needed
     if (!_isConnected) {
       await reconnect();
+    }
+  }
+
+  /// Clear chat notifications when app opens (keep badge and service notifications)
+  static Future<void> clearChatNotificationsOnAppOpen() async {
+    try {
+      print('🧹 Clearing chat notifications - app opened');
+
+      // Get all active notifications
+      final activeNotifications = await _localNotifications.getActiveNotifications();
+
+      for (final notification in activeNotifications) {
+        // Only cancel chat message notifications
+        // Keep: badge notifications (-1), service notifications (1001)
+        if (notification.id != -1 &&
+            notification.id != 1001 &&
+            notification.id != 999999) {
+          await _localNotifications.cancel(notification.id!);
+          print('🧹 Cancelled notification: ${notification.id}');
+        }
+      }
+
+      _activeNotificationsByChatId.clear();
+      _recentMessageIds.clear();
+
+      print('✅ Chat notifications cleared on app open');
+    } catch (e) {
+      print('❌ Error clearing notifications on app open: $e');
     }
   }
 
@@ -996,5 +1221,116 @@ class PushService {
       chatId: 'test_chat',
       senderId: _currentUserId!,
     );
+  }
+
+  /// Test badge functionality directly
+  static Future<void> testBadge({int count = 5}) async {
+    print('🧪 TESTING BADGE WITH COUNT: $count');
+
+    try {
+      // Test current unread count
+      if (_currentUserId != null) {
+        final actualUnread = await _getUnreadCountForUser(_currentUserId!);
+        print('🔍 Current actual unread count: $actualUnread');
+      }
+
+      // Force set badge
+      await _setIOSBadgeNumber(count);
+
+      // Also test with visible notification
+      if (Platform.isIOS) {
+        final iosDetails = DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+          badgeNumber: count,
+          threadIdentifier: 'badge_test',
+        );
+
+        await _localNotifications.show(
+          888,
+          'Badge Test',
+          'Testing badge count: $count',
+          NotificationDetails(iOS: iosDetails),
+        );
+
+        print('✅ Test notification sent with badge: $count');
+      } else if (Platform.isAndroid) {
+        final androidDetails = AndroidNotificationDetails(
+          'badge_test_channel',
+          'Badge Test',
+          importance: Importance.high,
+          priority: Priority.high,
+          number: count,
+        );
+
+        await _localNotifications.show(
+          888,
+          'Badge Test',
+          'Testing badge count: $count',
+          NotificationDetails(android: androidDetails),
+        );
+
+        print('✅ Android test notification sent with number: $count');
+      }
+
+    } catch (e) {
+      print('❌ Badge test failed: $e');
+    }
+  }
+
+  /// Clear all test notifications
+  static Future<void> clearTestNotifications() async {
+    await _localNotifications.cancel(888);
+    await _localNotifications.cancel(999);
+    await _localNotifications.cancel(-3); // Clear badge update notifications
+    print('🧹 Cleared test notifications and badge updates');
+  }
+
+  /// Force clear stuck badge (for Android debugging)
+  static Future<void> forceResetBadge() async {
+    print('🔧 Force resetting badge...');
+
+    try {
+      if (Platform.isAndroid) {
+        // Nuclear option: Cancel EVERYTHING
+        await _localNotifications.cancelAll();
+        print('🔧 Cancelled all notifications');
+
+        // Wait for system to process
+        await Future.delayed(Duration(milliseconds: 500));
+
+        // Force set to 0
+        await _forceSetAndroidBadge(0);
+
+        print('🔧 Android badge NUCLEAR RESET completed');
+      } else if (Platform.isIOS) {
+        await _setIOSBadgeNumber(0);
+        print('🔧 iOS badge force reset completed');
+      }
+    } catch (e) {
+      print('❌ Error force resetting badge: $e');
+    }
+  }
+
+  /// Debug function to test badge setting
+  static Future<void> debugTestBadge(int testCount) async {
+    print('\n🧪🧪🧪 BADGE DEBUG TEST 🧪🧪🧪');
+    print('🧪 Testing badge with count: $testCount');
+
+    // First clear everything
+    await forceResetBadge();
+    await Future.delayed(Duration(seconds: 1));
+
+    // Now set to test count
+    if (Platform.isAndroid) {
+      await _forceSetAndroidBadge(testCount);
+    } else {
+      await _setIOSBadgeNumber(testCount);
+    }
+
+    print('🧪 Badge should now show EXACTLY: $testCount');
+    print('🧪 If it shows something else, your launcher is buggy');
+    print('🧪🧪🧪 END DEBUG TEST 🧪🧪🧪\n');
   }
 }

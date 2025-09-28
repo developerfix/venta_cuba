@@ -384,6 +384,36 @@ class AuthController extends GetxController {
     }
   }
 
+  // Test badge functionality
+  void testBadge({int count = 5}) {
+    print('🧪 TESTING BADGE FUNCTIONALITY...');
+    try {
+      PushService.testBadge(count: count);
+    } catch (e) {
+      print('❌ Error testing badge: $e');
+    }
+  }
+
+  // Clear test notifications
+  void clearTestNotifications() {
+    print('🧹 CLEARING TEST NOTIFICATIONS...');
+    try {
+      PushService.clearTestNotifications();
+    } catch (e) {
+      print('❌ Error clearing test notifications: $e');
+    }
+  }
+
+  // Force reset stuck badge (for Android debugging)
+  void forceResetBadge() {
+    print('🔧 FORCE RESETTING BADGE...');
+    try {
+      PushService.forceResetBadge();
+    } catch (e) {
+      print('❌ Error force resetting badge: $e');
+    }
+  }
+
   final TwilioFlutter twilioFlutter = TwilioFlutter(
       accountSid:
           'AC31dcb3275f70cc16fc18c150bbf8a2f8', // replace with Account SID

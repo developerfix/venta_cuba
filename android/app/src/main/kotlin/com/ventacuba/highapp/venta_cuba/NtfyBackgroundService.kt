@@ -142,16 +142,16 @@ class NtfyBackgroundService : Service() {
     }
     
     private fun handleMessage(message: String) {
-        // Check if app has actual UI activity (not just background service)
-        val hasActiveUI = isAppInForegroundOrVisible()
+        // Check if Flutter app process is running at all (not just if it's visible)
+        val isFlutterAppRunning = isFlutterProcessRunning()
 
-        if (hasActiveUI) {
-            println("🔇 STICKY SERVICE: App has active UI - letting Flutter handle notification")
-            return // Let Flutter handle it when UI is active
+        if (isFlutterAppRunning) {
+            println("🔇 STICKY SERVICE: Flutter app is running (foreground/background) - letting Flutter handle notification")
+            return // Let Flutter handle notifications when app is running
         }
 
-        // App is in background or terminated - we handle the notification
-        println("📨 STICKY SERVICE: App is in background/terminated - showing notification")
+        // App is TERMINATED (not just backgrounded) - we handle the notification
+        println("📨 STICKY SERVICE: App is TERMINATED - showing sticky notification")
         try {
             val json = JSONObject(message)
 
@@ -294,24 +294,65 @@ class NtfyBackgroundService : Service() {
         }
     }
     
-    private fun isAppInForegroundOrVisible(): Boolean {
+    private fun isFlutterProcessRunning(): Boolean {
         val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
         val runningProcesses = activityManager.runningAppProcesses
 
         // If no running processes, app is definitely terminated
+        if (runningProcesses.isNullOrEmpty()) {
+            println("🔍 STICKY SERVICE: No running processes - app is terminated")
+            return false
+        }
+
+        runningProcesses.forEach { processInfo ->
+            if (processInfo.processName == packageName) {
+                // Check if Flutter app process exists (any state except GONE)
+                return when (processInfo.importance) {
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND -> {
+                        println("🔍 STICKY SERVICE: App is in FOREGROUND")
+                        true // App is in foreground
+                    }
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE -> {
+                        println("🔍 STICKY SERVICE: App is VISIBLE")
+                        true // App is visible
+                    }
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE,
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_TOP_SLEEPING,
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED,
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_BACKGROUND -> {
+                        println("🔍 STICKY SERVICE: App is in BACKGROUND")
+                        true // App is in background but still running
+                    }
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE -> {
+                        println("🔍 STICKY SERVICE: App process is GONE")
+                        false // App process is gone
+                    }
+                    else -> {
+                        println("🔍 STICKY SERVICE: App importance: ${processInfo.importance}")
+                        true // Assume app is running for other states
+                    }
+                }
+            }
+        }
+        println("🔍 STICKY SERVICE: App process not found - app is terminated")
+        return false
+    }
+
+    // Keep old function for reference (not used anymore)
+    private fun isAppInForegroundOrVisible(): Boolean {
+        val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        val runningProcesses = activityManager.runningAppProcesses
+
         if (runningProcesses.isNullOrEmpty()) {
             return false
         }
 
         runningProcesses.forEach { processInfo ->
             if (processInfo.processName == packageName) {
-                // Only consider the app "running with UI" if it's in foreground or visible
                 return when (processInfo.importance) {
                     ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND,
-                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE -> {
-                        true // App has active UI
-                    }
-                    else -> false // App is in background, cached, or only service is running
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE -> true
+                    else -> false
                 }
             }
         }

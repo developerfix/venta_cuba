@@ -35,6 +35,10 @@ class SupabaseChatController extends GetxController {
   // PERFORMANCE OPTIMIZATION: Debouncing for message loading
   Timer? _loadDebounceTimer;
 
+  // Badge update debouncer to prevent multiple updates
+  Timer? _badgeUpdateDebouncer;
+  bool _isBadgeUpdatePending = false;
+
   // PERFORMANCE OPTIMIZATION: Batch message sending queue
   final List<Map<String, dynamic>> _messageQueue = [];
   Timer? _messageQueueTimer;
@@ -66,6 +70,7 @@ class SupabaseChatController extends GetxController {
   @override
   void onClose() {
     _loadDebounceTimer?.cancel();
+    _badgeUpdateDebouncer?.cancel();
     _messageQueueTimer?.cancel();
     _connectionKeepAliveTimer?.cancel();
     _processMessageQueue(); // Process any remaining messages
@@ -167,8 +172,9 @@ class SupabaseChatController extends GetxController {
             controller.add(result);
           }
 
-          // Update overall unread count
-          updateUnreadMessageIndicators();
+          // Update overall unread count (debounced)
+          // This happens when loading all chats, so it's safe to update
+          debouncedUpdateUnreadIndicators();
 
           break; // Success, exit retry loop
         } catch (e) {
@@ -201,10 +207,14 @@ class SupabaseChatController extends GetxController {
             schema: 'public',
             table: 'chats',
             callback: (payload) {
+              print('🔄 Chat table change detected: ${payload.eventType}');
               // Debounce the refresh to avoid too many updates
               _loadDebounceTimer?.cancel();
               _loadDebounceTimer =
-                  Timer(Duration(milliseconds: 300), loadChats);
+                  Timer(Duration(milliseconds: 300), () {
+                    print('🔄 Refreshing chat list due to realtime update');
+                    loadChats();
+                  });
             },
           )
           .subscribe();
@@ -222,6 +232,7 @@ class SupabaseChatController extends GetxController {
 
   // Method to manually refresh all active chat list streams
   void refreshAllChatLists() {
+    print('🔄 Manually refreshing ${_globalChatRefreshCallbacks.length} chat list streams');
     for (final callback in _globalChatRefreshCallbacks) {
       try {
         callback();
@@ -447,8 +458,22 @@ class SupabaseChatController extends GetxController {
                   }
                 }
 
-                // Update unread indicators in background
-                Future.microtask(() => updateUnreadMessageIndicators());
+                // Only update unread indicators if we're not the sender of this message
+                // This prevents the sender's badge from increasing when they send messages
+                if (payload.eventType == PostgresChangeEvent.insert) {
+                  final senderId = payload.newRecord['send_by'];
+                  final currentUserId = _supabase.auth.currentUser?.id;
+
+                  // Only update badge if we're not the sender
+                  if (senderId != currentUserId) {
+                    Future.microtask(() => debouncedUpdateUnreadIndicators());
+                  } else {
+                    print('🔴 BADGE: Skipping update for sender\'s own message');
+                  }
+                } else {
+                  // For updates and deletes, always update
+                  Future.microtask(() => debouncedUpdateUnreadIndicators());
+                }
               },
             )
             .subscribe();
@@ -628,8 +653,9 @@ class SupabaseChatController extends GetxController {
       // Queue operations for background processing
       _queueBackgroundOperations(chatMessageData, chatId);
 
-      // Trigger immediate unread count update for real-time badge updates
-      Future.microtask(() => updateUnreadMessageIndicators());
+      // Don't update badge for the sender - they shouldn't see increased badge
+      // when they send their own messages
+      print('🔴 BADGE: Not updating badge for sender after sending message');
 
       // Clean up any remaining optimistic messages after a short delay
       Future.delayed(Duration(seconds: 2), () {
@@ -840,6 +866,26 @@ class SupabaseChatController extends GetxController {
     }
   }
 
+  // Debounced version of updateUnreadMessageIndicators to prevent multiple calls
+  void debouncedUpdateUnreadIndicators() {
+    // Cancel any pending update
+    _badgeUpdateDebouncer?.cancel();
+
+    // Don't schedule another if one is already pending
+    if (_isBadgeUpdatePending) {
+      print('🔴 BADGE: Update already pending, skipping duplicate request');
+      return;
+    }
+
+    _isBadgeUpdatePending = true;
+
+    // Schedule the update with a delay to batch multiple calls
+    _badgeUpdateDebouncer = Timer(Duration(milliseconds: 500), () {
+      _isBadgeUpdatePending = false;
+      updateUnreadMessageIndicators();
+    });
+  }
+
   // Update unread message indicators using proper schema
   Future<void> updateUnreadMessageIndicators() async {
     try {
@@ -937,6 +983,10 @@ class SupabaseChatController extends GetxController {
             '🔴 AFTER UPDATE: AuthController unread = ${authController.unreadMessageCount.value}');
         print(
             '🔴 AFTER UPDATE: hasUnread = ${authController.hasUnreadMessages.value}');
+
+        // Also update the app icon badge count via PushService
+        await PushService.updateBadgeCount();
+        print('📱 Updated app icon badge count to $totalUnread');
       } catch (e) {
         print('🔴 BADGE FATAL ERROR: Could not update AuthController: $e');
       }
@@ -1000,7 +1050,64 @@ class SupabaseChatController extends GetxController {
   // Start listening for chat updates
   void startListeningForChatUpdates() {
     // Already handled in getAllChats and message subscriptions
-    print('Chat update listeners already active');
+    print('✅ Chat update listeners already active (${_globalChatRefreshCallbacks.length} streams)');
+  }
+
+  // Force reconnect all realtime subscriptions
+  void reconnectRealtimeSubscriptions() {
+    print('🔄 Reconnecting all realtime subscriptions...');
+
+    // Unsubscribe from existing subscriptions
+    _chatChannel?.unsubscribe();
+    _messagesChannel?.unsubscribe();
+    for (var channel in _messageChannels.values) {
+      channel.unsubscribe();
+    }
+    _messageChannels.clear();
+
+    // Force refresh all chat lists which will recreate subscriptions
+    refreshAllChatLists();
+
+    // Also refresh all active message streams
+    refreshAllMessageStreams();
+
+    print('✅ Realtime subscriptions reconnected');
+  }
+
+  // Method to refresh all active message streams (for individual chats)
+  void refreshAllMessageStreams() {
+    print('🔄 Refreshing ${_messageStreams.length} active message streams');
+
+    for (final chatId in _messageStreams.keys.toList()) {
+      if (!_messageStreams[chatId]!.isClosed) {
+        print('🔄 Refreshing messages for chat: $chatId');
+
+        // Force reload messages from database
+        _loadMessagesForChat(chatId, useCache: false);
+
+        // Recreate realtime subscription
+        if (_messageChannels.containsKey(chatId)) {
+          _messageChannels[chatId]?.unsubscribe();
+          _messageChannels.remove(chatId);
+        }
+        _setupRealtimeSubscription(chatId);
+      }
+    }
+  }
+
+  // Method to refresh a specific chat's messages (for when you're inside a chat)
+  void refreshChatMessages(String chatId) {
+    print('🔄 Refreshing messages for specific chat: $chatId');
+
+    if (_messageStreams.containsKey(chatId) && !_messageStreams[chatId]!.isClosed) {
+      // Force reload messages from database
+      _loadMessagesForChat(chatId, useCache: false);
+
+      // Ensure realtime subscription is active
+      if (!_messageChannels.containsKey(chatId)) {
+        _setupRealtimeSubscription(chatId);
+      }
+    }
   }
 
   // Stop listening for chat updates
@@ -1146,8 +1253,8 @@ class SupabaseChatController extends GetxController {
         await Future.wait(notificationTasks, eagerError: false);
       }
 
-      // Update indicators once after all operations
-      updateUnreadMessageIndicators();
+      // Update indicators once after all operations (debounced)
+      debouncedUpdateUnreadIndicators();
       refreshAllChatLists();
     } catch (e) {
       print('Error processing message queue: $e');

@@ -168,6 +168,11 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
+
+    // CRITICAL: Update PushService about app lifecycle for notification logic
+    final isInForeground = state == AppLifecycleState.resumed;
+    PushService.setAppLifecycleState(isInForeground);
+
     if (state == AppLifecycleState.resumed) {
       _handleAppResume();
       _restoreServiceNotification();
@@ -202,12 +207,21 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
 
   Future<void> _handleAppResume() async {
     try {
+      print('🔄 App resumed - refreshing chat data...');
       final authCont = Get.find<AuthController>();
       if (authCont.user?.userId != null) {
         // Safe get with fallback
         final chatCont = Get.isRegistered<SupabaseChatController>()
           ? Get.find<SupabaseChatController>()
           : Get.put(SupabaseChatController(), permanent: true);
+
+        // CRITICAL: Refresh chat lists IMMEDIATELY when app resumes
+        chatCont.refreshAllChatLists();
+        print('✅ Chat lists refreshed on app resume');
+
+        // Also reconnect realtime subscriptions to ensure they're active
+        chatCont.reconnectRealtimeSubscriptions();
+
         await chatCont.setUserOnline(authCont.user!.userId.toString());
         await chatCont.updateUnreadMessageIndicators();
         await chatCont.updateBadgeCountFromChats();

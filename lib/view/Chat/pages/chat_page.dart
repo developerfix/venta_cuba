@@ -58,7 +58,7 @@ class ChatPage extends StatefulWidget {
   State<ChatPage> createState() => _ChatPageState();
 }
 
-class _ChatPageState extends State<ChatPage> {
+class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
   // Firebase removed for Cuba compatibility
   // final firebaseMessagingService = FirebaseMessagingService();
   final chatCont = Get.put(SupabaseChatController());
@@ -76,6 +76,9 @@ class _ChatPageState extends State<ChatPage> {
     isKeyBoardOpen = true;
     focusNode.dispose();
 
+    // Remove lifecycle observer
+    WidgetsBinding.instance.removeObserver(this);
+
     // Mark chat as read when user leaves the chat page
     if (widget.chatId != null && authCont.user?.userId != null) {
       chatCont.markChatAsRead(
@@ -91,6 +94,36 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    // CRITICAL: Update PushService about app state for notification logic
+    final isInForeground = state == AppLifecycleState.resumed;
+    PushService.setAppLifecycleState(isInForeground);
+
+    if (state == AppLifecycleState.resumed && mounted) {
+      print('🔄 ChatPage: App resumed - refreshing messages for chat ${widget.chatId}');
+
+      // CRITICAL: Refresh messages for this specific chat when app resumes
+      if (widget.chatId != null) {
+        chatCont.refreshChatMessages(widget.chatId!);
+        print('✅ Messages refreshed for chat ${widget.chatId}');
+      }
+
+      // Also update read status and notifications
+      if (widget.chatId != null && authCont.user?.userId != null) {
+        chatCont.markChatAsRead(
+          widget.chatId!,
+          authCont.user!.userId.toString(),
+        );
+      }
+    } else if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      print('📱 ChatPage: App backgrounded while chat ${widget.chatId} was open');
+      print('📱 Notifications will now be allowed for this chat while app is backgrounded');
+    }
+  }
+
+  @override
   void didChangeDependencies() {
     if (!isONImageScreen && isKeyBoardOpen) {
       _requestFocus();
@@ -102,6 +135,9 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void initState() {
     super.initState();
+
+    // Add lifecycle observer to detect app state changes
+    WidgetsBinding.instance.addObserver(this);
 
     focusNode = FocusNode();
 
