@@ -400,7 +400,12 @@ class PushService {
       }
 
     // Cancel previous notification to ensure only ONE exists
-    await _localNotifications.cancel(SINGLE_NOTIFICATION_ID);
+    try {
+      await _localNotifications.cancel(SINGLE_NOTIFICATION_ID);
+    } catch (e) {
+      print('⚠️ Could not cancel previous notification: $e');
+      // Continue anyway - the new notification will replace it
+    }
 
     final int safeBadgeCount = badgeCount ?? 0;
     print('🔴 REPLACING notification with badge: $safeBadgeCount');
@@ -414,13 +419,14 @@ class PushService {
       showWhen: true,
       enableVibration: true,
       enableLights: false,
-      autoCancel: false, // Keep notification to maintain badge
+      autoCancel: true, // Change to true so notification can be dismissed
       ongoing: false,
       category: AndroidNotificationCategory.message,
       fullScreenIntent: false,
       visibility: NotificationVisibility.public,
       number: safeBadgeCount, // This is the TOTAL count, not incremental
       setAsGroupSummary: false,
+      playSound: true,
     );
 
     final iosDetails = DarwinNotificationDetails(
@@ -439,22 +445,45 @@ class PushService {
     );
 
     // Use the SAME notification ID to replace previous
-    await _localNotifications.show(
-      SINGLE_NOTIFICATION_ID,
-      title,
-      body,
-      details,
-      payload: chatId != null ? json.encode({'chatId': chatId}) : null,
-    );
+    try {
+      await _localNotifications.show(
+        SINGLE_NOTIFICATION_ID,
+        title,
+        body,
+        details,
+        payload: chatId != null ? json.encode({'chatId': chatId}) : null,
+      );
 
-    // Track this notification for the chat
-    if (chatId != null) {
-      _activeNotificationsByChatId.putIfAbsent(chatId, () => <int>{});
-      _activeNotificationsByChatId[chatId]!.clear(); // Clear old tracking
-      _activeNotificationsByChatId[chatId]!.add(SINGLE_NOTIFICATION_ID);
+      // Track this notification for the chat
+      if (chatId != null) {
+        _activeNotificationsByChatId.putIfAbsent(chatId, () => <int>{});
+        _activeNotificationsByChatId[chatId]!.clear(); // Clear old tracking
+        _activeNotificationsByChatId[chatId]!.add(SINGLE_NOTIFICATION_ID);
+      }
+
+      print('✅ Notification REPLACED with badge: $safeBadgeCount (ID=$SINGLE_NOTIFICATION_ID)');
+    } catch (e) {
+      print('❌ Failed to show notification: $e');
+      // Try showing a simpler notification without badge
+      try {
+        final simpleAndroidDetails = AndroidNotificationDetails(
+          'venta_cuba_chat_messages',
+          'Chat Messages',
+          importance: Importance.max,
+          priority: Priority.max,
+        );
+
+        await _localNotifications.show(
+          DateTime.now().millisecondsSinceEpoch % 100000,
+          title,
+          body,
+          NotificationDetails(android: simpleAndroidDetails),
+        );
+        print('✅ Showed simple notification instead');
+      } catch (e2) {
+        print('❌ Even simple notification failed: $e2');
+      }
     }
-
-    print('✅ Notification REPLACED with badge: $safeBadgeCount (ID=$SINGLE_NOTIFICATION_ID)');
     } catch (e) {
       print('❌ Error in _showPremiumNotification: $e');
     }
@@ -902,16 +931,25 @@ class PushService {
       int totalUnread = 0;
 
       for (final chat in userChats) {
+        // Convert IDs to strings for comparison
+        final chatSenderId = chat['sender_id'].toString();
+        final chatSendToId = chat['send_to_id'].toString();
+        final userIdStr = userId.toString();
+
+        print('🔴 Chat ${chat['id']}: sender=$chatSenderId, recipient=$chatSendToId, user=$userIdStr');
+
         // Determine if user is sender or recipient
-        final isUserSender = chat['sender_id'] == userId;
+        final isUserSender = chatSenderId == userIdStr;
         final lastReadTime = isUserSender
             ? chat['sender_last_read_time']
             : chat['recipient_last_read_time'];
 
+        print('🔴 User is ${isUserSender ? "sender" : "recipient"}, last read: $lastReadTime');
+
         // Count unread messages for this chat
         final unreadMessages = await SupabaseService.client
             .from('messages')
-            .select('id')
+            .select('id, send_by, time')
             .eq('chat_id', chat['id'])
             .neq('send_by', userId)  // Messages NOT sent by this user
             .gt('time', lastReadTime ?? '1970-01-01T00:00:00Z');
@@ -919,8 +957,13 @@ class PushService {
         final chatUnreadCount = unreadMessages.length;
 
         if (chatUnreadCount > 0) {
-          print('🔴 Chat ${chat['id']}: $chatUnreadCount unread');
+          print('🔴 Chat ${chat['id']}: $chatUnreadCount unread messages');
+          for (var msg in unreadMessages.take(3)) {
+            print('🔴   - Message from ${msg['send_by']} at ${msg['time']}');
+          }
           totalUnread += chatUnreadCount;
+        } else {
+          print('🔴 Chat ${chat['id']}: No unread messages');
         }
       }
 
@@ -929,6 +972,7 @@ class PushService {
       return totalUnread;
     } catch (e) {
       print('❌ Badge calculation error: $e');
+      print('❌ Stack trace: ${StackTrace.current}');
       return 0;
     }
   }
@@ -1038,9 +1082,9 @@ class PushService {
         await _setIOSBadgeNumber(0);
         print('🧹 iOS badge cleared');
       } else if (Platform.isAndroid) {
-        // Clear any weird badge notifications
-        await _localNotifications.cancel(-1);
-        print('🧹 Android badge notifications cleared');
+        // Skip canceling notification -1 as it causes Gson error
+        // Badge will be cleared when next notification shows with count 0
+        print('🧹 Android badge clear deferred to next notification');
       }
     } catch (e) {
       print('❌ Error clearing badge: $e');
@@ -1135,8 +1179,8 @@ class PushService {
     try {
       print('🤖 Android badge update to: $count (no notification)');
 
-      // Clear any existing badge notifications first
-      await _localNotifications.cancel(-1);
+      // Skip canceling notification -1 as it causes Gson error
+      // The badge will be handled by regular chat notifications
 
       // DON'T create separate badge notifications - they show up weird in status bar
       // Let the regular chat notifications handle badge counts with their 'number' field
@@ -1332,5 +1376,23 @@ class PushService {
     print('🧪 Badge should now show EXACTLY: $testCount');
     print('🧪 If it shows something else, your launcher is buggy');
     print('🧪🧪🧪 END DEBUG TEST 🧪🧪🧪\n');
+  }
+
+  /// Diagnostic information about push service
+  static Map<String, dynamic> getDiagnostics() {
+    return {
+      'isConnected': _isConnected,
+      'currentUserId': _currentUserId,
+      'userTopic': _userTopic,
+      'serverUrl': _serverUrl,
+      'retryCount': _retryCount,
+      'connectionDuration': connectionDuration?.toString(),
+      'isChatScreenOpen': _isChatScreenOpen,
+      'currentChatId': _currentChatId,
+      'isAppInForeground': _isAppInForeground,
+      'offlineQueueSize': _offlineQueue.length,
+      'recentMessageCount': _recentMessageIds.length,
+      'activeChatNotifications': _activeNotificationsByChatId.map((k, v) => MapEntry(k, v.length)),
+    };
   }
 }
