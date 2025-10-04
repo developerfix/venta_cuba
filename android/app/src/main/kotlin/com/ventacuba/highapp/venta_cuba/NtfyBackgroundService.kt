@@ -143,15 +143,15 @@ class NtfyBackgroundService : Service() {
     
     private fun handleMessage(message: String) {
         // Check if Flutter app process is running at all (not just if it's visible)
-        val isFlutterAppRunning = isFlutterProcessRunning()
+        val isAppInForeground = isAppInForegroundOrVisible()
 
-        if (isFlutterAppRunning) {
-            println("🔇 STICKY SERVICE: Flutter app is running (foreground/background) - letting Flutter handle notification")
-            return // Let Flutter handle notifications when app is running
+        if (isAppInForeground) {
+            println("🔇 STICKY SERVICE: App is in FOREGROUND - letting Flutter handle notification")
+            return // Let Flutter handle notifications only when app is visible
         }
 
-        // App is TERMINATED (not just backgrounded) - we handle the notification
-        println("📨 STICKY SERVICE: App is TERMINATED - showing sticky notification")
+        // App is BACKGROUND or TERMINATED - we handle the notification
+        println("📨 STICKY SERVICE: App is BACKGROUND or TERMINATED - showing sticky notification")
         try {
             val json = JSONObject(message)
 
