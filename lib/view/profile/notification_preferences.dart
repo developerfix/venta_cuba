@@ -3,7 +3,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
 import 'package:venta_cuba/view/constants/Colors.dart';
-import 'package:venta_cuba/Services/push_service.dart';
 
 class NotificationPreferences extends StatefulWidget {
   const NotificationPreferences({super.key});

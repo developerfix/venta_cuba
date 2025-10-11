@@ -626,7 +626,7 @@ class SupabaseChatController extends GetxController {
       late final Map<String, dynamic> insertedMessage;
 
       if (!chatExists) {
-        // Create new chat and insert message in parallel
+        // Create new chat and insert message with better error handling
         final newChatData = {
           'id': chatId,
           'sender_id': chatMessageData['senderId'],
@@ -645,12 +645,29 @@ class SupabaseChatController extends GetxController {
           ...chatUpdateData,
         };
 
-        // Execute both operations in parallel
-        final results = await Future.wait<dynamic>([
-          _supabase.from('chats').insert(newChatData),
-          _supabase.from('messages').insert(messageData).select().single(),
-        ]);
-        insertedMessage = results[1] as Map<String, dynamic>;
+        try {
+          // Execute both operations in parallel
+          final results = await Future.wait<dynamic>([
+            _supabase.from('chats').insert(newChatData),
+            _supabase.from('messages').insert(messageData).select().single(),
+          ]);
+          insertedMessage = results[1] as Map<String, dynamic>;
+        } catch (e) {
+          // If chat creation fails (e.g., already exists due to race condition),
+          // try to just insert the message
+          print('🔄 Chat creation failed, trying message insert only: $e');
+          try {
+            insertedMessage = await _supabase
+                .from('messages')
+                .insert(messageData)
+                .select()
+                .single();
+            print('✅ Message inserted successfully on retry');
+          } catch (messageError) {
+            print('❌ Message insert also failed: $messageError');
+            rethrow; // Only rethrow if both operations fail
+          }
+        }
       } else {
         // Update chat and insert message in parallel
         final results = await Future.wait<dynamic>([

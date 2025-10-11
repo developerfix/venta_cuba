@@ -183,8 +183,8 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
         if (authCont.user?.userId != null) {
           // Safe get with fallback
           final chatCont = Get.isRegistered<SupabaseChatController>()
-            ? Get.find<SupabaseChatController>()
-            : Get.put(SupabaseChatController(), permanent: true);
+              ? Get.find<SupabaseChatController>()
+              : Get.put(SupabaseChatController(), permanent: true);
           chatCont.setUserOffline(authCont.user!.userId.toString());
         }
       } catch (e) {
@@ -212,8 +212,8 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
       if (authCont.user?.userId != null) {
         // Safe get with fallback
         final chatCont = Get.isRegistered<SupabaseChatController>()
-          ? Get.find<SupabaseChatController>()
-          : Get.put(SupabaseChatController(), permanent: true);
+            ? Get.find<SupabaseChatController>()
+            : Get.put(SupabaseChatController(), permanent: true);
 
         // CRITICAL: Refresh chat lists IMMEDIATELY when app resumes
         chatCont.refreshAllChatLists();
@@ -225,7 +225,8 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
         await chatCont.setUserOnline(authCont.user!.userId.toString());
         await chatCont.updateUnreadMessageIndicators();
         await chatCont.updateBadgeCountFromChats();
-        chatCont.startListeningForChatUpdates(); // Will skip if already initialized
+        chatCont
+            .startListeningForChatUpdates(); // Will skip if already initialized
 
         // Update PushService badge count and reconnect if needed
         await PushService.onAppResumed();

@@ -9,7 +9,6 @@ import 'package:venta_cuba/view/Chat/custom_text.dart';
 import 'package:venta_cuba/view/Navigation%20bar/post.dart';
 import 'package:venta_cuba/view/constants/Colors.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:venta_cuba/view/profile/become_vendor.dart';
 
 import '../../Controllers/auth_controller.dart';
 import '../../Utils/funcations.dart';
@@ -570,7 +569,7 @@ class _ListingsState extends State<Listings> {
                                                                       MaterialPageRoute(
                                                                         builder:
                                                                             (context) =>
-                                                                                const BecomeVendor(),
+                                                                                const FrameScreen(),
                                                                       ));
                                                                 },
                                                                 child:
@@ -977,7 +976,7 @@ class _ListingsState extends State<Listings> {
                                                                           context,
                                                                           MaterialPageRoute(
                                                                             builder: (context) =>
-                                                                                const BecomeVendor(),
+                                                                                const FrameScreen(),
                                                                           ));
                                                                     },
                                                                     child:
@@ -1419,7 +1418,7 @@ class _ListingsState extends State<Listings> {
                                                                           context,
                                                                           MaterialPageRoute(
                                                                             builder: (context) =>
-                                                                                const BecomeVendor(),
+                                                                                const FrameScreen(),
                                                                           ));
                                                                     },
                                                                     child:
@@ -1552,22 +1551,156 @@ class _ListingsState extends State<Listings> {
         ),
         TextButton(
           onPressed: () async {
-            bool isDeleted = await homeCont.deleteListing();
-            if (isDeleted) {
-              homeCont.userListingModelList.removeAt(index);
-              // Update the counters based on account type
-              if (homeCont.isBusinessAccount) {
-                homeCont.bussinessPostCount = homeCont.userListingModelList
-                    .where((listing) => listing.businessStatus == "1")
-                    .length;
-              } else {
-                homeCont.personalAcountPost = homeCont.userListingModelList
-                    .where((listing) => listing.businessStatus == "0")
-                    .length;
+            // Prevent multiple taps
+            if (homeCont.isLoading) return;
+
+            try {
+              // Validate prerequisites
+              if (homeCont.listingModel?.id == null) {
+                Navigator.of(context).pop();
+                errorAlertToast('Error: Invalid listing data. Please refresh and try again.'.tr);
+                return;
               }
-              homeCont.update(); // Trigger UI rebuild
+
+              // Check if context is still mounted before proceeding
+              if (!mounted) return;
+
+              // Store listing info before any async operations
+              final listingIdToDelete = homeCont.listingModel!.id;
+              final listingIndex = index;
+
+              // Set loading state
+              homeCont.isLoading = true;
+
+              // Close dialog first to prevent UI issues
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              }
+
+              // Ensure context is still valid after async operation
+              if (!mounted) {
+                homeCont.isLoading = false;
+                return;
+              }
+
+              // Show loading dialog with timeout protection
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => WillPopScope(
+                  onWillPop: () async => false,
+                  child: Dialog(
+                    child: Padding(
+                      padding: EdgeInsets.all(20),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(width: 20),
+                          Text('Deleting...'.tr),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+
+              // Add timeout to prevent indefinite loading
+              bool isDeleted = await homeCont.deleteListing().timeout(
+                Duration(seconds: 30),
+                onTimeout: () {
+                  print('Delete operation timed out');
+                  return false;
+                },
+              );
+
+              // Ensure context is still valid before UI operations
+              if (!mounted) {
+                homeCont.isLoading = false;
+                return;
+              }
+
+              // Close loading dialog safely
+              try {
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                }
+              } catch (e) {
+                print('Error closing loading dialog: $e');
+              }
+
+              if (isDeleted) {
+                // Double-check list validity and bounds
+                if (homeCont.userListingModelList.isNotEmpty &&
+                    listingIndex >= 0 &&
+                    listingIndex < homeCont.userListingModelList.length) {
+
+                  // Remove by ID for safety, with additional validation
+                  final initialCount = homeCont.userListingModelList.length;
+                  homeCont.userListingModelList
+                      .removeWhere((listing) => listing.id == listingIdToDelete);
+
+                  // Verify removal actually happened
+                  final finalCount = homeCont.userListingModelList.length;
+                  if (finalCount < initialCount) {
+                    // Update the counters based on account type
+                    if (homeCont.isBusinessAccount) {
+                      homeCont.bussinessPostCount = homeCont.userListingModelList
+                          .where((listing) => listing.businessStatus == "1")
+                          .length;
+                    } else {
+                      homeCont.personalAcountPost = homeCont.userListingModelList
+                          .where((listing) => listing.businessStatus == "0")
+                          .length;
+                    }
+
+                    // Schedule UI update for next frame to prevent conflicts
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) {
+                        homeCont.update();
+                      }
+                    });
+
+                    if (mounted) {
+                      errorAlertToast('Listing deleted successfully'.tr);
+                    }
+                  } else {
+                    if (mounted) {
+                      errorAlertToast('Item may have been already deleted'.tr);
+                    }
+                  }
+                } else {
+                  print('Warning: List bounds invalid during delete operation');
+                  // Refresh the entire list to sync state
+                  await homeCont.getSellerListingByStatus();
+                  if (mounted) {
+                    errorAlertToast('Listing deleted - list refreshed'.tr);
+                  }
+                }
+              } else {
+                if (mounted) {
+                  errorAlertToast('Failed to delete listing. Please try again.'.tr);
+                }
+              }
+            } catch (e) {
+              print('Delete operation error: $e');
+
+              // Close any open dialogs safely
+              try {
+                while (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                }
+              } catch (dialogError) {
+                print('Error closing dialogs: $dialogError');
+              }
+
+              if (mounted) {
+                errorAlertToast('An error occurred while deleting. Please try again.'.tr);
+              }
+            } finally {
+              // Always reset loading state
+              homeCont.isLoading = false;
             }
-            Navigator.of(context).pop();
           },
           child: Text('Delete'.tr),
         ),

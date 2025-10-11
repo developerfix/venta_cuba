@@ -1676,8 +1676,6 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                     ),
                                     maxLines: 5,
                                     inputFormatters: [
-                                      FilteringTextInputFormatter
-                                          .singleLineFormatter,
                                       CapitalizeFirstLetterFormatter(),
                                     ],
                                     decoration: InputDecoration(

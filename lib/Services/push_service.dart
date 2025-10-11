@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -19,7 +18,7 @@ class PushService {
   static const String _prefsKeyUserId = 'push_user_id';
   static const String _prefsKeyServerUrl = 'push_server_url';
   static String _serverUrl = 'https://ntfy.sh';
-  
+
   // OPTIMIZATION: Singleton instance for better resource management
   static final PushService _instance = PushService._internal();
   static PushService get instance => _instance;
@@ -124,7 +123,8 @@ class PushService {
 
   /// Initialize local notifications with maximum priority
   static Future<void> _initializeLocalNotifications() async {
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestSoundPermission: true,
       requestBadgePermission: true,
@@ -140,7 +140,8 @@ class PushService {
     await _localNotifications.initialize(
       initSettings,
       onDidReceiveNotificationResponse: _onNotificationTapped,
-      onDidReceiveBackgroundNotificationResponse: _onBackgroundNotificationTapped,
+      onDidReceiveBackgroundNotificationResponse:
+          _onBackgroundNotificationTapped,
     );
 
     // Create high priority channel for Android
@@ -152,11 +153,13 @@ class PushService {
         importance: Importance.max,
         playSound: true,
         enableVibration: true,
-        enableLights: false, // Fix: Disable LED lights to prevent NullPointerException
+        enableLights:
+            false, // Fix: Disable LED lights to prevent NullPointerException
       );
 
       await _localNotifications
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(androidChannel);
 
       // Create badge update channel for Android
@@ -172,26 +175,29 @@ class PushService {
       );
 
       await _localNotifications
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(androidBadgeUpdateChannel);
 
       // Request permissions
       await _localNotifications
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
           ?.requestExactAlarmsPermission();
-      
+
       await _localNotifications
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
           ?.requestNotificationsPermission();
     }
 
     if (Platform.isIOS) {
       await _localNotifications
-          .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
+          .resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin>()
           ?.requestPermissions(alert: true, badge: true, sound: true);
     }
   }
-
 
   /// Clear old chat notifications when app starts up
   static Future<void> _clearOldChatNotifications() async {
@@ -203,14 +209,17 @@ class PushService {
       // Keep the VentaCuba Active service notification and badge notifications
 
       // Get all active notifications
-      final activeNotifications = await _localNotifications.getActiveNotifications();
+      final activeNotifications =
+          await _localNotifications.getActiveNotifications();
 
       for (final notification in activeNotifications) {
         // Don't cancel badge notifications (-1) or service notifications
         // Only cancel chat message notifications
         if (notification.id != -1 &&
-            notification.id != 1001 && // Service notification ID (NtfyBackgroundService)
-            notification.id != 999999) { // Legacy badge notification ID
+            notification.id !=
+                1001 && // Service notification ID (NtfyBackgroundService)
+            notification.id != 999999) {
+          // Legacy badge notification ID
           await _localNotifications.cancel(notification.id!);
         }
       }
@@ -250,7 +259,7 @@ class PushService {
         uri,
         protocols: ['ws', 'wss'],
       );
-      
+
       _channelSubscription = _channel!.stream.listen(
         _handleMessage,
         onError: (error) {
@@ -271,10 +280,9 @@ class PushService {
 
       print('✅ Premium WebSocket connected to: $uri');
       print('🔔 Ready to receive notifications for topic: $_userTopic');
-      
+
       // Process any offline messages
       await _processOfflineQueue();
-
     } catch (e) {
       print('❌ WebSocket connection failed: $e');
       _handleConnectionError();
@@ -296,7 +304,8 @@ class PushService {
         return; // Skip system messages
       }
 
-      final messageId = data['id'] ?? DateTime.now().millisecondsSinceEpoch.toString();
+      final messageId =
+          data['id'] ?? DateTime.now().millisecondsSinceEpoch.toString();
       print('🔍 Message ID: $messageId');
 
       // Premium deduplication
@@ -317,7 +326,8 @@ class PushService {
       }
 
       // Parse the nested message
-      final notificationData = json.decode(nestedMessage) as Map<String, dynamic>;
+      final notificationData =
+          json.decode(nestedMessage) as Map<String, dynamic>;
       print('🔍 Parsed notification data: $notificationData');
 
       final title = notificationData['title'] as String?;
@@ -330,14 +340,15 @@ class PushService {
         print('❌ Missing title or body');
         return;
       }
-      
+
       // Extract chat ID from click action
       String? chatId;
       if (clickAction != null && clickAction.startsWith('myapp://chat/')) {
         chatId = clickAction.split('/').last;
       }
 
-      print('🔍 NOTIFICATION DECISION: Chat open: $_isChatScreenOpen, Current chat: $_currentChatId, Incoming chat: $chatId, App in foreground: $_isAppInForeground');
+      print(
+          '🔍 NOTIFICATION DECISION: Chat open: $_isChatScreenOpen, Current chat: $_currentChatId, Incoming chat: $chatId, App in foreground: $_isAppInForeground');
 
       // CRITICAL: Only block notifications if chat is open AND app is in foreground
       // If app is in background, ALWAYS show notifications regardless of which chat was open
@@ -348,7 +359,8 @@ class PushService {
 
       // If app is in background, always allow notifications
       if (!_isAppInForeground) {
-        print('✅ ALLOWING: App is in background - showing notification regardless of chat state');
+        print(
+            '✅ ALLOWING: App is in background - showing notification regardless of chat state');
       }
 
       // Global deduplication check
@@ -399,91 +411,92 @@ class PushService {
         badgeCount = 0;
       }
 
-    // Cancel previous notification to ensure only ONE exists
-    try {
-      await _localNotifications.cancel(SINGLE_NOTIFICATION_ID);
-    } catch (e) {
-      print('⚠️ Could not cancel previous notification: $e');
-      // Continue anyway - the new notification will replace it
-    }
+      // Cancel previous notification to ensure only ONE exists
+      try {
+        await _localNotifications.cancel(SINGLE_NOTIFICATION_ID);
+      } catch (e) {
+        print('⚠️ Could not cancel previous notification: $e');
+        // Continue anyway - the new notification will replace it
+      }
 
-    final int safeBadgeCount = badgeCount ?? 0;
-    print('🔴 REPLACING notification with badge: $safeBadgeCount');
+      final int safeBadgeCount = badgeCount;
+      print('🔴 REPLACING notification with badge: $safeBadgeCount');
 
-    final androidDetails = AndroidNotificationDetails(
-      'venta_cuba_chat_messages',
-      'Chat Messages',
-      channelDescription: 'Instant chat message notifications',
-      importance: Importance.max,
-      priority: Priority.max,
-      showWhen: true,
-      enableVibration: true,
-      enableLights: false,
-      autoCancel: true, // Change to true so notification can be dismissed
-      ongoing: false,
-      category: AndroidNotificationCategory.message,
-      fullScreenIntent: false,
-      visibility: NotificationVisibility.public,
-      number: safeBadgeCount, // This is the TOTAL count, not incremental
-      setAsGroupSummary: false,
-      playSound: true,
-    );
-
-    final iosDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-      sound: 'default',
-      badgeNumber: badgeCount,
-      threadIdentifier: 'chat_messages',
-      interruptionLevel: InterruptionLevel.timeSensitive,
-    );
-
-    final details = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
-
-    // Use the SAME notification ID to replace previous
-    try {
-      await _localNotifications.show(
-        SINGLE_NOTIFICATION_ID,
-        title,
-        body,
-        details,
-        payload: chatId != null ? json.encode({'chatId': chatId}) : null,
+      final androidDetails = AndroidNotificationDetails(
+        'venta_cuba_chat_messages',
+        'Chat Messages',
+        channelDescription: 'Instant chat message notifications',
+        importance: Importance.max,
+        priority: Priority.max,
+        showWhen: true,
+        enableVibration: true,
+        enableLights: false,
+        autoCancel: true, // Change to true so notification can be dismissed
+        ongoing: false,
+        category: AndroidNotificationCategory.message,
+        fullScreenIntent: false,
+        visibility: NotificationVisibility.public,
+        number: safeBadgeCount, // This is the TOTAL count, not incremental
+        setAsGroupSummary: false,
+        playSound: true,
       );
 
-      // Track this notification for the chat
-      if (chatId != null) {
-        _activeNotificationsByChatId.putIfAbsent(chatId, () => <int>{});
-        _activeNotificationsByChatId[chatId]!.clear(); // Clear old tracking
-        _activeNotificationsByChatId[chatId]!.add(SINGLE_NOTIFICATION_ID);
-      }
+      final iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+        sound: 'default',
+        badgeNumber: badgeCount,
+        threadIdentifier: 'chat_messages',
+        interruptionLevel: InterruptionLevel.timeSensitive,
+      );
 
-      print('✅ Notification REPLACED with badge: $safeBadgeCount (ID=$SINGLE_NOTIFICATION_ID)');
-    } catch (e) {
-      print('❌ Failed to show notification: $e');
-      // Try showing a simpler notification without badge
+      final details = NotificationDetails(
+        android: androidDetails,
+        iOS: iosDetails,
+      );
+
+      // Use the SAME notification ID to replace previous
       try {
-        final simpleAndroidDetails = AndroidNotificationDetails(
-          'venta_cuba_chat_messages',
-          'Chat Messages',
-          importance: Importance.max,
-          priority: Priority.max,
-        );
-
         await _localNotifications.show(
-          DateTime.now().millisecondsSinceEpoch % 100000,
+          SINGLE_NOTIFICATION_ID,
           title,
           body,
-          NotificationDetails(android: simpleAndroidDetails),
+          details,
+          payload: chatId != null ? json.encode({'chatId': chatId}) : null,
         );
-        print('✅ Showed simple notification instead');
-      } catch (e2) {
-        print('❌ Even simple notification failed: $e2');
+
+        // Track this notification for the chat
+        if (chatId != null) {
+          _activeNotificationsByChatId.putIfAbsent(chatId, () => <int>{});
+          _activeNotificationsByChatId[chatId]!.clear(); // Clear old tracking
+          _activeNotificationsByChatId[chatId]!.add(SINGLE_NOTIFICATION_ID);
+        }
+
+        print(
+            '✅ Notification REPLACED with badge: $safeBadgeCount (ID=$SINGLE_NOTIFICATION_ID)');
+      } catch (e) {
+        print('❌ Failed to show notification: $e');
+        // Try showing a simpler notification without badge
+        try {
+          final simpleAndroidDetails = AndroidNotificationDetails(
+            'venta_cuba_chat_messages',
+            'Chat Messages',
+            importance: Importance.max,
+            priority: Priority.max,
+          );
+
+          await _localNotifications.show(
+            DateTime.now().millisecondsSinceEpoch % 100000,
+            title,
+            body,
+            NotificationDetails(android: simpleAndroidDetails),
+          );
+          print('✅ Showed simple notification instead');
+        } catch (e2) {
+          print('❌ Even simple notification failed: $e2');
+        }
       }
-    }
     } catch (e) {
       print('❌ Error in _showPremiumNotification: $e');
     }
@@ -493,13 +506,14 @@ class PushService {
   static void _handleConnectionError() {
     _isConnected = false;
     _connectionStatus.value = false;
-    
+
     if (_retryCount < _maxRetries) {
       _retryCount++;
       final delay = 3000 * _retryCount; // Progressive delay
-      
-      print('🔄 Reconnecting in ${delay}ms (attempt $_retryCount/$_maxRetries)');
-      
+
+      print(
+          '🔄 Reconnecting in ${delay}ms (attempt $_retryCount/$_maxRetries)');
+
       _reconnectTimer?.cancel();
       _reconnectTimer = Timer(Duration(milliseconds: delay), () {
         _connectWebSocket();
@@ -518,10 +532,10 @@ class PushService {
   static Future<void> _closeWebSocket() async {
     await _channelSubscription?.cancel();
     _channelSubscription = null;
-    
+
     await _channel?.sink.close(status.goingAway);
     _channel = null;
-    
+
     _isConnected = false;
   }
 
@@ -530,7 +544,7 @@ class PushService {
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen(
       (result) {
         final hasConnection = result != ConnectivityResult.none;
-        
+
         if (hasConnection && !_isConnected) {
           print('📱 Network restored, reconnecting...');
           _retryCount = 0;
@@ -578,22 +592,22 @@ class PushService {
     if (_offlineQueue.length >= _maxQueueSize) {
       _offlineQueue.removeAt(0); // Remove oldest
     }
-    
+
     message['queued_at'] = DateTime.now().toIso8601String();
     _offlineQueue.add(message);
-    
+
     print('📦 Message queued (${_offlineQueue.length} in queue)');
   }
 
   /// Process offline message queue
   static Future<void> _processOfflineQueue() async {
     if (_offlineQueue.isEmpty || !_isConnected) return;
-    
+
     print('📤 Processing ${_offlineQueue.length} offline messages');
-    
+
     final toProcess = List.from(_offlineQueue);
     _offlineQueue.clear();
-    
+
     for (final message in toProcess) {
       try {
         await sendChatNotification(
@@ -604,7 +618,7 @@ class PushService {
           chatId: message['chatId'],
           senderId: message['senderId'],
         );
-        
+
         await Future.delayed(Duration(milliseconds: 100)); // Rate limiting
       } catch (e) {
         print('❌ Failed to send queued message: $e');
@@ -641,8 +655,7 @@ class PushService {
       try {
         await SupabaseService.client
             .from('users')
-            .update({'ntfy_topic': _userTopic})
-            .eq('user_id', userId);
+            .update({'ntfy_topic': _userTopic}).eq('user_id', userId);
       } catch (e) {
         // This might fail if users table doesn't have ntfy_topic column
         print('⚠️ Could not update ntfy_topic in users table: $e');
@@ -658,10 +671,11 @@ class PushService {
       try {
         final data = json.decode(response.payload!);
         final chatId = data['chatId'];
-        
+
         if (chatId != null) {
           // Clear notifications for this chat when tapped
-          print('💆 Notification tapped for chat $chatId - clearing notifications');
+          print(
+              '💆 Notification tapped for chat $chatId - clearing notifications');
           cancelChatNotifications(chatId);
 
           // Navigate to chat screen
@@ -689,7 +703,8 @@ class PushService {
     required String senderId,
   }) async {
     try {
-      print('📨 Sending notification: $senderId → $recipientUserId (Chat: $chatId)');
+      print(
+          '📨 Sending notification: $senderId → $recipientUserId (Chat: $chatId)');
 
       // CRITICAL: Don't send notifications to yourself
       try {
@@ -718,13 +733,15 @@ class PushService {
       // Get current badge count for recipient (only once)
       // CRITICAL: This should be the TOTAL unread count, not incremental
       int badgeCount = await _getUnreadCountForUser(recipientUserId);
-      print('🚨 NOTIFICATION BADGE: Setting badge to EXACTLY $badgeCount for recipient $recipientUserId');
+      print(
+          '🚨 NOTIFICATION BADGE: Setting badge to EXACTLY $badgeCount for recipient $recipientUserId');
       print('🚨 This is NOT adding to existing badge, it\'s REPLACING it');
 
       // IMPORTANT: Only update badge if this is truly for the recipient
       // The sender should never get their badge updated when sending
       if (_currentUserId == recipientUserId) {
-        print('🚨 Recipient is on this device, updating local badge to: $badgeCount');
+        print(
+            '🚨 Recipient is on this device, updating local badge to: $badgeCount');
         // Force clear any existing badge first
         await clearBadgeCount();
         // Then set new badge count
@@ -760,14 +777,17 @@ class PushService {
       };
 
       if (_isConnected) {
-        final response = await http.post(
-          url,
-          headers: {'Content-Type': 'application/json'},
-          body: json.encode(payload),
-        ).timeout(Duration(seconds: 5));
+        final response = await http
+            .post(
+              url,
+              headers: {'Content-Type': 'application/json'},
+              body: json.encode(payload),
+            )
+            .timeout(Duration(seconds: 5));
 
         if (response.statusCode == 200) {
-          print('✅ Remote notification sent to $recipientTopic (badge: $badgeCount)');
+          print(
+              '✅ Remote notification sent to $recipientTopic (badge: $badgeCount)');
 
           // ONLY update badge for current user - NO local notification
           // The background service or WebSocket will handle showing notifications
@@ -813,7 +833,8 @@ class PushService {
       // 1. Cancel all tracked notifications for this chat
       if (_activeNotificationsByChatId.containsKey(chatId)) {
         final notificationIds = _activeNotificationsByChatId[chatId]!;
-        print('🧼 Found ${notificationIds.length} tracked notifications for chat $chatId');
+        print(
+            '🧼 Found ${notificationIds.length} tracked notifications for chat $chatId');
 
         for (final notificationId in notificationIds) {
           await _localNotifications.cancel(notificationId);
@@ -832,7 +853,6 @@ class PushService {
       _recentMessageIds.removeWhere((id) => id.contains(chatId));
 
       print('✅ All notifications canceled for chat: $chatId');
-
     } catch (e) {
       print('❌ Error canceling chat notifications: $e');
     }
@@ -862,7 +882,8 @@ class PushService {
         cancelChatNotifications(chatId);
       }
     }
-    print('🔄 Chat screen status: open=$isOpen, chatId=$chatId, appInForeground=$_isAppInForeground');
+    print(
+        '🔄 Chat screen status: open=$isOpen, chatId=$chatId, appInForeground=$_isAppInForeground');
   }
 
   /// Set app lifecycle state for notification management
@@ -872,9 +893,11 @@ class PushService {
     print('🔄 App lifecycle state changed: inForeground=$isInForeground');
 
     if (!isInForeground) {
-      print('📱 App backgrounded - notifications will now be allowed for all chats');
+      print(
+          '📱 App backgrounded - notifications will now be allowed for all chats');
     } else {
-      print('📱 App foregrounded - notifications will be filtered based on active chat');
+      print(
+          '📱 App foregrounded - notifications will be filtered based on active chat');
 
       // If app was in background and now is in foreground, clear notifications
       if (wasInBackground) {
@@ -886,7 +909,7 @@ class PushService {
 
   /// Get connection status
   static bool get isConnected => _isConnected;
-  
+
   /// Get connection duration
   static Duration? get connectionDuration {
     if (_lastConnectedTime != null && _isConnected) {
@@ -898,21 +921,20 @@ class PushService {
   /// Cleanup and dispose
   static Future<void> dispose() async {
     print('🧹 Disposing Push Service');
-    
+
     _reconnectTimer?.cancel();
     _heartbeatTimer?.cancel();
     _deduplicationTimer?.cancel();
     _connectivitySubscription?.cancel();
-    
+
     await _closeWebSocket();
-    
+
     // No persistent notification to cancel anymore
-    
+
     _offlineQueue.clear();
     _recentMessageIds.clear();
     _activeNotificationsByChatId.clear();
   }
-
 
   /// Get unread message count for a specific user - FIXED ACCUMULATION
   static Future<int> _getUnreadCountForUser(String userId) async {
@@ -923,7 +945,8 @@ class PushService {
       // Get all chats where the user is involved
       final userChats = await SupabaseService.client
           .from('chats')
-          .select('id, sender_id, send_to_id, sender_last_read_time, recipient_last_read_time')
+          .select(
+              'id, sender_id, send_to_id, sender_last_read_time, recipient_last_read_time')
           .or('sender_id.eq.$userId,send_to_id.eq.$userId');
 
       print('🔴 Found ${userChats.length} chats for user');
@@ -936,7 +959,8 @@ class PushService {
         final chatSendToId = chat['send_to_id'].toString();
         final userIdStr = userId.toString();
 
-        print('🔴 Chat ${chat['id']}: sender=$chatSenderId, recipient=$chatSendToId, user=$userIdStr');
+        print(
+            '🔴 Chat ${chat['id']}: sender=$chatSenderId, recipient=$chatSendToId, user=$userIdStr');
 
         // Determine if user is sender or recipient
         final isUserSender = chatSenderId == userIdStr;
@@ -944,14 +968,15 @@ class PushService {
             ? chat['sender_last_read_time']
             : chat['recipient_last_read_time'];
 
-        print('🔴 User is ${isUserSender ? "sender" : "recipient"}, last read: $lastReadTime');
+        print(
+            '🔴 User is ${isUserSender ? "sender" : "recipient"}, last read: $lastReadTime');
 
         // Count unread messages for this chat
         final unreadMessages = await SupabaseService.client
             .from('messages')
             .select('id, send_by, time')
             .eq('chat_id', chat['id'])
-            .neq('send_by', userId)  // Messages NOT sent by this user
+            .neq('send_by', userId) // Messages NOT sent by this user
             .gt('time', lastReadTime ?? '1970-01-01T00:00:00Z');
 
         final chatUnreadCount = unreadMessages.length;
@@ -990,7 +1015,8 @@ class PushService {
 
       // Only show if this is for the current user on this device
       if (_currentUserId != recipientUserId) {
-        print('🔕 Skipping: Not for current user (recipient: $recipientUserId, current: $_currentUserId)');
+        print(
+            '🔕 Skipping: Not for current user (recipient: $recipientUserId, current: $_currentUserId)');
         return;
       }
 
@@ -1011,7 +1037,8 @@ class PushService {
       final notificationId = DateTime.now().millisecondsSinceEpoch % 100000;
 
       // CRITICAL FIX: Ensure badge is set to exact count, not accumulated
-      print('🚨 LOCAL NOTIFICATION: Badge count should be EXACTLY: $badgeCount');
+      print(
+          '🚨 LOCAL NOTIFICATION: Badge count should be EXACTLY: $badgeCount');
       print('🚨 If seeing accumulation, launcher may be buggy');
 
       final androidDetails = AndroidNotificationDetails(
@@ -1022,7 +1049,8 @@ class PushService {
         priority: Priority.max,
         showWhen: true,
         enableVibration: true,
-        enableLights: false, // Fix: Disable LED lights to prevent NullPointerException
+        enableLights:
+            false, // Fix: Disable LED lights to prevent NullPointerException
         autoCancel: true,
         groupKey: 'com.venta.cuba.CHAT_MESSAGES',
         category: AndroidNotificationCategory.message,
@@ -1065,8 +1093,10 @@ class PushService {
       _activeNotificationsByChatId.putIfAbsent(chatId, () => <int>{});
       _activeNotificationsByChatId[chatId]!.add(notificationId);
 
-      print('📢 LOCAL NOTIFICATION SHOWN: ID=$notificationId, Title=$senderName, Body=$message');
-      print('📢 Local notification shown for recipient with badge: $badgeCount');
+      print(
+          '📢 LOCAL NOTIFICATION SHOWN: ID=$notificationId, Title=$senderName, Body=$message');
+      print(
+          '📢 Local notification shown for recipient with badge: $badgeCount');
     } catch (e) {
       print('❌ Error showing local notification: $e');
     }
@@ -1117,8 +1147,9 @@ class PushService {
       print('🎯 Attempting to set iOS badge to: $count');
 
       // First ensure permissions are granted
-      final iosImplementation = _localNotifications
-          .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
+      final iosImplementation =
+          _localNotifications.resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin>();
 
       if (iosImplementation == null) {
         print('❌ iOS notifications plugin not available');
@@ -1141,7 +1172,7 @@ class PushService {
 
       // METHOD 1: Try using a visible notification with badge
       final iosDetails = DarwinNotificationDetails(
-        presentAlert: true,  // Make it visible for testing
+        presentAlert: true, // Make it visible for testing
         presentBadge: true,
         presentSound: false,
         badgeNumber: count,
@@ -1165,7 +1196,6 @@ class PushService {
         await _localNotifications.cancel(999);
         print('🧹 Cleared badge test notification');
       });
-
     } catch (e) {
       print('❌ Error setting iOS badge number: $e');
       print('❌ Stack trace: ${e.toString()}');
@@ -1197,7 +1227,6 @@ class PushService {
     await _forceSetAndroidBadge(count);
   }
 
-
   /// Handle when app comes to foreground - clear notifications and update badge
   static Future<void> onAppResumed() async {
     print('📱 App resumed - clearing notifications and updating badge');
@@ -1220,7 +1249,8 @@ class PushService {
       print('🧹 Clearing chat notifications - app opened');
 
       // Get all active notifications
-      final activeNotifications = await _localNotifications.getActiveNotifications();
+      final activeNotifications =
+          await _localNotifications.getActiveNotifications();
 
       for (final notification in activeNotifications) {
         // Only cancel chat message notifications
@@ -1317,7 +1347,6 @@ class PushService {
 
         print('✅ Android test notification sent with number: $count');
       }
-
     } catch (e) {
       print('❌ Badge test failed: $e');
     }
@@ -1392,7 +1421,8 @@ class PushService {
       'isAppInForeground': _isAppInForeground,
       'offlineQueueSize': _offlineQueue.length,
       'recentMessageCount': _recentMessageIds.length,
-      'activeChatNotifications': _activeNotificationsByChatId.map((k, v) => MapEntry(k, v.length)),
+      'activeChatNotifications':
+          _activeNotificationsByChatId.map((k, v) => MapEntry(k, v.length)),
     };
   }
 }

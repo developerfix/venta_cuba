@@ -28,13 +28,16 @@ class PushNotificationTester extends StatelessWidget {
                   children: [
                     Text(
                       'Current Status',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     SizedBox(height: 8),
                     Text('User ID: $currentUserId'),
-                    Text('Connection: ${PushService.isConnected ? "✅ Connected" : "❌ Disconnected"}'),
+                    Text(
+                        'Connection: ${PushService.isConnected ? "✅ Connected" : "❌ Disconnected"}'),
                     if (PushService.connectionDuration != null)
-                      Text('Connected for: ${PushService.connectionDuration!.inSeconds}s'),
+                      Text(
+                          'Connected for: ${PushService.connectionDuration!.inSeconds}s'),
                   ],
                 ),
               ),

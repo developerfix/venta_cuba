@@ -37,7 +37,8 @@ class ListingView extends StatelessWidget {
           ),
           itemBuilder: (BuildContext context, int index) {
             if (index == shuffledList.length) {
-              return cont.hasMore.value
+              // Only show loading spinner if actually loading and has more items
+              return (cont.hasMore.value && cont.isPostLoading.value)
                   ? Center(child: CircularProgressIndicator())
                   : SizedBox.shrink();
             }

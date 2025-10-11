@@ -1051,16 +1051,36 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
           "listingLocation": widget.listingLocation,
         };
 
-        // Send message without blocking UI
+        // Send message without blocking UI with retry logic
         chatCont.sendMessage(id ?? "", chatMessageData).catchError((e) {
-          // Show error if send fails
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("Failed to send message".tr),
-              backgroundColor: Colors.red,
-              duration: Duration(seconds: 2),
-            ),
-          );
+          print('📱 First message send attempt failed: $e');
+
+          // Attempt retry after a short delay for new contacts
+          Future.delayed(Duration(milliseconds: 500), () async {
+            try {
+              await chatCont.sendMessage(id ?? "", chatMessageData);
+              print('✅ Message sent successfully on retry');
+            } catch (retryError) {
+              print('❌ Retry also failed: $retryError');
+              // Only show error if retry also fails
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("Unable to send message. Please try again."),
+                    backgroundColor: Colors.red,
+                    duration: Duration(seconds: 3),
+                    action: SnackBarAction(
+                      label: 'Retry',
+                      textColor: Colors.white,
+                      onPressed: () {
+                        sendMessage('text'); // Retry sending
+                      },
+                    ),
+                  ),
+                );
+              }
+            }
+          });
         });
 
         // Scroll to bottom immediately
@@ -1070,13 +1090,28 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
         // No need for additional notification calls
       }
     } catch (e) {
-      // Show error to user
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("❌ Failed to send message: ${e.toString()}"),
-          backgroundColor: Colors.red,
-        ),
-      );
+      // Log error but don't show intrusive message for common issues
+      print('❌ Message send error in _sendMessage: $e');
+
+      // Only show error for critical issues, not for common recoverable ones
+      if (!e.toString().toLowerCase().contains('unique') &&
+          !e.toString().toLowerCase().contains('duplicate') &&
+          !e.toString().toLowerCase().contains('already exists')) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Message send failed. Please try again."),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 2),
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: () {
+                sendMessage('text'); // Retry sending
+              },
+            ),
+          ),
+        );
+      }
     }
   }
 
