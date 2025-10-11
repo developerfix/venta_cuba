@@ -920,6 +920,8 @@ class _ListingsState extends State<Listings> {
                                                                 children: [
                                                                   GestureDetector(
                                                                     onTap: () {
+                                                                      cont.listingModel =
+                                                                          cont.userListingModelList[index];
                                                                       showDialog(
                                                                         context:
                                                                             context,
@@ -1362,6 +1364,8 @@ class _ListingsState extends State<Listings> {
                                                                 children: [
                                                                   GestureDetector(
                                                                     onTap: () {
+                                                                      cont.listingModel =
+                                                                          cont.userListingModelList[index];
                                                                       showDialog(
                                                                         context:
                                                                             context,

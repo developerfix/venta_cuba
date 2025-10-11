@@ -789,7 +789,10 @@ class _FrameScreenState extends State<FrameScreen> {
                                 style: TextStyle(
                                     fontSize: 15..sp,
                                     fontWeight: FontWeight.w400,
-                                    color: AppColors.k0xFFA9ABAC),
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodyLarge
+                                        ?.color),
                               ),
                             ),
                             SizedBox(
@@ -1384,7 +1387,10 @@ print("Successfully".tr);
                                           fontSize: 12..sp,
                                           overflow: TextOverflow.ellipsis,
                                           fontWeight: FontWeight.w500,
-                                          color: AppColors.k0xFF9F9F9F),
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .bodyLarge
+                                              ?.color),
                                     ),
                                     Text(
                                       cont.listingModel!.price == "0"
