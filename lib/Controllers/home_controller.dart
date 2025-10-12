@@ -99,7 +99,7 @@ class HomeController extends GetxController {
   RxBool loadingCategory = false.obs;
   RxBool loadingSubCategory = false.obs;
   RxBool loadingSubSubCategory = false.obs;
-  
+
   // Randomization control
   RxBool hasShuffledThisSession = false.obs;
   bool shouldShuffleOnLocationChange = false;
@@ -166,12 +166,12 @@ class HomeController extends GetxController {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String currentSessionId = prefs.getString('current_session_id') ?? '';
-      
+
       // Generate new session id if none exists or if it's a fresh login
       if (currentSessionId.isEmpty || !hasShuffledThisSession.value) {
         String newSessionId = DateTime.now().millisecondsSinceEpoch.toString();
         await prefs.setString('current_session_id', newSessionId);
-        
+
         if (listingModelList.isNotEmpty) {
           listingModelList.shuffle();
           hasShuffledThisSession.value = true;
@@ -246,7 +246,7 @@ class HomeController extends GetxController {
     try {
       await loadLastLocationAndRadius();
       bool locationChanged = hasLocationOrRadiusChanged();
-      
+
       if (locationChanged || listingModelList.isEmpty) {
         // Set flag to shuffle on location change
         if (locationChanged) {
@@ -303,18 +303,38 @@ class HomeController extends GetxController {
       }
 
       Get.log("Fetching Page: ${currentPage.value}");
-      
-      // Check if no location is selected  
+
+      // Check if no location is selected
       bool noLocationSelected = false;
       // Check for default location or empty location
-      if (address == null || 
-          address == '' || 
+      if (address == null ||
+          address == '' ||
           address == "4JF7+RM6, Av. Paseo, La Habana, Cuba" ||
-          (lat == "23.124792615936276" && lng == "-82.38597269330762" && radius == 50.0)) {
+          (lat == "23.124792615936276" &&
+              lng == "-82.38597269330762" &&
+              radius == 50.0)) {
         noLocationSelected = true;
-        Get.log("📍 No location selected - will filter to user's own posts only");
+        Get.log(
+            "📍 No location selected - will filter to user's own posts only");
       }
-      
+
+      // Check authentication status before making API call
+      if (authCont.user?.accessToken == null || authCont.user?.accessToken == "") {
+        if (tokenMain == null || tokenMain == "") {
+          Get.log("⚠️ No authentication token - stopping API calls to prevent infinite loading");
+
+          // For no location + no auth: show empty list
+          if (noLocationSelected) {
+            listingModelList.clear();
+            hasMore.value = false;
+          }
+
+          isPostLoading.value = false;
+          update();
+          return;
+        }
+      }
+
       Response response = await api.postData(
         "api/getListing?page=${currentPage.value}",
         {
@@ -332,10 +352,13 @@ class HomeController extends GetxController {
         headers: {
           'Accept': 'application/json',
           'Access-Control-Allow-Origin': "*",
-          'Authorization': 'Bearer ${authCont.user?.accessToken}'
+          'Authorization': 'Bearer ${authCont.user?.accessToken ?? tokenMain ?? ""}'
         },
         showdialog: false,
-      );
+      ).timeout(Duration(seconds: 30), onTimeout: () {
+        Get.log("⏱️ API call timed out - returning empty response");
+        return Response(statusCode: 408, body: {'error': 'timeout'});
+      });
 
       if (response.statusCode == 200) {
         List<dynamic> dataListing = response.body['data']['data'] ?? [];
@@ -345,32 +368,35 @@ class HomeController extends GetxController {
           List<ListingModel> newListings =
               dataListing.map((e) => ListingModel.fromJson(e)).toList();
 
-          // Filter to only show current user's posts when no location is selected
+          // Location-based filtering logic
           if (noLocationSelected) {
+            // NO LOCATION SELECTED: Show only current user's items
             if (authCont.user?.userId != null) {
-              // Strictly filter to only user's own posts
+              // Filter to show ONLY user's own posts
               List<ListingModel> userOwnPosts = newListings.where((listing) {
                 bool isOwnPost = listing.userId?.toString() == authCont.user?.userId?.toString();
-                if (!isOwnPost) {
-                  Get.log("📍 Filtered out post from user ${listing.userId} (current user: ${authCont.user?.userId})");
-                }
                 return isOwnPost;
               }).toList();
-              
+
               newListings = userOwnPosts;
-              Get.log("📍 No location selected - showing ${newListings.length} user's own posts only");
-              
-              // If no own posts, clear the list
+              Get.log("📍 NO LOCATION: Showing ${newListings.length} of user's own posts only");
+
+              // Clear list if no user posts found on first page
               if (newListings.isEmpty && currentPage.value == 1) {
                 listingModelList.clear();
-                Get.log("📍 No own posts to show when no location is selected");
+                hasMore.value = false; // Stop pagination if no user posts
+                Get.log("📍 NO LOCATION: No user posts found - stopping pagination");
               }
             } else {
-              // If not logged in and no location, show nothing
+              // Not logged in + no location = show nothing
               newListings = [];
               listingModelList.clear();
-              Get.log("📍 Not logged in and no location - showing no posts");
+              hasMore.value = false;
+              Get.log("📍 NO LOCATION + NOT LOGGED IN: Showing no posts");
             }
+          } else {
+            // LOCATION SELECTED: Show items from that location (all users)
+            Get.log("📍 LOCATION SELECTED: Showing ${newListings.length} posts from location: ${address}");
           }
 
           // Apply client-side category filtering for consistency with search
@@ -381,10 +407,10 @@ class HomeController extends GetxController {
           // This ensures randomization on both initial load and scroll
           newListings.shuffle();
           Get.log("📝 Shuffled ${newListings.length} new items");
-          
+
           listingModelList.addAll(newListings);
-          
-          // Additional shuffle for entire list on first load 
+
+          // Additional shuffle for entire list on first load
           if (currentPage.value == 1) {
             if (shouldShuffleOnLocationChange) {
               // Always shuffle when location changes
@@ -395,17 +421,29 @@ class HomeController extends GetxController {
               await shuffleListingsOnLogin();
             }
           }
-          
+
           currentPage.value++;
           hasMore.value = dataListing.length == 15;
         } else {
           hasMore.value = false;
         }
         saveLocationAndRadius();
+      } else if (response.statusCode == 408) {
+        // Handle timeout
+        Get.log("⏱️ Request timed out", isError: true);
+        hasMore.value = false; // Stop further requests
+        print('Request timed out. Please check your connection.'.tr);
       } else {
         Get.log("API error: ${response.statusCode}, ${response.body}",
             isError: true);
-        print('Failed to fetch listings. Please try again.'.tr);
+
+        // For authentication errors, stop further requests to prevent loops
+        if (response.statusCode == 401) {
+          hasMore.value = false;
+          print('Authentication required. Please login.'.tr);
+        } else {
+          print('Failed to fetch listings. Please try again.'.tr);
+        }
       }
     } catch (e, stackTrace) {
       Get.log("Error in getListing: $e\n$stackTrace", isError: true);
@@ -639,8 +677,7 @@ class HomeController extends GetxController {
         print("Invalid promo code".tr);
       }
       if (isEnterPromoCode) {
-        print(
-            "Promo add successfully.Please Wait for admin approval.".tr);
+        print("Promo add successfully.Please Wait for admin approval.".tr);
       } else if (type == "Other") {
         // errorAlertToast(
         //     "Promotion code applied successfully. Your subscription has started"
@@ -815,23 +852,148 @@ class HomeController extends GetxController {
   }
 
   Future<bool> deleteListing() async {
-    Response response = await api.postWithForm(
-        "api/deleteListing",
-        {
-          'listing_id': listingModel?.id,
-        },
-        headers: {
-          'Accept': 'application/json',
-          'Access-Control-Allow-Origin': "*",
-          'Authorization': 'Bearer ${authCont.user?.accessToken}'
-        },
-        showdialog: false);
-    if (response.statusCode == 200) {
-      print('Listing Delete Successfully'.tr);
-      return true;
-    } else {
-      print('Something went wrong\nPlease try again!'.tr);
+    try {
+      // Enhanced validation
+      if (listingModel?.id == null) {
+        print('Error: No listing ID available for deletion');
+        return false;
+      }
+
+      // Check authentication
+      if (authCont.user?.accessToken == null ||
+          authCont.user?.accessToken == "") {
+        print('Error: No valid authentication token');
+        return false;
+      }
+
+      // Add retry mechanism for network issues
+      int retryCount = 0;
+      const maxRetries = 2;
+
+      while (retryCount <= maxRetries) {
+        try {
+          Response response = await api
+              .postWithForm(
+                  "api/deleteListing",
+                  {
+                    'listing_id': listingModel?.id,
+                  },
+                  headers: {
+                    'Accept': 'application/json',
+                    'Access-Control-Allow-Origin': "*",
+                    'Authorization': 'Bearer ${authCont.user?.accessToken}'
+                  },
+                  showdialog: false)
+              .timeout(Duration(seconds: 15));
+
+          if (response.statusCode == 200) {
+            print('Listing Delete Successfully'.tr);
+
+            // Sync deletion with home screen list
+            syncDeletedItemFromHomeScreen();
+
+            return true;
+          } else if (response.statusCode == 401) {
+            print('Authentication failed - token may be expired');
+            // Try to refresh token
+            await authCont.getuserDetail();
+            if (retryCount < maxRetries) {
+              retryCount++;
+              continue;
+            }
+            return false;
+          } else if (response.statusCode == 500) {
+            // Server error - retry
+            if (retryCount < maxRetries) {
+              retryCount++;
+              await Future.delayed(Duration(seconds: 1)); // Brief delay
+              continue;
+            }
+            print(
+                'Server error - delete failed with status: ${response.statusCode}');
+            return false;
+          } else {
+            print('Delete failed with status: ${response.statusCode}');
+            print('Response body: ${response.body}');
+            return false;
+          }
+        } on TimeoutException {
+          if (retryCount < maxRetries) {
+            retryCount++;
+            print(
+                'Delete request timed out, retrying... (${retryCount}/${maxRetries})');
+            continue;
+          }
+          print('Delete request timed out after $maxRetries retries');
+          return false;
+        } catch (networkError) {
+          if (retryCount < maxRetries) {
+            retryCount++;
+            print(
+                'Network error, retrying... (${retryCount}/${maxRetries}): $networkError');
+            await Future.delayed(Duration(seconds: 1));
+            continue;
+          }
+          print('Network error after $maxRetries retries: $networkError');
+          return false;
+        }
+      }
+
       return false;
+    } catch (e) {
+      print('Unexpected exception during delete: $e');
+      return false;
+    }
+  }
+
+  /// Sync deleted item from home screen listing to keep lists in sync
+  void syncDeletedItemFromHomeScreen() {
+    if (listingModel?.id != null) {
+      final deletedItemId = listingModel!.id;
+
+      // Remove from main home screen list
+      final initialCount = listingModelList.length;
+      listingModelList.removeWhere((listing) => listing.id == deletedItemId);
+      final finalCount = listingModelList.length;
+
+      if (finalCount < initialCount) {
+        print('🔄 Synced deletion: Removed item ${deletedItemId} from home screen list');
+
+        // Trigger UI update for home screen
+        update();
+
+        // Also remove from search list if present
+        listingModelSearchList.removeWhere((listing) => listing.id == deletedItemId);
+
+        print('✅ Home screen and search lists synchronized after deletion');
+      } else {
+        print('ℹ️ Item ${deletedItemId} was not in home screen list (may be filtered out)');
+      }
+    }
+  }
+
+  /// Sync multiple deleted items from home screen listing for bulk operations
+  void syncMultipleDeletedItemsFromHomeScreen(List<int> deletedIds) {
+    if (deletedIds.isNotEmpty) {
+      // Remove from main home screen list
+      final initialCount = listingModelList.length;
+      listingModelList.removeWhere((listing) => deletedIds.contains(listing.id));
+      final finalCount = listingModelList.length;
+
+      if (finalCount < initialCount) {
+        final removedCount = initialCount - finalCount;
+        print('🔄 Bulk sync: Removed ${removedCount} items from home screen list');
+
+        // Trigger UI update for home screen
+        update();
+
+        // Also remove from search list if present
+        listingModelSearchList.removeWhere((listing) => deletedIds.contains(listing.id));
+
+        print('✅ Home screen and search lists synchronized after bulk deletion');
+      } else {
+        print('ℹ️ No items from bulk delete were in home screen list (may be filtered out)');
+      }
     }
   }
 
@@ -885,8 +1047,19 @@ class HomeController extends GetxController {
 
       // Remove successfully deleted listings from local list
       if (successCount > 0) {
+        // Get list of IDs that were successfully deleted for sync with home screen
+        List<int> deletedIds = [];
+        for (int i = 0; i < listingsToDelete.length; i++) {
+          if (results[i] && listingsToDelete[i].id != null) {
+            deletedIds.add(listingsToDelete[i].id!);
+          }
+        }
+
         userListingModelList.removeWhere(
             (listing) => listing.businessStatus == currentAccountType);
+
+        // Sync deletion with home screen list
+        syncMultipleDeletedItemsFromHomeScreen(deletedIds);
 
         // Update the counters
         if (authCont.isBusinessAccount) {
@@ -1185,6 +1358,32 @@ class HomeController extends GetxController {
         addressCont.clear();
         descriptionCont.clear();
         tagsController.clear();
+
+        // Clear all tags and optional information
+        tags.clear();
+        optionalInformation.clear();
+
+        // Clear YouTube and optional detail controllers
+        youTubeController.clear();
+        phoneController.clear();
+        websiteController.clear();
+        conditionController.clear();
+        fulfillmentController.clear();
+        paymentController.clear();
+        makeController.clear();
+        modelController.clear();
+
+        // Clear uploaded images
+        postImages.clear();
+        uploadingImages.clear();
+
+        // Reset expansion states to closed
+        showBelowFields = [0, 0, 0, 0, 0, 0];
+
+        // Reset other form state
+        furnished = '';
+        jobType = '';
+
         selectedCategory = null;
         selectedSubCategory = null;
         selectedSubSubCategory = null;
@@ -1340,6 +1539,32 @@ class HomeController extends GetxController {
       addressCont.clear();
       descriptionCont.clear();
       tagsController.clear();
+
+      // Clear all tags and optional information
+      tags.clear();
+      optionalInformation.clear();
+
+      // Clear YouTube and optional detail controllers
+      youTubeController.clear();
+      phoneController.clear();
+      websiteController.clear();
+      conditionController.clear();
+      fulfillmentController.clear();
+      paymentController.clear();
+      makeController.clear();
+      modelController.clear();
+
+      // Clear uploaded images
+      postImages.clear();
+      uploadingImages.clear();
+
+      // Reset expansion states to closed
+      showBelowFields = [0, 0, 0, 0, 0, 0];
+
+      // Reset other form state
+      furnished = '';
+      jobType = '';
+
       selectedCategory = null;
       selectedSubCategory = null;
       selectedCurrency = 'USD';
@@ -1384,16 +1609,14 @@ class HomeController extends GetxController {
       } else {
         Get.log("No coordinates found for address: $latestAddress",
             isError: true);
-        print(
-            'Unable to fetch location. Using default coordinates.'.tr);
+        print('Unable to fetch location. Using default coordinates.'.tr);
         lat = "23.124792615936276"; // Fallback default
         lng = "-82.38597269330762";
       }
     } catch (e, stackTrace) {
       Get.log("Error in getCoordinatesFromAddress: $e\n$stackTrace",
           isError: true);
-      print(
-          'Failed to get coordinates. Using default coordinates.'.tr);
+      print('Failed to get coordinates. Using default coordinates.'.tr);
       lat = "23.124792615936276"; // Fallback default
       lng = "-82.38597269330762";
     }
@@ -1675,7 +1898,7 @@ class HomeController extends GetxController {
         listingLoading = false;
         update();
       } else {
-      print('Something went wrong\nPlease try again!'.tr);
+        print('Something went wrong\nPlease try again!'.tr);
       }
     } catch (e) {
       print('Something went wrong\nPlease try again!'.tr);
@@ -1809,7 +2032,7 @@ class HomeController extends GetxController {
       } else {
         Get.log("API Error: ${response.statusCode}, ${response.body}",
             isError: true);
-      print('Something went wrong\nPlease try again!'.tr);
+        print('Something went wrong\nPlease try again!'.tr);
       }
     } catch (e, stackTrace) {
       Get.log("Error in getListingSearch: $e\n$stackTrace", isError: true);
@@ -2072,11 +2295,11 @@ class HomeController extends GetxController {
         // Don't show toast for chat screen (showDialog = false) to avoid annoying users
         if (showDialog) {
           if (response.statusCode == 500) {
-print('Listing not found or has been removed.'.tr);
+            print('Listing not found or has been removed.'.tr);
             // Go back if this was opened from a direct action
             Get.back();
           } else {
-      print('Something went wrong\nPlease try again!'.tr);
+            print('Something went wrong\nPlease try again!'.tr);
           }
         }
       }
@@ -2085,7 +2308,7 @@ print('Listing not found or has been removed.'.tr);
       listingModel = null;
       update();
       if (showDialog) {
-print('Listing not found or has been removed.'.tr);
+        print('Listing not found or has been removed.'.tr);
         // Go back if this was opened from a direct action
         Get.back();
       }
@@ -2607,7 +2830,7 @@ print('Listing not found or has been removed.'.tr);
                 };
         }
       } else {
-      print('Something went wrong\nPlease try again!'.tr);
+        print('Something went wrong\nPlease try again!'.tr);
       }
     } catch (e) {
     } finally {

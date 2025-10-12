@@ -74,15 +74,16 @@ import UserNotifications
     completionHandler()
   }
 
-  // Reset badge when app becomes active
+  // Handle when app becomes active
   override func applicationDidBecomeActive(_ application: UIApplication) {
     super.applicationDidBecomeActive(application)
-    print("🔥 iOS: App became active - clearing badge")
-    // Reset badge count when app becomes active
-    application.applicationIconBadgeNumber = 0
+    print("🔥 iOS: App became active")
+    // Badge count is managed by Flutter based on actual unread messages
+    // Don't automatically clear it here
 
-    // Also clear notification center
+    // Clear notification center (visual notifications only, not badge)
     if #available(iOS 10.0, *) {
+      // Only clear delivered notifications, badge is managed separately
       UNUserNotificationCenter.current().removeAllDeliveredNotifications()
     }
   }

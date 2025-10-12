@@ -142,14 +142,16 @@ class NtfyBackgroundService : Service() {
     }
     
     private fun handleMessage(message: String) {
-        // FIRST CHECK: Is app running (foreground/background)? If yes, let temp service handle it
-        if (isAppRunning()) {
-            println("🔇 STICKY SERVICE: App is running (foreground/background) - letting temp service handle notification")
-            return // Exit early - temp service will show the notification
+        // Check if Flutter app process is running at all (not just if it's visible)
+        val isAppInForeground = isAppInForegroundOrVisible()
+
+        if (isAppInForeground) {
+            println("🔇 STICKY SERVICE: App is in FOREGROUND - letting Flutter handle notification")
+            return // Let Flutter handle notifications only when app is visible
         }
 
-        // Only process if app is COMPLETELY TERMINATED
-        println("📨 STICKY SERVICE: App is TERMINATED - sticky service will handle notification")
+        // App is BACKGROUND or TERMINATED - we handle the notification
+        println("📨 STICKY SERVICE: App is BACKGROUND or TERMINATED - showing sticky notification")
         try {
             val json = JSONObject(message)
 
@@ -160,18 +162,29 @@ class NtfyBackgroundService : Service() {
                 return
             }
 
-            // Only process messages that have actual content
-            val title = json.optString("title", "")
-            val body = json.optString("message", "")
+            // The actual notification data is nested in the 'message' field (just like Flutter)
+            val nestedMessage = json.optString("message", "")
+            if (nestedMessage.isEmpty()) {
+                println("🔇 BACKGROUND: No nested message found")
+                return
+            }
 
-            // Skip if no title or body (system messages)
+            // Parse the nested JSON
+            val notificationData = JSONObject(nestedMessage)
+            println("🔍 BACKGROUND: Parsed notification data: $notificationData")
+
+            // Extract the actual title and body from the nested data
+            val title = notificationData.optString("title", "")
+            val body = notificationData.optString("message", "")
+
+            // Skip if no title or body
             if (title.isEmpty() || body.isEmpty()) {
-                println("🔇 BACKGROUND: Skipping message without content")
+                println("🔇 BACKGROUND: Skipping message without content (title: '$title', body: '$body')")
                 return
             }
 
             // Skip if this is not a chat message (check for chat ID in click action)
-            val clickAction = json.optString("click", "")
+            val clickAction = notificationData.optString("click", "")
             if (clickAction.isEmpty() || !clickAction.startsWith("myapp://chat/")) {
                 println("🔇 BACKGROUND: Skipping non-chat message")
                 return
@@ -281,6 +294,71 @@ class NtfyBackgroundService : Service() {
         }
     }
     
+    private fun isFlutterProcessRunning(): Boolean {
+        val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        val runningProcesses = activityManager.runningAppProcesses
+
+        // If no running processes, app is definitely terminated
+        if (runningProcesses.isNullOrEmpty()) {
+            println("🔍 STICKY SERVICE: No running processes - app is terminated")
+            return false
+        }
+
+        runningProcesses.forEach { processInfo ->
+            if (processInfo.processName == packageName) {
+                // Check if Flutter app process exists (any state except GONE)
+                return when (processInfo.importance) {
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND -> {
+                        println("🔍 STICKY SERVICE: App is in FOREGROUND")
+                        true // App is in foreground
+                    }
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE -> {
+                        println("🔍 STICKY SERVICE: App is VISIBLE")
+                        true // App is visible
+                    }
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE,
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_TOP_SLEEPING,
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED,
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_BACKGROUND -> {
+                        println("🔍 STICKY SERVICE: App is in BACKGROUND")
+                        true // App is in background but still running
+                    }
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE -> {
+                        println("🔍 STICKY SERVICE: App process is GONE")
+                        false // App process is gone
+                    }
+                    else -> {
+                        println("🔍 STICKY SERVICE: App importance: ${processInfo.importance}")
+                        true // Assume app is running for other states
+                    }
+                }
+            }
+        }
+        println("🔍 STICKY SERVICE: App process not found - app is terminated")
+        return false
+    }
+
+    // Keep old function for reference (not used anymore)
+    private fun isAppInForegroundOrVisible(): Boolean {
+        val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        val runningProcesses = activityManager.runningAppProcesses
+
+        if (runningProcesses.isNullOrEmpty()) {
+            return false
+        }
+
+        runningProcesses.forEach { processInfo ->
+            if (processInfo.processName == packageName) {
+                return when (processInfo.importance) {
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND,
+                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE -> true
+                    else -> false
+                }
+            }
+        }
+        return false
+    }
+
     private fun isAppRunning(): Boolean {
         val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
 
@@ -292,14 +370,10 @@ class NtfyBackgroundService : Service() {
             null
         }
 
-        // If we can get running tasks and there's an active task from our app
-        if (!runningTasks.isNullOrEmpty()) {
-            val topTask = runningTasks[0]
-            if (topTask.baseActivity?.packageName == packageName) {
-                println("🔍 STICKY SERVICE: App has active task - SKIP notification")
-                return true
-            }
-        }
+        // We should NOT skip notifications based on running tasks alone
+        // The only time we skip is when the specific chat is open
+        // This will be handled by the Flutter side logic
+        // Let the notification through and Flutter will decide
 
         // Alternative check: Look at running app processes
         val runningProcesses = activityManager.runningAppProcesses
@@ -316,19 +390,19 @@ class NtfyBackgroundService : Service() {
                 // SERVICE state alone means only the sticky service is running
                 val isRunning = when (processInfo.importance) {
                     ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND -> {
-                        println("🔍 STICKY SERVICE: App is in FOREGROUND - SKIP notification")
-                        true
+                        println("🔍 STICKY SERVICE: App is in FOREGROUND - let Flutter decide")
+                        false // Let Flutter handle the notification logic
                     }
                     ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE -> {
-                        println("🔍 STICKY SERVICE: App is VISIBLE - SKIP notification")
-                        true
+                        println("🔍 STICKY SERVICE: App is VISIBLE - let Flutter decide")
+                        false // Let Flutter handle the notification logic
                     }
                     ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE -> {
                         // This might be just our sticky service - need to check further
                         // Check if MainActivity is alive
                         if (isMainActivityRunning()) {
-                            println("🔍 STICKY SERVICE: App has MainActivity running - SKIP notification")
-                            true
+                            println("🔍 STICKY SERVICE: App has MainActivity running - let Flutter decide")
+                            false // Let Flutter handle the notification logic
                         } else {
                             println("🔍 STICKY SERVICE: Only sticky service running - app TERMINATED")
                             false
@@ -340,12 +414,12 @@ class NtfyBackgroundService : Service() {
                         false
                     }
                     ActivityManager.RunningAppProcessInfo.IMPORTANCE_BACKGROUND -> {
-                        println("🔍 STICKY SERVICE: App is in BACKGROUND - SKIP notification")
-                        true
+                        println("🔍 STICKY SERVICE: App is in BACKGROUND - SHOW notification")
+                        false
                     }
                     ActivityManager.RunningAppProcessInfo.IMPORTANCE_TOP_SLEEPING -> {
-                        println("🔍 STICKY SERVICE: App is TOP_SLEEPING - SKIP notification")
-                        true
+                        println("🔍 STICKY SERVICE: App is TOP_SLEEPING - SHOW notification")
+                        false
                     }
                     ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED -> {
                         // App might be cached but check if activities are alive

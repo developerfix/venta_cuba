@@ -369,15 +369,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
 
     // If category is selected, we need to ensure subcategories are loaded and validated
     if (cont.selectedCategory != null) {
-      // If subcategories are still loading, don't allow submission
-      if (cont.loadingSubCategory.value == true ||
-          cont.loadingCategory.value == true) {
-        errorAlertToast("Please wait for categories to load".tr);
-        return false;
-      }
+      // Allow submission even if categories are loading - removed loading check
 
-      // If subcategories data is not loaded yet, don't allow submission
-      if (cont.subCategoriesModel == null) {
+      // If subcategories data is not loaded yet and no subcategory is selected from existing listing, don't allow submission
+      if (cont.subCategoriesModel == null && cont.selectedSubCategory?.id == null) {
         errorAlertToast("Please select a subcategory".tr);
         return false;
       }
@@ -392,13 +387,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
 
     // If subcategory is selected, validate sub-subcategories
     if (cont.selectedSubCategory != null) {
-      // If sub-subcategories are still loading, don't allow submission
-      if (cont.loadingSubSubCategory.value == true) {
-        errorAlertToast("Please wait for categories to load".tr);
-        return false;
-      }
+      // Allow submission even if sub-subcategories are loading - removed loading check
 
       // If sub-subcategories exist and none is selected, require selection
+      // But allow if we have existing selection from listing update
       if (cont.subSubCategoriesModel?.data?.isNotEmpty == true &&
           cont.selectedSubSubCategory?.id == null) {
         errorAlertToast("Please select a sub-subcategory".tr);
@@ -480,6 +472,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
           name: homeCont.listingModel?.category?.name,
           icon: homeCont.listingModel?.category?.icon,
         );
+
+        // Load subcategories for the selected category when updating listing
+        homeCont.isNavigate = false; // Prevent navigation during initialization
+        homeCont.getSubCategories();
       }
       if (homeCont.listingModel?.subCategory != null) {
         homeCont.selectedSubCategory = sub.Data(
@@ -492,6 +488,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
           name: homeCont.listingModel?.subCategory?.name,
           categoryId: homeCont.listingModel?.category?.id.toString(),
         );
+
+        // Load sub-subcategories for the selected subcategory when updating listing
+        homeCont.isNavigate = false; // Prevent navigation during initialization
+        homeCont.getSubSubCategories();
       }
       if (homeCont.listingModel?.subSubCategory != null) {
         homeCont.selectedSubSubCategory = subSub.Data(
@@ -1676,8 +1676,6 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                     ),
                                     maxLines: 5,
                                     inputFormatters: [
-                                      FilteringTextInputFormatter
-                                          .singleLineFormatter,
                                       CapitalizeFirstLetterFormatter(),
                                     ],
                                     decoration: InputDecoration(

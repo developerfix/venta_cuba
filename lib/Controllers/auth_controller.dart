@@ -96,6 +96,13 @@ class AuthController extends GetxController {
     try {
       print('🔔 === INITIALIZING PUSH NOTIFICATIONS FOR USER: $userId ===');
 
+      // Ensure device token is properly set and saved before initializing push
+      if (deviceToken.isEmpty || !deviceToken.contains(userId)) {
+        await refreshDeviceToken();
+        await saveDeviceTokenWithPlatform(userId);
+        print('✅ Device token ensured before push init: $deviceToken');
+      }
+
       // Request notification permissions first
       bool permissionsGranted = await requestNotificationPermissions();
       if (!permissionsGranted) {
@@ -367,6 +374,46 @@ class AuthController extends GetxController {
     update();
   }
 
+  // Test push notification to yourself
+  void testPushNotification() {
+    print('🧪 TESTING PUSH NOTIFICATION...');
+    try {
+      PushService.sendTestNotification();
+    } catch (e) {
+      print('❌ Error testing push notification: $e');
+    }
+  }
+
+  // Test badge functionality
+  void testBadge({int count = 5}) {
+    print('🧪 TESTING BADGE FUNCTIONALITY...');
+    try {
+      PushService.testBadge(count: count);
+    } catch (e) {
+      print('❌ Error testing badge: $e');
+    }
+  }
+
+  // Clear test notifications
+  void clearTestNotifications() {
+    print('🧹 CLEARING TEST NOTIFICATIONS...');
+    try {
+      PushService.clearTestNotifications();
+    } catch (e) {
+      print('❌ Error clearing test notifications: $e');
+    }
+  }
+
+  // Force reset stuck badge (for Android debugging)
+  void forceResetBadge() {
+    print('🔧 FORCE RESETTING BADGE...');
+    try {
+      PushService.forceResetBadge();
+    } catch (e) {
+      print('❌ Error force resetting badge: $e');
+    }
+  }
+
   final TwilioFlutter twilioFlutter = TwilioFlutter(
       accountSid:
           'AC31dcb3275f70cc16fc18c150bbf8a2f8', // replace with Account SID
@@ -469,14 +516,20 @@ class AuthController extends GetxController {
       print(
           '🔥 AuthController: User object created: ${user?.firstName} ${user?.lastName}');
 
-      // Sync device token with current Firebase FCM token
-      // Firebase removed for Cuba compatibility
-      // final fcmToken = await _firebaseMessagingService.getToken();
-      final fcmToken = 'cuba-friendly-token';
-      if (user != null && user!.deviceToken != fcmToken) {
-        user!.deviceToken = fcmToken;
-        await prefss.setString("user_data", jsonEncode(user!.toJson()));
-        print('🔥 AuthController: Device token synced with Firebase');
+      // Sync device token (no longer using Firebase for Cuba compatibility)
+      // Generate a proper device token if not already set
+      if (user != null) {
+        final expectedToken = 'venta_cuba_user_${user!.userId}';
+        if (user!.deviceToken != expectedToken) {
+          user!.deviceToken = expectedToken;
+          deviceToken = expectedToken; // Update global device token
+          await prefss.setString("user_data", jsonEncode(user!.toJson()));
+          print('🔥 AuthController: Device token synced: $deviceToken');
+
+          // Save to Supabase if not already saved
+          await saveDeviceTokenWithPlatform(user!.userId.toString());
+          print('✅ Device token saved to Supabase during getuserDetail');
+        }
       }
 
       // Set user as online when they log in (with timeout to prevent hanging)
@@ -557,6 +610,12 @@ class AuthController extends GetxController {
           if (user?.userId != null) {
             print(
                 '🔔 Auto-initializing notifications for returning user: ${user!.userId}');
+
+            // Refresh and save device token for returning users
+            await refreshDeviceToken();
+            await saveDeviceTokenWithPlatform(user!.userId.toString());
+            print('✅ Device token refreshed and saved for returning user');
+
             await initializePushNotifications(user!.userId.toString());
           }
         }).catchError((e) {
@@ -645,6 +704,13 @@ class AuthController extends GetxController {
         }
       }
 
+      // Don't generate device token here - it will be done after login when we have user ID
+      // Just use a placeholder for the API call
+      if (deviceToken.isEmpty) {
+        deviceToken = 'pending_token';
+        print('🔔 Using placeholder token for login API');
+      }
+
       // Add timeout to API call to prevent hanging
       Response response = await api.postData(
         "api/login",
@@ -663,6 +729,9 @@ class AuthController extends GetxController {
       );
 
       if (response.statusCode == 200) {
+        print('🔍 Login response body keys: ${response.body.keys}');
+        print('🔍 Looking for user_id in response...');
+
         await prefs.setString("token", response.body["access_token"]);
 
         // Update tokenMain immediately after login
@@ -701,8 +770,12 @@ class AuthController extends GetxController {
     try {
       String? token;
 
-      token = 'venta_cuba_user_${user?.userId ?? "unknown"}';
+      // Generate a unique device token for this user
+      // If user is not yet logged in, create a temporary token
+      final userId = user?.userId ?? 'temp_${DateTime.now().millisecondsSinceEpoch}';
+      token = 'venta_cuba_user_$userId';
       deviceToken = token;
+      print('📱 Device token refreshed: $deviceToken');
     } catch (e) {
       print('❌ Error refreshing device token: $e');
     }
@@ -720,9 +793,13 @@ class AuthController extends GetxController {
     _savingDeviceToken = true;
 
     try {
+      print('🔍 Starting saveDeviceTokenWithPlatform for user: $userId');
+
       final supabaseService = SupabaseService.instance;
 
       String token = 'venta_cuba_user_$userId';
+      print('📱 Token to save: $token');
+
       bool success = await supabaseService.saveDeviceTokenWithPlatform(
         userId: userId,
         token: token,
@@ -730,9 +807,13 @@ class AuthController extends GetxController {
 
       if (success) {
         deviceToken = token; // Update local token
+        print('✅ SUCCESS: Device token saved to Supabase!');
+      } else {
+        print('❌ FAILED: Device token NOT saved to Supabase');
       }
     } catch (e) {
       print('❌ Error saving device token with platform: $e');
+      print('🔴 Stack trace: ${StackTrace.current}');
     } finally {
       _savingDeviceToken = false;
     }
@@ -906,7 +987,7 @@ class AuthController extends GetxController {
         'all_notifications': allNotification,
         'bump_up_notification': bumpUpNotification,
         'save_search_notification': saveSearchNotification,
-        'message_notification': marketingNotification,
+        'message_notification': messageNotification,
         'marketing_notification': marketingNotification,
         'reviews_notification': reviewsNotification
       },
@@ -1065,6 +1146,23 @@ class AuthController extends GetxController {
 
   onLoginSuccess(Map<String, dynamic> value) async {
     await prefs.setString("user_data", jsonEncode(value));
+
+    // Extract user_id directly from the response
+    String? loginUserId = value['user_id']?.toString();
+    print('🔍 User ID from login response: $loginUserId');
+
+    if (loginUserId != null && loginUserId.isNotEmpty && loginUserId != 'null') {
+      // Generate and save device token IMMEDIATELY with the user_id from login
+      deviceToken = 'venta_cuba_user_$loginUserId';
+      print('🔔 Generated device token from login response: $deviceToken');
+
+      // Save to Supabase immediately
+      await saveDeviceTokenWithPlatform(loginUserId);
+      print('✅ Device token save attempt completed for user: $loginUserId');
+    } else {
+      print('⚠️ No user_id found in login response');
+    }
+
     isBusinessAccount = false;
     changeAccountType();
     fetchAccountType();

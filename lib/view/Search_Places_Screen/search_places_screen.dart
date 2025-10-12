@@ -96,7 +96,7 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
                           width: 50,
                           padding: EdgeInsets.only(left: 10),
                           decoration: BoxDecoration(
-                              color: Colors.white, shape: BoxShape.circle),
+                              color: Theme.of(context).cardColor, shape: BoxShape.circle),
                           child: IconButton(
                             onPressed: () {
                               Get.back();
@@ -107,7 +107,11 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
                         SizedBox(
                           width: 10.w,
                         ),
-                        SizedBox(width: 230, child: Text(cont.address)),
+                        SizedBox(width: 230, child: Text(cont.address,
+                          style: TextStyle(
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
+                          ),
+                        )),
                         SizedBox(
                           width: 10.w,
                         ),
@@ -192,7 +196,7 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
                           height: 90.h,
                           // width: 300.w,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Theme.of(context).cardColor,
                             borderRadius: BorderRadius.only(
                               topLeft: Radius.circular(10),
                               topRight: Radius.circular(10),
@@ -206,7 +210,11 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text("Search Range".tr),
+                                    Text("Search Range".tr,
+                                      style: TextStyle(
+                                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                                      ),
+                                    ),
                                     Container(
                                       height: 20.h,
                                       width: 100.w,
@@ -214,7 +222,7 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
                                           borderRadius:
                                               BorderRadius.circular(5),
                                           border: Border.all(
-                                              color: Colors.black26)),
+                                              color: Theme.of(context).dividerColor)),
                                       child: Padding(
                                         padding: EdgeInsets.symmetric(
                                             horizontal: 5.w),
@@ -222,11 +230,16 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceBetween,
                                           children: [
-                                            Text("${cont.radius.toInt()}"),
+                                            Text("${cont.radius.toInt()}",
+                                              style: TextStyle(
+                                                color: Theme.of(context).textTheme.bodyLarge?.color,
+                                              ),
+                                            ),
                                             Text(
                                               "Km",
                                               style: TextStyle(
-                                                  color: Colors.black26),
+                                                color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                                              ),
                                             ),
                                           ],
                                         ),

@@ -35,6 +35,10 @@ class SupabaseChatController extends GetxController {
   // PERFORMANCE OPTIMIZATION: Debouncing for message loading
   Timer? _loadDebounceTimer;
 
+  // Badge update debouncer to prevent multiple updates
+  Timer? _badgeUpdateDebouncer;
+  bool _isBadgeUpdatePending = false;
+
   // PERFORMANCE OPTIMIZATION: Batch message sending queue
   final List<Map<String, dynamic>> _messageQueue = [];
   Timer? _messageQueueTimer;
@@ -66,6 +70,7 @@ class SupabaseChatController extends GetxController {
   @override
   void onClose() {
     _loadDebounceTimer?.cancel();
+    _badgeUpdateDebouncer?.cancel();
     _messageQueueTimer?.cancel();
     _connectionKeepAliveTimer?.cancel();
     _processMessageQueue(); // Process any remaining messages
@@ -167,8 +172,9 @@ class SupabaseChatController extends GetxController {
             controller.add(result);
           }
 
-          // Update overall unread count
-          updateUnreadMessageIndicators();
+          // Update overall unread count (debounced)
+          // This happens when loading all chats, so it's safe to update
+          debouncedUpdateUnreadIndicators();
 
           break; // Success, exit retry loop
         } catch (e) {
@@ -201,10 +207,13 @@ class SupabaseChatController extends GetxController {
             schema: 'public',
             table: 'chats',
             callback: (payload) {
+              print('🔄 Chat table change detected: ${payload.eventType}');
               // Debounce the refresh to avoid too many updates
               _loadDebounceTimer?.cancel();
-              _loadDebounceTimer =
-                  Timer(Duration(milliseconds: 300), loadChats);
+              _loadDebounceTimer = Timer(Duration(milliseconds: 300), () {
+                print('🔄 Refreshing chat list due to realtime update');
+                loadChats();
+              });
             },
           )
           .subscribe();
@@ -222,6 +231,8 @@ class SupabaseChatController extends GetxController {
 
   // Method to manually refresh all active chat list streams
   void refreshAllChatLists() {
+    print(
+        '🔄 Manually refreshing ${_globalChatRefreshCallbacks.length} chat list streams');
     for (final callback in _globalChatRefreshCallbacks) {
       try {
         callback();
@@ -400,8 +411,15 @@ class SupabaseChatController extends GetxController {
                     if (!isDuplicate && !hasOptimistic) {
                       // Safe to add new message from real-time update
                       _messageCache[chatId]!.add(newMessage);
-                      print(
-                          '📡 Added real-time message: ${newMessage['message']?.substring(0, 20)}...');
+                      final messagePreview = newMessage['message'] != null &&
+                              newMessage['message'].length > 0
+                          ? newMessage['message'].substring(
+                              0,
+                              newMessage['message'].length > 20
+                                  ? 20
+                                  : newMessage['message'].length)
+                          : '';
+                      print('📡 Added real-time message: $messagePreview...');
 
                       // Emit updated cache
                       if (_messageStreams.containsKey(chatId) &&
@@ -409,9 +427,53 @@ class SupabaseChatController extends GetxController {
                         _messageStreams[chatId]!
                             .add(List.from(_messageCache[chatId]!));
                       }
+
+                      // CRITICAL: Send notification for incoming messages
+                      final currentUserId = _supabase.auth.currentUser?.id;
+                      final senderId = newMessage['send_by'];
+
+                      // Only send notification if this is NOT from current user
+                      if (senderId != currentUserId && currentUserId != null) {
+                        print(
+                            '🔔 Triggering notification for incoming message from $senderId');
+
+                        // Get sender info from chat
+                        _getChatDetails(chatId).then((chat) {
+                          if (chat != null) {
+                            final senderName = chat['sender_id'] == senderId
+                                ? chat['sender_name'] ?? 'User'
+                                : chat['recipient_name'] ?? 'User';
+
+                            // Send notification and update badge
+                            Future.microtask(() async {
+                              // Send push notification
+                              await PushService.sendChatNotification(
+                                recipientUserId: currentUserId,
+                                senderName: senderName,
+                                message: newMessage['message'] ?? 'New message',
+                                messageType:
+                                    newMessage['message_type'] ?? 'text',
+                                chatId: chatId,
+                                senderId: senderId,
+                              );
+
+                              // Update badge count
+                              await PushService.updateBadgeCount();
+                            });
+                          }
+                        });
+                      }
                     } else {
+                      final messagePreview = newMessage['message'] != null &&
+                              newMessage['message'].length > 0
+                          ? newMessage['message'].substring(
+                              0,
+                              newMessage['message'].length > 20
+                                  ? 20
+                                  : newMessage['message'].length)
+                          : '';
                       print(
-                          '📡 Skipped duplicate real-time message: ${newMessage['message']?.substring(0, 20)}...');
+                          '📡 Skipped duplicate real-time message: $messagePreview...');
                     }
                   }
                 } else if (payload.eventType == PostgresChangeEvent.update) {
@@ -443,8 +505,23 @@ class SupabaseChatController extends GetxController {
                   }
                 }
 
-                // Update unread indicators in background
-                Future.microtask(() => updateUnreadMessageIndicators());
+                // Only update unread indicators if we're not the sender of this message
+                // This prevents the sender's badge from increasing when they send messages
+                if (payload.eventType == PostgresChangeEvent.insert) {
+                  final senderId = payload.newRecord['send_by'];
+                  final currentUserId = _supabase.auth.currentUser?.id;
+
+                  // Only update badge if we're not the sender
+                  if (senderId != currentUserId) {
+                    Future.microtask(() => debouncedUpdateUnreadIndicators());
+                  } else {
+                    print(
+                        '🔴 BADGE: Skipping update for sender\'s own message');
+                  }
+                } else {
+                  // For updates and deletes, always update
+                  Future.microtask(() => debouncedUpdateUnreadIndicators());
+                }
               },
             )
             .subscribe();
@@ -549,7 +626,7 @@ class SupabaseChatController extends GetxController {
       late final Map<String, dynamic> insertedMessage;
 
       if (!chatExists) {
-        // Create new chat and insert message in parallel
+        // Create new chat and insert message with better error handling
         final newChatData = {
           'id': chatId,
           'sender_id': chatMessageData['senderId'],
@@ -568,12 +645,29 @@ class SupabaseChatController extends GetxController {
           ...chatUpdateData,
         };
 
-        // Execute both operations in parallel
-        final results = await Future.wait<dynamic>([
-          _supabase.from('chats').insert(newChatData),
-          _supabase.from('messages').insert(messageData).select().single(),
-        ]);
-        insertedMessage = results[1] as Map<String, dynamic>;
+        try {
+          // Execute both operations in parallel
+          final results = await Future.wait<dynamic>([
+            _supabase.from('chats').insert(newChatData),
+            _supabase.from('messages').insert(messageData).select().single(),
+          ]);
+          insertedMessage = results[1] as Map<String, dynamic>;
+        } catch (e) {
+          // If chat creation fails (e.g., already exists due to race condition),
+          // try to just insert the message
+          print('🔄 Chat creation failed, trying message insert only: $e');
+          try {
+            insertedMessage = await _supabase
+                .from('messages')
+                .insert(messageData)
+                .select()
+                .single();
+            print('✅ Message inserted successfully on retry');
+          } catch (messageError) {
+            print('❌ Message insert also failed: $messageError');
+            rethrow; // Only rethrow if both operations fail
+          }
+        }
       } else {
         // Update chat and insert message in parallel
         final results = await Future.wait<dynamic>([
@@ -624,8 +718,9 @@ class SupabaseChatController extends GetxController {
       // Queue operations for background processing
       _queueBackgroundOperations(chatMessageData, chatId);
 
-      // Trigger immediate unread count update for real-time badge updates
-      Future.microtask(() => updateUnreadMessageIndicators());
+      // Don't update badge for the sender - they shouldn't see increased badge
+      // when they send their own messages
+      print('🔴 BADGE: Not updating badge for sender after sending message');
 
       // Clean up any remaining optimistic messages after a short delay
       Future.delayed(Duration(seconds: 2), () {
@@ -668,8 +763,11 @@ class SupabaseChatController extends GetxController {
       final senderId = chatMessageData['senderId'];
       final sendToId = chatMessageData['sendToId'];
 
+      // Send notification to recipient
+
       // Don't send notification to yourself
       if (senderId == sendToId) {
+        print('🔕 Skipping self-notification');
         return;
       }
 
@@ -701,7 +799,6 @@ class SupabaseChatController extends GetxController {
       print('Error sending chat notification: $e');
     }
   }
-
 
   // OPTIMIZED: Delete chat with better performance
   Future<void> deleteChat(String chatId) async {
@@ -747,6 +844,18 @@ class SupabaseChatController extends GetxController {
     }
   }
 
+  // Get chat details for notifications
+  Future<Map<String, dynamic>?> _getChatDetails(String chatId) async {
+    try {
+      final response =
+          await _supabase.from('chats').select('*').eq('id', chatId).single();
+      return response;
+    } catch (e) {
+      print('Error getting chat details: $e');
+      return null;
+    }
+  }
+
   // OPTIMIZED: Mark chat as read using proper schema
   Future<void> markChatAsRead(String chatId, String userId) async {
     try {
@@ -788,6 +897,10 @@ class SupabaseChatController extends GetxController {
       // Update PushService badge count for system-level badges
       await PushService.updateBadgeCount();
 
+      // Clear notifications for this chat when marked as read
+      await PushService.cancelChatNotifications(chatId);
+      print('🧼 Chat marked as read - cleared notifications for: $chatId');
+
       // Force immediate UI update
       try {
         final authController = Get.find<AuthController>();
@@ -827,6 +940,26 @@ class SupabaseChatController extends GetxController {
     } catch (e) {
       print('Error loading more messages: $e');
     }
+  }
+
+  // Debounced version of updateUnreadMessageIndicators to prevent multiple calls
+  void debouncedUpdateUnreadIndicators() {
+    // Cancel any pending update
+    _badgeUpdateDebouncer?.cancel();
+
+    // Don't schedule another if one is already pending
+    if (_isBadgeUpdatePending) {
+      print('🔴 BADGE: Update already pending, skipping duplicate request');
+      return;
+    }
+
+    _isBadgeUpdatePending = true;
+
+    // Schedule the update with a delay to batch multiple calls
+    _badgeUpdateDebouncer = Timer(Duration(milliseconds: 500), () {
+      _isBadgeUpdatePending = false;
+      updateUnreadMessageIndicators();
+    });
   }
 
   // Update unread message indicators using proper schema
@@ -926,6 +1059,10 @@ class SupabaseChatController extends GetxController {
             '🔴 AFTER UPDATE: AuthController unread = ${authController.unreadMessageCount.value}');
         print(
             '🔴 AFTER UPDATE: hasUnread = ${authController.hasUnreadMessages.value}');
+
+        // Also update the app icon badge count via PushService
+        await PushService.updateBadgeCount();
+        print('📱 Updated app icon badge count to $totalUnread');
       } catch (e) {
         print('🔴 BADGE FATAL ERROR: Could not update AuthController: $e');
       }
@@ -989,7 +1126,66 @@ class SupabaseChatController extends GetxController {
   // Start listening for chat updates
   void startListeningForChatUpdates() {
     // Already handled in getAllChats and message subscriptions
-    print('Chat update listeners already active');
+    print(
+        '✅ Chat update listeners already active (${_globalChatRefreshCallbacks.length} streams)');
+  }
+
+  // Force reconnect all realtime subscriptions
+  void reconnectRealtimeSubscriptions() {
+    print('🔄 Reconnecting all realtime subscriptions...');
+
+    // Unsubscribe from existing subscriptions
+    _chatChannel?.unsubscribe();
+    _messagesChannel?.unsubscribe();
+    for (var channel in _messageChannels.values) {
+      channel.unsubscribe();
+    }
+    _messageChannels.clear();
+
+    // Force refresh all chat lists which will recreate subscriptions
+    refreshAllChatLists();
+
+    // Also refresh all active message streams
+    refreshAllMessageStreams();
+
+    print('✅ Realtime subscriptions reconnected');
+  }
+
+  // Method to refresh all active message streams (for individual chats)
+  void refreshAllMessageStreams() {
+    print('🔄 Refreshing ${_messageStreams.length} active message streams');
+
+    for (final chatId in _messageStreams.keys.toList()) {
+      if (!_messageStreams[chatId]!.isClosed) {
+        print('🔄 Refreshing messages for chat: $chatId');
+
+        // Force reload messages from database
+        _loadMessagesForChat(chatId, useCache: false);
+
+        // Recreate realtime subscription
+        if (_messageChannels.containsKey(chatId)) {
+          _messageChannels[chatId]?.unsubscribe();
+          _messageChannels.remove(chatId);
+        }
+        _setupRealtimeSubscription(chatId);
+      }
+    }
+  }
+
+  // Method to refresh a specific chat's messages (for when you're inside a chat)
+  void refreshChatMessages(String chatId) {
+    print('🔄 Refreshing messages for specific chat: $chatId');
+
+    if (_messageStreams.containsKey(chatId) &&
+        !_messageStreams[chatId]!.isClosed) {
+      // Force reload messages from database
+      _loadMessagesForChat(chatId, useCache: false);
+
+      // Ensure realtime subscription is active
+      if (!_messageChannels.containsKey(chatId)) {
+        _setupRealtimeSubscription(chatId);
+      }
+    }
   }
 
   // Stop listening for chat updates
@@ -1135,8 +1331,8 @@ class SupabaseChatController extends GetxController {
         await Future.wait(notificationTasks, eagerError: false);
       }
 
-      // Update indicators once after all operations
-      updateUnreadMessageIndicators();
+      // Update indicators once after all operations (debounced)
+      debouncedUpdateUnreadIndicators();
       refreshAllChatLists();
     } catch (e) {
       print('Error processing message queue: $e');
@@ -1248,9 +1444,7 @@ class SupabaseChatController extends GetxController {
       final fileName = 'chat_${DateTime.now().millisecondsSinceEpoch}.jpg';
       final bytes = await imageFile.readAsBytes();
 
-      await _supabase.storage
-          .from('chat-images')
-          .uploadBinary(fileName, bytes);
+      await _supabase.storage.from('chat-images').uploadBinary(fileName, bytes);
 
       // Get public URL
       final publicUrl =

@@ -58,7 +58,7 @@ class ChatPage extends StatefulWidget {
   State<ChatPage> createState() => _ChatPageState();
 }
 
-class _ChatPageState extends State<ChatPage> {
+class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
   // Firebase removed for Cuba compatibility
   // final firebaseMessagingService = FirebaseMessagingService();
   final chatCont = Get.put(SupabaseChatController());
@@ -76,6 +76,9 @@ class _ChatPageState extends State<ChatPage> {
     isKeyBoardOpen = true;
     focusNode.dispose();
 
+    // Remove lifecycle observer
+    WidgetsBinding.instance.removeObserver(this);
+
     // Mark chat as read when user leaves the chat page
     if (widget.chatId != null && authCont.user?.userId != null) {
       chatCont.markChatAsRead(
@@ -91,6 +94,36 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    // CRITICAL: Update PushService about app state for notification logic
+    final isInForeground = state == AppLifecycleState.resumed;
+    PushService.setAppLifecycleState(isInForeground);
+
+    if (state == AppLifecycleState.resumed && mounted) {
+      print('🔄 ChatPage: App resumed - refreshing messages for chat ${widget.chatId}');
+
+      // CRITICAL: Refresh messages for this specific chat when app resumes
+      if (widget.chatId != null) {
+        chatCont.refreshChatMessages(widget.chatId!);
+        print('✅ Messages refreshed for chat ${widget.chatId}');
+      }
+
+      // Also update read status and notifications
+      if (widget.chatId != null && authCont.user?.userId != null) {
+        chatCont.markChatAsRead(
+          widget.chatId!,
+          authCont.user!.userId.toString(),
+        );
+      }
+    } else if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      print('📱 ChatPage: App backgrounded while chat ${widget.chatId} was open');
+      print('📱 Notifications will now be allowed for this chat while app is backgrounded');
+    }
+  }
+
+  @override
   void didChangeDependencies() {
     if (!isONImageScreen && isKeyBoardOpen) {
       _requestFocus();
@@ -102,6 +135,9 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void initState() {
     super.initState();
+
+    // Add lifecycle observer to detect app state changes
+    WidgetsBinding.instance.addObserver(this);
 
     focusNode = FocusNode();
 
@@ -1015,16 +1051,36 @@ class _ChatPageState extends State<ChatPage> {
           "listingLocation": widget.listingLocation,
         };
 
-        // Send message without blocking UI
+        // Send message without blocking UI with retry logic
         chatCont.sendMessage(id ?? "", chatMessageData).catchError((e) {
-          // Show error if send fails
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("Failed to send message".tr),
-              backgroundColor: Colors.red,
-              duration: Duration(seconds: 2),
-            ),
-          );
+          print('📱 First message send attempt failed: $e');
+
+          // Attempt retry after a short delay for new contacts
+          Future.delayed(Duration(milliseconds: 500), () async {
+            try {
+              await chatCont.sendMessage(id ?? "", chatMessageData);
+              print('✅ Message sent successfully on retry');
+            } catch (retryError) {
+              print('❌ Retry also failed: $retryError');
+              // Only show error if retry also fails
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("Unable to send message. Please try again."),
+                    backgroundColor: Colors.red,
+                    duration: Duration(seconds: 3),
+                    action: SnackBarAction(
+                      label: 'Retry',
+                      textColor: Colors.white,
+                      onPressed: () {
+                        sendMessage('text'); // Retry sending
+                      },
+                    ),
+                  ),
+                );
+              }
+            }
+          });
         });
 
         // Scroll to bottom immediately
@@ -1034,13 +1090,28 @@ class _ChatPageState extends State<ChatPage> {
         // No need for additional notification calls
       }
     } catch (e) {
-      // Show error to user
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("❌ Failed to send message: ${e.toString()}"),
-          backgroundColor: Colors.red,
-        ),
-      );
+      // Log error but don't show intrusive message for common issues
+      print('❌ Message send error in _sendMessage: $e');
+
+      // Only show error for critical issues, not for common recoverable ones
+      if (!e.toString().toLowerCase().contains('unique') &&
+          !e.toString().toLowerCase().contains('duplicate') &&
+          !e.toString().toLowerCase().contains('already exists')) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Message send failed. Please try again."),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 2),
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: () {
+                sendMessage('text'); // Retry sending
+              },
+            ),
+          ),
+        );
+      }
     }
   }
 

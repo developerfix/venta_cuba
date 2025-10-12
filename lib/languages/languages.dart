@@ -2018,7 +2018,6 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
           'OK': 'Aceptar',
           'Delete_2': 'Eliminar',
           'Chat deleted': 'Chat eliminado',
-          'Failed to send message': 'Error al enviar mensaje',
           '📷 Photo': '📷 Foto',
           '📹 Video': '📹 Video',
           '📎 File': '📎 Archivo',

@@ -15,7 +15,7 @@ class Chats extends StatefulWidget {
   State<Chats> createState() => _ChatsState();
 }
 
-class _ChatsState extends State<Chats> {
+class _ChatsState extends State<Chats> with WidgetsBindingObserver {
   final authCont = Get.put(AuthController());
   final chatCont = Get.put(SupabaseChatController());
   String userName = "";
@@ -28,24 +28,46 @@ class _ChatsState extends State<Chats> {
   void initState() {
     super.initState();
 
+    // Add lifecycle observer to detect app state changes
+    WidgetsBinding.instance.addObserver(this);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       gettingUserData();
       // Update badge count and unread indicators when chats page is loaded
       chatCont.updateBadgeCountFromChats();
       chatCont.updateUnreadMessageIndicators();
+      // Force immediate refresh of chat lists
+      chatCont.refreshAllChatLists();
     });
 
     // Start periodic refresh for real-time unread count updates
-    _refreshTimer = Timer.periodic(Duration(seconds: 30), (_) {
+    _refreshTimer = Timer.periodic(Duration(seconds: 10), (_) {
       if (mounted) {
         chatCont.updateUnreadMessageIndicators();
+        // Also refresh chat lists more frequently
+        chatCont.refreshAllChatLists();
       }
     });
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    if (state == AppLifecycleState.resumed && mounted) {
+      print('🔄 Chat screen: App resumed - refreshing chat list');
+      // Immediately refresh when app comes to foreground
+      chatCont.refreshAllChatLists();
+      chatCont.updateUnreadMessageIndicators();
+      // Also refresh the local state
+      gettingUserData();
+    }
+  }
+
+  @override
   void dispose() {
     _refreshTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
