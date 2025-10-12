@@ -62,7 +62,8 @@
       "Write(**)",
       "Edit(**)",
       "MultiEdit(**)",
-      "Bash(git branch:*)"
+      "Bash(git branch:*)",
+      "Bash(git merge:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",
