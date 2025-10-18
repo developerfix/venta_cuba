@@ -68,6 +68,12 @@ class PushService {
     String? customServerUrl,
   }) async {
     try {
+      // Skip iOS push notifications - ntfy.sh doesn't work on iOS
+      if (Platform.isIOS) {
+        print('⚠️ iOS push notifications disabled - ntfy.sh not supported on iOS');
+        return;
+      }
+
       print('🚀 PREMIUM Push Service initializing for user: $userId');
 
       _currentUserId = userId;
@@ -125,16 +131,9 @@ class PushService {
   static Future<void> _initializeLocalNotifications() async {
     const androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
-    const iosSettings = DarwinInitializationSettings(
-      requestSoundPermission: true,
-      requestBadgePermission: true,
-      requestAlertPermission: true,
-      requestProvisionalPermission: true,
-    );
 
     const initSettings = InitializationSettings(
       android: androidSettings,
-      iOS: iosSettings,
     );
 
     await _localNotifications.initialize(
@@ -191,12 +190,7 @@ class PushService {
           ?.requestNotificationsPermission();
     }
 
-    if (Platform.isIOS) {
-      await _localNotifications
-          .resolvePlatformSpecificImplementation<
-              IOSFlutterLocalNotificationsPlugin>()
-          ?.requestPermissions(alert: true, badge: true, sound: true);
-    }
+    // iOS notifications disabled - ntfy.sh doesn't work on iOS
   }
 
   /// Clear old chat notifications when app starts up
@@ -441,19 +435,8 @@ class PushService {
         playSound: true,
       );
 
-      final iosDetails = DarwinNotificationDetails(
-        presentAlert: true,
-        presentBadge: true,
-        presentSound: true,
-        sound: 'default',
-        badgeNumber: badgeCount,
-        threadIdentifier: 'chat_messages',
-        interruptionLevel: InterruptionLevel.timeSensitive,
-      );
-
       final details = NotificationDetails(
         android: androidDetails,
-        iOS: iosDetails,
       );
 
       // Use the SAME notification ID to replace previous
@@ -1061,20 +1044,8 @@ class PushService {
         setAsGroupSummary: false,
       );
 
-      final iosDetails = DarwinNotificationDetails(
-        presentAlert: true,
-        presentBadge: true,
-        presentSound: true,
-        sound: 'default',
-        badgeNumber: badgeCount,
-        threadIdentifier: 'chat_messages',
-        interruptionLevel: InterruptionLevel.timeSensitive,
-        categoryIdentifier: 'CHAT_MESSAGE',
-      );
-
       final details = NotificationDetails(
         android: androidDetails,
-        iOS: iosDetails,
       );
 
       await _localNotifications.show(
@@ -1107,11 +1078,7 @@ class PushService {
     try {
       print('🧹 Clearing badge count...');
 
-      if (Platform.isIOS) {
-        // Clear iOS badge directly
-        await _setIOSBadgeNumber(0);
-        print('🧹 iOS badge cleared');
-      } else if (Platform.isAndroid) {
+      if (Platform.isAndroid) {
         // Skip canceling notification -1 as it causes Gson error
         // Badge will be cleared when next notification shows with count 0
         print('🧹 Android badge clear deferred to next notification');
@@ -1129,9 +1096,7 @@ class PushService {
       final unreadCount = await _getUnreadCountForUser(_currentUserId!);
       print('🎯 Setting badge to: $unreadCount');
 
-      if (Platform.isIOS) {
-        await _setIOSBadgeNumber(unreadCount);
-      } else if (Platform.isAndroid) {
+      if (Platform.isAndroid) {
         await _forceSetAndroidBadge(unreadCount);
       }
     } catch (e) {

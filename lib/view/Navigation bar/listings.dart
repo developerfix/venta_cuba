@@ -918,55 +918,104 @@ class _ListingsState extends State<Listings> {
                                                               ),
                                                               Column(
                                                                 children: [
-                                                                  GestureDetector(
-                                                                    onTap: () {
-                                                                      cont.listingModel =
-                                                                          cont.userListingModelList[index];
-                                                                      showDialog(
-                                                                        context:
-                                                                            context,
-                                                                        builder:
-                                                                            (context) =>
-                                                                                deleteListing(index),
-                                                                      );
-                                                                    },
-                                                                    child:
+                                                                  SizedBox(
+                                                                    width: MediaQuery.of(
+                                                                                context)
+                                                                            .size
+                                                                            .width *
+                                                                        .37,
+                                                                    child: Row(
+                                                                      mainAxisAlignment:
+                                                                          MainAxisAlignment
+                                                                              .spaceBetween,
+                                                                      children: [
                                                                         Container(
-                                                                      height: 35
-                                                                        ..h,
-                                                                      width: MediaQuery.of(context)
-                                                                              .size
-                                                                              .width *
-                                                                          .37,
-                                                                      decoration:
-                                                                          BoxDecoration(
-                                                                        border: Border.all(
-                                                                            color:
-                                                                                Colors.red),
-                                                                        borderRadius:
-                                                                            BorderRadius.circular(10),
-                                                                      ),
-                                                                      child:
-                                                                          Center(
-                                                                        child:
-                                                                            Text(
-                                                                          'Delete'
-                                                                              .tr,
-                                                                          maxLines:
-                                                                              1,
-                                                                          overflow:
-                                                                              TextOverflow.ellipsis,
-                                                                          style:
-                                                                              TextStyle(
-                                                                            fontSize: 14
-                                                                              ..sp,
-                                                                            fontWeight:
-                                                                                FontWeight.w600,
-                                                                            color:
-                                                                                Colors.red,
+                                                                          height: 35
+                                                                            ..h,
+                                                                          width:
+                                                                              60.w,
+                                                                          decoration:
+                                                                              BoxDecoration(
+                                                                            border: Border.all(
+                                                                                color:
+                                                                                    AppColors.k0xFF0254B8),
+                                                                            borderRadius:
+                                                                                BorderRadius.circular(10),
+                                                                          ),
+                                                                          child:
+                                                                              InkWell(
+                                                                            onTap:
+                                                                                () {
+                                                                              cont.listingModel =
+                                                                                  cont.userListingModelList[index];
+                                                                              Navigator.push(
+                                                                                  context,
+                                                                                  MaterialPageRoute(
+                                                                                    builder: (context) => Post(
+                                                                                      isUpdate: true,
+                                                                                    ),
+                                                                                  ));
+                                                                            },
+                                                                            child:
+                                                                                Center(
+                                                                              child:
+                                                                                  Text(
+                                                                                'Edit'.tr,
+                                                                                maxLines:
+                                                                                    1,
+                                                                                overflow:
+                                                                                    TextOverflow.ellipsis,
+                                                                                style: TextStyle(
+                                                                                    fontSize: 16..sp,
+                                                                                    fontWeight: FontWeight.w600,
+                                                                                    color: AppColors.k0xFF0254B8),
+                                                                              ),
+                                                                            ),
                                                                           ),
                                                                         ),
-                                                                      ),
+                                                                        Container(
+                                                                          height: 35
+                                                                            ..h,
+                                                                          width:
+                                                                              60.w,
+                                                                          decoration:
+                                                                              BoxDecoration(
+                                                                            border: Border.all(
+                                                                                color:
+                                                                                    Colors.red),
+                                                                            borderRadius:
+                                                                                BorderRadius.circular(10),
+                                                                          ),
+                                                                          child:
+                                                                              InkWell(
+                                                                            onTap:
+                                                                                () {
+                                                                              cont.listingModel =
+                                                                                  cont.userListingModelList[index];
+                                                                              showDialog(
+                                                                                  context: context,
+                                                                                  builder: (context) {
+                                                                                    return deleteListing(index);
+                                                                                  });
+                                                                            },
+                                                                            child:
+                                                                                Center(
+                                                                              child:
+                                                                                  Text(
+                                                                                'Delete'.tr,
+                                                                                maxLines:
+                                                                                    1,
+                                                                                overflow:
+                                                                                    TextOverflow.ellipsis,
+                                                                                style: TextStyle(
+                                                                                    fontSize: 16..sp,
+                                                                                    fontWeight: FontWeight.w600,
+                                                                                    color: Colors.red),
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                        )
+                                                                      ],
                                                                     ),
                                                                   ),
                                                                   SizedBox(
@@ -1362,55 +1411,104 @@ class _ListingsState extends State<Listings> {
                                                               ),
                                                               Column(
                                                                 children: [
-                                                                  GestureDetector(
-                                                                    onTap: () {
-                                                                      cont.listingModel =
-                                                                          cont.userListingModelList[index];
-                                                                      showDialog(
-                                                                        context:
-                                                                            context,
-                                                                        builder:
-                                                                            (context) =>
-                                                                                deleteListing(index),
-                                                                      );
-                                                                    },
-                                                                    child:
+                                                                  SizedBox(
+                                                                    width: MediaQuery.of(
+                                                                                context)
+                                                                            .size
+                                                                            .width *
+                                                                        .37,
+                                                                    child: Row(
+                                                                      mainAxisAlignment:
+                                                                          MainAxisAlignment
+                                                                              .spaceBetween,
+                                                                      children: [
                                                                         Container(
-                                                                      height: 35
-                                                                        ..h,
-                                                                      width: MediaQuery.of(context)
-                                                                              .size
-                                                                              .width *
-                                                                          .37,
-                                                                      decoration:
-                                                                          BoxDecoration(
-                                                                        border: Border.all(
-                                                                            color:
-                                                                                Colors.red),
-                                                                        borderRadius:
-                                                                            BorderRadius.circular(10),
-                                                                      ),
-                                                                      child:
-                                                                          Center(
-                                                                        child:
-                                                                            Text(
-                                                                          'Delete'
-                                                                              .tr,
-                                                                          maxLines:
-                                                                              1,
-                                                                          overflow:
-                                                                              TextOverflow.ellipsis,
-                                                                          style:
-                                                                              TextStyle(
-                                                                            fontSize: 14
-                                                                              ..sp,
-                                                                            fontWeight:
-                                                                                FontWeight.w600,
-                                                                            color:
-                                                                                Colors.red,
+                                                                          height: 35
+                                                                            ..h,
+                                                                          width:
+                                                                              60.w,
+                                                                          decoration:
+                                                                              BoxDecoration(
+                                                                            border: Border.all(
+                                                                                color:
+                                                                                    AppColors.k0xFF0254B8),
+                                                                            borderRadius:
+                                                                                BorderRadius.circular(10),
+                                                                          ),
+                                                                          child:
+                                                                              InkWell(
+                                                                            onTap:
+                                                                                () {
+                                                                              cont.listingModel =
+                                                                                  cont.userListingModelList[index];
+                                                                              Navigator.push(
+                                                                                  context,
+                                                                                  MaterialPageRoute(
+                                                                                    builder: (context) => Post(
+                                                                                      isUpdate: true,
+                                                                                    ),
+                                                                                  ));
+                                                                            },
+                                                                            child:
+                                                                                Center(
+                                                                              child:
+                                                                                  Text(
+                                                                                'Edit'.tr,
+                                                                                maxLines:
+                                                                                    1,
+                                                                                overflow:
+                                                                                    TextOverflow.ellipsis,
+                                                                                style: TextStyle(
+                                                                                    fontSize: 16..sp,
+                                                                                    fontWeight: FontWeight.w600,
+                                                                                    color: AppColors.k0xFF0254B8),
+                                                                              ),
+                                                                            ),
                                                                           ),
                                                                         ),
-                                                                      ),
+                                                                        Container(
+                                                                          height: 35
+                                                                            ..h,
+                                                                          width:
+                                                                              60.w,
+                                                                          decoration:
+                                                                              BoxDecoration(
+                                                                            border: Border.all(
+                                                                                color:
+                                                                                    Colors.red),
+                                                                            borderRadius:
+                                                                                BorderRadius.circular(10),
+                                                                          ),
+                                                                          child:
+                                                                              InkWell(
+                                                                            onTap:
+                                                                                () {
+                                                                              cont.listingModel =
+                                                                                  cont.userListingModelList[index];
+                                                                              showDialog(
+                                                                                  context: context,
+                                                                                  builder: (context) {
+                                                                                    return deleteListing(index);
+                                                                                  });
+                                                                            },
+                                                                            child:
+                                                                                Center(
+                                                                              child:
+                                                                                  Text(
+                                                                                'Delete'.tr,
+                                                                                maxLines:
+                                                                                    1,
+                                                                                overflow:
+                                                                                    TextOverflow.ellipsis,
+                                                                                style: TextStyle(
+                                                                                    fontSize: 16..sp,
+                                                                                    fontWeight: FontWeight.w600,
+                                                                                    color: Colors.red),
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                        )
+                                                                      ],
                                                                     ),
                                                                   ),
                                                                   SizedBox(

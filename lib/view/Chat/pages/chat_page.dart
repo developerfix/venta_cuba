@@ -1306,21 +1306,67 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
   }
 
   void _openCamera(BuildContext context) async {
-    final pickedFile = await ImagePicker().pickImage(
-      source: ImageSource.camera,
-    );
-    if (pickedFile != null) {
-      uploadImage(pickedFile);
+    // Request camera permission
+    final cameraStatus = await Permission.camera.request();
+
+    if (cameraStatus.isGranted) {
+      final pickedFile = await ImagePicker().pickImage(
+        source: ImageSource.camera,
+      );
+      if (pickedFile != null) {
+        uploadImage(pickedFile);
+      }
+    } else if (cameraStatus.isPermanentlyDenied) {
+      // Show dialog to open settings
+      _showPermissionDialog('Camera');
     }
   }
 
   void _openGallery(BuildContext context) async {
-    final pickedFile = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-    );
-    if (pickedFile != null) {
-      uploadImage(pickedFile);
+    // Request photo library permission
+    PermissionStatus photoStatus;
+    if (Platform.isIOS) {
+      photoStatus = await Permission.photos.request();
+    } else {
+      // Android 13+ uses photos, earlier versions use storage
+      photoStatus = await Permission.photos.request();
     }
+
+    if (photoStatus.isGranted) {
+      final pickedFile = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+      );
+      if (pickedFile != null) {
+        uploadImage(pickedFile);
+      }
+    } else if (photoStatus.isPermanentlyDenied) {
+      // Show dialog to open settings
+      _showPermissionDialog('Photo Library');
+    }
+  }
+
+  void _showPermissionDialog(String permissionName) {
+    Get.dialog(
+      AlertDialog(
+        title: Text('Permission Required'.tr),
+        content: Text(
+            '$permissionName permission is required to send photos in chat. Please enable it in settings.'
+                .tr),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text('Cancel'.tr),
+          ),
+          TextButton(
+            onPressed: () {
+              Get.back();
+              openAppSettings();
+            },
+            child: Text('Open Settings'.tr),
+          ),
+        ],
+      ),
+    );
   }
 
   Future uploadImage(var pickedFile) async {

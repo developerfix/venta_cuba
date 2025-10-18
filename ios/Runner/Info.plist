@@ -44,7 +44,9 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>$(PRODUCT_NAME)Need access camera to upload post or update profile picture.</string>
+	<string>$(PRODUCT_NAME) needs access to camera to upload posts, update profile picture, and send photos in chat.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>$(PRODUCT_NAME) needs access to save photos to your library.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Need access location to nearby result showing.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
@@ -52,9 +54,7 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>$(PRODUCT_NAME)Need access location to nearby result showing.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>$(PRODUCT_NAME)Need access photos to upload post or update profile picture.</string>
-	<key>NSUserNotificationAlertStyle</key>
-	<string>alert</string>
+	<string>$(PRODUCT_NAME) needs access to photos to upload posts, update profile picture, and send photos in chat.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
@@ -74,11 +74,6 @@
 	</dict>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>remote-notification</string>
-		<string>fetch</string>
-	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
@@ -96,14 +91,5 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>UIUserNotificationSettings</key>
-	<dict>
-		<key>UIUserNotificationTypeAlert</key>
-		<true/>
-		<key>UIUserNotificationTypeBadge</key>
-		<true/>
-		<key>UIUserNotificationTypeSound</key>
-		<true/>
-	</dict>
 </dict>
 </plist>

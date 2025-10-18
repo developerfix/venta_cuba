@@ -1,8 +1,6 @@
 import UIKit
 import Flutter
 import GoogleMaps
-import flutter_local_notifications
-import UserNotifications
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -13,115 +11,8 @@ import UserNotifications
 
     // Initialize Flutter plugins
     GeneratedPluginRegistrant.register(with: self)
-    
-    FlutterLocalNotificationsPlugin.setPluginRegistrantCallback { (registry) in
-      GeneratedPluginRegistrant.register(with: registry)
-    }
-
-  if #available(iOS 10.0, *) {
-    UNUserNotificationCenter.current().delegate = self as UNUserNotificationCenterDelegate
-  }
-
-    // Request notification permissions early
-    if #available(iOS 10.0, *) {
-      let center = UNUserNotificationCenter.current()
-      center.requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
-        if granted {
-          print("🔥 iOS: Notification permissions granted")
-          // Register for remote notifications after permission is granted
-          DispatchQueue.main.async {
-            application.registerForRemoteNotifications()
-          }
-        } else {
-          print("🔥 iOS: Notification permissions denied: \(error?.localizedDescription ?? "Unknown error")")
-        }
-      }
-    } else {
-      // For iOS 9 and below
-      let settings = UIUserNotificationSettings(types: [.alert, .badge, .sound], categories: nil)
-      application.registerUserNotificationSettings(settings)
-      application.registerForRemoteNotifications()
-    }
 
     GMSServices.provideAPIKey("AIzaSyBx95Bvl9O-US2sQpqZ41GdsHIprnXvJv8")
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
-  }
-
-  // Handle notification when app is in foreground
-  @available(iOS 10.0, *)
-  override func userNotificationCenter(_ center: UNUserNotificationCenter,
-                                     willPresent notification: UNNotification,
-                                     withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-    print("🔥 iOS: Notification received in foreground: \(notification.request.content.title)")
-    print("🔥 iOS: Notification body: \(notification.request.content.body)")
-    print("🔥 iOS: Notification sound: \(notification.request.content.sound?.description ?? "No sound")")
-
-    // Show notification with badge, sound, and alert - ensure sound is always played
-    if #available(iOS 14.0, *) {
-      completionHandler([.alert, .badge, .sound, .banner, .list])
-    } else {
-      completionHandler([.alert, .badge, .sound])
-    }
-  }
-
-  // Handle notification tap
-  @available(iOS 10.0, *)
-  override func userNotificationCenter(_ center: UNUserNotificationCenter,
-                                     didReceive response: UNNotificationResponse,
-                                     withCompletionHandler completionHandler: @escaping () -> Void) {
-    print("🔥 iOS: Notification tapped: \(response.notification.request.content.title)")
-    // Handle notification tap here if needed
-    completionHandler()
-  }
-
-  // Handle when app becomes active
-  override func applicationDidBecomeActive(_ application: UIApplication) {
-    super.applicationDidBecomeActive(application)
-    print("🔥 iOS: App became active")
-    // Badge count is managed by Flutter based on actual unread messages
-    // Don't automatically clear it here
-
-    // Clear notification center (visual notifications only, not badge)
-    if #available(iOS 10.0, *) {
-      // Only clear delivered notifications, badge is managed separately
-      UNUserNotificationCenter.current().removeAllDeliveredNotifications()
-    }
-  }
-
-  // Handle app entering background
-  override func applicationDidEnterBackground(_ application: UIApplication) {
-    super.applicationDidEnterBackground(application)
-    print("🔥 iOS: App entered background")
-  }
-
-  // Handle app entering foreground
-  override func applicationWillEnterForeground(_ application: UIApplication) {
-    super.applicationWillEnterForeground(application)
-    print("🔥 iOS: App will enter foreground")
-  }
-
-  // APNS token handling
-  override func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-    print("🔥 iOS: APNS device token received")
-    
-    // Convert token to string for logging
-    let tokenParts = deviceToken.map { data in String(format: "%02.2hhx", data) }
-    let token = tokenParts.joined()
-    print("🔥 iOS: APNS Token: \(token.prefix(20))...")
-    
-    super.application(application, didRegisterForRemoteNotificationsWithDeviceToken: deviceToken)
-  }
-
-  override func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
-    print("🔥 iOS: Failed to register for remote notifications: \(error.localizedDescription)")
-    super.application(application, didFailToRegisterForRemoteNotificationsWithError: error)
-  }
-
-  // Handle remote notification received
-  override func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
-    print("🔥 iOS: Remote notification received: \(userInfo)")
-    
-    super.application(application, didReceiveRemoteNotification: userInfo, fetchCompletionHandler: completionHandler)
-    completionHandler(.newData)
   }
 }

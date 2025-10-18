@@ -107,9 +107,7 @@ class AuthController extends GetxController {
       bool permissionsGranted = await requestNotificationPermissions();
       if (!permissionsGranted) {
         print('❌ Notification permissions not granted');
-        showSnackBar(
-            title: 'Please enable notifications in settings to receive messages'
-                .tr);
+        // Snackbar removed - let users decide if they want notifications
       }
 
       // Initialize enhanced push service (works for both Android and iOS)
@@ -158,28 +156,7 @@ class AuthController extends GetxController {
             return true;
           } else if (status.isPermanentlyDenied) {
             print('❌ Android notification permission permanently denied');
-            // Show dialog to open settings
-            Get.dialog(
-              AlertDialog(
-                title: Text('Enable Notifications'.tr),
-                content: Text(
-                    'Please enable notifications in settings to receive messages when the app is closed.'
-                        .tr),
-                actions: [
-                  TextButton(
-                    onPressed: () => Get.back(),
-                    child: Text('Later'.tr),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      Get.back();
-                      openAppSettings();
-                    },
-                    child: Text('Open Settings'.tr),
-                  ),
-                ],
-              ),
-            );
+            // Dialog removed - let users enable notifications on their own
             return false;
           } else {
             print('❌ Android notification permission denied');
@@ -201,28 +178,7 @@ class AuthController extends GetxController {
           return true;
         } else if (status.isPermanentlyDenied) {
           print('❌ iOS notification permission permanently denied');
-          // Show dialog to open settings
-          Get.dialog(
-            CupertinoAlertDialog(
-              title: Text('Enable Notifications'.tr),
-              content: Text(
-                  'Please enable notifications in settings to receive messages.'
-                      .tr),
-              actions: [
-                CupertinoDialogAction(
-                  onPressed: () => Get.back(),
-                  child: Text('Later'.tr),
-                ),
-                CupertinoDialogAction(
-                  onPressed: () {
-                    Get.back();
-                    openAppSettings();
-                  },
-                  child: Text('Open Settings'.tr),
-                ),
-              ],
-            ),
-          );
+          // Dialog removed - let users enable notifications on their own
           return false;
         } else {
           print('❌ iOS notification permission denied');

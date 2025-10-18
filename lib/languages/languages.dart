@@ -174,6 +174,7 @@ class Languages extends Translations {
           "Save Draft": "Save Draft",
           "Are you sure you want to delete this item?":
               "Are you sure you want to delete this item?",
+          "Deleting...": "Deleting...",
           "Keep track of all your sold listings in one place":
               "Keep track of all your sold listings in one place",
           "Sold Listings": "Sold Listings",
@@ -1838,6 +1839,7 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
           "Save Draft": "Guardar borrador",
           "Are you sure you want to delete this item?":
               "¿Estás segura de que quieres eliminar este artículo?",
+          "Deleting...": "Eliminando...",
           "Keep track of all your sold listings in one place":
               "Realice un seguimiento de todos sus anuncios vendidos en un solo lugar",
           "Sold Listings": "Listados vendidos",

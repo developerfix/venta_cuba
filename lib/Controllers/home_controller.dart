@@ -403,6 +403,13 @@ class HomeController extends GetxController {
           newListings = applyCategoryFilter(newListings);
           Get.log("After category filtering: ${newListings.length} items");
 
+          // Apply business/personal account filtering
+          String currentAccountType = authCont.isBusinessAccount ? "1" : "0";
+          newListings = newListings.where((listing) {
+            return listing.businessStatus == currentAccountType;
+          }).toList();
+          Get.log("After business/personal filtering (${authCont.isBusinessAccount ? 'Business' : 'Personal'}): ${newListings.length} items");
+
           // Always shuffle new items before adding them to the list
           // This ensures randomization on both initial load and scroll
           newListings.shuffle();
@@ -2006,6 +2013,13 @@ class HomeController extends GetxController {
           // Apply client-side category filtering as backup
           newListings = applyCategoryFilter(newListings);
           Get.log("After category filtering: ${newListings.length} items");
+
+          // Apply business/personal account filtering
+          String currentAccountType = authCont.isBusinessAccount ? "1" : "0";
+          newListings = newListings.where((listing) {
+            return listing.businessStatus == currentAccountType;
+          }).toList();
+          Get.log("After business/personal filtering (${authCont.isBusinessAccount ? 'Business' : 'Personal'}): ${newListings.length} items");
 
           listingModelSearchList.addAll(newListings);
           currentSearchPage.value++; // Increment page correctly
