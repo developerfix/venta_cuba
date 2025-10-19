@@ -534,9 +534,9 @@ class HomeController extends GetxController {
     bool en = lanCode == "en";
     int days = noOfDays(updatedOn);
     if (en) {
-      return "${'updated'.tr} $days ${'days'.tr} ${'ago'.tr}";
+      return "${'updated'.tr} $days ${'days_2'.tr} ${'ago_2'.tr}";
     } else {
-      return "${'updated'.tr} ${'ago'.tr} $days ${'days'.tr}";
+      return "${'updated'.tr} ${'ago_2'.tr} $days ${'days_2'.tr}";
     }
   }
 

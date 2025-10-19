@@ -21,8 +21,6 @@ class _SearchAndCurrentLocationPageState
   FocusNode focusNode = FocusNode();
   final locationCont = Get.put(LocationController());
 
-
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -46,17 +44,19 @@ class _SearchAndCurrentLocationPageState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-
                     Container(
-                      height: 60.h,
+                      height: 45.h,
                       decoration: BoxDecoration(
-                          color: Theme.of(context).cardColor,
-                          borderRadius: BorderRadius.circular(5),
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.black
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                              color: Theme.of(context)
-                                  .dividerColor
-                                  .withValues(alpha: 0.3),
-                              width: 1)),
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? Colors.white
+                                  : Colors.black,
+                              width: 0.5)),
                       child: TextField(
                         onTap: () {
                           locationCont.isTextFiled = 0;
@@ -69,8 +69,17 @@ class _SearchAndCurrentLocationPageState
                           contentPadding: EdgeInsets.symmetric(
                               vertical: 10, horizontal: 20),
                           hintText: "Select location".tr,
+                          filled: true,
+                          fillColor: Colors.transparent,
                           border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          errorBorder: InputBorder.none,
+                          focusedErrorBorder: InputBorder.none,
+                          disabledBorder: InputBorder.none,
                         ),
+                        cursorColor:
+                            Theme.of(context).textTheme.bodyLarge?.color,
                         onChanged: (value) {
                           locationCont.showOrHideLocationsList.value = true;
                           locationCont.onChange(value.toString());

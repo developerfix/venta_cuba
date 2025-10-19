@@ -953,6 +953,7 @@ It is not allowed to use our member-to-member communication resources to send sp
           "Deleting all listings...": "Deleting all listings...",
           "All listings deleted successfully":
               "All listings deleted successfully",
+          "Listing deleted successfully": "Listing deleted successfully",
           "Failed to delete some listings. Please try again.":
               "Failed to delete some listings. Please try again.",
           // Chat interface translations
@@ -1972,6 +1973,7 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
           "Deleting all listings...": "Eliminando todos los anuncios...",
           "All listings deleted successfully":
               "Todos los anuncios eliminados exitosamente",
+          "Listing deleted successfully": "Anuncio eliminado exitosamente",
           "Failed to delete some listings. Please try again.":
               "Error al eliminar algunos anuncios. Por favor, inténtalo de nuevo.",
           "Please Enter 8 Character Confirm Password":

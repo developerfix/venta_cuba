@@ -360,13 +360,31 @@ class PremiumErrorHandler {
     required String message,
     required Color backgroundColor,
   }) {
-    PremiumComponents.showPremiumSnackbar(
-      context: Get.context!,
-      message: message,
-      backgroundColor: backgroundColor,
-      icon: icon,
-      duration: const Duration(seconds: 4),
-    );
+    final context = Get.context;
+    if (context != null && context.mounted) {
+      try {
+        // Check if overlay exists before showing snackbar
+        final overlay = Overlay.maybeOf(context);
+        if (overlay != null) {
+          PremiumComponents.showPremiumSnackbar(
+            context: context,
+            message: message,
+            backgroundColor: backgroundColor,
+            icon: icon,
+            duration: const Duration(seconds: 4),
+          );
+        } else {
+          // Fallback to debug print if no overlay available
+          debugPrint('Error: $message');
+        }
+      } catch (e) {
+        // Fallback to debug print if snackbar fails
+        debugPrint('Error: $message (Failed to show snackbar: $e)');
+      }
+    } else {
+      // Fallback to debug print if no context available
+      debugPrint('Error: $message (No context available)');
+    }
   }
 
   /// Premium success snackbar
@@ -374,13 +392,31 @@ class PremiumErrorHandler {
     required IconData icon,
     required String message,
   }) {
-    PremiumComponents.showPremiumSnackbar(
-      context: Get.context!,
-      message: message,
-      backgroundColor: Colors.green[600]!,
-      icon: icon,
-      duration: const Duration(seconds: 3),
-    );
+    final context = Get.context;
+    if (context != null && context.mounted) {
+      try {
+        // Check if overlay exists before showing snackbar
+        final overlay = Overlay.maybeOf(context);
+        if (overlay != null) {
+          PremiumComponents.showPremiumSnackbar(
+            context: context,
+            message: message,
+            backgroundColor: Colors.green[600]!,
+            icon: icon,
+            duration: const Duration(seconds: 3),
+          );
+        } else {
+          // Fallback to debug print if no overlay available
+          debugPrint('Success: $message');
+        }
+      } catch (e) {
+        // Fallback to debug print if snackbar fails
+        debugPrint('Success: $message (Failed to show snackbar: $e)');
+      }
+    } else {
+      // Fallback to debug print if no context available
+      debugPrint('Success: $message (No context available)');
+    }
   }
 
   /// Open network settings

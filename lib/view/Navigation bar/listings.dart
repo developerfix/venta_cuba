@@ -398,8 +398,7 @@ class _ListingsState extends State<Listings> {
                                                                         style: TextStyle(
                                                                             fontSize: 17
                                                                               ..sp,
-                                                                            fontWeight:
-                                                                                FontWeight.w600,
+                                                                            fontWeight: FontWeight.w600,
                                                                             color: AppColors.textPrimary),
                                                                       ),
                                                                     ),
@@ -414,8 +413,7 @@ class _ListingsState extends State<Listings> {
                                                                         style: TextStyle(
                                                                             fontSize: 12
                                                                               ..sp,
-                                                                            fontWeight:
-                                                                                FontWeight.w400,
+                                                                            fontWeight: FontWeight.w400,
                                                                             color: AppColors.textSecondary),
                                                                       ),
                                                                     ),
@@ -435,30 +433,28 @@ class _ListingsState extends State<Listings> {
                                                                         style: TextStyle(
                                                                             fontSize: 12
                                                                               ..sp,
-                                                                            fontWeight:
-                                                                                FontWeight.w400,
+                                                                            fontWeight: FontWeight.w400,
                                                                             color: AppColors.textSecondary),
                                                                       ),
                                                                     ),
-                                                                    SelectionArea(
-                                                                      child:
-                                                                          Text(
-                                                                        cont.userListingModelList[index].price == "0" ||
-                                                                                cont.userListingModelList[index].price == null
-                                                                            ? ""
-                                                                            : "${PriceFormatter().formatNumber(int.parse(cont.userListingModelList[index].price.toString()))}\$ ${PriceFormatter().getCurrency(cont.userListingModelList[index].currency)}",
-                                                                        maxLines:
-                                                                            1,
-                                                                        overflow:
-                                                                            TextOverflow.ellipsis,
-                                                                        style: TextStyle(
-                                                                            fontSize: 12
-                                                                              ..sp,
-                                                                            fontWeight:
-                                                                                FontWeight.w600,
-                                                                            color: AppColors.k0xFF0254B8),
+                                                                    if (cont.userListingModelList[index].price != "0" &&
+                                                                        cont.userListingModelList[index].price != null)
+                                                                      SelectionArea(
+                                                                        child:
+                                                                            Text(
+                                                                          "${PriceFormatter().formatNumber(int.parse(cont.userListingModelList[index].price.toString()))}\$ ${PriceFormatter().getCurrency(cont.userListingModelList[index].currency)}",
+                                                                          maxLines:
+                                                                              1,
+                                                                          overflow:
+                                                                              TextOverflow.ellipsis,
+                                                                          style: TextStyle(
+                                                                              fontSize: 12
+                                                                                ..sp,
+                                                                              fontWeight:
+                                                                                  FontWeight.w600,
+                                                                              color: AppColors.k0xFF0254B8),
+                                                                        ),
                                                                       ),
-                                                                    ),
                                                                   ],
                                                                 ),
                                                               ),
@@ -852,8 +848,7 @@ class _ListingsState extends State<Listings> {
                                                                         style: TextStyle(
                                                                             fontSize: 17
                                                                               ..sp,
-                                                                            fontWeight:
-                                                                                FontWeight.w600,
+                                                                            fontWeight: FontWeight.w600,
                                                                             color: AppColors.textPrimary),
                                                                       ),
                                                                     ),
@@ -889,38 +884,35 @@ class _ListingsState extends State<Listings> {
                                                                         style: TextStyle(
                                                                             fontSize: 12
                                                                               ..sp,
-                                                                            fontWeight:
-                                                                                FontWeight.w400,
+                                                                            fontWeight: FontWeight.w400,
                                                                             color: AppColors.textSecondary),
                                                                       ),
                                                                     ),
-                                                                    SelectionArea(
-                                                                      child:
-                                                                          Text(
-                                                                        cont.userListingModelList[index].price == "0" ||
-                                                                                cont.userListingModelList[index].price == null
-                                                                            ? ""
-                                                                            : "${PriceFormatter().formatNumber(int.parse(cont.userListingModelList[index].price.toString()))}\$ ${PriceFormatter().getCurrency(cont.userListingModelList[index].currency)}",
-                                                                        maxLines:
-                                                                            1,
-                                                                        overflow:
-                                                                            TextOverflow.ellipsis,
-                                                                        style: TextStyle(
-                                                                            fontSize: 12
-                                                                              ..sp,
-                                                                            fontWeight:
-                                                                                FontWeight.w600,
-                                                                            color: AppColors.k0xFF0254B8),
+                                                                    if (cont.userListingModelList[index].price != "0" &&
+                                                                        cont.userListingModelList[index].price != null)
+                                                                      SelectionArea(
+                                                                        child:
+                                                                            Text(
+                                                                          "${PriceFormatter().formatNumber(int.parse(cont.userListingModelList[index].price.toString()))}\$ ${PriceFormatter().getCurrency(cont.userListingModelList[index].currency)}",
+                                                                          maxLines:
+                                                                              1,
+                                                                          overflow:
+                                                                              TextOverflow.ellipsis,
+                                                                          style: TextStyle(
+                                                                              fontSize: 12
+                                                                                ..sp,
+                                                                              fontWeight:
+                                                                                  FontWeight.w600,
+                                                                              color: AppColors.k0xFF0254B8),
+                                                                        ),
                                                                       ),
-                                                                    ),
                                                                   ],
                                                                 ),
                                                               ),
                                                               Column(
                                                                 children: [
                                                                   SizedBox(
-                                                                    width: MediaQuery.of(
-                                                                                context)
+                                                                    width: MediaQuery.of(context)
                                                                             .size
                                                                             .width *
                                                                         .37,
@@ -936,9 +928,8 @@ class _ListingsState extends State<Listings> {
                                                                               60.w,
                                                                           decoration:
                                                                               BoxDecoration(
-                                                                            border: Border.all(
-                                                                                color:
-                                                                                    AppColors.k0xFF0254B8),
+                                                                            border:
+                                                                                Border.all(color: AppColors.k0xFF0254B8),
                                                                             borderRadius:
                                                                                 BorderRadius.circular(10),
                                                                           ),
@@ -946,8 +937,7 @@ class _ListingsState extends State<Listings> {
                                                                               InkWell(
                                                                             onTap:
                                                                                 () {
-                                                                              cont.listingModel =
-                                                                                  cont.userListingModelList[index];
+                                                                              cont.listingModel = cont.userListingModelList[index];
                                                                               Navigator.push(
                                                                                   context,
                                                                                   MaterialPageRoute(
@@ -958,17 +948,11 @@ class _ListingsState extends State<Listings> {
                                                                             },
                                                                             child:
                                                                                 Center(
-                                                                              child:
-                                                                                  Text(
+                                                                              child: Text(
                                                                                 'Edit'.tr,
-                                                                                maxLines:
-                                                                                    1,
-                                                                                overflow:
-                                                                                    TextOverflow.ellipsis,
-                                                                                style: TextStyle(
-                                                                                    fontSize: 16..sp,
-                                                                                    fontWeight: FontWeight.w600,
-                                                                                    color: AppColors.k0xFF0254B8),
+                                                                                maxLines: 1,
+                                                                                overflow: TextOverflow.ellipsis,
+                                                                                style: TextStyle(fontSize: 16..sp, fontWeight: FontWeight.w600, color: AppColors.k0xFF0254B8),
                                                                               ),
                                                                             ),
                                                                           ),
@@ -980,9 +964,8 @@ class _ListingsState extends State<Listings> {
                                                                               60.w,
                                                                           decoration:
                                                                               BoxDecoration(
-                                                                            border: Border.all(
-                                                                                color:
-                                                                                    Colors.red),
+                                                                            border:
+                                                                                Border.all(color: Colors.red),
                                                                             borderRadius:
                                                                                 BorderRadius.circular(10),
                                                                           ),
@@ -990,8 +973,7 @@ class _ListingsState extends State<Listings> {
                                                                               InkWell(
                                                                             onTap:
                                                                                 () {
-                                                                              cont.listingModel =
-                                                                                  cont.userListingModelList[index];
+                                                                              cont.listingModel = cont.userListingModelList[index];
                                                                               showDialog(
                                                                                   context: context,
                                                                                   builder: (context) {
@@ -1000,17 +982,11 @@ class _ListingsState extends State<Listings> {
                                                                             },
                                                                             child:
                                                                                 Center(
-                                                                              child:
-                                                                                  Text(
+                                                                              child: Text(
                                                                                 'Delete'.tr,
-                                                                                maxLines:
-                                                                                    1,
-                                                                                overflow:
-                                                                                    TextOverflow.ellipsis,
-                                                                                style: TextStyle(
-                                                                                    fontSize: 16..sp,
-                                                                                    fontWeight: FontWeight.w600,
-                                                                                    color: Colors.red),
+                                                                                maxLines: 1,
+                                                                                overflow: TextOverflow.ellipsis,
+                                                                                style: TextStyle(fontSize: 16..sp, fontWeight: FontWeight.w600, color: Colors.red),
                                                                               ),
                                                                             ),
                                                                           ),
@@ -1345,8 +1321,7 @@ class _ListingsState extends State<Listings> {
                                                                         style: TextStyle(
                                                                             fontSize: 17
                                                                               ..sp,
-                                                                            fontWeight:
-                                                                                FontWeight.w600,
+                                                                            fontWeight: FontWeight.w600,
                                                                             color: AppColors.textPrimary),
                                                                       ),
                                                                     ),
@@ -1361,8 +1336,7 @@ class _ListingsState extends State<Listings> {
                                                                         style: TextStyle(
                                                                             fontSize: 12
                                                                               ..sp,
-                                                                            fontWeight:
-                                                                                FontWeight.w400,
+                                                                            fontWeight: FontWeight.w400,
                                                                             color: AppColors.textSecondary),
                                                                       ),
                                                                     ),
@@ -1382,38 +1356,35 @@ class _ListingsState extends State<Listings> {
                                                                         style: TextStyle(
                                                                             fontSize: 12
                                                                               ..sp,
-                                                                            fontWeight:
-                                                                                FontWeight.w400,
+                                                                            fontWeight: FontWeight.w400,
                                                                             color: AppColors.textSecondary),
                                                                       ),
                                                                     ),
-                                                                    SelectionArea(
-                                                                      child:
-                                                                          Text(
-                                                                        cont.userListingModelList[index].price ==
-                                                                                "0"
-                                                                            ? ""
-                                                                            : "${PriceFormatter().formatNumber(int.parse(cont.userListingModelList[index].price ?? '0'))}\$ ${PriceFormatter().getCurrency(cont.userListingModelList[index].currency)}",
-                                                                        maxLines:
-                                                                            1,
-                                                                        overflow:
-                                                                            TextOverflow.ellipsis,
-                                                                        style: TextStyle(
-                                                                            fontSize: 12
-                                                                              ..sp,
-                                                                            fontWeight:
-                                                                                FontWeight.w600,
-                                                                            color: AppColors.k0xFF0254B8),
+                                                                    if (cont.userListingModelList[index].price != "0" &&
+                                                                        cont.userListingModelList[index].price != null)
+                                                                      SelectionArea(
+                                                                        child:
+                                                                            Text(
+                                                                          "${PriceFormatter().formatNumber(int.parse(cont.userListingModelList[index].price ?? '0'))}\$ ${PriceFormatter().getCurrency(cont.userListingModelList[index].currency)}",
+                                                                          maxLines:
+                                                                              1,
+                                                                          overflow:
+                                                                              TextOverflow.ellipsis,
+                                                                          style: TextStyle(
+                                                                              fontSize: 12
+                                                                                ..sp,
+                                                                              fontWeight:
+                                                                                  FontWeight.w600,
+                                                                              color: AppColors.k0xFF0254B8),
+                                                                        ),
                                                                       ),
-                                                                    ),
                                                                   ],
                                                                 ),
                                                               ),
                                                               Column(
                                                                 children: [
                                                                   SizedBox(
-                                                                    width: MediaQuery.of(
-                                                                                context)
+                                                                    width: MediaQuery.of(context)
                                                                             .size
                                                                             .width *
                                                                         .37,
@@ -1429,9 +1400,8 @@ class _ListingsState extends State<Listings> {
                                                                               60.w,
                                                                           decoration:
                                                                               BoxDecoration(
-                                                                            border: Border.all(
-                                                                                color:
-                                                                                    AppColors.k0xFF0254B8),
+                                                                            border:
+                                                                                Border.all(color: AppColors.k0xFF0254B8),
                                                                             borderRadius:
                                                                                 BorderRadius.circular(10),
                                                                           ),
@@ -1439,8 +1409,7 @@ class _ListingsState extends State<Listings> {
                                                                               InkWell(
                                                                             onTap:
                                                                                 () {
-                                                                              cont.listingModel =
-                                                                                  cont.userListingModelList[index];
+                                                                              cont.listingModel = cont.userListingModelList[index];
                                                                               Navigator.push(
                                                                                   context,
                                                                                   MaterialPageRoute(
@@ -1451,17 +1420,11 @@ class _ListingsState extends State<Listings> {
                                                                             },
                                                                             child:
                                                                                 Center(
-                                                                              child:
-                                                                                  Text(
+                                                                              child: Text(
                                                                                 'Edit'.tr,
-                                                                                maxLines:
-                                                                                    1,
-                                                                                overflow:
-                                                                                    TextOverflow.ellipsis,
-                                                                                style: TextStyle(
-                                                                                    fontSize: 16..sp,
-                                                                                    fontWeight: FontWeight.w600,
-                                                                                    color: AppColors.k0xFF0254B8),
+                                                                                maxLines: 1,
+                                                                                overflow: TextOverflow.ellipsis,
+                                                                                style: TextStyle(fontSize: 16..sp, fontWeight: FontWeight.w600, color: AppColors.k0xFF0254B8),
                                                                               ),
                                                                             ),
                                                                           ),
@@ -1473,9 +1436,8 @@ class _ListingsState extends State<Listings> {
                                                                               60.w,
                                                                           decoration:
                                                                               BoxDecoration(
-                                                                            border: Border.all(
-                                                                                color:
-                                                                                    Colors.red),
+                                                                            border:
+                                                                                Border.all(color: Colors.red),
                                                                             borderRadius:
                                                                                 BorderRadius.circular(10),
                                                                           ),
@@ -1483,8 +1445,7 @@ class _ListingsState extends State<Listings> {
                                                                               InkWell(
                                                                             onTap:
                                                                                 () {
-                                                                              cont.listingModel =
-                                                                                  cont.userListingModelList[index];
+                                                                              cont.listingModel = cont.userListingModelList[index];
                                                                               showDialog(
                                                                                   context: context,
                                                                                   builder: (context) {
@@ -1493,17 +1454,11 @@ class _ListingsState extends State<Listings> {
                                                                             },
                                                                             child:
                                                                                 Center(
-                                                                              child:
-                                                                                  Text(
+                                                                              child: Text(
                                                                                 'Delete'.tr,
-                                                                                maxLines:
-                                                                                    1,
-                                                                                overflow:
-                                                                                    TextOverflow.ellipsis,
-                                                                                style: TextStyle(
-                                                                                    fontSize: 16..sp,
-                                                                                    fontWeight: FontWeight.w600,
-                                                                                    color: Colors.red),
+                                                                                maxLines: 1,
+                                                                                overflow: TextOverflow.ellipsis,
+                                                                                style: TextStyle(fontSize: 16..sp, fontWeight: FontWeight.w600, color: Colors.red),
                                                                               ),
                                                                             ),
                                                                           ),
@@ -1660,7 +1615,9 @@ class _ListingsState extends State<Listings> {
               // Validate prerequisites
               if (homeCont.listingModel?.id == null) {
                 Navigator.of(context).pop();
-                errorAlertToast('Error: Invalid listing data. Please refresh and try again.'.tr);
+                errorAlertToast(
+                    'Error: Invalid listing data. Please refresh and try again.'
+                        .tr);
                 return;
               }
 
@@ -1736,22 +1693,23 @@ class _ListingsState extends State<Listings> {
                 if (homeCont.userListingModelList.isNotEmpty &&
                     listingIndex >= 0 &&
                     listingIndex < homeCont.userListingModelList.length) {
-
                   // Remove by ID for safety, with additional validation
                   final initialCount = homeCont.userListingModelList.length;
-                  homeCont.userListingModelList
-                      .removeWhere((listing) => listing.id == listingIdToDelete);
+                  homeCont.userListingModelList.removeWhere(
+                      (listing) => listing.id == listingIdToDelete);
 
                   // Verify removal actually happened
                   final finalCount = homeCont.userListingModelList.length;
                   if (finalCount < initialCount) {
                     // Update the counters based on account type
                     if (homeCont.isBusinessAccount) {
-                      homeCont.bussinessPostCount = homeCont.userListingModelList
+                      homeCont.bussinessPostCount = homeCont
+                          .userListingModelList
                           .where((listing) => listing.businessStatus == "1")
                           .length;
                     } else {
-                      homeCont.personalAcountPost = homeCont.userListingModelList
+                      homeCont.personalAcountPost = homeCont
+                          .userListingModelList
                           .where((listing) => listing.businessStatus == "0")
                           .length;
                     }
@@ -1781,7 +1739,8 @@ class _ListingsState extends State<Listings> {
                 }
               } else {
                 if (mounted) {
-                  errorAlertToast('Failed to delete listing. Please try again.'.tr);
+                  errorAlertToast(
+                      'Failed to delete listing. Please try again.'.tr);
                 }
               }
             } catch (e) {
@@ -1797,7 +1756,8 @@ class _ListingsState extends State<Listings> {
               }
 
               if (mounted) {
-                errorAlertToast('An error occurred while deleting. Please try again.'.tr);
+                errorAlertToast(
+                    'An error occurred while deleting. Please try again.'.tr);
               }
             } finally {
               // Always reset loading state

@@ -19,9 +19,9 @@ class SearchPlacesScreen extends StatefulWidget {
 }
 
 const kGoogleApiKey = 'AIzaSyBx95Bvl9O-US2sQpqZ41GdsHIprnXvJv8';
-final homeScaffoldKey = GlobalKey<ScaffoldState>();
 
 class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
+  final homeScaffoldKey = GlobalKey<ScaffoldState>();
   static CameraPosition initialCameraPosition = CameraPosition(
       target: LatLng(23.124792615936276, -82.38597269330762), zoom: 14.0);
   final homeCont = Get.put(HomeController());
@@ -96,7 +96,7 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
                           width: 50,
                           padding: EdgeInsets.only(left: 10),
                           decoration: BoxDecoration(
-                              color: Theme.of(context).cardColor, shape: BoxShape.circle),
+                              color: Colors.white, shape: BoxShape.circle),
                           child: IconButton(
                             onPressed: () {
                               Get.back();
@@ -107,11 +107,7 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
                         SizedBox(
                           width: 10.w,
                         ),
-                        SizedBox(width: 230, child: Text(cont.address,
-                          style: TextStyle(
-                            color: Theme.of(context).textTheme.bodyLarge?.color,
-                          ),
-                        )),
+                        SizedBox(width: 230, child: Text(cont.address)),
                         SizedBox(
                           width: 10.w,
                         ),
@@ -196,7 +192,7 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
                           height: 90.h,
                           // width: 300.w,
                           decoration: BoxDecoration(
-                            color: Theme.of(context).cardColor,
+                            color: Colors.white,
                             borderRadius: BorderRadius.only(
                               topLeft: Radius.circular(10),
                               topRight: Radius.circular(10),
@@ -210,11 +206,7 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text("Search Range".tr,
-                                      style: TextStyle(
-                                        color: Theme.of(context).textTheme.bodyLarge?.color,
-                                      ),
-                                    ),
+                                    Text("Search Range".tr),
                                     Container(
                                       height: 20.h,
                                       width: 100.w,
@@ -222,7 +214,7 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
                                           borderRadius:
                                               BorderRadius.circular(5),
                                           border: Border.all(
-                                              color: Theme.of(context).dividerColor)),
+                                              color: Colors.black26)),
                                       child: Padding(
                                         padding: EdgeInsets.symmetric(
                                             horizontal: 5.w),
@@ -230,16 +222,11 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceBetween,
                                           children: [
-                                            Text("${cont.radius.toInt()}",
-                                              style: TextStyle(
-                                                color: Theme.of(context).textTheme.bodyLarge?.color,
-                                              ),
-                                            ),
+                                            Text("${cont.radius.toInt()}"),
                                             Text(
                                               "Km",
                                               style: TextStyle(
-                                                color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
-                                              ),
+                                                  color: Colors.black26),
                                             ),
                                           ],
                                         ),
@@ -291,10 +278,10 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
                               cont.currentPage.value = 1;
                               cont.hasMore.value = true;
                               cont.listingModelList.clear();
-                              
+
                               // Set flag to shuffle listings when location changes
                               homeCont.forceShuffleAfterLocationChange();
-                              
+
                               await homeCont.getListing();
                               SharedPreferences sharedPreferences =
                                   await SharedPreferences.getInstance();
