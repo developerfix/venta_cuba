@@ -1309,42 +1309,63 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
   }
 
   void _openCamera(BuildContext context) async {
-    // Request camera permission
-    final cameraStatus = await Permission.camera.request();
+    try {
+      // Request camera permission
+      final cameraStatus = await Permission.camera.request();
 
-    if (cameraStatus.isGranted) {
-      final pickedFile = await ImagePicker().pickImage(
-        source: ImageSource.camera,
-      );
-      if (pickedFile != null) {
-        uploadImage(pickedFile);
+      if (cameraStatus.isGranted) {
+        final pickedFile = await ImagePicker().pickImage(
+          source: ImageSource.camera,
+        );
+        if (pickedFile != null) {
+          uploadImage(pickedFile);
+        }
+      } else if (cameraStatus.isPermanentlyDenied) {
+        // Show dialog to open settings
+        _showPermissionDialog('Camera');
+      } else {
+        // Permission denied - silent failure
+        print('Camera permission denied');
       }
-    } else if (cameraStatus.isPermanentlyDenied) {
-      // Show dialog to open settings
-      _showPermissionDialog('Camera');
+    } catch (e) {
+      // Camera error - silent failure
+      print('Failed to open camera: ${e.toString()}');
     }
   }
 
   void _openGallery(BuildContext context) async {
-    // Request photo library permission
-    PermissionStatus photoStatus;
-    if (Platform.isIOS) {
-      photoStatus = await Permission.photos.request();
-    } else {
-      // Android 13+ uses photos, earlier versions use storage
-      photoStatus = await Permission.photos.request();
-    }
+    try {
+      // Request photo library permission
+      PermissionStatus photoStatus;
+      if (Platform.isIOS) {
+        photoStatus = await Permission.photos.request();
+      } else {
+        // Android 13+ uses photos, earlier versions use storage
+        photoStatus = await Permission.photos.request();
 
-    if (photoStatus.isGranted) {
-      final pickedFile = await ImagePicker().pickImage(
-        source: ImageSource.gallery,
-      );
-      if (pickedFile != null) {
-        uploadImage(pickedFile);
+        // Fallback to storage permission for older Android versions
+        if (!photoStatus.isGranted) {
+          photoStatus = await Permission.storage.request();
+        }
       }
-    } else if (photoStatus.isPermanentlyDenied) {
-      // Show dialog to open settings
-      _showPermissionDialog('Photo Library');
+
+      if (photoStatus.isGranted) {
+        final pickedFile = await ImagePicker().pickImage(
+          source: ImageSource.gallery,
+        );
+        if (pickedFile != null) {
+          uploadImage(pickedFile);
+        }
+      } else if (photoStatus.isPermanentlyDenied) {
+        // Show dialog to open settings
+        _showPermissionDialog('Photo Library');
+      } else {
+        // Permission denied - silent failure
+        print('Gallery permission denied');
+      }
+    } catch (e) {
+      // Gallery error - silent failure
+      print('Failed to open gallery: ${e.toString()}');
     }
   }
 
@@ -1383,19 +1404,15 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
       if (imageUrl != null) {
         // Send image message
         await sendImageMessage(imageUrl);
-      } else {}
+      } else {
+        // Silent failure - image upload returned null but no exception
+        print('Image upload failed: uploadImage returned null');
+      }
     } catch (error) {
       Get.back(); // Hide loading
 
-      if (error.toString().contains('Bucket not found')) {
-        // Image storage not configured
-      } else if (error.toString().contains('row-level security policy') ||
-          error.toString().contains('Unauthorized') ||
-          error.toString().contains('403')) {
-        // Image upload not authorized
-      } else if (error.toString().contains('permission')) {
-        // Permission denied for image upload
-      }
+      // Log the error for debugging but don't show to user
+      print('Image upload error: ${error.toString()}');
 
     }
   }

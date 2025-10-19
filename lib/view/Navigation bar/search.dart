@@ -187,6 +187,13 @@ class _SearchState extends State<Search> {
 
   @override
   void dispose() {
+    // Remove scroll listener before disposing
+    try {
+      homeCont.searchScrollController.removeListener(homeCont.onScrollSearch);
+    } catch (e) {
+      // Controller might be disposed or listener not attached, which is fine
+    }
+
     // Reset search screen flags when leaving the screen
     homeCont.isSearchScreen = false;
     super.dispose();
@@ -203,11 +210,20 @@ class _SearchState extends State<Search> {
 
     // Ensure scroll listener is attached for search pagination
     try {
+      // Try to remove existing listener first
       homeCont.searchScrollController.removeListener(homeCont.onScrollSearch);
     } catch (e) {
-      // Listener wasn't attached, which is fine
+      // Listener wasn't attached or controller is disposed, which is fine
     }
-    homeCont.searchScrollController.addListener(homeCont.onScrollSearch);
+
+    try {
+      // Try to add listener
+      homeCont.searchScrollController.addListener(homeCont.onScrollSearch);
+    } catch (e) {
+      // Controller might be disposed, recreate it
+      homeCont.searchScrollController = ScrollController();
+      homeCont.searchScrollController.addListener(homeCont.onScrollSearch);
+    }
 
     // Perform initial search when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -309,9 +325,14 @@ class _SearchState extends State<Search> {
                                     .bodyLarge
                                     ?.color,
                                 decoration: InputDecoration(
+                                    filled: true,
+                                    fillColor: Colors.transparent,
                                     border: InputBorder.none,
                                     enabledBorder: InputBorder.none,
                                     focusedBorder: InputBorder.none,
+                                    errorBorder: InputBorder.none,
+                                    focusedErrorBorder: InputBorder.none,
+                                    disabledBorder: InputBorder.none,
                                     contentPadding: EdgeInsets.symmetric(
                                         vertical: 10, horizontal: 20),
                                     prefixIcon: InkWell(
