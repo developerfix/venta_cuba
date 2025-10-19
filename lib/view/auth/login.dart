@@ -81,8 +81,15 @@ class _LoginState extends State<Login> {
                                       height: 60..h,
                                       width: MediaQuery.of(context).size.width,
                                       decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(10))),
+                                        color: Theme.of(context).brightness == Brightness.dark
+                                            ? Colors.black
+                                            : Colors.white,
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                            color: Theme.of(context).brightness == Brightness.dark
+                                                ? Colors.white
+                                                : Colors.black,
+                                            width: 1)),
                                       child: Center(
                                         child: TextField(
                                           controller: cont.emailCont,
@@ -143,6 +150,16 @@ class _LoginState extends State<Login> {
                                     Container(
                                       height: 60..h,
                                       width: MediaQuery.of(context).size.width,
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context).brightness == Brightness.dark
+                                            ? Colors.black
+                                            : Colors.white,
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                            color: Theme.of(context).brightness == Brightness.dark
+                                                ? Colors.white
+                                                : Colors.black,
+                                            width: 1)),
                                       child: Center(
                                           child: Obx(
                                         () => TextField(

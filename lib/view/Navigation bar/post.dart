@@ -372,7 +372,8 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
       // Allow submission even if categories are loading - removed loading check
 
       // If subcategories data is not loaded yet and no subcategory is selected from existing listing, don't allow submission
-      if (cont.subCategoriesModel == null && cont.selectedSubCategory?.id == null) {
+      if (cont.subCategoriesModel == null &&
+          cont.selectedSubCategory?.id == null) {
         errorAlertToast("Please select a subcategory".tr);
         return false;
       }
@@ -428,7 +429,6 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
 
     _scrollController = ScrollController();
     if (authCont.user?.province != null && authCont.user?.city != null)
-
       _controller = AnimationController(
         duration: Duration(milliseconds: 700),
         vsync: this,
@@ -448,7 +448,6 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
       city = null;
       province = null;
 
-      print(homeCont.listingModel?.address);
       List<String> names =
           homeCont.listingModel?.address?.split(',') ?? ["", ""];
       provinceName.forEach((element) {
@@ -524,7 +523,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
       homeCont.makeController.text =
           homeCont.listingModel?.additionalFeatures?.listingDetails?.make ?? "";
       homeCont.titleCont.text = homeCont.listingModel?.title ?? "";
-      homeCont.priceCont?.text = homeCont.listingModel?.price.toString() ?? "0";
+      homeCont.priceCont?.text = homeCont.listingModel?.price.toString() ?? "";
       homeCont.selectedCurrency = homeCont.listingModel?.currency ?? "CUP";
       homeCont.descriptionCont.text = homeCont.listingModel?.description ?? "";
       locationCont.locationEditingController.value.text =
@@ -720,7 +719,6 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
         );
       }
     } catch (e) {
-      print('Error in pickImage: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to process images. Please try again.'),
@@ -748,13 +746,17 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
       // Get file size for smart compression
       final file = File(inputPath);
       final fileSize = await file.length();
-      
+
       // Smart quality selection
       int quality = 70;
-      if (fileSize > 5 * 1024 * 1024) quality = 50; // > 5MB
-      else if (fileSize > 3 * 1024 * 1024) quality = 60; // > 3MB
-      else if (fileSize > 2 * 1024 * 1024) quality = 70; // > 2MB
-      else quality = 80; // < 2MB
+      if (fileSize > 5 * 1024 * 1024)
+        quality = 50; // > 5MB
+      else if (fileSize > 3 * 1024 * 1024)
+        quality = 60; // > 3MB
+      else if (fileSize > 2 * 1024 * 1024)
+        quality = 70; // > 2MB
+      else
+        quality = 80; // < 2MB
 
       uploadingImage.updateProgress(ImageProcessingResult(
         progress: 0.5,
@@ -762,7 +764,8 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
       ));
 
       // ULTRA-FAST compression using flutter_image_compress
-      final Uint8List? compressedBytes = await FlutterImageCompress.compressWithFile(
+      final Uint8List? compressedBytes =
+          await FlutterImageCompress.compressWithFile(
         inputPath,
         minWidth: 1920,
         minHeight: 1920,
@@ -789,8 +792,6 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
       final originalSize = fileSize;
       final compressedSize = compressedBytes.length;
       final reduction = ((originalSize - compressedSize) / originalSize * 100);
-      
-      print('✅ Image optimized: ${(originalSize/1024).toStringAsFixed(0)}KB → ${(compressedSize/1024).toStringAsFixed(0)}KB (${reduction.toStringAsFixed(0)}% smaller)');
 
       // Add to post images
       homeCont.postImages.add(outputPath);
@@ -801,9 +802,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
         status: 'Ready'.tr,
         outputPath: outputPath,
       ));
-
     } catch (e) {
-      print('❌ Image processing error: $e');
       uploadingImage.updateProgress(ImageProcessingResult(
         progress: 0.0,
         status: 'Failed'.tr,
@@ -840,7 +839,6 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
 
       homeCont.update();
     } catch (e) {
-      print('Error retrying image upload: $e');
       if (mounted) {
         setState(() {
           final failedImage = homeCont.uploadingImages.firstWhere(
@@ -867,7 +865,6 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
       onPopInvokedWithResult: (bool didPop, Object? result) async {
         // Manually navigate back
         if (!didPop) {
-          print('sssssssssssssss handling back navigation');
           widget.isUpdate
               ? Get.back()
               : Get.offAll(
@@ -1106,10 +1103,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                 decoration: BoxDecoration(
                                                   color: image.errorMessage !=
                                                           null
-                                                      ? Colors.red
-                                                          .withValues(alpha: 0.8)
-                                                      : Colors.black
-                                                          .withValues(alpha: 0.75),
+                                                      ? Colors.red.withValues(
+                                                          alpha: 0.8)
+                                                      : Colors.black.withValues(
+                                                          alpha: 0.75),
                                                   borderRadius:
                                                       BorderRadius.circular(10),
                                                 ),
@@ -1245,7 +1242,8 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                   color:
                                                       image.errorMessage != null
                                                           ? Colors.orange
-                                                              .withValues(alpha: 0.8)
+                                                              .withValues(
+                                                                  alpha: 0.8)
                                                           : Colors.black38,
                                                 ),
                                                 child: Center(
@@ -1391,19 +1389,27 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                             Container(
                               height: 58..h,
                               decoration: BoxDecoration(
-                                  color: Theme.of(context).cardColor,
+                                  color: Theme.of(context).brightness == Brightness.dark
+                                      ? Colors.black
+                                      : Colors.white,
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
-                                      color: Theme.of(context)
-                                          .dividerColor
-                                          .withValues(alpha: 0.3))),
+                                      color: Theme.of(context).brightness == Brightness.dark
+                                          ? Colors.white
+                                          : Colors.black,
+                                      width: 1)),
                               child: TextField(
                                 controller: cont.titleCont,
                                 decoration: InputDecoration(
                                   hintText: "Title".tr,
+                                  filled: true,
+                                  fillColor: Colors.transparent,
                                   border: InputBorder.none,
                                   enabledBorder: InputBorder.none,
                                   focusedBorder: InputBorder.none,
+                                  errorBorder: InputBorder.none,
+                                  focusedErrorBorder: InputBorder.none,
+                                  disabledBorder: InputBorder.none,
                                   contentPadding: EdgeInsets.symmetric(
                                       vertical: 10, horizontal: 20),
                                 ),
@@ -1426,8 +1432,6 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                   ? () {}
                                   : () async {
                                       cont.isNavigate = false;
-                                      print(cont.selectedSubSubCategory?.name);
-                                      print("cont.selectedSubSubCategory");
                                       if (cont.selectedSubSubCategory != null) {
                                         cont.isType = 2;
                                         cont.update();
@@ -1457,12 +1461,15 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                     horizontal: 20, vertical: 18),
                                 height: 58..h,
                                 decoration: BoxDecoration(
-                                    color: Theme.of(context).cardColor,
+                                    color: Theme.of(context).brightness == Brightness.dark
+                                        ? Colors.black
+                                        : Colors.white,
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
-                                        color: Theme.of(context)
-                                            .dividerColor
-                                            .withValues(alpha: 0.3))),
+                                        color: Theme.of(context).brightness == Brightness.dark
+                                            ? Colors.white
+                                            : Colors.black,
+                                        width: 1)),
                                 child: Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
@@ -1478,12 +1485,14 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                             Container(
                               height: 58..h,
                               decoration: BoxDecoration(
-                                  color: Theme.of(context).cardColor,
+                                  color: Theme.of(context).brightness == Brightness.dark
+                                      ? Colors.black
+                                      : Colors.white,
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
-                                      color: Theme.of(context)
-                                          .dividerColor
-                                          .withValues(alpha: 0.3),
+                                      color: Theme.of(context).brightness == Brightness.dark
+                                          ? Colors.white
+                                          : Colors.black,
                                       width: 1)),
                               child: Row(
                                 children: [
@@ -1494,9 +1503,14 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                       decoration: InputDecoration(
                                         hintText: "Price (Optional)".tr,
                                         hintStyle: TextStyle(fontSize: 14),
+                                        filled: true,
+                                        fillColor: Colors.transparent,
                                         border: InputBorder.none,
                                         enabledBorder: InputBorder.none,
                                         focusedBorder: InputBorder.none,
+                                        errorBorder: InputBorder.none,
+                                        focusedErrorBorder: InputBorder.none,
+                                        disabledBorder: InputBorder.none,
                                         counterText:
                                             "", // Hide character counter
                                         contentPadding: EdgeInsets.symmetric(
@@ -1552,12 +1566,15 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                               // height: 160..h,
                               width: MediaQuery.of(context).size.width,
                               decoration: BoxDecoration(
-                                  color: Theme.of(context).cardColor,
+                                  color: Theme.of(context).brightness == Brightness.dark
+                                      ? Colors.black
+                                      : Colors.white,
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
-                                      color: Theme.of(context)
-                                          .dividerColor
-                                          .withValues(alpha: 0.3))),
+                                      color: Theme.of(context).brightness == Brightness.dark
+                                          ? Colors.white
+                                          : Colors.black,
+                                      width: 1)),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -1679,9 +1696,14 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                       CapitalizeFirstLetterFormatter(),
                                     ],
                                     decoration: InputDecoration(
+                                        filled: true,
+                                        fillColor: Colors.transparent,
                                         border: InputBorder.none,
                                         enabledBorder: InputBorder.none,
                                         focusedBorder: InputBorder.none,
+                                        errorBorder: InputBorder.none,
+                                        focusedErrorBorder: InputBorder.none,
+                                        disabledBorder: InputBorder.none,
                                         contentPadding: EdgeInsets.symmetric(
                                             horizontal: 10, vertical: 10)),
                                     cursorColor: Theme.of(context)
@@ -1728,7 +1750,6 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                 ],
                               ),
                             ),
-                            Divider(),
                             Visibility(
                                 visible:
                                     cont.showBelowFields[5] == 2 ? true : false,
@@ -1744,19 +1765,27 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           Container(
                                             height: 58..h,
                                             decoration: BoxDecoration(
-                                                color:
-                                                    Theme.of(context).cardColor,
+                                                color: Theme.of(context).brightness == Brightness.dark
+                                                    ? Colors.black
+                                                    : Colors.white,
                                                 borderRadius:
                                                     BorderRadius.circular(8),
                                                 border: Border.all(
-                                                    color: Theme.of(context)
-                                                        .dividerColor
-                                                        .withValues(
-                                                            alpha: 0.3))),
+                                                    color: Theme.of(context).brightness == Brightness.dark
+                                                        ? Colors.white
+                                                        : Colors.black,
+                                                    width: 1)),
                                             child: TextField(
                                               decoration: InputDecoration(
                                                 hintText: "Make (Optional)",
+                                                filled: true,
+                                                fillColor: Colors.transparent,
                                                 border: InputBorder.none,
+                                                enabledBorder: InputBorder.none,
+                                                focusedBorder: InputBorder.none,
+                                                errorBorder: InputBorder.none,
+                                                focusedErrorBorder: InputBorder.none,
+                                                disabledBorder: InputBorder.none,
                                                 contentPadding:
                                                     EdgeInsets.symmetric(
                                                         vertical: 20,
@@ -1774,19 +1803,27 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           Container(
                                             height: 58..h,
                                             decoration: BoxDecoration(
-                                                color:
-                                                    Theme.of(context).cardColor,
+                                                color: Theme.of(context).brightness == Brightness.dark
+                                                    ? Colors.black
+                                                    : Colors.white,
                                                 borderRadius:
                                                     BorderRadius.circular(8),
                                                 border: Border.all(
-                                                    color: Theme.of(context)
-                                                        .dividerColor
-                                                        .withValues(
-                                                            alpha: 0.3))),
+                                                    color: Theme.of(context).brightness == Brightness.dark
+                                                        ? Colors.white
+                                                        : Colors.black,
+                                                    width: 1)),
                                             child: TextField(
                                               decoration: InputDecoration(
                                                 hintText: "Model (Optional)",
+                                                filled: true,
+                                                fillColor: Colors.transparent,
                                                 border: InputBorder.none,
+                                                enabledBorder: InputBorder.none,
+                                                focusedBorder: InputBorder.none,
+                                                errorBorder: InputBorder.none,
+                                                focusedErrorBorder: InputBorder.none,
+                                                disabledBorder: InputBorder.none,
                                                 contentPadding:
                                                     EdgeInsets.symmetric(
                                                         vertical: 20,
@@ -1810,21 +1847,19 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                     vertical: 18),
                                                 height: 58..h,
                                                 decoration: BoxDecoration(
-                                                    color: Theme.of(context)
-                                                        .cardColor,
+                                                    color: Theme.of(context).brightness == Brightness.dark
+                                                        ? Colors.black
+                                                        : Colors.white,
                                                     borderRadius:
                                                         BorderRadius.circular(
                                                             8),
                                                     border: Border.all(
-                                                        color: Theme.of(context)
-                                                            .dividerColor
-                                                            .withValues(
-                                                                alpha: 0.3))),
+                                                        color: Theme.of(context).brightness == Brightness.dark
+                                                            ? Colors.white
+                                                            : Colors.black,
+                                                        width: 1)),
                                                 child: DropdownButton(
-                                                    onTap: () {
-                                                      print(
-                                                          ">>>>>>>>>>>>>>>>>>>>>>>>>>>>ggggg");
-                                                    },
+                                                    onTap: () {},
                                                     hint: Text('Furnished'),
                                                     underline: SizedBox(),
                                                     isExpanded: true,
@@ -1859,18 +1894,17 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                             vertical: 18),
                                                     height: 58..h,
                                                     decoration: BoxDecoration(
-                                                        color: Theme.of(context)
-                                                            .cardColor,
+                                                        color: Theme.of(context).brightness == Brightness.dark
+                                                            ? Colors.black
+                                                            : Colors.white,
                                                         borderRadius:
                                                             BorderRadius
                                                                 .circular(8),
                                                         border: Border.all(
-                                                            color: Theme.of(
-                                                                    context)
-                                                                .dividerColor
-                                                                .withValues(
-                                                                    alpha:
-                                                                        0.3))),
+                                                            color: Theme.of(context).brightness == Brightness.dark
+                                                                ? Colors.white
+                                                                : Colors.black,
+                                                            width: 1)),
                                                     child: DropdownButton(
                                                         hint: Text('Job Type'),
                                                         underline: SizedBox(),
@@ -1959,56 +1993,56 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                     SizedBox(
                                       height: 15..h,
                                     ),
-                                    TextField(
-                                      cursorColor: Theme.of(context)
-                                          .textTheme
-                                          .bodyLarge
-                                          ?.color,
-                                      controller: cont.tagsController,
-                                      decoration: InputDecoration(
-                                        isDense: true,
-                                        focusedBorder: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          borderSide: BorderSide(
-                                              color: Theme.of(context)
-                                                  .primaryColor),
+                                    Container(
+                                      height: 58..h,
+                                      decoration: BoxDecoration(
+                                          color: Theme.of(context).brightness == Brightness.dark
+                                              ? Colors.black
+                                              : Colors.white,
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(
+                                              color: Theme.of(context).brightness == Brightness.dark
+                                                  ? Colors.white
+                                                  : Colors.black,
+                                              width: 1)),
+                                      child: TextField(
+                                        cursorColor: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.color,
+                                        controller: cont.tagsController,
+                                        decoration: InputDecoration(
+                                          isDense: true,
+                                          filled: true,
+                                          fillColor: Colors.transparent,
+                                          border: InputBorder.none,
+                                          enabledBorder: InputBorder.none,
+                                          focusedBorder: InputBorder.none,
+                                          errorBorder: InputBorder.none,
+                                          focusedErrorBorder: InputBorder.none,
+                                          disabledBorder: InputBorder.none,
+                                          contentPadding: EdgeInsets.symmetric(
+                                              vertical: 10, horizontal: 20),
+                                          hintText:
+                                              // cont.tags.isNotEmpty ? '' :
+                                              "Enter tags...".tr,
+                                          prefixIconConstraints: BoxConstraints(
+                                              maxWidth: MediaQuery.of(context)
+                                                  .size
+                                                  .width),
                                         ),
-                                        enabledBorder: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          borderSide: BorderSide(
-                                              color: Theme.of(context)
-                                                  .dividerColor
-                                                  .withValues(alpha: 0.3)),
-                                        ),
-                                        border: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          borderSide: BorderSide(
-                                              color: Theme.of(context)
-                                                  .dividerColor
-                                                  .withValues(alpha: 0.3)),
-                                        ),
-                                        hintText:
-                                            // cont.tags.isNotEmpty ? '' :
-                                            "Enter tags...".tr,
-                                        prefixIconConstraints: BoxConstraints(
-                                            maxWidth: MediaQuery.of(context)
-                                                .size
-                                                .width),
-                                      ),
-                                      onSubmitted: (value) {
-                                        if (cont.tags.length < 5) {
-                                          cont.tags.add(value);
-                                        } else {
-                                          errorAlertToast(
-                                              "maximum tags allowed are 5.".tr);
-                                        }
+                                        onSubmitted: (value) {
+                                          if (cont.tags.length < 5) {
+                                            cont.tags.add(value);
+                                          } else {
+                                            errorAlertToast(
+                                                "maximum tags allowed are 5.".tr);
+                                          }
 
-                                        cont.tagsController.clear();
-                                        cont.update();
-                                      },
+                                          cont.tagsController.clear();
+                                          cont.update();
+                                        },
+                                      ),
                                     ),
                                     SizedBox(height: 8..h),
                                     cont.tags.isNotEmpty
@@ -2048,9 +2082,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                                       .white),
                                                         ),
                                                       ),
-                                                      onTap: () {
-                                                        print("$tag selected");
-                                                      },
+                                                      onTap: () {},
                                                     ),
                                                     const SizedBox(width: 4.0),
                                                     InkWell(
@@ -2078,7 +2110,6 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                             SizedBox(
                                 height:
                                     cont.showBelowFields[0] == 1 ? 15.h : 5.h),
-                            Divider(),
                             InkWell(
                               onTap: () async {
                                 SharedPreferences share =
@@ -2100,8 +2131,6 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                       "${authCont.user?.province}, ${authCont.user?.city}";
                                 homeCont.lat1 = share.getString("lat")!;
                                 homeCont.lng1 = share.getString("lng")!;
-                                print("homeCont.lat1111111111111");
-                                print(homeCont.lng1);
                                 // cont.update();
                               },
                               child: Row(
@@ -2143,13 +2172,16 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           // padding: EdgeInsets.only(left: 10),
                                           alignment: Alignment.centerLeft,
                                           decoration: BoxDecoration(
-                                              color: Colors.transparent,
+                                              color: Theme.of(context).brightness == Brightness.dark
+                                                  ? Colors.black
+                                                  : Colors.white,
                                               borderRadius:
-                                                  BorderRadius.circular(5),
+                                                  BorderRadius.circular(8),
                                               border: Border.all(
-                                                  color: Theme.of(context)
-                                                      .dividerColor
-                                                      .withValues(alpha: 0.3))),
+                                                  color: Theme.of(context).brightness == Brightness.dark
+                                                      ? Colors.white
+                                                      : Colors.black,
+                                                  width: 1)),
                                           child: DropdownButtonHideUnderline(
                                             child: DropdownButton2<
                                                 CustomProvinceNameList>(
@@ -2187,8 +2219,6 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                     province = value;
                                                   }
                                                   // province?.provinceName = "${selectedValue!.provinceName}";
-                                                  print(
-                                                      ".............${province?.provinceName}");
                                                 });
                                               },
 
@@ -2227,6 +2257,8 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                         textEditingController,
                                                     decoration: InputDecoration(
                                                       // isDense: true,
+                                                      filled: true,
+                                                      fillColor: Colors.transparent,
                                                       contentPadding:
                                                           const EdgeInsets
                                                               .symmetric(
@@ -2238,12 +2270,12 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                       hintStyle:
                                                           const TextStyle(
                                                               fontSize: 16),
-                                                      border:
-                                                          OutlineInputBorder(
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(8),
-                                                      ),
+                                                      border: InputBorder.none,
+                                                      enabledBorder: InputBorder.none,
+                                                      focusedBorder: InputBorder.none,
+                                                      errorBorder: InputBorder.none,
+                                                      focusedErrorBorder: InputBorder.none,
+                                                      disabledBorder: InputBorder.none,
                                                     ),
                                                   ),
                                                 ),
@@ -2270,13 +2302,16 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           // padding: EdgeInsets.only(left: 10),
                                           alignment: Alignment.centerLeft,
                                           decoration: BoxDecoration(
-                                              color: Colors.transparent,
+                                              color: Theme.of(context).brightness == Brightness.dark
+                                                  ? Colors.black
+                                                  : Colors.white,
                                               borderRadius:
-                                                  BorderRadius.circular(5),
+                                                  BorderRadius.circular(8),
                                               border: Border.all(
-                                                  color: Theme.of(context)
-                                                      .dividerColor
-                                                      .withValues(alpha: 0.3))),
+                                                  color: Theme.of(context).brightness == Brightness.dark
+                                                      ? Colors.white
+                                                      : Colors.black,
+                                                  width: 1)),
                                           child: DropdownButtonHideUnderline(
                                             child: DropdownButton2<
                                                 CustomCitiesList>(
@@ -2373,6 +2408,8 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                         textEditingController,
                                                     decoration: InputDecoration(
                                                       // isDense: true,
+                                                      filled: true,
+                                                      fillColor: Colors.transparent,
                                                       contentPadding:
                                                           const EdgeInsets
                                                               .symmetric(
@@ -2384,12 +2421,12 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                       hintStyle:
                                                           const TextStyle(
                                                               fontSize: 16),
-                                                      border:
-                                                          OutlineInputBorder(
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(8),
-                                                      ),
+                                                      border: InputBorder.none,
+                                                      enabledBorder: InputBorder.none,
+                                                      focusedBorder: InputBorder.none,
+                                                      errorBorder: InputBorder.none,
+                                                      focusedErrorBorder: InputBorder.none,
+                                                      disabledBorder: InputBorder.none,
                                                     ),
                                                   ),
                                                 ),
@@ -2504,7 +2541,6 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                             ),
                             SizedBox(
                                 height: searchCity?.length == 0 ? 5.h : 19.h),
-                            Divider(),
                             InkWell(
                               onTap: () {
                                 cont.showBelowFields[2] == 2
@@ -2556,18 +2592,28 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                     Container(
                                       height: 58..h,
                                       decoration: BoxDecoration(
-                                          color: Colors.transparent,
+                                          color: Theme.of(context).brightness == Brightness.dark
+                                              ? Colors.black
+                                              : Colors.white,
                                           borderRadius:
-                                              BorderRadius.circular(5),
+                                              BorderRadius.circular(8),
                                           border: Border.all(
-                                              color: Theme.of(context)
-                                                  .dividerColor
-                                                  .withValues(alpha: 0.3))),
+                                              color: Theme.of(context).brightness == Brightness.dark
+                                                  ? Colors.white
+                                                  : Colors.black,
+                                              width: 1)),
                                       child: TextField(
                                         controller: cont.websiteController,
                                         decoration: InputDecoration(
                                           hintText: "Website (Optional)".tr,
+                                          filled: true,
+                                          fillColor: Colors.transparent,
                                           border: InputBorder.none,
+                                          enabledBorder: InputBorder.none,
+                                          focusedBorder: InputBorder.none,
+                                          errorBorder: InputBorder.none,
+                                          focusedErrorBorder: InputBorder.none,
+                                          disabledBorder: InputBorder.none,
                                           contentPadding: EdgeInsets.symmetric(
                                               vertical: 20, horizontal: 20),
                                         ),
@@ -2583,19 +2629,29 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                     Container(
                                       height: 58..h,
                                       decoration: BoxDecoration(
-                                          color: Colors.transparent,
+                                          color: Theme.of(context).brightness == Brightness.dark
+                                              ? Colors.black
+                                              : Colors.white,
                                           borderRadius:
-                                              BorderRadius.circular(5),
+                                              BorderRadius.circular(8),
                                           border: Border.all(
-                                              color: Theme.of(context)
-                                                  .dividerColor
-                                                  .withValues(alpha: 0.3))),
+                                              color: Theme.of(context).brightness == Brightness.dark
+                                                  ? Colors.white
+                                                  : Colors.black,
+                                              width: 1)),
                                       child: TextField(
                                         controller: cont.phoneController,
                                         decoration: InputDecoration(
                                           hintText:
                                               "Phone number (Optional)".tr,
+                                          filled: true,
+                                          fillColor: Colors.transparent,
                                           border: InputBorder.none,
+                                          enabledBorder: InputBorder.none,
+                                          focusedBorder: InputBorder.none,
+                                          errorBorder: InputBorder.none,
+                                          focusedErrorBorder: InputBorder.none,
+                                          disabledBorder: InputBorder.none,
                                           contentPadding: EdgeInsets.symmetric(
                                               vertical: 20, horizontal: 20),
                                         ),
@@ -2611,18 +2667,28 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                     Container(
                                       height: 58..h,
                                       decoration: BoxDecoration(
-                                          color: Colors.transparent,
+                                          color: Theme.of(context).brightness == Brightness.dark
+                                              ? Colors.black
+                                              : Colors.white,
                                           borderRadius:
-                                              BorderRadius.circular(5),
+                                              BorderRadius.circular(8),
                                           border: Border.all(
-                                              color: Theme.of(context)
-                                                  .dividerColor
-                                                  .withValues(alpha: 0.3))),
+                                              color: Theme.of(context).brightness == Brightness.dark
+                                                  ? Colors.white
+                                                  : Colors.black,
+                                              width: 1)),
                                       child: TextField(
                                         controller: cont.conditionController,
                                         decoration: InputDecoration(
                                           hintText: "Condition (Optional)".tr,
+                                          filled: true,
+                                          fillColor: Colors.transparent,
                                           border: InputBorder.none,
+                                          enabledBorder: InputBorder.none,
+                                          focusedBorder: InputBorder.none,
+                                          errorBorder: InputBorder.none,
+                                          focusedErrorBorder: InputBorder.none,
+                                          disabledBorder: InputBorder.none,
                                           contentPadding: EdgeInsets.symmetric(
                                               vertical: 20, horizontal: 20),
                                         ),
@@ -2638,18 +2704,28 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                     Container(
                                       height: 58..h,
                                       decoration: BoxDecoration(
-                                          color: Colors.transparent,
+                                          color: Theme.of(context).brightness == Brightness.dark
+                                              ? Colors.black
+                                              : Colors.white,
                                           borderRadius:
-                                              BorderRadius.circular(5),
+                                              BorderRadius.circular(8),
                                           border: Border.all(
-                                              color: Theme.of(context)
-                                                  .dividerColor
-                                                  .withValues(alpha: 0.3))),
+                                              color: Theme.of(context).brightness == Brightness.dark
+                                                  ? Colors.white
+                                                  : Colors.black,
+                                              width: 1)),
                                       child: TextField(
                                         controller: cont.fulfillmentController,
                                         decoration: InputDecoration(
                                           hintText: "Fulfillment (Optional)".tr,
+                                          filled: true,
+                                          fillColor: Colors.transparent,
                                           border: InputBorder.none,
+                                          enabledBorder: InputBorder.none,
+                                          focusedBorder: InputBorder.none,
+                                          errorBorder: InputBorder.none,
+                                          focusedErrorBorder: InputBorder.none,
+                                          disabledBorder: InputBorder.none,
                                           contentPadding: EdgeInsets.symmetric(
                                               vertical: 20, horizontal: 20),
                                         ),
@@ -2665,18 +2741,28 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                     Container(
                                       height: 58..h,
                                       decoration: BoxDecoration(
-                                          color: Colors.transparent,
+                                          color: Theme.of(context).brightness == Brightness.dark
+                                              ? Colors.black
+                                              : Colors.white,
                                           borderRadius:
-                                              BorderRadius.circular(5),
+                                              BorderRadius.circular(8),
                                           border: Border.all(
-                                              color: Theme.of(context)
-                                                  .dividerColor
-                                                  .withValues(alpha: 0.3))),
+                                              color: Theme.of(context).brightness == Brightness.dark
+                                                  ? Colors.white
+                                                  : Colors.black,
+                                              width: 1)),
                                       child: TextField(
                                         controller: cont.paymentController,
                                         decoration: InputDecoration(
                                           hintText: "Payment (Optional)".tr,
+                                          filled: true,
+                                          fillColor: Colors.transparent,
                                           border: InputBorder.none,
+                                          enabledBorder: InputBorder.none,
+                                          focusedBorder: InputBorder.none,
+                                          errorBorder: InputBorder.none,
+                                          focusedErrorBorder: InputBorder.none,
+                                          disabledBorder: InputBorder.none,
                                           contentPadding: EdgeInsets.symmetric(
                                               vertical: 20, horizontal: 20),
                                         ),
@@ -2690,8 +2776,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                 ),
                               ),
                             ),
-                            SizedBox(height: 5.h),
-                            Divider(),
+                            SizedBox(height: 15.h),
                             InkWell(
                               onTap: () {
                                 cont.showBelowFields[3] == 2
@@ -2741,18 +2826,28 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                     Container(
                                       height: 58..h,
                                       decoration: BoxDecoration(
-                                          color: Colors.transparent,
+                                          color: Theme.of(context).brightness == Brightness.dark
+                                              ? Colors.black
+                                              : Colors.white,
                                           borderRadius:
-                                              BorderRadius.circular(5),
+                                              BorderRadius.circular(8),
                                           border: Border.all(
-                                              color: Theme.of(context)
-                                                  .dividerColor
-                                                  .withValues(alpha: 0.3))),
+                                              color: Theme.of(context).brightness == Brightness.dark
+                                                  ? Colors.white
+                                                  : Colors.black,
+                                              width: 1)),
                                       child: TextField(
                                         controller: cont.youTubeController,
                                         decoration: InputDecoration(
                                           hintText: "Video link (Optional)".tr,
+                                          filled: true,
+                                          fillColor: Colors.transparent,
                                           border: InputBorder.none,
+                                          enabledBorder: InputBorder.none,
+                                          focusedBorder: InputBorder.none,
+                                          errorBorder: InputBorder.none,
+                                          focusedErrorBorder: InputBorder.none,
+                                          disabledBorder: InputBorder.none,
                                           contentPadding: EdgeInsets.symmetric(
                                               vertical: 20, horizontal: 20),
                                         ),
@@ -3200,8 +3295,6 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                   //   cont.isSelect2 = index;
                                                   cont.update();
                                                   Navigator.pop(context);
-                                                  print(cont
-                                                      .selectedSubSubCategory);
                                                 }
                                               },
                                               child: Container(
@@ -3362,13 +3455,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           return Padding(
                                             padding: EdgeInsets.symmetric(
                                                 horizontal: 20.w),
-                                            child: Divider(
-                                              height: 1,
-                                              thickness: 0.5,
-                                              color: Theme.of(context)
-                                                  .dividerColor
-                                                  .withValues(alpha: 0.3),
-                                            ),
+                                            child: SizedBox(),
                                           );
                                         },
                                       ),

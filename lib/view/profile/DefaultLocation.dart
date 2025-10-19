@@ -105,11 +105,15 @@ class _DefaultLocationState extends State<DefaultLocation> {
                                 // padding: EdgeInsets.only(left: 10),
                                 alignment: Alignment.centerLeft,
                                 decoration: BoxDecoration(
-                                    color: Colors.transparent,
-                                    borderRadius: BorderRadius.circular(5),
+                                    color: Theme.of(context).brightness == Brightness.dark
+                                        ? Colors.black
+                                        : Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
-                                        color: AppColors.k0xFFA9ABAC
-                                            .withValues(alpha: .33))),
+                                        color: Theme.of(context).brightness == Brightness.dark
+                                            ? Colors.white
+                                            : Colors.black,
+                                        width: 1)),
                                 child: DropdownButtonHideUnderline(
                                   child:
                                       DropdownButton2<CustomProvinceNameList>(
@@ -212,11 +216,15 @@ class _DefaultLocationState extends State<DefaultLocation> {
                                 // padding: EdgeInsets.only(left: 10),
                                 alignment: Alignment.centerLeft,
                                 decoration: BoxDecoration(
-                                    color: Colors.transparent,
-                                    borderRadius: BorderRadius.circular(5),
+                                    color: Theme.of(context).brightness == Brightness.dark
+                                        ? Colors.black
+                                        : Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
-                                        color: AppColors.k0xFFA9ABAC
-                                            .withValues(alpha: .33))),
+                                        color: Theme.of(context).brightness == Brightness.dark
+                                            ? Colors.white
+                                            : Colors.black,
+                                        width: 1)),
                                 child: DropdownButtonHideUnderline(
                                   child: DropdownButton2<CustomCitiesList>(
                                     isExpanded: true,

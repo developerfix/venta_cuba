@@ -52,6 +52,16 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                       Container(
                         height: 60..h,
                         width: MediaQuery.of(context).size.width,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.black
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.white
+                                  : Colors.black,
+                              width: 1)),
                         child: Center(
                           child: TextField(
                             controller: con.forgetPasswordCont,

@@ -202,10 +202,15 @@ class _VendorScreenState extends State<VendorScreen> {
                       Container(
                         height: 58..h,
                         decoration: BoxDecoration(
-                            color: Colors.transparent,
-                            borderRadius: BorderRadius.circular(5),
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? Colors.black
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                                color: AppColors.k0xFFA9ABAC.withValues(alpha: .33))),
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.white
+                                    : Colors.black,
+                                width: 1)),
                         child: TextField(
                           controller: cont.businessNameCont,
                           inputFormatters: [

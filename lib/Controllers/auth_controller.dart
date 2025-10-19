@@ -728,7 +728,8 @@ class AuthController extends GetxController {
 
       // Generate a unique device token for this user
       // If user is not yet logged in, create a temporary token
-      final userId = user?.userId ?? 'temp_${DateTime.now().millisecondsSinceEpoch}';
+      final userId =
+          user?.userId ?? 'temp_${DateTime.now().millisecondsSinceEpoch}';
       token = 'venta_cuba_user_$userId';
       deviceToken = token;
       print('📱 Device token refreshed: $deviceToken');
@@ -1107,7 +1108,9 @@ class AuthController extends GetxController {
     String? loginUserId = value['user_id']?.toString();
     print('🔍 User ID from login response: $loginUserId');
 
-    if (loginUserId != null && loginUserId.isNotEmpty && loginUserId != 'null') {
+    if (loginUserId != null &&
+        loginUserId.isNotEmpty &&
+        loginUserId != 'null') {
       // Generate and save device token IMMEDIATELY with the user_id from login
       deviceToken = 'venta_cuba_user_$loginUserId';
       print('🔔 Generated device token from login response: $deviceToken');

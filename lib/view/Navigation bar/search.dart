@@ -270,7 +270,15 @@ class _SearchState extends State<Search> {
                             Container(
                               width: MediaQuery.of(context).size.width * .75,
                               decoration: BoxDecoration(
-                                color: Theme.of(context).cardColor,
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.black
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                    color: Theme.of(context).brightness == Brightness.dark
+                                        ? Colors.white
+                                        : Colors.black,
+                                    width: 1),
                               ),
                               child: TextField(
                                 controller: cont.searchController,
@@ -302,9 +310,10 @@ class _SearchState extends State<Search> {
                                     ?.color,
                                 decoration: InputDecoration(
                                     border: InputBorder.none,
-                                    contentPadding:
-                                        EdgeInsets.fromLTRB(0, 0, 0, 0),
+                                    enabledBorder: InputBorder.none,
                                     focusedBorder: InputBorder.none,
+                                    contentPadding: EdgeInsets.symmetric(
+                                        vertical: 10, horizontal: 20),
                                     prefixIcon: InkWell(
                                       onTap: () {
                                         // Reset price filter when search icon is tapped
@@ -1657,11 +1666,13 @@ class _PokeToDialBottomSheetContentState
                       width: MediaQuery.of(context).size.width * .42,
                       decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(5),
-                          color: Theme.of(context).cardColor,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.black
+                              : Colors.white,
                           border: Border.all(
-                            color: Theme.of(context)
-                                .dividerColor
-                                .withValues(alpha: 0.3),
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white
+                                : Colors.black,
                             width: 1,
                           )),
                       child: Center(
@@ -1687,11 +1698,13 @@ class _PokeToDialBottomSheetContentState
                       width: MediaQuery.of(context).size.width * .42,
                       decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(5),
-                          color: Theme.of(context).cardColor,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.black
+                              : Colors.white,
                           border: Border.all(
-                            color: Theme.of(context)
-                                .dividerColor
-                                .withValues(alpha: 0.3),
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white
+                                : Colors.black,
                             width: 1,
                           )),
                       child: Center(

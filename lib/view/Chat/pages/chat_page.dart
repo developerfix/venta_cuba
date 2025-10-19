@@ -672,7 +672,9 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                           child: Container(
                             padding: EdgeInsets.symmetric(horizontal: 12.w),
                             decoration: BoxDecoration(
-                                color: Theme.of(context).cardColor,
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.black
+                                    : Colors.white,
                                 borderRadius: BorderRadius.circular(30.r),
                                 boxShadow: [
                                   BoxShadow(
@@ -685,9 +687,10 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                                   )
                                 ],
                                 border: Border.all(
-                                    color: AppColors.textPrimary
-                                        .withValues(alpha: 0.5),
-                                    width: 1.5)),
+                                    color: Theme.of(context).brightness == Brightness.dark
+                                        ? Colors.white
+                                        : Colors.black,
+                                    width: 1)),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [

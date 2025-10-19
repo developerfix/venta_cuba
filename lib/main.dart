@@ -65,10 +65,7 @@ Future<void> initializeSharedPreferences() async {
 }
 
 void main() async {
-  print('🚀 === VENTA CUBA STARTUP - 1 ===');
   WidgetsFlutterBinding.ensureInitialized();
-
-  print('🚀 === VENTA CUBA STARTUP - 2 - Flutter binding initialized ===');
 
   // Initialize premium systems
   PremiumErrorHandler.initialize();
@@ -76,8 +73,6 @@ void main() async {
 
   // Initialize critical services only, others will load in background
   _initializeServicesInBackground();
-
-  print('🚀 === VENTA CUBA STARTUP - 3 - Premium systems & background services initiated ===');
 
   // Start app immediately
   runApp(const MyApp());
@@ -373,7 +368,8 @@ class _MyAppState extends State<MyApp> {
             // Premium optimized transitions
             defaultTransition: Transition.cupertino,
             transitionDuration: const Duration(milliseconds: 300),
-            customTransition: null, // Will be handled by our premium transitions
+            customTransition:
+                null, // Will be handled by our premium transitions
             defaultGlobalState: true, // Enable state preservation
 
             home: const WhiteScreen(),
