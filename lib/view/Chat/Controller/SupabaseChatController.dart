@@ -1439,20 +1439,37 @@ class SupabaseChatController extends GetxController {
   }
 
   // Upload image to Supabase storage
-  Future<String?> uploadImage(File imageFile) async {
+  Future<String?> uploadImage(dynamic imageFile) async {
     try {
-      final fileName = 'chat_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final bytes = await imageFile.readAsBytes();
+      print('🔄 SupabaseChatController: Starting image upload...');
+      print('🔄 Image file type: ${imageFile.runtimeType}');
 
+      final fileName = 'chat_${DateTime.now().millisecondsSinceEpoch}.jpg';
+
+      // Handle both XFile and File types
+      late final File file;
+      if (imageFile is File) {
+        file = imageFile;
+      } else {
+        // Convert XFile to File
+        file = File(imageFile.path);
+      }
+
+      print('🔄 Reading file bytes...');
+      final bytes = await file.readAsBytes();
+      print('🔄 File size: ${bytes.length} bytes');
+
+      print('🔄 Uploading to Supabase storage...');
       await _supabase.storage.from('chat-images').uploadBinary(fileName, bytes);
 
       // Get public URL
       final publicUrl =
           _supabase.storage.from('chat-images').getPublicUrl(fileName);
 
+      print('✅ Upload successful! Public URL: $publicUrl');
       return publicUrl;
     } catch (e) {
-      print('Error uploading image: $e');
+      print('❌ Error uploading image: $e');
       return null;
     }
   }

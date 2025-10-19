@@ -102,7 +102,8 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
     PushService.setAppLifecycleState(isInForeground);
 
     if (state == AppLifecycleState.resumed && mounted) {
-      print('🔄 ChatPage: App resumed - refreshing messages for chat ${widget.chatId}');
+      print(
+          '🔄 ChatPage: App resumed - refreshing messages for chat ${widget.chatId}');
 
       // CRITICAL: Refresh messages for this specific chat when app resumes
       if (widget.chatId != null) {
@@ -117,9 +118,12 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
           authCont.user!.userId.toString(),
         );
       }
-    } else if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
-      print('📱 ChatPage: App backgrounded while chat ${widget.chatId} was open');
-      print('📱 Notifications will now be allowed for this chat while app is backgrounded');
+    } else if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      print(
+          '📱 ChatPage: App backgrounded while chat ${widget.chatId} was open');
+      print(
+          '📱 Notifications will now be allowed for this chat while app is backgrounded');
     }
   }
 
@@ -608,7 +612,8 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
               width: MediaQuery.of(context).size.width,
               child: Container(
                 color: Colors.transparent,
-                padding: EdgeInsets.only(top: 2.h, bottom: 8.h, right: 5.w),
+                padding: EdgeInsets.only(
+                    top: 2.h, bottom: 8.h, left: 5.w, right: 5.w),
                 width: MediaQuery.of(context).size.width,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -668,14 +673,17 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                         constraints: BoxConstraints(
                           maxHeight: 120.h, // Maximum height (about 4 lines)
                         ),
+                        margin: EdgeInsets.symmetric(vertical: 2.h),
                         child: IntrinsicHeight(
                           child: Container(
-                            padding: EdgeInsets.symmetric(horizontal: 12.w),
+                            clipBehavior: Clip.antiAlias,
+                            padding: EdgeInsets.symmetric(horizontal: 16.w),
                             decoration: BoxDecoration(
-                                color: Theme.of(context).brightness == Brightness.dark
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
                                     ? Colors.black
                                     : Colors.white,
-                                borderRadius: BorderRadius.circular(30.r),
+                                borderRadius: BorderRadius.circular(25.r),
                                 boxShadow: [
                                   BoxShadow(
                                     color: Theme.of(context)
@@ -687,7 +695,8 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                                   )
                                 ],
                                 border: Border.all(
-                                    color: Theme.of(context).brightness == Brightness.dark
+                                    color: Theme.of(context).brightness ==
+                                            Brightness.dark
                                         ? Colors.white
                                         : Colors.black,
                                     width: 1)),
@@ -695,62 +704,72 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Expanded(
-                                  child: TextField(
-                                    focusNode: focusNode,
-                                    controller: cont.messageController,
-                                    maxLines:
-                                        null, // Allow unlimited lines within maxHeight
-                                    minLines: 1, // Start with 1 line only
-                                    keyboardType: TextInputType.multiline,
-                                    textAlignVertical: TextAlignVertical.center,
-                                    scrollPhysics: BouncingScrollPhysics(),
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      color: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium
-                                          ?.color,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(2.0),
+                                    child: TextField(
+                                      focusNode: focusNode,
+
+                                      controller: cont.messageController,
+                                      maxLines:
+                                          null, // Allow unlimited lines within maxHeight
+                                      minLines: 1, // Start with 1 line only
+                                      keyboardType: TextInputType.multiline,
+                                      textAlignVertical:
+                                          TextAlignVertical.center,
+                                      scrollPhysics: BouncingScrollPhysics(),
+                                      style: TextStyle(
+                                        fontSize: 14.sp,
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.color,
+                                      ),
+                                      decoration: InputDecoration(
+                                          fillColor:
+                                              Theme.of(context).brightness !=
+                                                      Brightness.dark
+                                                  ? Colors.white
+                                                  : Colors.black,
+                                          isDense: true,
+                                          contentPadding: EdgeInsets.symmetric(
+                                            horizontal: 0,
+                                            vertical:
+                                                12.h, // Proper vertical padding
+                                          ),
+                                          border: InputBorder.none,
+                                          enabledBorder: InputBorder.none,
+                                          focusedBorder: InputBorder.none,
+                                          errorBorder: InputBorder.none,
+                                          focusedErrorBorder: InputBorder.none,
+                                          hintText: 'Type Message'.tr,
+                                          hintStyle: TextStyle(
+                                            fontSize: 14.sp,
+                                            color: Theme.of(context)
+                                                    .textTheme
+                                                    .bodyMedium
+                                                    ?.color
+                                                    ?.withValues(alpha: 0.5) ??
+                                                Colors.black
+                                                    .withValues(alpha: 0.5),
+                                          )),
+                                      onTap: () {
+                                        Future.delayed(
+                                            Duration(milliseconds: 300), () {
+                                          _scrollToBottom(animated: true);
+                                        });
+                                        cont.update();
+                                      },
+                                      onChanged: (String? value) {
+                                        if (cont.messageController.text
+                                            .isNotEmpty) {
+                                          chatCont.isTyping = true;
+                                          cont.update();
+                                        } else {
+                                          cont.isTyping = false;
+                                          cont.update();
+                                        }
+                                      },
                                     ),
-                                    decoration: InputDecoration(
-                                        isDense: true,
-                                        contentPadding: EdgeInsets.symmetric(
-                                          horizontal: 0,
-                                          vertical:
-                                              12.h, // Proper vertical padding
-                                        ),
-                                        border: InputBorder.none,
-                                        enabledBorder: InputBorder.none,
-                                        focusedBorder: InputBorder.none,
-                                        errorBorder: InputBorder.none,
-                                        focusedErrorBorder: InputBorder.none,
-                                        hintText: 'Type Message'.tr,
-                                        hintStyle: TextStyle(
-                                          fontSize: 14.sp,
-                                          color: Theme.of(context)
-                                                  .textTheme
-                                                  .bodyMedium
-                                                  ?.color
-                                                  ?.withValues(alpha: 0.5) ??
-                                              Colors.black
-                                                  .withValues(alpha: 0.5),
-                                        )),
-                                    onTap: () {
-                                      Future.delayed(
-                                          Duration(milliseconds: 300), () {
-                                        _scrollToBottom(animated: true);
-                                      });
-                                      cont.update();
-                                    },
-                                    onChanged: (String? value) {
-                                      if (cont
-                                          .messageController.text.isNotEmpty) {
-                                        chatCont.isTyping = true;
-                                        cont.update();
-                                      } else {
-                                        cont.isTyping = false;
-                                        cont.update();
-                                      }
-                                    },
                                   ),
                                 ),
                                 SizedBox(width: 8.w),
@@ -1395,6 +1414,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
 
   Future uploadImage(var pickedFile) async {
     try {
+      print('🔄 Starting image upload process...');
       showLoading();
 
       String? imageUrl = await chatCont.uploadImage(pickedFile);
@@ -1402,24 +1422,42 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
       Get.back(); // Hide loading
 
       if (imageUrl != null) {
+        print('✅ Image uploaded successfully: $imageUrl');
         // Send image message
         await sendImageMessage(imageUrl);
+        print('✅ Image message sent successfully');
       } else {
-        // Silent failure - image upload returned null but no exception
-        print('Image upload failed: uploadImage returned null');
+        print('❌ Image upload failed: uploadImage returned null');
+        // Show error to user
+        Get.snackbar(
+          'Upload Failed'.tr,
+          'Failed to upload image. Please try again.'.tr,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
       }
     } catch (error) {
       Get.back(); // Hide loading
 
-      // Log the error for debugging but don't show to user
-      print('Image upload error: ${error.toString()}');
+      print('❌ Image upload error: ${error.toString()}');
 
+      // Show error to user
+      Get.snackbar(
+        'Upload Error'.tr,
+        'Error uploading image: ${error.toString()}'.tr,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 
   Future sendImageMessage(String imageUrl) async {
     try {
+      print('📤 Sending image message with URL: $imageUrl');
       String? id = widget.chatId ?? widget.createChatid;
+      print('📤 Chat ID: $id');
 
       Map<String, dynamic> chatMessageData = {
         "message": imageUrl,
@@ -1442,7 +1480,9 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
         "listingLocation": widget.listingLocation,
       };
 
+      print('📤 Message data prepared: ${chatMessageData.keys}');
       await chatCont.sendMessage(id ?? "", chatMessageData);
+      print('✅ Image message sent to database');
 
       // Scroll to bottom
       Future.delayed(Duration(milliseconds: 100), () {
@@ -1451,6 +1491,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
 
       // Firebase notifications are sent automatically by SupabaseChatController
     } catch (e) {
+      print('❌ Error sending image message: $e');
     }
   }
 
