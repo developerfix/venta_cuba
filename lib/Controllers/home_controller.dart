@@ -52,7 +52,7 @@ List<String> beforeData = [];
 
 //Your package is in pending, waiting for admin approval.
 class HomeController extends GetxController {
-  TextEditingController? priceCont = TextEditingController(text: "0");
+  TextEditingController? priceCont = TextEditingController();
   TextEditingController addressCont = TextEditingController();
   TextEditingController addressController = TextEditingController();
   TextEditingController titleCont = TextEditingController();
