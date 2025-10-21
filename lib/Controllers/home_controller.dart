@@ -365,8 +365,26 @@ class HomeController extends GetxController {
         Get.log("HOME POST COUNT ${dataListing.length}");
 
         if (dataListing.isNotEmpty) {
-          List<ListingModel> newListings =
-              dataListing.map((e) => ListingModel.fromJson(e)).toList();
+          List<ListingModel> newListings = [];
+
+          // Parse each item with error handling to prevent crashes
+          for (var element in dataListing) {
+            try {
+              if (element != null && element is Map<String, dynamic>) {
+                // Validate required fields before parsing
+                String? itemId = element['item_id']?.toString();
+                if (itemId != null && itemId.isNotEmpty) {
+                  newListings.add(ListingModel.fromJson(element));
+                } else {
+                  Get.log("Skipping item with null/empty item_id: ${element['id']}", isError: true);
+                }
+              }
+            } catch (e, stackTrace) {
+              Get.log("Error parsing listing item: $e", isError: true);
+              Get.log("Stack trace: $stackTrace", isError: true);
+              Get.log("Problematic element: $element", isError: true);
+            }
+          }
 
           // Location-based filtering logic
           if (noLocationSelected) {
@@ -410,12 +428,26 @@ class HomeController extends GetxController {
           }).toList();
           Get.log("After business/personal filtering (${authCont.isBusinessAccount ? 'Business' : 'Personal'}): ${newListings.length} items");
 
+          // Filter out duplicates before adding to list
+          Set<String> existingItemIds = listingModelList
+              .map((listing) => listing.itemId ?? '')
+              .where((id) => id.isNotEmpty)
+              .toSet();
+
+          List<ListingModel> uniqueNewListings = newListings.where((listing) {
+            String itemId = listing.itemId ?? '';
+            return itemId.isNotEmpty && !existingItemIds.contains(itemId);
+          }).toList();
+
+          Get.log("📝 Filtered ${newListings.length - uniqueNewListings.length} duplicate items");
+          Get.log("📝 Adding ${uniqueNewListings.length} unique items");
+
           // Always shuffle new items before adding them to the list
           // This ensures randomization on both initial load and scroll
-          newListings.shuffle();
-          Get.log("📝 Shuffled ${newListings.length} new items");
+          uniqueNewListings.shuffle();
+          Get.log("📝 Shuffled ${uniqueNewListings.length} unique new items");
 
-          listingModelList.addAll(newListings);
+          listingModelList.addAll(uniqueNewListings);
 
           // Additional shuffle for entire list on first load
           if (currentPage.value == 1) {
@@ -1995,8 +2027,26 @@ class HomeController extends GetxController {
         Get.log("API returned ${dataListing.length} items");
 
         if (dataListing.isNotEmpty) {
-          List<ListingModel> newListings =
-              dataListing.map((e) => ListingModel.fromJson(e)).toList();
+          List<ListingModel> newListings = [];
+
+          // Parse each search item with error handling to prevent crashes
+          for (var element in dataListing) {
+            try {
+              if (element != null && element is Map<String, dynamic>) {
+                // Validate required fields before parsing
+                String? itemId = element['item_id']?.toString();
+                if (itemId != null && itemId.isNotEmpty) {
+                  newListings.add(ListingModel.fromJson(element));
+                } else {
+                  Get.log("Search: Skipping item with null/empty item_id: ${element['id']}", isError: true);
+                }
+              }
+            } catch (e, stackTrace) {
+              Get.log("Search: Error parsing listing item: $e", isError: true);
+              Get.log("Search: Stack trace: $stackTrace", isError: true);
+              Get.log("Search: Problematic element: $element", isError: true);
+            }
+          }
 
           // Debug: Log first few items to verify category filtering
           for (int i = 0;
@@ -2004,6 +2054,52 @@ class HomeController extends GetxController {
               i++) {
             Get.log(
                 "Item ${i + 1}: '${newListings[i].title}' - Category: ${newListings[i].category?.name} (ID: ${newListings[i].category?.id})");
+          }
+
+          // LOCATION-BASED FILTERING LOGIC (same as home page)
+          // Check if no location is selected
+          bool noLocationSelected = false;
+          // Check for default location or empty location
+          if (address == null ||
+              address == '' ||
+              address == "4JF7+RM6, Av. Paseo, La Habana, Cuba" ||
+              (lat == "23.124792615936276" &&
+                  lng == "-82.38597269330762" &&
+                  radius == 50.0)) {
+            noLocationSelected = true;
+            Get.log(
+                "📍 SEARCH: No location selected - will filter to user's own posts only");
+          }
+
+          // Location-based filtering logic
+          if (noLocationSelected) {
+            // NO LOCATION SELECTED: Show only current user's items
+            if (authCont.user?.userId != null) {
+              // Filter to show ONLY user's own posts
+              List<ListingModel> userOwnPosts = newListings.where((listing) {
+                bool isOwnPost = listing.userId?.toString() == authCont.user?.userId?.toString();
+                return isOwnPost;
+              }).toList();
+
+              newListings = userOwnPosts;
+              Get.log("📍 SEARCH NO LOCATION: Showing ${newListings.length} of user's own posts only");
+
+              // Clear list if no user posts found on first page
+              if (newListings.isEmpty && currentSearchPage.value == 1) {
+                listingModelSearchList.clear();
+                hasMoreSearch.value = false; // Stop pagination if no user posts
+                Get.log("📍 SEARCH NO LOCATION: No user posts found - stopping pagination");
+              }
+            } else {
+              // Not logged in + no location = show nothing
+              newListings = [];
+              listingModelSearchList.clear();
+              hasMoreSearch.value = false;
+              Get.log("📍 SEARCH NO LOCATION + NOT LOGGED IN: Showing no posts");
+            }
+          } else {
+            // LOCATION SELECTED: Show items from that location (all users)
+            Get.log("📍 SEARCH LOCATION SELECTED: Showing ${newListings.length} posts from location: ${address}");
           }
 
           // Apply client-side price filtering
@@ -2021,7 +2117,21 @@ class HomeController extends GetxController {
           }).toList();
           Get.log("After business/personal filtering (${authCont.isBusinessAccount ? 'Business' : 'Personal'}): ${newListings.length} items");
 
-          listingModelSearchList.addAll(newListings);
+          // Filter out duplicates for search results
+          Set<String> existingSearchItemIds = listingModelSearchList
+              .map((listing) => listing.itemId ?? '')
+              .where((id) => id.isNotEmpty)
+              .toSet();
+
+          List<ListingModel> uniqueSearchListings = newListings.where((listing) {
+            String itemId = listing.itemId ?? '';
+            return itemId.isNotEmpty && !existingSearchItemIds.contains(itemId);
+          }).toList();
+
+          Get.log("📝 Search: Filtered ${newListings.length - uniqueSearchListings.length} duplicate items");
+          Get.log("📝 Search: Adding ${uniqueSearchListings.length} unique items");
+
+          listingModelSearchList.addAll(uniqueSearchListings);
           currentSearchPage.value++; // Increment page correctly
           hasMoreSearch.value =
               dataListing.length == 15; // More pages available?

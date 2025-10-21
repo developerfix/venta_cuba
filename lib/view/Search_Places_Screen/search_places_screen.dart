@@ -96,18 +96,37 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
                           width: 50,
                           padding: EdgeInsets.only(left: 10),
                           decoration: BoxDecoration(
-                              color: Colors.white, shape: BoxShape.circle),
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.grey[800]
+                                  : Colors.white,
+                              shape: BoxShape.circle),
                           child: IconButton(
                             onPressed: () {
                               Get.back();
                             },
-                            icon: const Icon(Icons.arrow_back_ios),
+                            icon: Icon(
+                              Icons.arrow_back_ios,
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.white
+                                  : Colors.black,
+                            ),
                           ),
                         ),
                         SizedBox(
                           width: 10.w,
                         ),
-                        SizedBox(width: 230, child: Text(cont.address)),
+                        SizedBox(
+                          width: 230,
+                          child: Text(
+                            cont.address,
+                            style: TextStyle(
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.white
+                                  : Colors.black,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          )
+                        ),
                         SizedBox(
                           width: 10.w,
                         ),
@@ -192,7 +211,9 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
                           height: 90.h,
                           // width: 300.w,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? Colors.grey[800]
+                                : Colors.white,
                             borderRadius: BorderRadius.only(
                               topLeft: Radius.circular(10),
                               topRight: Radius.circular(10),
@@ -206,7 +227,13 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text("Search Range".tr),
+                                    Text(
+                                      "Search Range".tr,
+                                      style: TextStyle(
+                                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
                                     Container(
                                       height: 20.h,
                                       width: 100.w,
@@ -214,7 +241,9 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
                                           borderRadius:
                                               BorderRadius.circular(5),
                                           border: Border.all(
-                                              color: Colors.black26)),
+                                              color: Theme.of(context).brightness == Brightness.dark
+                                                  ? Colors.grey[500]!
+                                                  : Colors.black26)),
                                       child: Padding(
                                         padding: EdgeInsets.symmetric(
                                             horizontal: 5.w),
@@ -222,11 +251,19 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceBetween,
                                           children: [
-                                            Text("${cont.radius.toInt()}"),
+                                            Text(
+                                              "${cont.radius.toInt()}",
+                                              style: TextStyle(
+                                                color: Theme.of(context).textTheme.bodyLarge?.color,
+                                              ),
+                                            ),
                                             Text(
                                               "Km",
                                               style: TextStyle(
-                                                  color: Colors.black26),
+                                                color: Theme.of(context).brightness == Brightness.dark
+                                                    ? Colors.grey[400]
+                                                    : Colors.black26,
+                                              ),
                                             ),
                                           ],
                                         ),
@@ -236,8 +273,15 @@ class _SearchPlacesScreenState extends State<SearchPlacesScreen> {
                                 ),
                                 SliderTheme(
                                     data: SliderTheme.of(context).copyWith(
-                                      activeTrackColor: Colors.white,
-                                      thumbColor: Colors.white,
+                                      activeTrackColor: Theme.of(context).brightness == Brightness.dark
+                                          ? Colors.grey[600]
+                                          : Colors.white,
+                                      inactiveTrackColor: Theme.of(context).brightness == Brightness.dark
+                                          ? Colors.grey[700]
+                                          : Colors.grey[300],
+                                      thumbColor: Theme.of(context).brightness == Brightness.dark
+                                          ? Colors.grey[300]
+                                          : Colors.white,
                                       overlayColor: Color(0x29eb1555),
                                       thumbShape: CircleThumbShape(),
                                       overlayShape: RoundSliderOverlayShape(
@@ -388,11 +432,11 @@ class CircleThumbShape extends SliderComponentShape {
     final Canvas canvas = context.canvas;
 
     final fillPaint = Paint()
-      ..color = Colors.white
+      ..color = sliderTheme.thumbColor ?? Colors.white
       ..style = PaintingStyle.fill;
 
     final borderPaint = Paint()
-      ..color = sliderTheme.thumbColor!
+      ..color = const Color(0xFF0254B8)
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 

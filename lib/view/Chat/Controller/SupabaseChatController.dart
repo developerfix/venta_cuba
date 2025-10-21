@@ -1251,16 +1251,28 @@ class SupabaseChatController extends GetxController {
   // Check if user is online
   bool isUserOnline(Map<String, dynamic> presence) {
     if (presence['is_online'] == true) {
+      // Double check with timestamp to avoid stale data
+      if (presence['last_active'] != null) {
+        try {
+          final lastActive = DateTime.parse(presence['last_active']);
+          final now = DateTime.now().toUtc();
+          final difference = now.difference(lastActive);
+          // Only consider truly online if updated within last 2 minutes
+          return difference.inMinutes < 2;
+        } catch (e) {
+          return false;
+        }
+      }
       return true;
     }
 
-    // Check last active time - consider online if active within last 5 minutes
+    // Check last active time - consider online if active within last 3 minutes
     if (presence['last_active'] != null) {
       try {
         final lastActive = DateTime.parse(presence['last_active']);
         final now = DateTime.now().toUtc();
         final difference = now.difference(lastActive);
-        return difference.inMinutes < 5;
+        return difference.inMinutes < 3;
       } catch (e) {
         return false;
       }

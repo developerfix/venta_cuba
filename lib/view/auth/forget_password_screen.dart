@@ -49,51 +49,55 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                               "Please enter your email address below and we will send you an email to change your password."
                                   .tr),
                       SizedBox(height: 40..h),
-                      Container(
-                        height: 60..h,
-                        width: MediaQuery.of(context).size.width,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).brightness == Brightness.dark
+                      TextField(
+                        controller: con.forgetPasswordCont,
+                        textAlignVertical: TextAlignVertical.center,
+                        cursorColor:
+                            Theme.of(context).textTheme.bodyLarge?.color ??
+                                Colors.black,
+                        decoration: InputDecoration(
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 20),
+                          prefixIcon: Icon(
+                            Icons.email,
+                            color: Color(0xFFA9ABAC),
+                          ),
+                          hintText: 'Enter your Email'.tr,
+                          hintStyle: TextStyle(color: Color(0xFFA9ABAC)),
+                          filled: true,
+                          fillColor: Theme.of(context).brightness == Brightness.dark
                               ? Colors.black
                               : Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(
                               color: Theme.of(context).brightness == Brightness.dark
                                   ? Colors.white
                                   : Colors.black,
-                              width: 1)),
-                        child: Center(
-                          child: TextField(
-                            controller: con.forgetPasswordCont,
-                            textAlignVertical: TextAlignVertical.center,
-                            cursorColor:
-                                Theme.of(context).textTheme.bodyLarge?.color ??
-                                    Colors.black,
-                            decoration: InputDecoration(
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.fromLTRB(0, 20, 0, 10),
-                              prefixIcon: Icon(
-                                Icons.email,
-                                color: Color(0xFFA9ABAC),
-                              ),
-                              hintText: 'Enter your Email'.tr,
-                              hintStyle: TextStyle(color: Color(0xFFA9ABAC)),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10.0),
-                                borderSide: BorderSide(),
-                              ),
-                              errorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10.0),
-                                borderSide: BorderSide(),
-                              ),
-                              focusedErrorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10.0),
-                                borderSide: BorderSide(),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10.0),
-                                borderSide: BorderSide(),
-                              ),
+                              width: 1,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.white
+                                  : Colors.black,
+                              width: 1,
+                            ),
+                          ),
+                          errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(
+                              color: Colors.red,
+                              width: 1,
+                            ),
+                          ),
+                          focusedErrorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(
+                              color: Colors.red,
+                              width: 1,
                             ),
                           ),
                         ),

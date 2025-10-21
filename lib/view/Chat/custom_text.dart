@@ -67,9 +67,39 @@ class CustomTextMonthDays extends StatelessWidget {
 
   String time = parts[0];
   String unit = parts[1];
-  String value = unit == 'month' ? "mes" : "día";
-  
-  return ' hace '+time+' ${value}';
+
+  // Handle both singular and plural forms
+  String value;
+  if (unit == 'month' || unit == 'months') {
+    // Handle singular vs plural for months
+    int timeValue = int.tryParse(time) ?? 1;
+    value = timeValue == 1 ? "mes" : "meses";
+  } else if (unit == 'day' || unit == 'days') {
+    // Handle singular vs plural for days
+    int timeValue = int.tryParse(time) ?? 1;
+    value = timeValue == 1 ? "día" : "días";
+  } else if (unit == 'year' || unit == 'years') {
+    // Handle singular vs plural for years
+    int timeValue = int.tryParse(time) ?? 1;
+    value = timeValue == 1 ? "año" : "años";
+  } else if (unit == 'week' || unit == 'weeks') {
+    // Handle singular vs plural for weeks
+    int timeValue = int.tryParse(time) ?? 1;
+    value = timeValue == 1 ? "semana" : "semanas";
+  } else if (unit == 'hour' || unit == 'hours') {
+    // Handle singular vs plural for hours
+    int timeValue = int.tryParse(time) ?? 1;
+    value = timeValue == 1 ? "hora" : "horas";
+  } else if (unit == 'minute' || unit == 'minutes') {
+    // Handle singular vs plural for minutes
+    int timeValue = int.tryParse(time) ?? 1;
+    value = timeValue == 1 ? "minuto" : "minutos";
+  } else {
+    // Default fallback
+    value = unit;
+  }
+
+  return 'hace $time $value';
 }
      if (text != null) {
   

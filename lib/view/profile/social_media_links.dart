@@ -77,7 +77,7 @@ class _SocialMediaLinksState extends State<SocialMediaLinks> {
                             Container(
                               height: 24..h,
                               width: 24..w,
-                              child: Image.asset('assets/images/insta_opt.jpg'),
+                              child: Image.asset('assets/images/youtube.png'),
                             ),
                             SizedBox(width: 16..w),
                             Expanded(
@@ -189,7 +189,7 @@ class _SocialMediaLinksState extends State<SocialMediaLinks> {
                             Container(
                               height: 24..h,
                               width: 24..w,
-                              child: Image.asset('assets/images/tiktok_opt.jpg'),
+                              child: Image.asset('assets/images/x.png'),
                             ),
                             SizedBox(width: 16..w),
                             Expanded(

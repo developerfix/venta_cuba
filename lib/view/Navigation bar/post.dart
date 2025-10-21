@@ -1389,12 +1389,14 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                             Container(
                               height: 58..h,
                               decoration: BoxDecoration(
-                                  color: Theme.of(context).brightness == Brightness.dark
+                                  color: Theme.of(context).brightness ==
+                                          Brightness.dark
                                       ? Colors.black
                                       : Colors.white,
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
-                                      color: Theme.of(context).brightness == Brightness.dark
+                                      color: Theme.of(context).brightness ==
+                                              Brightness.dark
                                           ? Colors.white
                                           : Colors.black,
                                       width: 1)),
@@ -1461,12 +1463,14 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                     horizontal: 20, vertical: 18),
                                 height: 58..h,
                                 decoration: BoxDecoration(
-                                    color: Theme.of(context).brightness == Brightness.dark
+                                    color: Theme.of(context).brightness ==
+                                            Brightness.dark
                                         ? Colors.black
                                         : Colors.white,
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
-                                        color: Theme.of(context).brightness == Brightness.dark
+                                        color: Theme.of(context).brightness ==
+                                                Brightness.dark
                                             ? Colors.white
                                             : Colors.black,
                                         width: 1)),
@@ -1485,12 +1489,14 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                             Container(
                               height: 58..h,
                               decoration: BoxDecoration(
-                                  color: Theme.of(context).brightness == Brightness.dark
+                                  color: Theme.of(context).brightness ==
+                                          Brightness.dark
                                       ? Colors.black
                                       : Colors.white,
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
-                                      color: Theme.of(context).brightness == Brightness.dark
+                                      color: Theme.of(context).brightness ==
+                                              Brightness.dark
                                           ? Colors.white
                                           : Colors.black,
                                       width: 1)),
@@ -1566,12 +1572,14 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                               // height: 160..h,
                               width: MediaQuery.of(context).size.width,
                               decoration: BoxDecoration(
-                                  color: Theme.of(context).brightness == Brightness.dark
+                                  color: Theme.of(context).brightness ==
+                                          Brightness.dark
                                       ? Colors.black
                                       : Colors.white,
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
-                                      color: Theme.of(context).brightness == Brightness.dark
+                                      color: Theme.of(context).brightness ==
+                                              Brightness.dark
                                           ? Colors.white
                                           : Colors.black,
                                       width: 1)),
@@ -1765,13 +1773,17 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           Container(
                                             height: 58..h,
                                             decoration: BoxDecoration(
-                                                color: Theme.of(context).brightness == Brightness.dark
+                                                color: Theme.of(context)
+                                                            .brightness ==
+                                                        Brightness.dark
                                                     ? Colors.black
                                                     : Colors.white,
                                                 borderRadius:
                                                     BorderRadius.circular(8),
                                                 border: Border.all(
-                                                    color: Theme.of(context).brightness == Brightness.dark
+                                                    color: Theme.of(context)
+                                                                .brightness ==
+                                                            Brightness.dark
                                                         ? Colors.white
                                                         : Colors.black,
                                                     width: 1)),
@@ -1784,8 +1796,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                 enabledBorder: InputBorder.none,
                                                 focusedBorder: InputBorder.none,
                                                 errorBorder: InputBorder.none,
-                                                focusedErrorBorder: InputBorder.none,
-                                                disabledBorder: InputBorder.none,
+                                                focusedErrorBorder:
+                                                    InputBorder.none,
+                                                disabledBorder:
+                                                    InputBorder.none,
                                                 contentPadding:
                                                     EdgeInsets.symmetric(
                                                         vertical: 20,
@@ -1803,13 +1817,17 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           Container(
                                             height: 58..h,
                                             decoration: BoxDecoration(
-                                                color: Theme.of(context).brightness == Brightness.dark
+                                                color: Theme.of(context)
+                                                            .brightness ==
+                                                        Brightness.dark
                                                     ? Colors.black
                                                     : Colors.white,
                                                 borderRadius:
                                                     BorderRadius.circular(8),
                                                 border: Border.all(
-                                                    color: Theme.of(context).brightness == Brightness.dark
+                                                    color: Theme.of(context)
+                                                                .brightness ==
+                                                            Brightness.dark
                                                         ? Colors.white
                                                         : Colors.black,
                                                     width: 1)),
@@ -1822,8 +1840,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                 enabledBorder: InputBorder.none,
                                                 focusedBorder: InputBorder.none,
                                                 errorBorder: InputBorder.none,
-                                                focusedErrorBorder: InputBorder.none,
-                                                disabledBorder: InputBorder.none,
+                                                focusedErrorBorder:
+                                                    InputBorder.none,
+                                                disabledBorder:
+                                                    InputBorder.none,
                                                 contentPadding:
                                                     EdgeInsets.symmetric(
                                                         vertical: 20,
@@ -1847,14 +1867,18 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                     vertical: 18),
                                                 height: 58..h,
                                                 decoration: BoxDecoration(
-                                                    color: Theme.of(context).brightness == Brightness.dark
+                                                    color: Theme.of(context)
+                                                                .brightness ==
+                                                            Brightness.dark
                                                         ? Colors.black
                                                         : Colors.white,
                                                     borderRadius:
                                                         BorderRadius.circular(
                                                             8),
                                                     border: Border.all(
-                                                        color: Theme.of(context).brightness == Brightness.dark
+                                                        color: Theme.of(context)
+                                                                    .brightness ==
+                                                                Brightness.dark
                                                             ? Colors.white
                                                             : Colors.black,
                                                         width: 1)),
@@ -1894,14 +1918,19 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                             vertical: 18),
                                                     height: 58..h,
                                                     decoration: BoxDecoration(
-                                                        color: Theme.of(context).brightness == Brightness.dark
+                                                        color: Theme.of(context)
+                                                                    .brightness ==
+                                                                Brightness.dark
                                                             ? Colors.black
                                                             : Colors.white,
                                                         borderRadius:
                                                             BorderRadius
                                                                 .circular(8),
                                                         border: Border.all(
-                                                            color: Theme.of(context).brightness == Brightness.dark
+                                                            color: Theme.of(context)
+                                                                        .brightness ==
+                                                                    Brightness
+                                                                        .dark
                                                                 ? Colors.white
                                                                 : Colors.black,
                                                             width: 1)),
@@ -1977,9 +2006,6 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                   mainAxisSize: MainAxisSize.min,
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    SizedBox(
-                                      height: 15..h,
-                                    ),
                                     SelectionArea(
                                       child: Text(
                                         'Increase your ad exposure. Enter up to 5 keywords buyers could search to find your ad'
@@ -1996,12 +2022,16 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                     Container(
                                       height: 58..h,
                                       decoration: BoxDecoration(
-                                          color: Theme.of(context).brightness == Brightness.dark
+                                          color: Theme.of(context).brightness ==
+                                                  Brightness.dark
                                               ? Colors.black
                                               : Colors.white,
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                           border: Border.all(
-                                              color: Theme.of(context).brightness == Brightness.dark
+                                              color: Theme.of(context)
+                                                          .brightness ==
+                                                      Brightness.dark
                                                   ? Colors.white
                                                   : Colors.black,
                                               width: 1)),
@@ -2036,7 +2066,8 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                             cont.tags.add(value);
                                           } else {
                                             errorAlertToast(
-                                                "maximum tags allowed are 5.".tr);
+                                                "maximum tags allowed are 5."
+                                                    .tr);
                                           }
 
                                           cont.tagsController.clear();
@@ -2110,7 +2141,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                             ),
                             SizedBox(
                                 height:
-                                    cont.showBelowFields[0] == 1 ? 15.h : 5.h),
+                                    cont.showBelowFields[0] == 1 ? 8.h : 5.h),
                             InkWell(
                               onTap: () async {
                                 SharedPreferences share =
@@ -2164,7 +2195,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    SizedBox(height: 10..h),
+                                    SizedBox(height: 8..h),
                                     Column(
                                       children: [
                                         Container(
@@ -2173,13 +2204,17 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           // padding: EdgeInsets.only(left: 10),
                                           alignment: Alignment.centerLeft,
                                           decoration: BoxDecoration(
-                                              color: Theme.of(context).brightness == Brightness.dark
+                                              color: Theme.of(context)
+                                                          .brightness ==
+                                                      Brightness.dark
                                                   ? Colors.black
                                                   : Colors.white,
                                               borderRadius:
                                                   BorderRadius.circular(8),
                                               border: Border.all(
-                                                  color: Theme.of(context).brightness == Brightness.dark
+                                                  color: Theme.of(context)
+                                                              .brightness ==
+                                                          Brightness.dark
                                                       ? Colors.white
                                                       : Colors.black,
                                                   width: 1)),
@@ -2259,7 +2294,8 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                     decoration: InputDecoration(
                                                       // isDense: true,
                                                       filled: true,
-                                                      fillColor: Colors.transparent,
+                                                      fillColor:
+                                                          Colors.transparent,
                                                       contentPadding:
                                                           const EdgeInsets
                                                               .symmetric(
@@ -2272,11 +2308,16 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                           const TextStyle(
                                                               fontSize: 16),
                                                       border: InputBorder.none,
-                                                      enabledBorder: InputBorder.none,
-                                                      focusedBorder: InputBorder.none,
-                                                      errorBorder: InputBorder.none,
-                                                      focusedErrorBorder: InputBorder.none,
-                                                      disabledBorder: InputBorder.none,
+                                                      enabledBorder:
+                                                          InputBorder.none,
+                                                      focusedBorder:
+                                                          InputBorder.none,
+                                                      errorBorder:
+                                                          InputBorder.none,
+                                                      focusedErrorBorder:
+                                                          InputBorder.none,
+                                                      disabledBorder:
+                                                          InputBorder.none,
                                                     ),
                                                   ),
                                                 ),
@@ -2303,13 +2344,17 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           // padding: EdgeInsets.only(left: 10),
                                           alignment: Alignment.centerLeft,
                                           decoration: BoxDecoration(
-                                              color: Theme.of(context).brightness == Brightness.dark
+                                              color: Theme.of(context)
+                                                          .brightness ==
+                                                      Brightness.dark
                                                   ? Colors.black
                                                   : Colors.white,
                                               borderRadius:
                                                   BorderRadius.circular(8),
                                               border: Border.all(
-                                                  color: Theme.of(context).brightness == Brightness.dark
+                                                  color: Theme.of(context)
+                                                              .brightness ==
+                                                          Brightness.dark
                                                       ? Colors.white
                                                       : Colors.black,
                                                   width: 1)),
@@ -2410,7 +2455,8 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                     decoration: InputDecoration(
                                                       // isDense: true,
                                                       filled: true,
-                                                      fillColor: Colors.transparent,
+                                                      fillColor:
+                                                          Colors.transparent,
                                                       contentPadding:
                                                           const EdgeInsets
                                                               .symmetric(
@@ -2423,11 +2469,16 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                           const TextStyle(
                                                               fontSize: 16),
                                                       border: InputBorder.none,
-                                                      enabledBorder: InputBorder.none,
-                                                      focusedBorder: InputBorder.none,
-                                                      errorBorder: InputBorder.none,
-                                                      focusedErrorBorder: InputBorder.none,
-                                                      disabledBorder: InputBorder.none,
+                                                      enabledBorder:
+                                                          InputBorder.none,
+                                                      focusedBorder:
+                                                          InputBorder.none,
+                                                      errorBorder:
+                                                          InputBorder.none,
+                                                      focusedErrorBorder:
+                                                          InputBorder.none,
+                                                      disabledBorder:
+                                                          InputBorder.none,
                                                     ),
                                                   ),
                                                 ),
@@ -2588,19 +2639,19 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    SizedBox(
-                                      height: 10..h,
-                                    ),
                                     Container(
                                       height: 58..h,
                                       decoration: BoxDecoration(
-                                          color: Theme.of(context).brightness == Brightness.dark
+                                          color: Theme.of(context).brightness ==
+                                                  Brightness.dark
                                               ? Colors.black
                                               : Colors.white,
                                           borderRadius:
                                               BorderRadius.circular(8),
                                           border: Border.all(
-                                              color: Theme.of(context).brightness == Brightness.dark
+                                              color: Theme.of(context)
+                                                          .brightness ==
+                                                      Brightness.dark
                                                   ? Colors.white
                                                   : Colors.black,
                                               width: 1)),
@@ -2631,13 +2682,16 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                     Container(
                                       height: 58..h,
                                       decoration: BoxDecoration(
-                                          color: Theme.of(context).brightness == Brightness.dark
+                                          color: Theme.of(context).brightness ==
+                                                  Brightness.dark
                                               ? Colors.black
                                               : Colors.white,
                                           borderRadius:
                                               BorderRadius.circular(8),
                                           border: Border.all(
-                                              color: Theme.of(context).brightness == Brightness.dark
+                                              color: Theme.of(context)
+                                                          .brightness ==
+                                                      Brightness.dark
                                                   ? Colors.white
                                                   : Colors.black,
                                               width: 1)),
@@ -2669,13 +2723,16 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                     Container(
                                       height: 58..h,
                                       decoration: BoxDecoration(
-                                          color: Theme.of(context).brightness == Brightness.dark
+                                          color: Theme.of(context).brightness ==
+                                                  Brightness.dark
                                               ? Colors.black
                                               : Colors.white,
                                           borderRadius:
                                               BorderRadius.circular(8),
                                           border: Border.all(
-                                              color: Theme.of(context).brightness == Brightness.dark
+                                              color: Theme.of(context)
+                                                          .brightness ==
+                                                      Brightness.dark
                                                   ? Colors.white
                                                   : Colors.black,
                                               width: 1)),
@@ -2706,13 +2763,16 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                     Container(
                                       height: 58..h,
                                       decoration: BoxDecoration(
-                                          color: Theme.of(context).brightness == Brightness.dark
+                                          color: Theme.of(context).brightness ==
+                                                  Brightness.dark
                                               ? Colors.black
                                               : Colors.white,
                                           borderRadius:
                                               BorderRadius.circular(8),
                                           border: Border.all(
-                                              color: Theme.of(context).brightness == Brightness.dark
+                                              color: Theme.of(context)
+                                                          .brightness ==
+                                                      Brightness.dark
                                                   ? Colors.white
                                                   : Colors.black,
                                               width: 1)),
@@ -2743,13 +2803,16 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                     Container(
                                       height: 58..h,
                                       decoration: BoxDecoration(
-                                          color: Theme.of(context).brightness == Brightness.dark
+                                          color: Theme.of(context).brightness ==
+                                                  Brightness.dark
                                               ? Colors.black
                                               : Colors.white,
                                           borderRadius:
                                               BorderRadius.circular(8),
                                           border: Border.all(
-                                              color: Theme.of(context).brightness == Brightness.dark
+                                              color: Theme.of(context)
+                                                          .brightness ==
+                                                      Brightness.dark
                                                   ? Colors.white
                                                   : Colors.black,
                                               width: 1)),
@@ -2779,7 +2842,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                 ),
                               ),
                             ),
-                            SizedBox(height: 15.h),
+                            SizedBox(height: 8.h),
                             InkWell(
                               onTap: () {
                                 cont.showBelowFields[3] == 2
@@ -2829,13 +2892,16 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                     Container(
                                       height: 58..h,
                                       decoration: BoxDecoration(
-                                          color: Theme.of(context).brightness == Brightness.dark
+                                          color: Theme.of(context).brightness ==
+                                                  Brightness.dark
                                               ? Colors.black
                                               : Colors.white,
                                           borderRadius:
                                               BorderRadius.circular(8),
                                           border: Border.all(
-                                              color: Theme.of(context).brightness == Brightness.dark
+                                              color: Theme.of(context)
+                                                          .brightness ==
+                                                      Brightness.dark
                                                   ? Colors.white
                                                   : Colors.black,
                                               width: 1)),
@@ -2865,7 +2931,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                 ),
                               ),
                             ),
-                            SizedBox(height: 40..h),
+                            SizedBox(height: 16..h),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [

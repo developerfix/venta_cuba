@@ -109,7 +109,12 @@ class _SearchAndCurrentLocationPageState
                               ),
                               SizedBox(
                                   width: 280.w,
-                                  child: Text("Use Current Location".tr)),
+                                  child: Text(
+                                    "Use Current Location".tr,
+                                    style: TextStyle(
+                                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                                    ),
+                                  )),
                             ],
                           ),
                         ),
@@ -149,10 +154,12 @@ class _SearchAndCurrentLocationPageState
                                             ),
                                             SizedBox(
                                                 width: 280.w,
-                                                child: Text(cont
-                                                    .placeList[index]
-                                                        ["description"]
-                                                    .toString())),
+                                                child: Text(
+                                                  cont.placeList[index]["description"].toString(),
+                                                  style: TextStyle(
+                                                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                                                  ),
+                                                )),
                                           ],
                                         ),
                                       ));
@@ -167,6 +174,7 @@ class _SearchAndCurrentLocationPageState
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
+                            color: Theme.of(context).textTheme.titleLarge?.color,
                           ),
                         ),
                         SizedBox(
@@ -195,12 +203,16 @@ class _SearchAndCurrentLocationPageState
                                   children: [
                                     CircleAvatar(
                                       radius: 25,
-                                      backgroundColor: Color(0xffE4E4E4),
+                                      backgroundColor: Theme.of(context).brightness == Brightness.dark
+                                          ? Colors.grey[700]
+                                          : Color(0xffE4E4E4),
                                       child: Center(
                                           child: Icon(
                                         Icons.location_on,
                                         size: 20,
-                                        color: Colors.black,
+                                        color: Theme.of(context).brightness == Brightness.dark
+                                            ? Colors.white
+                                            : Colors.black,
                                       )),
                                     ),
                                     SizedBox(
@@ -209,7 +221,11 @@ class _SearchAndCurrentLocationPageState
                                     SizedBox(
                                         width: 250.w,
                                         child: Text(
-                                            "${jsonDecode(beforeData[index])['address']}")),
+                                          "${jsonDecode(beforeData[index])['address']}",
+                                          style: TextStyle(
+                                            color: Theme.of(context).textTheme.bodyLarge?.color,
+                                          ),
+                                        )),
                                   ],
                                 ),
                               );

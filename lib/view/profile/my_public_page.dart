@@ -572,7 +572,8 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                                                       ?.sellerAbout;
                                                               Navigator.push(
                                                                   context,
-                                                                  PremiumPageTransitions.slideFromRight(
+                                                                  PremiumPageTransitions
+                                                                      .slideFromRight(
                                                                     const FrameScreen(),
                                                                   ));
                                                             },

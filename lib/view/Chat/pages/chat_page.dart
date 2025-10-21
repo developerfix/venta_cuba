@@ -66,6 +66,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
   final authCont = Get.put(AuthController());
   bool isKeyBoardOpen = true;
   late FocusNode focusNode;
+  Timer? onlineStatusTimer;
 
   Stream<List<Map<String, dynamic>>>? messagesStream;
 
@@ -75,6 +76,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
     isONImageScreen = false;
     isKeyBoardOpen = true;
     focusNode.dispose();
+    onlineStatusTimer?.cancel();
 
     // Remove lifecycle observer
     WidgetsBinding.instance.removeObserver(this);
@@ -89,6 +91,11 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
 
     // Set chat screen as closed when leaving
     PushService.setChatScreenStatus(false, null);
+
+    // Update user status to offline when leaving chat
+    if (authCont.user?.userId != null) {
+      chatCont.setUserOffline(authCont.user!.userId.toString());
+    }
 
     super.dispose();
   }
@@ -151,6 +158,13 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
     // Set user as online when entering chat
     if (authCont.user?.userId != null) {
       chatCont.setUserOnline(authCont.user!.userId.toString());
+
+      // Set up timer to keep user online while in chat
+      onlineStatusTimer = Timer.periodic(Duration(minutes: 1), (timer) {
+        if (authCont.user?.userId != null) {
+          chatCont.setUserOnline(authCont.user!.userId.toString());
+        }
+      });
     }
 
     // Test Supabase connection before setting up chat
@@ -430,17 +444,18 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                   SizedBox(height: 2.h),
                   // Show last active time or online status
                   if (widget.remoteUid != null)
-                    FutureBuilder<Map<String, dynamic>>(
-                      future: chatCont.getUserPresence(widget.remoteUid!),
+                    StreamBuilder<Map<String, dynamic>>(
+                      stream: Stream.periodic(Duration(seconds: 30))
+                          .asyncMap((_) => chatCont.getUserPresence(widget.remoteUid!))
+                          .distinct(),
                       builder: (context, snapshot) {
                         if (snapshot.hasData && snapshot.data != null) {
                           Map<String, dynamic> presenceData = snapshot.data!;
 
                           bool isOnline = chatCont.isUserOnline(presenceData);
                           DateTime? lastActiveTime =
-                              presenceData['last_active_time'] != null
-                                  ? DateTime.parse(
-                                          presenceData['last_active_time'])
+                              presenceData['last_active'] != null
+                                  ? DateTime.parse(presenceData['last_active'])
                                       .toLocal()
                                   : null;
 
@@ -455,7 +470,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                           );
                         }
                         return CustomText(
-                          text: "Last seen long ago".tr,
+                          text: "Checking status...".tr,
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w400,
                           fontColor: Colors.grey[600]!,

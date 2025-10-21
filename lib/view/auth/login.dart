@@ -77,157 +77,133 @@ class _LoginState extends State<Login> {
                                     //     width: 90,
                                     //   ),
                                     // ),
-                                    Container(
-                                      height: 60..h,
-                                      width: MediaQuery.of(context).size.width,
-                                      decoration: BoxDecoration(
-                                        color: Theme.of(context).brightness == Brightness.dark
+                                    TextField(
+                                      controller: cont.emailCont,
+                                      textAlignVertical: TextAlignVertical.center,
+                                      cursorColor: Theme.of(context)
+                                              .textTheme
+                                              .bodyLarge
+                                              ?.color ??
+                                          Colors.black,
+                                      decoration: InputDecoration(
+                                        contentPadding: EdgeInsets.symmetric(
+                                            horizontal: 16, vertical: 20),
+                                        prefixIcon: Icon(
+                                          Icons.mail_outline,
+                                          color: Color(0xFFA9ABAC),
+                                        ),
+                                        hintText: 'Enter Email Address'.tr,
+                                        hintStyle: TextStyle(
+                                            color: Color(0xFFA9ABAC),
+                                            fontWeight: FontWeight.w400),
+                                        filled: true,
+                                        fillColor: Theme.of(context).brightness == Brightness.dark
                                             ? Colors.black
                                             : Colors.white,
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                          borderSide: BorderSide(
                                             color: Theme.of(context).brightness == Brightness.dark
                                                 ? Colors.white
                                                 : Colors.black,
-                                            width: 1)),
-                                      child: Center(
-                                        child: TextField(
-                                          controller: cont.emailCont,
-                                          textAlignVertical:
-                                              TextAlignVertical.center,
-                                          cursorColor: Theme.of(context)
-                                                  .textTheme
-                                                  .bodyLarge
-                                                  ?.color ??
-                                              Colors.black,
-                                          decoration: InputDecoration(
-                                            border: InputBorder.none,
-                                            contentPadding: EdgeInsets.fromLTRB(
-                                                0, 20, 0, 10),
-                                            // focusedBorder: InputBorder.none,
-                                            prefixIcon: Icon(
-                                              Icons.mail_outline,
-                                              color: Color(0xFFA9ABAC),
-                                            ),
-                                            hintText: 'Enter Email Address'.tr,
-                                            hintStyle: TextStyle(
-                                                color: Color(0xFFA9ABAC),
-                                                fontWeight: FontWeight.w400),
-                                            focusedBorder: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10.0),
-                                              borderSide: BorderSide(
-                                                  // color: AppColors.textFieldColor,
-                                                  ),
-                                            ),
-                                            errorBorder: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10.0),
-                                              borderSide: BorderSide(
-                                                  // color: AppColors.red,
-                                                  ),
-                                            ),
-                                            focusedErrorBorder:
-                                                OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10.0),
-                                              borderSide: BorderSide(
-                                                  // color: AppColors.red,
-                                                  ),
-                                            ),
-                                            enabledBorder: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10.0),
-                                              borderSide: BorderSide(
-                                                  // color: AppColors.textFieldColor,/
-                                                  ),
-                                            ),
+                                            width: 1,
+                                          ),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                          borderSide: BorderSide(
+                                            color: Theme.of(context).brightness == Brightness.dark
+                                                ? Colors.white
+                                                : Colors.black,
+                                            width: 1,
+                                          ),
+                                        ),
+                                        errorBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                          borderSide: BorderSide(
+                                            color: Colors.red,
+                                            width: 1,
+                                          ),
+                                        ),
+                                        focusedErrorBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                          borderSide: BorderSide(
+                                            color: Colors.red,
+                                            width: 1,
                                           ),
                                         ),
                                       ),
                                     ),
                                     SizedBox(height: 15..h),
-                                    Container(
-                                      height: 60..h,
-                                      width: MediaQuery.of(context).size.width,
-                                      decoration: BoxDecoration(
-                                        color: Theme.of(context).brightness == Brightness.dark
-                                            ? Colors.black
-                                            : Colors.white,
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(
-                                            color: Theme.of(context).brightness == Brightness.dark
-                                                ? Colors.white
-                                                : Colors.black,
-                                            width: 1)),
-                                      child: Center(
-                                          child: Obx(
-                                        () => TextField(
-                                          controller: cont.passCont,
-                                          obscureText:
-                                              !cont.isPasswordVisible.value,
-                                          textAlignVertical:
-                                              TextAlignVertical.center,
-                                          cursorColor: Theme.of(context)
-                                                  .textTheme
-                                                  .bodyLarge
-                                                  ?.color ??
-                                              Colors.black,
-                                          decoration: InputDecoration(
-                                            border: InputBorder.none,
-                                            suffixIcon: IconButton(
-                                              icon: Icon(
-                                                cont.isPasswordVisible.value
-                                                    ? Icons.visibility
-                                                    : Icons.visibility_off,
-                                              ),
-                                              onPressed: () {
-                                                cont.togglePasswordVisibility();
-                                              },
+                                    Obx(
+                                      () => TextField(
+                                        controller: cont.passCont,
+                                        obscureText: !cont.isPasswordVisible.value,
+                                        textAlignVertical: TextAlignVertical.center,
+                                        cursorColor: Theme.of(context)
+                                                .textTheme
+                                                .bodyLarge
+                                                ?.color ??
+                                            Colors.black,
+                                        decoration: InputDecoration(
+                                          contentPadding: EdgeInsets.symmetric(
+                                              horizontal: 16, vertical: 20),
+                                          suffixIcon: IconButton(
+                                            icon: Icon(
+                                              cont.isPasswordVisible.value
+                                                  ? Icons.visibility
+                                                  : Icons.visibility_off,
                                             ),
-                                            contentPadding: EdgeInsets.fromLTRB(
-                                                0, 20, 0, 10),
-                                            // focusedBorder: InputBorder.none,
-                                            prefixIcon: Icon(
-                                              Icons.lock,
+                                            onPressed: () {
+                                              cont.togglePasswordVisibility();
+                                            },
+                                          ),
+                                          prefixIcon: Icon(
+                                            Icons.lock,
+                                            color: Color(0xFFA9ABAC),
+                                          ),
+                                          hintText: 'Enter your Password'.tr,
+                                          hintStyle: TextStyle(
                                               color: Color(0xFFA9ABAC),
+                                              fontWeight: FontWeight.w400),
+                                          filled: true,
+                                          fillColor: Theme.of(context).brightness == Brightness.dark
+                                              ? Colors.black
+                                              : Colors.white,
+                                          enabledBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(8),
+                                            borderSide: BorderSide(
+                                              color: Theme.of(context).brightness == Brightness.dark
+                                                  ? Colors.white
+                                                  : Colors.black,
+                                              width: 1,
                                             ),
-                                            hintText: 'Enter your Password'.tr,
-                                            hintStyle: TextStyle(
-                                                color: Color(0xFFA9ABAC),
-                                                fontWeight: FontWeight.w400),
-                                            focusedBorder: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10.0),
-                                              borderSide: BorderSide(
-                                                  // color: AppColors.textFieldColor,
-                                                  ),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(8),
+                                            borderSide: BorderSide(
+                                              color: Theme.of(context).brightness == Brightness.dark
+                                                  ? Colors.white
+                                                  : Colors.black,
+                                              width: 1,
                                             ),
-                                            errorBorder: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10.0),
-                                              borderSide: BorderSide(
-                                                  // color: AppColors.red,
-                                                  ),
+                                          ),
+                                          errorBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(8),
+                                            borderSide: BorderSide(
+                                              color: Colors.red,
+                                              width: 1,
                                             ),
-                                            focusedErrorBorder:
-                                                OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10.0),
-                                              borderSide: BorderSide(
-                                                  // color: AppColors.red,
-                                                  ),
-                                            ),
-                                            enabledBorder: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10.0),
-                                              borderSide: BorderSide(
-                                                  // color: AppColors.textFieldColor,/
-                                                  ),
+                                          ),
+                                          focusedErrorBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(8),
+                                            borderSide: BorderSide(
+                                              color: Colors.red,
+                                              width: 1,
                                             ),
                                           ),
                                         ),
-                                      )),
+                                      ),
                                     ),
                                     SizedBox(height: 10..h),
                                     Row(
