@@ -1699,8 +1699,19 @@ class _PokeToDialBottomSheetContentState
                           controller: cont.minPriceController,
                           textAlign: TextAlign.center,
                           keyboardType: TextInputType.number,
+                          cursorColor: Theme.of(context)
+                              .textTheme
+                              .bodyLarge
+                              ?.color,
                           decoration: InputDecoration(
+                              filled: true,
+                              fillColor: Colors.transparent,
                               border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              errorBorder: InputBorder.none,
+                              focusedErrorBorder: InputBorder.none,
+                              disabledBorder: InputBorder.none,
                               hintText: 'Minimum'.tr,
                               hintStyle: TextStyle(
                                   fontSize: 13..sp,
@@ -1731,8 +1742,19 @@ class _PokeToDialBottomSheetContentState
                         controller: cont.maxPriceController,
                         textAlign: TextAlign.center,
                         keyboardType: TextInputType.number,
+                        cursorColor: Theme.of(context)
+                            .textTheme
+                            .bodyLarge
+                            ?.color,
                         decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.transparent,
                             border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            errorBorder: InputBorder.none,
+                            focusedErrorBorder: InputBorder.none,
+                            disabledBorder: InputBorder.none,
                             hintText: 'Maximum'.tr,
                             hintStyle: TextStyle(
                                 fontSize: 13..sp,

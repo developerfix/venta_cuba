@@ -109,6 +109,9 @@ class _HomeScreenState extends State<HomeScreen> {
         if (homeCont.shouldFetchData.value ||
             homeCont.listingModelList.isEmpty) {
           await homeCont.homeData();
+        } else {
+          // Ensure scroll listener is attached even if data doesn't need refreshing
+          homeCont.ensureScrollListenerAttached();
         }
       } else {
         Get.log('Coming from SearchAndCurrentLocationPage, checking for changes');
@@ -120,6 +123,9 @@ class _HomeScreenState extends State<HomeScreen> {
           homeCont.currentPage.value = 1;
           homeCont.hasMore.value = true;
           await homeCont.homeData();
+        } else {
+          // Ensure scroll listener is attached even if data doesn't need refreshing
+          homeCont.ensureScrollListenerAttached();
         }
       }
     } catch (e) {

@@ -218,6 +218,12 @@ class HomeController extends GetxController {
   void onInit() {
     super.onInit();
     fetchAccountType();
+
+    // Attach scroll listener for infinite scroll
+    scrollsController.addListener(onScroll);
+    searchScrollController.addListener(onScrollSearch);
+    Get.log("📜 Scroll listeners attached in onInit");
+
     // Reset shuffle session on app start (fresh app launch)
     // This ensures shuffling happens when app is reopened
     resetShuffleSession().then((_) {
@@ -242,6 +248,21 @@ class HomeController extends GetxController {
     Get.log("📜 Scroll controller reset and listener attached");
   }
 
+  void ensureScrollListenerAttached() {
+    try {
+      // Remove existing listeners if present to avoid duplicates
+      scrollsController.removeListener(onScroll);
+      searchScrollController.removeListener(onScrollSearch);
+    } catch (e) {
+      // Listeners weren't attached, that's fine
+    }
+
+    // Add the listeners
+    scrollsController.addListener(onScroll);
+    searchScrollController.addListener(onScrollSearch);
+    Get.log("📜 Scroll listeners ensured to be attached");
+  }
+
   // Test method to manually trigger scroll
   void testScrollEvent() {
     Get.log("📜 MANUAL SCROLL TEST");
@@ -251,6 +272,155 @@ class HomeController extends GetxController {
       onScroll();
     } else {
       Get.log("📜 TEST: No clients attached");
+    }
+  }
+
+  // DEBUG: Test method to load many items without pagination
+  Future<void> testLoadManyItems() async {
+    Get.log("🧪 DEBUG: Loading many items without pagination");
+    isPostLoading.value = true;
+    update();
+
+    try {
+      await getCoordinatesFromAddress();
+      listingModelList.clear();
+
+      // Load multiple pages at once for testing
+      for (int page = 1; page <= 5; page++) {
+        Get.log("🧪 DEBUG: Loading page $page");
+
+        Response response = await api.postData(
+          "api/getListing?page=$page",
+          {
+            'user_id': authCont.user?.userId ?? "",
+            'category_id': selectedCategory?.id ?? "",
+            'sub_category_id': selectedSubCategory?.id ?? "",
+            'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
+            'latitude': lat ?? "",
+            'longitude': lng ?? "",
+            'radius': radius.toString(),
+            'address': address ?? "",
+          },
+          headers: {
+            'Accept': 'application/json',
+            'Access-Control-Allow-Origin': "*",
+            'Authorization': 'Bearer ${authCont.user?.accessToken}'
+          },
+        ).timeout(Duration(seconds: 30));
+
+        if (response.statusCode == 200) {
+          List<dynamic> dataListing = response.body['data']['data'] ?? [];
+          Get.log("🧪 DEBUG: Page $page returned ${dataListing.length} items");
+
+          if (dataListing.isNotEmpty) {
+            for (var element in dataListing) {
+              try {
+                if (element != null && element is Map<String, dynamic>) {
+                  listingModelList.add(ListingModel.fromJson(element));
+                }
+              } catch (e) {
+                Get.log("🧪 DEBUG: Error parsing item: $e");
+              }
+            }
+          } else {
+            Get.log("🧪 DEBUG: Page $page returned empty data, stopping");
+            break;
+          }
+        } else {
+          Get.log("🧪 DEBUG: Page $page failed with status ${response.statusCode}");
+          break;
+        }
+      }
+
+      Get.log("🧪 DEBUG: Total items loaded: ${listingModelList.length}");
+      listingModelList.shuffle();
+
+    } catch (e) {
+      Get.log("🧪 DEBUG: Error in testLoadManyItems: $e");
+    } finally {
+      isPostLoading.value = false;
+      update();
+    }
+  }
+
+  // Load initial pages to ensure enough content for scrolling
+  Future<void> _loadInitialPages() async {
+    try {
+      await getCoordinatesFromAddress();
+      listingModelList.clear();
+      currentPage.value = 1;
+      hasMore.value = true;
+
+      // Load enough pages to ensure scrollability (at least 10 items)
+      for (int i = 0; i < 15 && hasMore.value; i++) {
+        await _loadSinglePage();
+        if (listingModelList.length >= 20) break; // Stop if we have enough items
+      }
+
+      // Apply initial shuffle
+      if (shouldShuffleOnLocationChange) {
+        shuffleListingsOnLocationChange();
+        shouldShuffleOnLocationChange = false;
+      } else {
+        await shuffleListingsOnLogin();
+      }
+
+    } catch (e) {
+      Get.log("🔄 DEBUG: Error in _loadInitialPages: $e");
+    } finally {
+      isPostLoading.value = false;
+      isFetching.value = false;
+      update();
+    }
+  }
+
+  // Load a single page (helper method)
+  Future<void> _loadSinglePage() async {
+    Get.log("🔄 DEBUG: Loading single page ${currentPage.value}");
+
+    Response response = await api.postData(
+      "api/getListing?page=${currentPage.value}",
+      {
+        'user_id': authCont.user?.userId ?? "",
+        'category_id': selectedCategory?.id ?? "",
+        'sub_category_id': selectedSubCategory?.id ?? "",
+        'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
+        'latitude': lat ?? "23.124792615936276",
+        'longitude': lng ?? "-82.38597269330762",
+        'radius': radius.toString(),
+        'min_price': '',
+        'max_price': '',
+        'search_by_title': ''
+      },
+      headers: {
+        'Accept': 'application/json',
+        'Access-Control-Allow-Origin': "*",
+        'Authorization': 'Bearer ${authCont.user?.accessToken ?? tokenMain ?? ""}'
+      },
+      showdialog: false,
+    ).timeout(Duration(seconds: 30));
+
+    if (response.statusCode == 200) {
+      List<dynamic> dataListing = response.body['data']['data'] ?? [];
+      Get.log("🔄 DEBUG: Page ${currentPage.value} returned ${dataListing.length} items");
+
+      if (dataListing.isNotEmpty) {
+        for (var element in dataListing) {
+          try {
+            if (element != null && element is Map<String, dynamic>) {
+              listingModelList.add(ListingModel.fromJson(element));
+            }
+          } catch (e) {
+            Get.log("🔄 DEBUG: Error parsing item: $e");
+          }
+        }
+        currentPage.value++;
+      } else {
+        hasMore.value = false;
+      }
+    } else {
+      Get.log("🔄 DEBUG: API call failed with status ${response.statusCode}");
+      hasMore.value = false;
     }
   }
 
@@ -265,8 +435,8 @@ class HomeController extends GetxController {
           shouldShuffleOnLocationChange = true;
         }
         loadingHome = true.obs;
-        scrollsController.addListener(onScroll);
-        searchScrollController.addListener(onScrollSearch);
+        // Ensure scroll listeners are attached (avoid duplicates)
+        ensureScrollListenerAttached();
         currentPage.value = 1;
         hasMore.value = true;
         await getCategories();
@@ -285,43 +455,38 @@ class HomeController extends GetxController {
   }
 
   void onScroll() {
-    if (!scrollsController.hasClients) {
-      Get.log("📜 ❌ SCROLL CONTROLLER HAS NO CLIENTS");
-      return;
-    }
-
-    if (isFetching.value) {
-      Get.log("📜 ❌ ALREADY FETCHING - SKIPPING");
-      return;
-    }
+    if (!scrollsController.hasClients) return;
+    if (isFetching.value) return;
 
     double pixels = scrollsController.position.pixels;
     double maxExtent = scrollsController.position.maxScrollExtent;
-    double triggerPoint = maxExtent - 100;
+    double triggerPoint = maxExtent * 0.8; // Trigger at 80% of scroll
 
-    if (pixels >= triggerPoint && triggerPoint > 0) {
+    if (pixels >= triggerPoint && maxExtent > 0) {
       if (!isPostLoading.value && hasMore.value) {
+        Get.log("📜 Loading more items...");
         isFetching.value = true; // Prevent multiple triggers
         getListing(isLoadMore: true).then((_) {
           isFetching.value = false;
         }).catchError((e) {
           isFetching.value = false;
         });
-      } else {
-        Get.log(
-            "📜 ❌ BLOCKED - isPostLoading=${isPostLoading.value}, hasMore=${hasMore.value}");
       }
-    } else {
-      Get.log(
-          "📜 ⏸️ Not at trigger point yet (trigger: $triggerPoint, pixels: $pixels)");
     }
   }
 
   Future<void> getListing({bool isLoadMore = false}) async {
     if (isPostLoading.value || isFetching.value) return;
+
     isPostLoading.value = true;
     isFetching.value = true;
     update();
+
+    // For initial load, load multiple pages to ensure scrollability
+    if (!isLoadMore && currentPage.value == 1) {
+      await _loadInitialPages();
+      return;
+    }
 
     try {
       await getCoordinatesFromAddress();
@@ -402,7 +567,6 @@ class HomeController extends GetxController {
 
       if (response.statusCode == 200) {
         List<dynamic> dataListing = response.body['data']['data'] ?? [];
-        Get.log("HOME POST COUNT ${dataListing.length}");
 
         if (dataListing.isNotEmpty) {
           List<ListingModel> newListings = [];

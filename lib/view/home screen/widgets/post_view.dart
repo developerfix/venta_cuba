@@ -38,27 +38,20 @@ class ListingView extends StatelessWidget {
           ),
           itemBuilder: (BuildContext context, int index) {
             if (index == shuffledList.length) {
-              // Show loading indicator or "Load More" button
-              if (cont.hasMore.value) {
-                if (cont.isPostLoading.value) {
-                  return Container(
-                    height: 100,
-                    child: Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  );
-                }
-              } else {
+              // Show loading indicator when loading more items
+              if (cont.hasMore.value && cont.isPostLoading.value) {
                 return Container(
-                  height: 60,
+                  height: 100,
                   child: Center(
-                    child: Text(
-                      'No more items to load',
-                      style: TextStyle(color: Colors.grey),
-                    ),
+                    child: CircularProgressIndicator(),
                   ),
                 );
               }
+              // Always show a small spacer to ensure scroll detection works
+              return Container(
+                height: 50,
+                child: SizedBox.shrink(),
+              );
             }
             // Safety check to prevent RangeError
             if (index >= shuffledList.length) {
