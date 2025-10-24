@@ -94,19 +94,16 @@ class AuthController extends GetxController {
   // Initialize push notifications with permission handling
   Future<void> initializePushNotifications(String userId) async {
     try {
-      print('🔔 === INITIALIZING PUSH NOTIFICATIONS FOR USER: $userId ===');
 
       // Ensure device token is properly set and saved before initializing push
       if (deviceToken.isEmpty || !deviceToken.contains(userId)) {
         await refreshDeviceToken();
         await saveDeviceTokenWithPlatform(userId);
-        print('✅ Device token ensured before push init: $deviceToken');
       }
 
       // Request notification permissions first
       bool permissionsGranted = await requestNotificationPermissions();
       if (!permissionsGranted) {
-        print('❌ Notification permissions not granted');
         // Snackbar removed - let users decide if they want notifications
       }
 
@@ -114,27 +111,20 @@ class AuthController extends GetxController {
       await PushService.initialize(
         userId: userId,
       );
-      print(
-          '✅ Enhanced push service initialized with ultra-fast notifications');
 
       // On Android, also start the background service for persistent notifications
       if (Platform.isAndroid) {
-        print('🤖 Starting Android background service...');
         bool serviceStarted = await AndroidBackgroundService.startService(
           userId: userId,
           customServerUrl: null,
         );
 
         if (serviceStarted) {
-          print('✅ Android background service started successfully');
         } else {
-          print('❌ Failed to start Android background service');
         }
       }
 
-      print('🔔 === PUSH NOTIFICATIONS INITIALIZATION COMPLETE ===');
     } catch (e) {
-      print('❌ Error initializing push notifications: $e');
       // Don't throw - allow app to continue without notifications
     }
   }
@@ -142,7 +132,6 @@ class AuthController extends GetxController {
   // Request notification permissions with proper handling
   Future<bool> requestNotificationPermissions() async {
     try {
-      print('📱 Requesting notification permissions...');
 
       // For Android 13+ (API 33+)
       if (Platform.isAndroid) {
@@ -152,19 +141,15 @@ class AuthController extends GetxController {
           final status = await Permission.notification.request();
 
           if (status.isGranted) {
-            print('✅ Android notification permission granted');
             return true;
           } else if (status.isPermanentlyDenied) {
-            print('❌ Android notification permission permanently denied');
             // Dialog removed - let users enable notifications on their own
             return false;
           } else {
-            print('❌ Android notification permission denied');
             return false;
           }
         } else {
           // For Android < 13, notifications are allowed by default
-          print('✅ Android < 13, notifications allowed by default');
           return true;
         }
       }
@@ -174,21 +159,17 @@ class AuthController extends GetxController {
         final status = await Permission.notification.request();
 
         if (status.isGranted) {
-          print('✅ iOS notification permission granted');
           return true;
         } else if (status.isPermanentlyDenied) {
-          print('❌ iOS notification permission permanently denied');
           // Dialog removed - let users enable notifications on their own
           return false;
         } else {
-          print('❌ iOS notification permission denied');
           return false;
         }
       }
 
       return false;
     } catch (e) {
-      print('❌ Error requesting notification permissions: $e');
       return false;
     }
   }
@@ -196,19 +177,15 @@ class AuthController extends GetxController {
   // Stop push notifications on logout
   Future<void> stopPushNotifications() async {
     try {
-      print('🛑 Stopping push notifications...');
 
       // Stop Android background service
       if (Platform.isAndroid) {
         await AndroidBackgroundService.stopService();
-        print('✅ Android background service stopped');
       }
 
       // Stop push service
       await PushService.dispose();
-      print('✅ Push service stopped');
     } catch (e) {
-      print('❌ Error stopping push notifications: $e');
     }
   }
 
@@ -227,8 +204,6 @@ class AuthController extends GetxController {
     // Initialize tokenMain early to prevent null token issues
     tokenMain = prefs.getString('token');
     token = prefs.getString('token');
-    print(
-        '🔥 AuthController onInit: tokenMain initialized as: ${tokenMain ?? "NULL"}');
 
     // Update API client headers with the token if available
     if (tokenMain != null) {
@@ -261,12 +236,9 @@ class AuthController extends GetxController {
           await prefs.remove('init_test');
         }
 
-        print('✅ SharedPreferences initialized successfully');
         return;
       } catch (e) {
         retries--;
-        print(
-            '⚠️ SharedPreferences initialization failed, retries left: $retries, error: $e');
         if (retries > 0) {
           // Exponential backoff with longer delays
           await Future.delayed(Duration(milliseconds: 1000 * (4 - retries)));
@@ -303,28 +275,19 @@ class AuthController extends GetxController {
     try {
       final chatCont = Get.find<SupabaseChatController>();
       await chatCont.updateUnreadMessageIndicators();
-      print(
-          '🔥 ✅ Manually refreshed unread message count: ${unreadMessageCount.value}');
     } catch (e) {
-      print('🔥 ❌ Error refreshing unread message count: $e');
     }
   }
 
   // Test method to manually set unread count (for debugging)
   void setTestUnreadCount(int count) {
-    print('🔴 TEST: Setting unread count to $count');
     unreadMessageCount.value = count;
     hasUnreadMessages.value = count > 0;
     update(); // Trigger UI update
-    print(
-        '🔴 TEST: After setting - unreadMessageCount.value = ${unreadMessageCount.value}');
-    print(
-        '🔴 TEST: After setting - hasUnreadMessages.value = ${hasUnreadMessages.value}');
   }
 
   // Force show badge for immediate testing
   void showBadgeNow() {
-    print('🔴 FORCE BADGE: Showing badge with count 5');
     unreadMessageCount.value = 5;
     hasUnreadMessages.value = true;
     update();
@@ -332,41 +295,33 @@ class AuthController extends GetxController {
 
   // Test push notification to yourself
   void testPushNotification() {
-    print('🧪 TESTING PUSH NOTIFICATION...');
     try {
       PushService.sendTestNotification();
     } catch (e) {
-      print('❌ Error testing push notification: $e');
     }
   }
 
   // Test badge functionality
   void testBadge({int count = 5}) {
-    print('🧪 TESTING BADGE FUNCTIONALITY...');
     try {
       PushService.testBadge(count: count);
     } catch (e) {
-      print('❌ Error testing badge: $e');
     }
   }
 
   // Clear test notifications
   void clearTestNotifications() {
-    print('🧹 CLEARING TEST NOTIFICATIONS...');
     try {
       PushService.clearTestNotifications();
     } catch (e) {
-      print('❌ Error clearing test notifications: $e');
     }
   }
 
   // Force reset stuck badge (for Android debugging)
   void forceResetBadge() {
-    print('🔧 FORCE RESETTING BADGE...');
     try {
       PushService.forceResetBadge();
     } catch (e) {
-      print('❌ Error force resetting badge: $e');
     }
   }
 
@@ -416,12 +371,10 @@ class AuthController extends GetxController {
       if (response.statusCode == 200) {
         // Email address already exists
       } else {
-        print('response.statusCode: ${response.statusCode}');
         await signUp(province, city);
       }
     } catch (e) {
       Get.back();
-      print("validateEmailAndProceed error: $e");
       // Something went wrong while verifying email
     }
   }
@@ -450,7 +403,6 @@ class AuthController extends GetxController {
 
   Future getuserDetail() async {
     try {
-      print('🔥 AuthController: Getting user details...');
 
       final SharedPreferences prefss = await SharedPreferences.getInstance();
       tokenMain = prefss.getString('token');
@@ -460,17 +412,12 @@ class AuthController extends GetxController {
 
       String? userDataString = prefss.getString("user_data");
       if (userDataString == null) {
-        print('🔥 AuthController: No user data found in preferences');
         throw Exception('No user data found');
       }
 
-      print('🔥 AuthController: User data found, parsing...');
       Map<String, dynamic> userData = jsonDecode(userDataString);
-      print('🔥 AuthController: User data parsed successfully');
 
       user = UserData.fromJson(userData);
-      print(
-          '🔥 AuthController: User object created: ${user?.firstName} ${user?.lastName}');
 
       // Sync device token (no longer using Firebase for Cuba compatibility)
       // Generate a proper device token if not already set
@@ -480,18 +427,15 @@ class AuthController extends GetxController {
           user!.deviceToken = expectedToken;
           deviceToken = expectedToken; // Update global device token
           await prefss.setString("user_data", jsonEncode(user!.toJson()));
-          print('🔥 AuthController: Device token synced: $deviceToken');
 
           // Save to Supabase if not already saved
           await saveDeviceTokenWithPlatform(user!.userId.toString());
-          print('✅ Device token saved to Supabase during getuserDetail');
         }
       }
 
       // Set user as online when they log in (with timeout to prevent hanging)
       if (user?.userId != null) {
         try {
-          print('🔥 AuthController: Setting user online...');
           final chatCont = Get.put(SupabaseChatController());
 
           // Add timeout to prevent hanging
@@ -512,13 +456,10 @@ class AuthController extends GetxController {
         await PushService.initialize(
           userId: user!.userId.toString(),
         );
-        print(
-            '✅ PREMIUM Push notifications initialized with ultra-fast delivery for user: ${user!.userId}');
       }
 
       // Start chat listener (with timeout and error handling)
       try {
-        print('🔥 AuthController: Starting chat services...');
         // Safe get with fallback
         final chatCont = Get.isRegistered<SupabaseChatController>()
             ? Get.find<SupabaseChatController>()
@@ -531,18 +472,13 @@ class AuthController extends GetxController {
           await chatCont.updateUnreadMessageIndicators().timeout(
             const Duration(seconds: 5),
             onTimeout: () {
-              print(
-                  '🔥 AuthController: updateUnreadMessageIndicators timed out');
             },
           );
         } catch (e) {
-          print('🔥 AuthController: Error updating unread indicators: $e');
         }
       } catch (e) {
-        print('🔥 AuthController: Error starting chat services: $e');
       }
     } catch (e) {
-      print('🔥 AuthController: Error in getuserDetail: $e');
 
       Get.offAll(() => const Login());
       rethrow; // Re-throw to let calling method handle the error
@@ -564,24 +500,19 @@ class AuthController extends GetxController {
         getuserDetail().then((_) async {
           // After user details are loaded, initialize notifications
           if (user?.userId != null) {
-            print(
-                '🔔 Auto-initializing notifications for returning user: ${user!.userId}');
 
             // Refresh and save device token for returning users
             await refreshDeviceToken();
             await saveDeviceTokenWithPlatform(user!.userId.toString());
-            print('✅ Device token refreshed and saved for returning user');
 
             await initializePushNotifications(user!.userId.toString());
           }
         }).catchError((e) {
-          print('Error loading user details: $e');
         });
       } else {
         Get.offAll(() => const Login());
       }
     } catch (e) {
-      print('Error in checkUserLoggedIn: $e');
       Get.offAll(() => const Login());
     }
   }
@@ -602,7 +533,6 @@ class AuthController extends GetxController {
         },
       );
 
-      print("signUp statusCode: ${response.statusCode}");
 
       if (response.statusCode == 200) {
         // Extract user ID from response and save device token to Supabase
@@ -610,14 +540,9 @@ class AuthController extends GetxController {
           if (response.body != null && response.body['user_id'] != null) {
             String userId = response.body['user_id'].toString();
             await saveDeviceTokenWithPlatform(userId);
-            print(
-                '✅ Device token saved to Supabase during registration for user: $userId');
           } else {
-            print(
-                '⚠️ No user_id found in signup response, skipping Supabase token save');
           }
         } catch (e) {
-          print('❌ Error saving device token to Supabase during signup: $e');
           // Don't block the signup process if Supabase fails
         }
 
@@ -629,11 +554,9 @@ class AuthController extends GetxController {
 
         Get.offAll(const Login());
       } else {
-        print("signUp error body: ${response.body}");
         // Signup failed
       }
     } catch (e) {
-      print("signUp exception: $e");
       // Something went wrong while signing up
     }
   }
@@ -649,13 +572,9 @@ class AuthController extends GetxController {
         // Test if prefs is initialized by attempting to access it
         prefs.getString('test');
       } catch (e) {
-        print('🔥 Initializing SharedPreferences during login...');
         try {
           await _initializeSharedPreferences();
         } catch (initError) {
-          print(
-              '🔥 Critical: SharedPreferences initialization failed completely: $initError');
-
           return;
         }
       }
@@ -664,7 +583,6 @@ class AuthController extends GetxController {
       // Just use a placeholder for the API call
       if (deviceToken.isEmpty) {
         deviceToken = 'pending_token';
-        print('🔔 Using placeholder token for login API');
       }
 
       // Add timeout to API call to prevent hanging
@@ -678,15 +596,12 @@ class AuthController extends GetxController {
       ).timeout(
         Duration(seconds: 10),
         onTimeout: () {
-          print('❌ Login API call timed out');
           throw Exception(
               'Login API call timed out after 10 seconds. Please check your internet connection.');
         },
       );
 
       if (response.statusCode == 200) {
-        print('🔍 Login response body keys: ${response.body.keys}');
-        print('🔍 Looking for user_id in response...');
 
         await prefs.setString("token", response.body["access_token"]);
 
@@ -707,14 +622,10 @@ class AuthController extends GetxController {
         await onLoginSuccess(response.body);
         return response.statusCode;
       } else if (response.statusCode! >= 400) {
-        print('Login failed - incorrect credentials: ${response.statusCode}');
       } else if (response.statusCode == 500) {
-        print('Server error during login - Status Code: 500');
       } else {
-        print('Login failed with status code: ${response.statusCode}');
       }
     } catch (e) {
-      print('🔥 Login error: $e');
     } finally {
       // Always set loading state to false when done
       isLoading.value = false;
@@ -732,9 +643,7 @@ class AuthController extends GetxController {
           user?.userId ?? 'temp_${DateTime.now().millisecondsSinceEpoch}';
       token = 'venta_cuba_user_$userId';
       deviceToken = token;
-      print('📱 Device token refreshed: $deviceToken');
     } catch (e) {
-      print('❌ Error refreshing device token: $e');
     }
   }
 
@@ -742,7 +651,6 @@ class AuthController extends GetxController {
   Future<void> saveDeviceTokenWithPlatform(String userId) async {
     // Prevent concurrent device token saves
     if (_savingDeviceToken) {
-      print(
           'ℹ️ Device token save already in progress for user $userId, skipping');
       return;
     }
@@ -750,12 +658,10 @@ class AuthController extends GetxController {
     _savingDeviceToken = true;
 
     try {
-      print('🔍 Starting saveDeviceTokenWithPlatform for user: $userId');
 
       final supabaseService = SupabaseService.instance;
 
       String token = 'venta_cuba_user_$userId';
-      print('📱 Token to save: $token');
 
       bool success = await supabaseService.saveDeviceTokenWithPlatform(
         userId: userId,
@@ -764,13 +670,9 @@ class AuthController extends GetxController {
 
       if (success) {
         deviceToken = token; // Update local token
-        print('✅ SUCCESS: Device token saved to Supabase!');
       } else {
-        print('❌ FAILED: Device token NOT saved to Supabase');
       }
     } catch (e) {
-      print('❌ Error saving device token with platform: $e');
-      print('🔴 Stack trace: ${StackTrace.current}');
     } finally {
       _savingDeviceToken = false;
     }
@@ -788,21 +690,17 @@ class AuthController extends GetxController {
     request.headers.addAll(headers);
     Http.StreamedResponse response = await request.send();
     if (response.statusCode == 200) {
-      print(await response.stream.bytesToString());
       // Email send successfully
     } else if (response.statusCode == 500) {
-      print(await response.stream.bytesToString());
       // Unable to send password reset email
     } else {
       // An account doesn't exist with that email address
-      print(response.reasonPhrase);
     }
   }
 
   Future addBusiness(String province, String city) async {
     List<String>? image = [];
     image.add(businessLogo ?? "");
-    print(jsonEncode(image));
 
     Response response = await api.postWithForm(
         "api/addBusiness",
@@ -857,7 +755,6 @@ class AuthController extends GetxController {
   Future updateBusiness() async {
     List<String>? image = [];
     image.add(businessLogo ?? "");
-    print(jsonEncode(image));
 
     Response response = await api.postWithForm(
         "api/addBusiness",
@@ -897,7 +794,6 @@ class AuthController extends GetxController {
         imageKey: 'business_logo',
         image: image);
     if (response.statusCode == 200) {
-      print("JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ");
       onUpdateUserData(response.body);
       // Image Update Successfully
     } else {
@@ -973,9 +869,7 @@ class AuthController extends GetxController {
         // Update user presence as online when token is updated
         await setUserOnline();
       }
-      print('🔥 Device token updated locally: $newToken');
     } catch (e) {
-      print('🔥 Error updating device token: $e');
     }
   }
 
@@ -987,7 +881,6 @@ class AuthController extends GetxController {
         await chatController.setUserOnline(user!.userId.toString());
       }
     } catch (e) {
-      print('🔥 Error setting user online: $e');
     }
   }
 
@@ -1000,11 +893,8 @@ class AuthController extends GetxController {
 
         // Stop push notification services when going offline
         await stopPushNotifications();
-        print(
-            '🔥 AuthController: Push notification services stopped for offline user');
       }
     } catch (e) {
-      print('🔥 Error setting user offline: $e');
     }
   }
 
@@ -1013,7 +903,6 @@ class AuthController extends GetxController {
     try {
       if (user?.userId == null) return;
 
-      print('🔥 Updating device token in all chat documents...');
 
       final chatController = Get.find<SupabaseChatController>();
       final supabase = chatController.getSupabaseClient();
@@ -1033,9 +922,7 @@ class AuthController extends GetxController {
         );
       }
 
-      print('🔥 ✅ Device token updated in ${chats.length} chat documents');
     } catch (e) {
-      print('🔥 Error updating device token in chats: $e');
     }
   }
 
@@ -1049,10 +936,8 @@ class AuthController extends GetxController {
 
       // For other users, you would typically call an API to get their current device token
       // Since we don't have that API, we'll return null and rely on the stored token
-      print('🔥 Cannot get device token for user $userId - no API available');
       return null;
     } catch (e) {
-      print('🔥 Error getting device token for user $userId: $e');
       return null;
     }
   }
@@ -1106,20 +991,16 @@ class AuthController extends GetxController {
 
     // Extract user_id directly from the response
     String? loginUserId = value['user_id']?.toString();
-    print('🔍 User ID from login response: $loginUserId');
 
     if (loginUserId != null &&
         loginUserId.isNotEmpty &&
         loginUserId != 'null') {
       // Generate and save device token IMMEDIATELY with the user_id from login
       deviceToken = 'venta_cuba_user_$loginUserId';
-      print('🔔 Generated device token from login response: $deviceToken');
 
       // Save to Supabase immediately
       await saveDeviceTokenWithPlatform(loginUserId);
-      print('✅ Device token save attempt completed for user: $loginUserId');
     } else {
-      print('⚠️ No user_id found in login response');
     }
 
     isBusinessAccount = false;
@@ -1131,20 +1012,15 @@ class AuthController extends GetxController {
     try {
       if (user?.userId != null) {
         final userId = user!.userId.toString();
-        print('🚀 Initializing services for user: $userId');
 
         // Set RLS user context for secure Supabase access
         await RLSHelper.setUserContext(userId);
-        print('✅ RLS user context set for secure chat access');
 
         // Initialize push notifications properly
         await initializePushNotifications(userId);
-        print('✅ Push notifications initialized for user: $userId');
 
-        print('✅ All services initialized successfully');
       }
     } catch (e) {
-      print('❌ Error initializing services: $e');
       // Don't block login if services fail
     }
 
@@ -1154,7 +1030,6 @@ class AuthController extends GetxController {
 
   void userMainProfileData(Map<String, dynamic> value) {}
   void onUpdateUserData(Map<String, dynamic> value) async {
-    print("???????????????????????????");
     value.addAll({"access_token": user?.accessToken});
     await prefs.setString("user_data", jsonEncode(value));
     await getuserDetail();
@@ -1170,9 +1045,7 @@ class AuthController extends GetxController {
       try {
         final chatCont = Get.find<SupabaseChatController>();
         chatCont.stopListeningForChatUpdates();
-        print('🔥 ✅ Chat listener stopped on logout');
       } catch (e) {
-        print('🔥 SupabaseChatController not found on logout: $e');
       }
 
       // Clear device token from Supabase for all platforms
@@ -1183,18 +1056,12 @@ class AuthController extends GetxController {
               .from('device_tokens')
               .delete()
               .eq('user_id', user!.userId.toString());
-
-          print(
-              '🔥 All device tokens cleared from Supabase for user: ${user!.userId}');
         } catch (e) {
-          print('❌ Error clearing device tokens from Supabase: $e');
         }
       }
 
       // Stop all push notification services
       await stopPushNotifications();
-      print(
-          '🔥 AuthController: All push notification services stopped on logout');
 
       // Clear local device token
       deviceToken = "";
@@ -1222,20 +1089,15 @@ class AuthController extends GetxController {
       // Clear RLS user context for security
       try {
         await RLSHelper.clearUserContext();
-        print('✅ RLS user context cleared on logout');
       } catch (e) {
-        print('⚠️ Error clearing RLS context: $e');
       }
 
       // Navigate to login regardless of server response
       Get.offAll(() => const Login());
 
       if (response.statusCode != 200) {
-        print(
-            '🔥 Logout API failed but local data cleared: ${response.statusCode}');
       }
     } catch (e) {
-      print('🔥 Error during logout: $e');
       // Even if there's an error, clear local data and navigate to login
       try {
         SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -1249,14 +1111,11 @@ class AuthController extends GetxController {
         // Clear RLS user context for security
         try {
           await RLSHelper.clearUserContext();
-          print('✅ RLS user context cleared on logout (error path)');
         } catch (e) {
-          print('⚠️ Error clearing RLS context (error path): $e');
         }
 
         Get.offAll(() => const Login());
       } catch (clearError) {
-        print('🔥 Error clearing local data: $clearError');
         Get.offAll(() => const Login());
       }
     }
@@ -1279,9 +1138,7 @@ class AuthController extends GetxController {
       // Clear RLS user context for security
       try {
         await RLSHelper.clearUserContext();
-        print('✅ RLS user context cleared on account deletion');
       } catch (e) {
-        print('⚠️ Error clearing RLS context on deletion: $e');
       }
 
       Get.offAll(() => const Login());

@@ -41,7 +41,6 @@ Future<void> initializeSharedPreferences() async {
         try {
           await platform.invokeMethod('getAll');
         } catch (e) {
-          print('Platform channel not ready, attempt ${i + 1}/$maxRetries');
           if (i < maxRetries - 1) continue;
         }
       }
@@ -51,13 +50,9 @@ Future<void> initializeSharedPreferences() async {
       // Verify it's working
       await globalPrefs!.reload();
 
-      print('✅ SharedPreferences initialized successfully on attempt ${i + 1}');
       return;
     } catch (e) {
-      print('⚠️ SharedPreferences init attempt ${i + 1} failed: $e');
       if (i == maxRetries - 1) {
-        print(
-            '❌ Failed to initialize SharedPreferences after $maxRetries attempts');
         // Don't throw - allow app to continue with limited functionality
       }
     }
@@ -77,7 +72,6 @@ void main() async {
   // Start app immediately
   runApp(const MyApp());
 
-  print('🚀 === VENTA CUBA STARTUP - 4 - App started ===');
 }
 
 // Initialize services in background without blocking startup
@@ -90,9 +84,7 @@ void _initializeServicesInBackground() {
       // Initialize other services in background
       await _initializePremiumFeatures();
 
-      print('✅ Background services initialized');
     } catch (e) {
-      print('⚠️ Background initialization error: $e');
     }
   });
 }
@@ -105,9 +97,7 @@ Future<void> _initializeSharedPreferencesQuick() async {
     // Set a reasonable timeout to prevent hanging
     globalPrefs = await SharedPreferences.getInstance()
         .timeout(const Duration(seconds: 3));
-    print('✅ SharedPreferences initialized quickly');
   } catch (e) {
-    print('⚠️ SharedPreferences init failed, continuing without: $e');
     // Continue without SharedPreferences rather than hanging
   }
 }
@@ -124,9 +114,7 @@ Future<void> _initializePremiumFeatures() async {
       _initializePremiumSystems().timeout(const Duration(seconds: 3)),
     ]).timeout(const Duration(seconds: 15));
 
-    print('✅ Premium features initialized successfully');
   } catch (e) {
-    print('⚠️ Premium features initialization error (continuing anyway): $e');
     // Don't let initialization errors block the app
   }
 }
@@ -135,7 +123,6 @@ Future<void> _initializePremiumFeatures() async {
 Future<void> _initializePremiumSystems() async {
   // Cache optimization on startup
   await OptimizedCacheManager.optimizeOnStartup();
-  print('🏎️ Premium systems ready');
 }
 
 /// Optimize image cache for faster loading
@@ -143,7 +130,6 @@ Future<void> _optimizeImageCache() async {
   await OptimizedCacheManager.optimizeOnStartup();
 
   // Preload critical images
-  print('🖼️ Image cache optimized');
 }
 
 /// Initialize lazy routing system
@@ -160,9 +146,7 @@ Future<void> _setupOptimizations() async {
 Future<void> _initializeNotificationManager() async {
   try {
     await NotificationManager.instance.initialize();
-    print('🔔 Premium notification manager initialized');
   } catch (e) {
-    print('⚠️ Notification manager init failed (continuing): $e');
     // Don't block app startup for notification issues
   }
 }
@@ -197,7 +181,6 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
           chatCont.setUserOffline(authCont.user!.userId.toString());
         }
       } catch (e) {
-        print('Error setting user offline: $e');
       }
     }
   }
@@ -207,16 +190,13 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
       // Only restore if on Android
       if (Platform.isAndroid) {
         await platform.invokeMethod('restoreNotification');
-        print('📱 Restored sticky notification to default state');
       }
     } catch (e) {
-      print('Error restoring notification: $e');
     }
   }
 
   Future<void> _handleAppResume() async {
     try {
-      print('🔄 App resumed - refreshing chat data...');
       final authCont = Get.find<AuthController>();
       if (authCont.user?.userId != null) {
         // Safe get with fallback
@@ -226,7 +206,6 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
 
         // CRITICAL: Refresh chat lists IMMEDIATELY when app resumes
         chatCont.refreshAllChatLists();
-        print('✅ Chat lists refreshed on app resume');
 
         // Also reconnect realtime subscriptions to ensure they're active
         chatCont.reconnectRealtimeSubscriptions();
@@ -241,7 +220,6 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
         await PushService.onAppResumed();
       }
     } catch (e) {
-      print('🔥 Error handling app resume: $e');
     }
   }
 }
@@ -265,22 +243,18 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
 
-    print('🔥 MyApp initState - START');
 
     themeController = Get.put(ThemeController());
-    print('🔥 MyApp initState - ThemeController initialized');
 
     // Initialize services in background without blocking UI
     Future.microtask(() => _initializeServicesInBackground());
 
     // Add lifecycle observer
     WidgetsBinding.instance.addObserver(AppLifecycleObserver());
-    print('🔥 MyApp initState - Lifecycle observer added');
 
     // Load locale in background
     Future.microtask(() => _loadLocale());
 
-    print('🔥 MyApp initState - END');
   }
 
   void _initializeServicesInBackground() async {
@@ -297,9 +271,7 @@ class _MyAppState extends State<MyApp> {
           url: AppConfig.supabaseUrl,
           anonKey: AppConfig.supabaseAnonKey,
         ).timeout(const Duration(seconds: 10));
-        print('✅ Supabase initialized');
       } catch (e) {
-        print('Supabase init error (continuing): $e');
       }
     }
 
@@ -338,15 +310,12 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    print('🔥 MyApp build - START');
     return ScreenUtilInit(
       designSize: const Size(360, 690),
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {
-        print('🔥 ScreenUtilInit builder - START');
         return Obx(() {
-          print('🔥 Obx builder - START');
           return GetMaterialApp(
             title: 'Venta Cuba Premium',
             theme: ThemeConfig.lightTheme,
