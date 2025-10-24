@@ -33,8 +33,6 @@ class PremiumPerformance {
     _isMonitoring = true;
     _startFrameMonitoring();
     _startPerformanceTimer();
-
-    debugPrint('📊 Premium Performance Monitoring Started');
   }
 
   /// Start monitoring frame rates
@@ -55,7 +53,8 @@ class PremiumPerformance {
         _frameTimes.removeAt(0);
       }
 
-      _averageFPS = _frameTimes.fold<double>(0, (sum, fps) => sum + fps) / _frameTimes.length;
+      _averageFPS = _frameTimes.fold<double>(0, (sum, fps) => sum + fps) /
+          _frameTimes.length;
 
       // Add frame metric
       final frameMetric = FrameMetric(
@@ -85,41 +84,13 @@ class PremiumPerformance {
     final frameCount = _frameMetrics.length;
     final avgFPS = _averageFPS;
 
-    // Log performance if in debug mode
-    if (kDebugMode) {
-      debugPrint('📊 Performance Update:');
-      debugPrint('   FPS: ${avgFPS.toStringAsFixed(1)}');
-      debugPrint('   Memory: ${memoryUsage.toStringAsFixed(1)}MB');
-      debugPrint('   Frame Count: $frameCount');
-    }
-
-    // Alert if performance is degraded
-    if (avgFPS < 45) {
-      _handleLowFPS(avgFPS);
-    }
-
     if (memoryUsage > 200) {
       _handleHighMemoryUsage(memoryUsage);
     }
   }
 
-  /// Handle low FPS scenarios
-  void _handleLowFPS(double fps) {
-    debugPrint('⚠️ Low FPS detected: ${fps.toStringAsFixed(1)}');
-
-    // Suggest optimizations
-    if (kDebugMode) {
-      debugPrint('💡 Performance suggestions:');
-      debugPrint('   - Reduce complex animations');
-      debugPrint('   - Optimize image loading');
-      debugPrint('   - Check for expensive operations on UI thread');
-    }
-  }
-
   /// Handle high memory usage
   void _handleHighMemoryUsage(double memoryMB) {
-    debugPrint('⚠️ High memory usage: ${memoryMB.toStringAsFixed(1)}MB');
-
     // Trigger garbage collection if needed
     if (memoryMB > 300) {
       _triggerMemoryCleanup();
@@ -128,16 +99,11 @@ class PremiumPerformance {
 
   /// Trigger memory cleanup
   void _triggerMemoryCleanup() {
-    debugPrint('🧹 Triggering memory cleanup...');
-
     // Clear image caches if available
     try {
       PaintingBinding.instance.imageCache.clear();
       PaintingBinding.instance.imageCache.clearLiveImages();
-      debugPrint('✅ Image cache cleared');
-    } catch (e) {
-      debugPrint('Failed to clear image cache: $e');
-    }
+    } catch (e) {}
   }
 
   /// Get current memory usage in MB
@@ -163,14 +129,10 @@ class PremiumPerformance {
     metric.endTime = DateTime.now();
     metric.duration = metric.endTime!.difference(metric.startTime);
 
-    if (kDebugMode && metric.duration != null) {
-      debugPrint('⏱️ $name: ${metric.duration!.inMilliseconds}ms');
-    }
+    if (kDebugMode && metric.duration != null) {}
 
     // Warn about slow operations
-    if (metric.duration != null && metric.duration!.inMilliseconds > 1000) {
-      debugPrint('⚠️ Slow operation detected: $name (${metric.duration!.inMilliseconds}ms)');
-    }
+    if (metric.duration != null && metric.duration!.inMilliseconds > 1000) {}
   }
 
   /// Measure a function execution time
@@ -350,8 +312,8 @@ class PerformanceStats {
   @override
   String toString() {
     return 'PerformanceStats(fps: ${averageFPS.toStringAsFixed(1)}, '
-           'memory: ${memoryUsageMB.toStringAsFixed(1)}MB, '
-           'frames: $frameCount, metrics: $activeMetrics)';
+        'memory: ${memoryUsageMB.toStringAsFixed(1)}MB, '
+        'frames: $frameCount, metrics: $activeMetrics)';
   }
 }
 

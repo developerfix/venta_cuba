@@ -514,10 +514,7 @@ class SupabaseChatController extends GetxController {
                   // Only update badge if we're not the sender
                   if (senderId != currentUserId) {
                     Future.microtask(() => debouncedUpdateUnreadIndicators());
-                  } else {
-                    print(
-                        '🔴 BADGE: Skipping update for sender\'s own message');
-                  }
+                  } else {}
                 } else {
                   // For updates and deletes, always update
                   Future.microtask(() => debouncedUpdateUnreadIndicators());
@@ -525,9 +522,7 @@ class SupabaseChatController extends GetxController {
               },
             )
             .subscribe();
-      } catch (e) {
-        print('Error setting up real-time subscription: $e');
-      }
+      } catch (e) {}
     }
   }
 
@@ -720,7 +715,6 @@ class SupabaseChatController extends GetxController {
 
       // Don't update badge for the sender - they shouldn't see increased badge
       // when they send their own messages
-      print('🔴 BADGE: Not updating badge for sender after sending message');
 
       // Clean up any remaining optimistic messages after a short delay
       Future.delayed(Duration(seconds: 2), () {
@@ -731,8 +725,6 @@ class SupabaseChatController extends GetxController {
           final afterCount = _messageCache[chatId]!.length;
 
           if (beforeCount != afterCount) {
-            print(
-                '🧩 Cleaned up ${beforeCount - afterCount} lingering optimistic messages');
             // Update stream with cleaned cache
             if (_messageStreams.containsKey(chatId) &&
                 !_messageStreams[chatId]!.isClosed) {
@@ -899,19 +891,13 @@ class SupabaseChatController extends GetxController {
 
       // Clear notifications for this chat when marked as read
       await PushService.cancelChatNotifications(chatId);
-      print('🧼 Chat marked as read - cleared notifications for: $chatId');
 
       // Force immediate UI update
       try {
         final authController = Get.find<AuthController>();
         authController.update();
-        print('🔴 MARK READ: Forced AuthController update after marking read');
-      } catch (e) {
-        print('🔴 MARK READ ERROR: Could not force update: $e');
-      }
-    } catch (e) {
-      print('Error marking chat as read: $e');
-    }
+      } catch (e) {}
+    } catch (e) {}
   }
 
   // Add method for loading more messages (pagination)
@@ -949,7 +935,6 @@ class SupabaseChatController extends GetxController {
 
     // Don't schedule another if one is already pending
     if (_isBadgeUpdatePending) {
-      print('🔴 BADGE: Update already pending, skipping duplicate request');
       return;
     }
 
@@ -975,14 +960,10 @@ class SupabaseChatController extends GetxController {
         try {
           final authController = Get.find<AuthController>();
           userId = authController.user?.userId?.toString();
-        } catch (e) {
-          print(
-              '🔴 BADGE ERROR: No authenticated user and no AuthController: $e');
-        }
+        } catch (e) {}
       }
 
       if (userId == null) {
-        print('🔴 BADGE ERROR: No user ID found');
         // Set count to 0 when no user
         try {
           final authController = Get.find<AuthController>();
@@ -992,8 +973,6 @@ class SupabaseChatController extends GetxController {
         } catch (e) {}
         return;
       }
-
-      print('🔴 BADGE: Starting unread count calculation for user $userId');
 
       // Count unread messages by comparing message times with read times
       final chatsQuery = await _supabase
@@ -1030,8 +1009,6 @@ class SupabaseChatController extends GetxController {
                 .gt('time', lastReadTime ?? '1970-01-01T00:00:00Z');
 
             totalUnread += unreadMessages.length;
-            print(
-                '🔴 CHAT ${chat['id']}: Found ${unreadMessages.length} unread messages');
           }
         }
       }
@@ -1049,26 +1026,14 @@ class SupabaseChatController extends GetxController {
         }
 
         // Force update with logging
-        print(
-            '🔴 BEFORE UPDATE: AuthController unread = ${authController.unreadMessageCount.value}');
         authController.unreadMessageCount.value = totalUnread;
         authController.hasUnreadMessages.value = totalUnread > 0;
         authController.update(); // Force UI update
-        print('🔴 AFTER UPDATE: Set unread count to $totalUnread');
-        print(
-            '🔴 AFTER UPDATE: AuthController unread = ${authController.unreadMessageCount.value}');
-        print(
-            '🔴 AFTER UPDATE: hasUnread = ${authController.hasUnreadMessages.value}');
 
         // Also update the app icon badge count via PushService
         await PushService.updateBadgeCount();
-        print('📱 Updated app icon badge count to $totalUnread');
-      } catch (e) {
-        print('🔴 BADGE FATAL ERROR: Could not update AuthController: $e');
-      }
-    } catch (e) {
-      print('Error updating unread indicators: $e');
-    }
+      } catch (e) {}
+    } catch (e) {}
   }
 
   Future<void> updateBadgeCountFromChats() async {
@@ -1434,19 +1399,13 @@ class SupabaseChatController extends GetxController {
       authController.unreadMessageCount.value = count;
       authController.hasUnreadMessages.value = count > 0;
       authController.update();
-      print('🔴 EMERGENCY BADGE: Forced badge to show count $count');
     } catch (e) {
-      print('🔴 EMERGENCY BADGE ERROR: $e');
       try {
         final authController = Get.put(AuthController());
         authController.unreadMessageCount.value = count;
         authController.hasUnreadMessages.value = count > 0;
         authController.update();
-        print(
-            '🔴 EMERGENCY BADGE: Created controller and forced badge to $count');
-      } catch (e2) {
-        print('🔴 EMERGENCY BADGE FATAL ERROR: $e2');
-      }
+      } catch (e2) {}
     }
   }
 

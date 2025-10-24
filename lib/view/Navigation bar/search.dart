@@ -977,7 +977,6 @@ class _SearchState extends State<Search> {
     return Expanded(
       child: GridView.builder(
         itemCount: listingList.length,
-        controller: homeCont.searchScrollController,
         // physics: NeverScrollableScrollPhysics(),
         shrinkWrap: true,
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -1391,7 +1390,6 @@ class _SearchState extends State<Search> {
     return Expanded(
       child: ListView.separated(
         itemCount: listingList.length,
-        controller: homeCont.searchScrollController,
         shrinkWrap: true,
         // physics: NeverScrollableScrollPhysics(),
         itemBuilder: (BuildContext context, int index) {

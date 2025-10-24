@@ -97,13 +97,7 @@ class SupabaseService {
 
       return true;
     } catch (e) {
-      print('❌ [SupabaseService] Error saving token: $e');
-      print('🔴 [SupabaseService] Error type: ${e.runtimeType}');
-      if (e is PostgrestException) {
-        print('🔴 [SupabaseService] Postgrest error details: ${e.message}');
-        print('🔴 [SupabaseService] Postgrest error code: ${e.code}');
-        print('🔴 [SupabaseService] Postgrest error hint: ${e.hint}');
-      }
+      if (e is PostgrestException) {}
       return false;
     }
   }

@@ -10,7 +10,6 @@ Future<void> initializeSharedPreferences() async {
   // First try using global instance
   if (globalPrefs != null) {
     prefs = globalPrefs!;
-    print('✅ SharedPreferences initialized from global instance');
     return;
   }
 
@@ -47,14 +46,11 @@ Future<void> initializeSharedPreferences() async {
         }
       }
 
-      print('✅ SharedPreferences initialized successfully');
       // Update global instance
       globalPrefs = prefs;
       return;
     } catch (e) {
       retries--;
-      print(
-          '⚠️ SharedPreferences initialization failed, retries left: $retries, error: $e');
       if (retries > 0) {
         // Exponential backoff with longer delays for iOS
         int delayMs = Platform.isIOS
@@ -66,7 +62,6 @@ Future<void> initializeSharedPreferences() async {
         try {
           prefs = await SharedPreferences.getInstance();
           globalPrefs = prefs;
-          print('⚠️ SharedPreferences initialized in fallback mode');
           return;
         } catch (fallbackError) {
           throw Exception(

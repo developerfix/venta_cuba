@@ -94,7 +94,6 @@ class AuthController extends GetxController {
   // Initialize push notifications with permission handling
   Future<void> initializePushNotifications(String userId) async {
     try {
-
       // Ensure device token is properly set and saved before initializing push
       if (deviceToken.isEmpty || !deviceToken.contains(userId)) {
         await refreshDeviceToken();
@@ -120,10 +119,8 @@ class AuthController extends GetxController {
         );
 
         if (serviceStarted) {
-        } else {
-        }
+        } else {}
       }
-
     } catch (e) {
       // Don't throw - allow app to continue without notifications
     }
@@ -132,7 +129,6 @@ class AuthController extends GetxController {
   // Request notification permissions with proper handling
   Future<bool> requestNotificationPermissions() async {
     try {
-
       // For Android 13+ (API 33+)
       if (Platform.isAndroid) {
         final androidInfo = await DeviceInfoPlugin().androidInfo;
@@ -177,7 +173,6 @@ class AuthController extends GetxController {
   // Stop push notifications on logout
   Future<void> stopPushNotifications() async {
     try {
-
       // Stop Android background service
       if (Platform.isAndroid) {
         await AndroidBackgroundService.stopService();
@@ -185,8 +180,7 @@ class AuthController extends GetxController {
 
       // Stop push service
       await PushService.dispose();
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   @override
@@ -275,8 +269,7 @@ class AuthController extends GetxController {
     try {
       final chatCont = Get.find<SupabaseChatController>();
       await chatCont.updateUnreadMessageIndicators();
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   // Test method to manually set unread count (for debugging)
@@ -297,32 +290,28 @@ class AuthController extends GetxController {
   void testPushNotification() {
     try {
       PushService.sendTestNotification();
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   // Test badge functionality
   void testBadge({int count = 5}) {
     try {
       PushService.testBadge(count: count);
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   // Clear test notifications
   void clearTestNotifications() {
     try {
       PushService.clearTestNotifications();
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   // Force reset stuck badge (for Android debugging)
   void forceResetBadge() {
     try {
       PushService.forceResetBadge();
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   final TwilioFlutter twilioFlutter = TwilioFlutter(
@@ -403,7 +392,6 @@ class AuthController extends GetxController {
 
   Future getuserDetail() async {
     try {
-
       final SharedPreferences prefss = await SharedPreferences.getInstance();
       tokenMain = prefss.getString('token');
       token = prefss.getString('token');
@@ -470,16 +458,12 @@ class AuthController extends GetxController {
         // Update unread message indicators with timeout
         try {
           await chatCont.updateUnreadMessageIndicators().timeout(
-            const Duration(seconds: 5),
-            onTimeout: () {
-            },
-          );
-        } catch (e) {
-        }
-      } catch (e) {
-      }
+                const Duration(seconds: 5),
+                onTimeout: () {},
+              );
+        } catch (e) {}
+      } catch (e) {}
     } catch (e) {
-
       Get.offAll(() => const Login());
       rethrow; // Re-throw to let calling method handle the error
     }
@@ -500,15 +484,13 @@ class AuthController extends GetxController {
         getuserDetail().then((_) async {
           // After user details are loaded, initialize notifications
           if (user?.userId != null) {
-
             // Refresh and save device token for returning users
             await refreshDeviceToken();
             await saveDeviceTokenWithPlatform(user!.userId.toString());
 
             await initializePushNotifications(user!.userId.toString());
           }
-        }).catchError((e) {
-        });
+        }).catchError((e) {});
       } else {
         Get.offAll(() => const Login());
       }
@@ -533,15 +515,13 @@ class AuthController extends GetxController {
         },
       );
 
-
       if (response.statusCode == 200) {
         // Extract user ID from response and save device token to Supabase
         try {
           if (response.body != null && response.body['user_id'] != null) {
             String userId = response.body['user_id'].toString();
             await saveDeviceTokenWithPlatform(userId);
-          } else {
-          }
+          } else {}
         } catch (e) {
           // Don't block the signup process if Supabase fails
         }
@@ -602,7 +582,6 @@ class AuthController extends GetxController {
       );
 
       if (response.statusCode == 200) {
-
         await prefs.setString("token", response.body["access_token"]);
 
         // Update tokenMain immediately after login
@@ -623,8 +602,7 @@ class AuthController extends GetxController {
         return response.statusCode;
       } else if (response.statusCode! >= 400) {
       } else if (response.statusCode == 500) {
-      } else {
-      }
+      } else {}
     } catch (e) {
     } finally {
       // Always set loading state to false when done
@@ -643,22 +621,19 @@ class AuthController extends GetxController {
           user?.userId ?? 'temp_${DateTime.now().millisecondsSinceEpoch}';
       token = 'venta_cuba_user_$userId';
       deviceToken = token;
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   /// Helper method to save device token with platform detection
   Future<void> saveDeviceTokenWithPlatform(String userId) async {
     // Prevent concurrent device token saves
     if (_savingDeviceToken) {
-          'ℹ️ Device token save already in progress for user $userId, skipping');
       return;
     }
 
     _savingDeviceToken = true;
 
     try {
-
       final supabaseService = SupabaseService.instance;
 
       String token = 'venta_cuba_user_$userId';
@@ -670,8 +645,7 @@ class AuthController extends GetxController {
 
       if (success) {
         deviceToken = token; // Update local token
-      } else {
-      }
+      } else {}
     } catch (e) {
     } finally {
       _savingDeviceToken = false;
@@ -869,8 +843,7 @@ class AuthController extends GetxController {
         // Update user presence as online when token is updated
         await setUserOnline();
       }
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   // Set user as online
@@ -880,8 +853,7 @@ class AuthController extends GetxController {
         final chatController = Get.find<SupabaseChatController>();
         await chatController.setUserOnline(user!.userId.toString());
       }
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   // Set user as offline
@@ -894,15 +866,13 @@ class AuthController extends GetxController {
         // Stop push notification services when going offline
         await stopPushNotifications();
       }
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   // Update device token in all chat documents where this user participates
   Future<void> updateDeviceTokenInAllChats(String newToken) async {
     try {
       if (user?.userId == null) return;
-
 
       final chatController = Get.find<SupabaseChatController>();
       final supabase = chatController.getSupabaseClient();
@@ -921,9 +891,7 @@ class AuthController extends GetxController {
           newToken,
         );
       }
-
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   // Get current device token for a specific user (for notifications)
@@ -1000,8 +968,7 @@ class AuthController extends GetxController {
 
       // Save to Supabase immediately
       await saveDeviceTokenWithPlatform(loginUserId);
-    } else {
-    }
+    } else {}
 
     isBusinessAccount = false;
     changeAccountType();
@@ -1018,7 +985,6 @@ class AuthController extends GetxController {
 
         // Initialize push notifications properly
         await initializePushNotifications(userId);
-
       }
     } catch (e) {
       // Don't block login if services fail
@@ -1045,8 +1011,7 @@ class AuthController extends GetxController {
       try {
         final chatCont = Get.find<SupabaseChatController>();
         chatCont.stopListeningForChatUpdates();
-      } catch (e) {
-      }
+      } catch (e) {}
 
       // Clear device token from Supabase for all platforms
       if (user?.userId != null) {
@@ -1056,8 +1021,7 @@ class AuthController extends GetxController {
               .from('device_tokens')
               .delete()
               .eq('user_id', user!.userId.toString());
-        } catch (e) {
-        }
+        } catch (e) {}
       }
 
       // Stop all push notification services
@@ -1089,14 +1053,12 @@ class AuthController extends GetxController {
       // Clear RLS user context for security
       try {
         await RLSHelper.clearUserContext();
-      } catch (e) {
-      }
+      } catch (e) {}
 
       // Navigate to login regardless of server response
       Get.offAll(() => const Login());
 
-      if (response.statusCode != 200) {
-      }
+      if (response.statusCode != 200) {}
     } catch (e) {
       // Even if there's an error, clear local data and navigate to login
       try {
@@ -1111,8 +1073,7 @@ class AuthController extends GetxController {
         // Clear RLS user context for security
         try {
           await RLSHelper.clearUserContext();
-        } catch (e) {
-        }
+        } catch (e) {}
 
         Get.offAll(() => const Login());
       } catch (clearError) {
@@ -1138,8 +1099,7 @@ class AuthController extends GetxController {
       // Clear RLS user context for security
       try {
         await RLSHelper.clearUserContext();
-      } catch (e) {
-      }
+      } catch (e) {}
 
       Get.offAll(() => const Login());
     } else {

@@ -63,7 +63,8 @@
       "Edit(**)",
       "MultiEdit(**)",
       "Bash(git rev-parse:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(git restore:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",

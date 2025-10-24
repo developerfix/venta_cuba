@@ -2,7 +2,8 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 
 class EnsureBackgroundService {
-  static const MethodChannel _channel = MethodChannel('venta_cuba/background_service');
+  static const MethodChannel _channel =
+      MethodChannel('venta_cuba/background_service');
 
   /// Check if background service is running and restart if needed
   static Future<void> ensureServiceRunning(String userId) async {
@@ -12,17 +13,12 @@ class EnsureBackgroundService {
       final bool isRunning = await _channel.invokeMethod('isServiceRunning');
 
       if (!isRunning) {
-        print('🔄 Background service not running, starting it...');
         await _channel.invokeMethod('startService', {
           'userId': userId,
           'serverUrl': 'https://ntfy.sh',
         });
-      } else {
-        print('✅ Background service is already running');
-      }
-    } catch (e) {
-      print('❌ Error checking background service: $e');
-    }
+      } else {}
+    } catch (e) {}
   }
 
   /// Force restart the background service
@@ -30,8 +26,6 @@ class EnsureBackgroundService {
     if (!Platform.isAndroid) return;
 
     try {
-      print('🔄 Restarting background service...');
-
       // Stop the service first
       await _channel.invokeMethod('stopService');
 
@@ -43,10 +37,6 @@ class EnsureBackgroundService {
         'userId': userId,
         'serverUrl': 'https://ntfy.sh',
       });
-
-      print('✅ Background service restarted');
-    } catch (e) {
-      print('❌ Error restarting background service: $e');
-    }
+    } catch (e) {}
   }
 }

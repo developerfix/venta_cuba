@@ -111,27 +111,27 @@ class _ChatsState extends State<Chats> with WidgetsBindingObserver {
         body: Column(
           children: [
             SizedBox(height: 2.h, child: Divider()),
-            // Notification warning text - only show on iOS
-            if (Platform.isIOS)
-              Container(
-                padding: EdgeInsets.all(8.0),
-                margin: EdgeInsets.all(8.0),
-                decoration: BoxDecoration(
-                  color: Colors.orange.withValues(alpha: 0.1),
-                  border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-                child: Text(
-                  'Notifications won\'t work outside the app because of network restrictions'
-                      .tr,
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: Colors.orange[700],
-                    fontStyle: FontStyle.italic,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
+            // Notification warning text - show platform-specific messages
+            Container(
+              padding: EdgeInsets.all(8.0),
+              margin: EdgeInsets.all(8.0),
+              decoration: BoxDecoration(
+                color: Colors.orange.withValues(alpha: 0.1),
+                border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                borderRadius: BorderRadius.circular(8.0),
               ),
+              child: Text(
+                Platform.isIOS
+                    ? 'Notifications won\'t work outside the app because of network restrictions'.tr
+                    : 'Chat notifications won\'t work outside of the app for some phone models because of network restrictions. Just log in periodically to check your messages. We will find another solution in the next update. You may also receive duplicate messages.'.tr,
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: Colors.orange[700],
+                  fontStyle: FontStyle.italic,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
             Expanded(child: groupList()),
           ],
         ));

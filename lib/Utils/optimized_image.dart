@@ -45,14 +45,17 @@ class OptimizedImage extends StatelessWidget {
       memCacheHeight: _getMemoryCacheDimension(height),
       memCacheWidth: _getMemoryCacheDimension(width),
 
-      placeholder: (context, url) => placeholder ??
-        (enableShimmer ? _buildShimmerPlaceholder() : _buildStaticPlaceholder()),
+      placeholder: (context, url) =>
+          placeholder ??
+          (enableShimmer
+              ? _buildShimmerPlaceholder()
+              : _buildStaticPlaceholder()),
 
       errorWidget: (context, url, error) => errorWidget ?? _buildErrorWidget(),
 
       // Progressive loading for better UX
       progressIndicatorBuilder: (context, url, progress) =>
-        _buildProgressIndicator(progress),
+          _buildProgressIndicator(progress),
 
       // Premium fade animations for ultra-smooth transitions
       fadeInDuration: const Duration(milliseconds: 400),
@@ -66,15 +69,20 @@ class OptimizedImage extends StatelessWidget {
     if (!enableWebP || !imageUrl.startsWith('http')) return imageUrl;
 
     // Auto-detect and convert to WebP if supported
-    if (imageUrl.contains('.png') || imageUrl.contains('.jpg') || imageUrl.contains('.jpeg')) {
+    if (imageUrl.contains('.png') ||
+        imageUrl.contains('.jpg') ||
+        imageUrl.contains('.jpeg')) {
       return imageUrl.replaceFirst(RegExp(r'\.(png|jpe?g)$'), '.webp');
     }
     return imageUrl;
   }
 
   int _getCacheDimension(double? dimension, ImageQuality quality) {
-    final multiplier = quality == ImageQuality.high ? 1.0 :
-                     quality == ImageQuality.medium ? 0.8 : 0.6;
+    final multiplier = quality == ImageQuality.high
+        ? 1.0
+        : quality == ImageQuality.medium
+            ? 0.8
+            : 0.6;
     return ((dimension ?? 200) * multiplier).toInt();
   }
 
@@ -212,7 +220,8 @@ class OptimizedCacheManager {
     _instance ??= CacheManager(
       Config(
         _cacheKey,
-        stalePeriod: const Duration(days: 30), // Longer cache for better performance
+        stalePeriod:
+            const Duration(days: 30), // Longer cache for better performance
         maxNrOfCacheObjects: 500, // Increased cache size for premium experience
         repo: JsonCacheInfoRepository(databaseName: _cacheKey),
         fileService: HttpFileService(),
@@ -272,8 +281,6 @@ class OptimizedCacheManager {
     if (stats.totalSizeMB > 200) {
       await smartCacheCleanup();
     }
-
-    print('📊 Cache optimization complete. Size: ${stats.totalSizeMB}MB, Files: ${stats.totalFiles}');
   }
 }
 

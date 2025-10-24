@@ -70,7 +70,8 @@ class PushService {
     try {
       // Skip iOS push notifications - ntfy.sh doesn't work on iOS
       if (Platform.isIOS) {
-        print('⚠️ iOS push notifications disabled - ntfy.sh not supported on iOS');
+        print(
+            '⚠️ iOS push notifications disabled - ntfy.sh not supported on iOS');
         return;
       }
 
@@ -120,11 +121,7 @@ class PushService {
 
       // Save token to Supabase
       await _saveTokenToSupabase(userId);
-
-      print('✅ PREMIUM Push Service initialized successfully');
-    } catch (e) {
-      print('❌ Error initializing Push Service: $e');
-    }
+    } catch (e) {}
   }
 
   /// Initialize local notifications with maximum priority
@@ -400,7 +397,6 @@ class PushService {
       // Always recalculate badge for current user
       if (_currentUserId != null) {
         badgeCount = await _getUnreadCountForUser(_currentUserId!);
-        print('📊 FRESH badge count calculated: $badgeCount');
       } else {
         badgeCount = 0;
       }
@@ -414,7 +410,6 @@ class PushService {
       }
 
       final int safeBadgeCount = badgeCount;
-      print('🔴 REPLACING notification with badge: $safeBadgeCount');
 
       final androidDetails = AndroidNotificationDetails(
         'venta_cuba_chat_messages',
@@ -455,11 +450,7 @@ class PushService {
           _activeNotificationsByChatId[chatId]!.clear(); // Clear old tracking
           _activeNotificationsByChatId[chatId]!.add(SINGLE_NOTIFICATION_ID);
         }
-
-        print(
-            '✅ Notification REPLACED with badge: $safeBadgeCount (ID=$SINGLE_NOTIFICATION_ID)');
       } catch (e) {
-        print('❌ Failed to show notification: $e');
         // Try showing a simpler notification without badge
         try {
           final simpleAndroidDetails = AndroidNotificationDetails(
@@ -475,14 +466,9 @@ class PushService {
             body,
             NotificationDetails(android: simpleAndroidDetails),
           );
-          print('✅ Showed simple notification instead');
-        } catch (e2) {
-          print('❌ Even simple notification failed: $e2');
-        }
+        } catch (e2) {}
       }
-    } catch (e) {
-      print('❌ Error in _showPremiumNotification: $e');
-    }
+    } catch (e) {}
   }
 
   /// Handle disconnection with auto-reconnection
@@ -493,9 +479,6 @@ class PushService {
     if (_retryCount < _maxRetries) {
       _retryCount++;
       final delay = 3000 * _retryCount; // Progressive delay
-
-      print(
-          '🔄 Reconnecting in ${delay}ms (attempt $_retryCount/$_maxRetries)');
 
       _reconnectTimer?.cancel();
       _reconnectTimer = Timer(Duration(milliseconds: delay), () {
@@ -922,17 +905,12 @@ class PushService {
   /// Get unread message count for a specific user - FIXED ACCUMULATION
   static Future<int> _getUnreadCountForUser(String userId) async {
     try {
-      print('\n🔴🔴🔴 BADGE CALCULATION START 🔴🔴🔴');
-      print('🔴 Calculating for user: $userId');
-
       // Get all chats where the user is involved
       final userChats = await SupabaseService.client
           .from('chats')
           .select(
               'id, sender_id, send_to_id, sender_last_read_time, recipient_last_read_time')
           .or('sender_id.eq.$userId,send_to_id.eq.$userId');
-
-      print('🔴 Found ${userChats.length} chats for user');
 
       int totalUnread = 0;
 
@@ -942,17 +920,11 @@ class PushService {
         final chatSendToId = chat['send_to_id'].toString();
         final userIdStr = userId.toString();
 
-        print(
-            '🔴 Chat ${chat['id']}: sender=$chatSenderId, recipient=$chatSendToId, user=$userIdStr');
-
         // Determine if user is sender or recipient
         final isUserSender = chatSenderId == userIdStr;
         final lastReadTime = isUserSender
             ? chat['sender_last_read_time']
             : chat['recipient_last_read_time'];
-
-        print(
-            '🔴 User is ${isUserSender ? "sender" : "recipient"}, last read: $lastReadTime');
 
         // Count unread messages for this chat
         final unreadMessages = await SupabaseService.client
@@ -965,22 +937,13 @@ class PushService {
         final chatUnreadCount = unreadMessages.length;
 
         if (chatUnreadCount > 0) {
-          print('🔴 Chat ${chat['id']}: $chatUnreadCount unread messages');
-          for (var msg in unreadMessages.take(3)) {
-            print('🔴   - Message from ${msg['send_by']} at ${msg['time']}');
-          }
+          for (var msg in unreadMessages.take(3)) {}
           totalUnread += chatUnreadCount;
-        } else {
-          print('🔴 Chat ${chat['id']}: No unread messages');
-        }
+        } else {}
       }
 
-      print('🔴 FINAL BADGE COUNT: $totalUnread');
-      print('🔴🔴🔴 BADGE CALCULATION END 🔴🔴🔴\n');
       return totalUnread;
     } catch (e) {
-      print('❌ Badge calculation error: $e');
-      print('❌ Stack trace: ${StackTrace.current}');
       return 0;
     }
   }
@@ -1172,19 +1135,13 @@ class PushService {
     if (!Platform.isAndroid) return;
 
     try {
-      print('🤖 Android badge update to: $count (no notification)');
-
       // Skip canceling notification -1 as it causes Gson error
       // The badge will be handled by regular chat notifications
 
       // DON'T create separate badge notifications - they show up weird in status bar
       // Let the regular chat notifications handle badge counts with their 'number' field
       // This prevents the weird silent notifications in status bar
-
-      print('🤖 Badge logic handled by chat notifications');
-    } catch (e) {
-      print('❌ Error updating Android badge: $e');
-    }
+    } catch (e) {}
   }
 
   /// Legacy method - redirects to force set

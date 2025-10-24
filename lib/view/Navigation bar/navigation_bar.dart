@@ -22,7 +22,8 @@ class Navigation_Bar extends StatefulWidget {
   State<Navigation_Bar> createState() => _Navigation_BarState();
 }
 
-class _Navigation_BarState extends State<Navigation_Bar> with TickerProviderStateMixin {
+class _Navigation_BarState extends State<Navigation_Bar>
+    with TickerProviderStateMixin {
   final authCont = Get.put(AuthController());
   final home = Get.put(HomeController());
 
@@ -107,28 +108,19 @@ class _Navigation_BarState extends State<Navigation_Bar> with TickerProviderStat
 
   void _initializeUnreadCount() async {
     try {
-      print('🔴 NAVIGATION: Starting unread count initialization');
-      print('🔴 NAVIGATION: Current unread count = ${authCont.unreadMessageCount.value}');
-
       if (authCont.user?.userId != null) {
         try {
           final chatController = Get.find<SupabaseChatController>();
           await chatController.updateUnreadMessageIndicators();
-          print('🔴 NAVIGATION: After update, unread count = ${authCont.unreadMessageCount.value}');
         } catch (e) {
-          print('🔴 NAVIGATION: SupabaseChatController not found: $e');
           // Try to create it
           final chatController = Get.put(SupabaseChatController());
           await chatController.updateUnreadMessageIndicators();
-          print('🔴 NAVIGATION: Created controller and updated count = ${authCont.unreadMessageCount.value}');
         }
       }
 
       // Badge will update automatically based on real unread messages
-
-    } catch (e) {
-      print('🔴 NAVIGATION ERROR: $e');
-    }
+    } catch (e) {}
   }
 
   @override
@@ -166,9 +158,8 @@ class _Navigation_BarState extends State<Navigation_Bar> with TickerProviderStat
               } else {
                 if (authCont.user?.email == "") {
                   // Navigate to login with premium transition
-                  await Navigator.of(context).push(
-                    PremiumPageTransitions.slideFromRight(Login())
-                  );
+                  await Navigator.of(context)
+                      .push(PremiumPageTransitions.slideFromRight(Login()));
                 } else {
                   // Update the actual badge count when switching to chat tab
                   if (index == 1) {
@@ -176,14 +167,17 @@ class _Navigation_BarState extends State<Navigation_Bar> with TickerProviderStat
                     try {
                       final chatController = Get.find<SupabaseChatController>();
                       chatController.updateUnreadMessageIndicators();
-                      print('🔥 Switched to chat tab, current unread count: ${authCont.unreadMessageCount.value}');
+                      print(
+                          '🔥 Switched to chat tab, current unread count: ${authCont.unreadMessageCount.value}');
                     } catch (e) {
-                      print('🔥 SupabaseChatController not found when switching to chat tab');
+                      print(
+                          '🔥 SupabaseChatController not found when switching to chat tab');
                     }
                   }
 
                   // Debug: Print current unread count
-                  print('🔥 Navigation - Current unread count: ${authCont.unreadMessageCount.value}');
+                  print(
+                      '🔥 Navigation - Current unread count: ${authCont.unreadMessageCount.value}');
 
                   cont.currentIndexBottomAppBar = index;
                   cont.update();
@@ -196,7 +190,9 @@ class _Navigation_BarState extends State<Navigation_Bar> with TickerProviderStat
                   animation: _iconScaleAnimations[0],
                   builder: (context, child) {
                     return Transform.scale(
-                      scale: cont.currentIndexBottomAppBar == 0 ? _iconScaleAnimations[0].value : 1.0,
+                      scale: cont.currentIndexBottomAppBar == 0
+                          ? _iconScaleAnimations[0].value
+                          : 1.0,
                       child: SvgPicture.asset(
                         'assets/icons/home.svg',
                         colorFilter: ColorFilter.mode(
@@ -216,10 +212,10 @@ class _Navigation_BarState extends State<Navigation_Bar> with TickerProviderStat
                   animation: _iconScaleAnimations[1],
                   builder: (context, child) {
                     return Transform.scale(
-                      scale: cont.currentIndexBottomAppBar == 1 ? _iconScaleAnimations[1].value : 1.0,
+                      scale: cont.currentIndexBottomAppBar == 1
+                          ? _iconScaleAnimations[1].value
+                          : 1.0,
                       child: Obx(() {
-                        print('🔴 BADGE CHECK: unread count = ${authCont.unreadMessageCount.value}');
-                        print('🔴 BADGE CHECK: hasUnread = ${authCont.hasUnreadMessages.value}');
                         return Stack(
                           clipBehavior: Clip.none,
                           children: [
@@ -232,7 +228,8 @@ class _Navigation_BarState extends State<Navigation_Bar> with TickerProviderStat
                                 BlendMode.srcIn,
                               ),
                             ),
-                            if (authCont.unreadMessageCount.value > 0) // Show badge with count if there are unread messages
+                            if (authCont.unreadMessageCount.value >
+                                0) // Show badge with count if there are unread messages
                               Positioned(
                                 right: -8,
                                 top: -8,
@@ -243,7 +240,8 @@ class _Navigation_BarState extends State<Navigation_Bar> with TickerProviderStat
                                       minWidth: 18,
                                       minHeight: 18,
                                     ),
-                                    padding: EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 5, vertical: 2),
                                     decoration: BoxDecoration(
                                       color: Colors.red[600],
                                       borderRadius: BorderRadius.circular(12),
@@ -253,7 +251,8 @@ class _Navigation_BarState extends State<Navigation_Bar> with TickerProviderStat
                                           width: 2),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black.withValues(alpha: 0.2),
+                                          color: Colors.black
+                                              .withValues(alpha: 0.2),
                                           blurRadius: 3,
                                           offset: Offset(0, 1),
                                         ),
@@ -289,7 +288,9 @@ class _Navigation_BarState extends State<Navigation_Bar> with TickerProviderStat
                   animation: _iconScaleAnimations[2],
                   builder: (context, child) {
                     return Transform.scale(
-                      scale: cont.currentIndexBottomAppBar == 2 ? _iconScaleAnimations[2].value : 1.0,
+                      scale: cont.currentIndexBottomAppBar == 2
+                          ? _iconScaleAnimations[2].value
+                          : 1.0,
                       child: SvgPicture.asset(
                         'assets/icons/camera.svg',
                         colorFilter: ColorFilter.mode(
@@ -309,7 +310,9 @@ class _Navigation_BarState extends State<Navigation_Bar> with TickerProviderStat
                   animation: _iconScaleAnimations[3],
                   builder: (context, child) {
                     return Transform.scale(
-                      scale: cont.currentIndexBottomAppBar == 3 ? _iconScaleAnimations[3].value : 1.0,
+                      scale: cont.currentIndexBottomAppBar == 3
+                          ? _iconScaleAnimations[3].value
+                          : 1.0,
                       child: SvgPicture.asset(
                         'assets/icons/tag.svg',
                         colorFilter: ColorFilter.mode(
@@ -329,7 +332,9 @@ class _Navigation_BarState extends State<Navigation_Bar> with TickerProviderStat
                   animation: _iconScaleAnimations[4],
                   builder: (context, child) {
                     return Transform.scale(
-                      scale: cont.currentIndexBottomAppBar == 4 ? _iconScaleAnimations[4].value : 1.0,
+                      scale: cont.currentIndexBottomAppBar == 4
+                          ? _iconScaleAnimations[4].value
+                          : 1.0,
                       child: SvgPicture.asset(
                         'assets/icons/profile.svg',
                         colorFilter: ColorFilter.mode(
@@ -350,5 +355,4 @@ class _Navigation_BarState extends State<Navigation_Bar> with TickerProviderStat
       },
     );
   }
-
 }

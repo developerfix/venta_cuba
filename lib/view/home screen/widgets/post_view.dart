@@ -38,10 +38,31 @@ class ListingView extends StatelessWidget {
           ),
           itemBuilder: (BuildContext context, int index) {
             if (index == shuffledList.length) {
-              // Only show loading spinner if actually loading and has more items
-              return (cont.hasMore.value && cont.isPostLoading.value)
-                  ? Center(child: CircularProgressIndicator())
-                  : SizedBox.shrink();
+              // Show loading indicator or "Load More" button
+              if (cont.hasMore.value) {
+                if (cont.isPostLoading.value) {
+                  return Container(
+                    height: 100,
+                    child: Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                }
+              } else {
+                return Container(
+                  height: 60,
+                  child: Center(
+                    child: Text(
+                      'No more items to load',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ),
+                );
+              }
+            }
+            // Safety check to prevent RangeError
+            if (index >= shuffledList.length) {
+              return SizedBox.shrink(); // Return empty widget if index is out of bounds
             }
             final item = shuffledList[index];
             return RepaintBoundary(

@@ -239,7 +239,19 @@ class HomeController extends GetxController {
     scrollsController.dispose();
     scrollsController = ScrollController();
     scrollsController.addListener(onScroll);
-    Get.log("Scroll controller reset");
+    Get.log("📜 Scroll controller reset and listener attached");
+  }
+
+  // Test method to manually trigger scroll
+  void testScrollEvent() {
+    Get.log("📜 MANUAL SCROLL TEST");
+    if (scrollsController.hasClients) {
+      Get.log(
+          "📜 TEST: pixels=${scrollsController.position.pixels}, maxExtent=${scrollsController.position.maxScrollExtent}");
+      onScroll();
+    } else {
+      Get.log("📜 TEST: No clients attached");
+    }
   }
 
   Future<void> homeData() async {
@@ -273,19 +285,42 @@ class HomeController extends GetxController {
   }
 
   void onScroll() {
-    if (isFetching.value || !scrollsController.hasClients) return;
-    if (scrollsController.position.pixels >=
-        scrollsController.position.maxScrollExtent - 100) {
+    if (!scrollsController.hasClients) {
+      Get.log("📜 ❌ SCROLL CONTROLLER HAS NO CLIENTS");
+      return;
+    }
+
+    if (isFetching.value) {
+      Get.log("📜 ❌ ALREADY FETCHING - SKIPPING");
+      return;
+    }
+
+    double pixels = scrollsController.position.pixels;
+    double maxExtent = scrollsController.position.maxScrollExtent;
+    double triggerPoint = maxExtent - 100;
+
+    if (pixels >= triggerPoint && triggerPoint > 0) {
       if (!isPostLoading.value && hasMore.value) {
-        Get.log("onScroll: Triggering getListing, page=${currentPage.value}");
-        getListing(isLoadMore: true);
+        isFetching.value = true; // Prevent multiple triggers
+        getListing(isLoadMore: true).then((_) {
+          isFetching.value = false;
+        }).catchError((e) {
+          isFetching.value = false;
+        });
+      } else {
+        Get.log(
+            "📜 ❌ BLOCKED - isPostLoading=${isPostLoading.value}, hasMore=${hasMore.value}");
       }
+    } else {
+      Get.log(
+          "📜 ⏸️ Not at trigger point yet (trigger: $triggerPoint, pixels: $pixels)");
     }
   }
 
   Future<void> getListing({bool isLoadMore = false}) async {
-    if (isPostLoading.value) return;
+    if (isPostLoading.value || isFetching.value) return;
     isPostLoading.value = true;
+    isFetching.value = true;
     update();
 
     try {
@@ -319,9 +354,11 @@ class HomeController extends GetxController {
       }
 
       // Check authentication status before making API call
-      if (authCont.user?.accessToken == null || authCont.user?.accessToken == "") {
+      if (authCont.user?.accessToken == null ||
+          authCont.user?.accessToken == "") {
         if (tokenMain == null || tokenMain == "") {
-          Get.log("⚠️ No authentication token - stopping API calls to prevent infinite loading");
+          Get.log(
+              "⚠️ No authentication token - stopping API calls to prevent infinite loading");
 
           // For no location + no auth: show empty list
           if (noLocationSelected) {
@@ -335,7 +372,8 @@ class HomeController extends GetxController {
         }
       }
 
-      Response response = await api.postData(
+      Response response = await api
+          .postData(
         "api/getListing?page=${currentPage.value}",
         {
           'user_id': authCont.user?.userId ?? "",
@@ -352,10 +390,12 @@ class HomeController extends GetxController {
         headers: {
           'Accept': 'application/json',
           'Access-Control-Allow-Origin': "*",
-          'Authorization': 'Bearer ${authCont.user?.accessToken ?? tokenMain ?? ""}'
+          'Authorization':
+              'Bearer ${authCont.user?.accessToken ?? tokenMain ?? ""}'
         },
         showdialog: false,
-      ).timeout(Duration(seconds: 30), onTimeout: () {
+      )
+          .timeout(Duration(seconds: 30), onTimeout: () {
         Get.log("⏱️ API call timed out - returning empty response");
         return Response(statusCode: 408, body: {'error': 'timeout'});
       });
@@ -371,13 +411,8 @@ class HomeController extends GetxController {
           for (var element in dataListing) {
             try {
               if (element != null && element is Map<String, dynamic>) {
-                // Validate required fields before parsing
-                String? itemId = element['item_id']?.toString();
-                if (itemId != null && itemId.isNotEmpty) {
-                  newListings.add(ListingModel.fromJson(element));
-                } else {
-                  Get.log("Skipping item with null/empty item_id: ${element['id']}", isError: true);
-                }
+                // Parse the item - ListingModel.fromJson handles null values gracefully
+                newListings.add(ListingModel.fromJson(element));
               }
             } catch (e, stackTrace) {
               Get.log("Error parsing listing item: $e", isError: true);
@@ -392,18 +427,21 @@ class HomeController extends GetxController {
             if (authCont.user?.userId != null) {
               // Filter to show ONLY user's own posts
               List<ListingModel> userOwnPosts = newListings.where((listing) {
-                bool isOwnPost = listing.userId?.toString() == authCont.user?.userId?.toString();
+                bool isOwnPost = listing.userId?.toString() ==
+                    authCont.user?.userId?.toString();
                 return isOwnPost;
               }).toList();
 
               newListings = userOwnPosts;
-              Get.log("📍 NO LOCATION: Showing ${newListings.length} of user's own posts only");
+              Get.log(
+                  "📍 NO LOCATION: Showing ${newListings.length} of user's own posts only");
 
               // Clear list if no user posts found on first page
               if (newListings.isEmpty && currentPage.value == 1) {
                 listingModelList.clear();
                 hasMore.value = false; // Stop pagination if no user posts
-                Get.log("📍 NO LOCATION: No user posts found - stopping pagination");
+                Get.log(
+                    "📍 NO LOCATION: No user posts found - stopping pagination");
               }
             } else {
               // Not logged in + no location = show nothing
@@ -414,7 +452,8 @@ class HomeController extends GetxController {
             }
           } else {
             // LOCATION SELECTED: Show items from that location (all users)
-            Get.log("📍 LOCATION SELECTED: Showing ${newListings.length} posts from location: ${address}");
+            Get.log(
+                "📍 LOCATION SELECTED: Showing ${newListings.length} posts from location: ${address}");
           }
 
           // Apply client-side category filtering for consistency with search
@@ -426,20 +465,25 @@ class HomeController extends GetxController {
           newListings = newListings.where((listing) {
             return listing.businessStatus == currentAccountType;
           }).toList();
-          Get.log("After business/personal filtering (${authCont.isBusinessAccount ? 'Business' : 'Personal'}): ${newListings.length} items");
+          Get.log(
+              "After business/personal filtering (${authCont.isBusinessAccount ? 'Business' : 'Personal'}): ${newListings.length} items");
 
           // Filter out duplicates before adding to list
-          Set<String> existingItemIds = listingModelList
-              .map((listing) => listing.itemId ?? '')
-              .where((id) => id.isNotEmpty)
-              .toSet();
+          Set<String> existingItemIds =
+              listingModelList.map((listing) => listing.itemId ?? '').toSet();
 
           List<ListingModel> uniqueNewListings = newListings.where((listing) {
             String itemId = listing.itemId ?? '';
-            return itemId.isNotEmpty && !existingItemIds.contains(itemId);
+            // If itemId is empty/null, allow the item (don't filter out due to missing ID)
+            // Only filter out if we have a valid itemId that already exists
+            if (itemId.isEmpty) {
+              return true; // Allow items with no itemId
+            }
+            return !existingItemIds.contains(itemId);
           }).toList();
 
-          Get.log("📝 Filtered ${newListings.length - uniqueNewListings.length} duplicate items");
+          Get.log(
+              "📝 Filtered ${newListings.length - uniqueNewListings.length} duplicate items");
           Get.log("📝 Adding ${uniqueNewListings.length} unique items");
 
           // Always shuffle new items before adding them to the list
@@ -461,17 +505,37 @@ class HomeController extends GetxController {
             }
           }
 
-          currentPage.value++;
-          hasMore.value = dataListing.length == 15;
+          // Only increment page if we actually added items
+          if (uniqueNewListings.isNotEmpty) {
+            currentPage.value++;
+            // Continue pagination if API returned data (even if less than 15)
+            // Only stop if API returns empty array
+            hasMore.value = dataListing.isNotEmpty;
+            Get.log(
+                "📝 SUCCESS: Added ${uniqueNewListings.length} items, page now ${currentPage.value}, API returned ${dataListing.length} items, hasMore=${hasMore.value}");
+          } else {
+            // If this is a load more request and no items were added, stop pagination
+            if (isLoadMore) {
+              hasMore.value = false;
+              Get.log(
+                  "📝 LOAD MORE: No unique items added - stopping pagination");
+            } else {
+              // Initial load - keep trying if API returned any data
+              hasMore.value = dataListing.isNotEmpty;
+              if (hasMore.value) {
+                currentPage.value++; // Increment to try next page
+              }
+              Get.log(
+                  "📝 INITIAL LOAD: No unique items, API returned ${dataListing.length} items, hasMore=${hasMore.value}, page=${currentPage.value}");
+            }
+          }
         } else {
           hasMore.value = false;
         }
         saveLocationAndRadius();
       } else if (response.statusCode == 408) {
         // Handle timeout
-        Get.log("⏱️ Request timed out", isError: true);
         hasMore.value = false; // Stop further requests
-        print('Request timed out. Please check your connection.'.tr);
       } else {
         Get.log("API error: ${response.statusCode}, ${response.body}",
             isError: true);
@@ -479,16 +543,13 @@ class HomeController extends GetxController {
         // For authentication errors, stop further requests to prevent loops
         if (response.statusCode == 401) {
           hasMore.value = false;
-          print('Authentication required. Please login.'.tr);
-        } else {
-          print('Failed to fetch listings. Please try again.'.tr);
-        }
+        } else {}
       }
-    } catch (e, stackTrace) {
-      Get.log("Error in getListing: $e\n$stackTrace", isError: true);
-      print('Something went wrong. Please try again.'.tr);
+    } catch (e) {
+      //
     } finally {
       isPostLoading.value = false;
+      isFetching.value = false;
       update();
     }
   }
@@ -604,9 +665,7 @@ class HomeController extends GetxController {
     if (response.statusCode == 200) {
       allPackagesModel = AllPackagesModel.fromJson(response.body);
       Get.to(SubscriptionScreen());
-    } else {
-      print('Something went wrong\nPlease try again!'.tr);
-    }
+    } else {}
   }
 
   String? imagePath;
@@ -644,9 +703,7 @@ class HomeController extends GetxController {
           Get.to(VideoPlayerScreenFile(
             file: videoFile,
           ));
-        } else {
-          print("Please select a video less than 20MB".tr);
-        }
+        } else {}
       }
     } catch (e) {}
   }
@@ -709,27 +766,14 @@ class HomeController extends GetxController {
       Get.offAll(Navigation_Bar());
       if (response.body['message'] ==
           "Your package is already active, you cannot purchase another package.") {
-        print(
-            "Your package is already active, you cannot purchase another package."
-                .tr);
-      } else if (response.body['message'] == "Invalid promo code") {
-        print("Invalid promo code".tr);
-      }
+      } else if (response.body['message'] == "Invalid promo code") {}
       if (isEnterPromoCode) {
-        print("Promo add successfully.Please Wait for admin approval.".tr);
       } else if (type == "Other") {
         // errorAlertToast(
         //     "Promotion code applied successfully. Your subscription has started"
         //         .tr);
-      } else {
-        selectedValue == 'Yes'
-            ? (print("Promo Code Generate Successfully.".tr))
-            : (print(
-                "Package buy successfully.Please Wait for admin approval.".tr));
-      }
-    } else {
-      print('Something went wrong\nPlease try again!'.tr);
-    }
+      } else {}
+    } else {}
   }
 
   AllPromoCodesModel? allPromoCodesModel;
@@ -758,10 +802,7 @@ class HomeController extends GetxController {
         showdialog: true);
     if (response.statusCode == 200) {
       Get.back();
-      print("Reporting List Successfully.".tr);
-    } else {
-      print('Something went wrong\nPlease try again!'.tr);
-    }
+    } else {}
   }
 
   Future getAllPromoCodes() async {
@@ -996,18 +1037,16 @@ class HomeController extends GetxController {
       final finalCount = listingModelList.length;
 
       if (finalCount < initialCount) {
-        print('🔄 Synced deletion: Removed item ${deletedItemId} from home screen list');
+        print(
+            '🔄 Synced deletion: Removed item ${deletedItemId} from home screen list');
 
         // Trigger UI update for home screen
         update();
 
         // Also remove from search list if present
-        listingModelSearchList.removeWhere((listing) => listing.id == deletedItemId);
-
-        print('✅ Home screen and search lists synchronized after deletion');
-      } else {
-        print('ℹ️ Item ${deletedItemId} was not in home screen list (may be filtered out)');
-      }
+        listingModelSearchList
+            .removeWhere((listing) => listing.id == deletedItemId);
+      } else {}
     }
   }
 
@@ -1016,23 +1055,22 @@ class HomeController extends GetxController {
     if (deletedIds.isNotEmpty) {
       // Remove from main home screen list
       final initialCount = listingModelList.length;
-      listingModelList.removeWhere((listing) => deletedIds.contains(listing.id));
+      listingModelList
+          .removeWhere((listing) => deletedIds.contains(listing.id));
       final finalCount = listingModelList.length;
 
       if (finalCount < initialCount) {
         final removedCount = initialCount - finalCount;
-        print('🔄 Bulk sync: Removed ${removedCount} items from home screen list');
+        print(
+            '🔄 Bulk sync: Removed ${removedCount} items from home screen list');
 
         // Trigger UI update for home screen
         update();
 
         // Also remove from search list if present
-        listingModelSearchList.removeWhere((listing) => deletedIds.contains(listing.id));
-
-        print('✅ Home screen and search lists synchronized after bulk deletion');
-      } else {
-        print('ℹ️ No items from bulk delete were in home screen list (may be filtered out)');
-      }
+        listingModelSearchList
+            .removeWhere((listing) => deletedIds.contains(listing.id));
+      } else {}
     }
   }
 
@@ -1330,19 +1368,8 @@ class HomeController extends GetxController {
             await ImageUploadHelper.processImagesForUpload(postImages);
 
         if (processedImages.isEmpty) {
-          print('Failed to process images. Please try again.');
           return;
         }
-
-        print('✅ Processed ${processedImages.length} images successfully');
-
-        // Debug info for upload
-        print('🔧 Upload Debug Info:');
-        print('  - Base URL: $baseUrl');
-        print('  - Endpoint: api/addListing');
-        print(
-            '  - Auth Token: ${authToken.isNotEmpty ? 'Present (${authToken.length} chars)' : 'Missing'}');
-        print('  - Number of images: ${processedImages.length}');
 
         // Use multipart form with proper authentication
         response = await api.postWithForm(
@@ -1524,16 +1551,6 @@ class HomeController extends GetxController {
           print('Failed to process images. Please try again.');
           return;
         }
-
-        print('✅ Processed ${processedImages.length} images successfully');
-
-        // Debug info for upload
-        print('🔧 Edit Upload Debug Info:');
-        print('  - Base URL: $baseUrl');
-        print('  - Endpoint: api/editListing');
-        print(
-            '  - Auth Token: ${authToken.isNotEmpty ? 'Present (${authToken.length} chars)' : 'Missing'}');
-        print('  - Number of images: ${processedImages.length}');
 
         // Use multipart form with proper authentication
         response = await api.postWithForm(
@@ -2033,13 +2050,8 @@ class HomeController extends GetxController {
           for (var element in dataListing) {
             try {
               if (element != null && element is Map<String, dynamic>) {
-                // Validate required fields before parsing
-                String? itemId = element['item_id']?.toString();
-                if (itemId != null && itemId.isNotEmpty) {
-                  newListings.add(ListingModel.fromJson(element));
-                } else {
-                  Get.log("Search: Skipping item with null/empty item_id: ${element['id']}", isError: true);
-                }
+                // Parse the item - ListingModel.fromJson handles null values gracefully
+                newListings.add(ListingModel.fromJson(element));
               }
             } catch (e, stackTrace) {
               Get.log("Search: Error parsing listing item: $e", isError: true);
@@ -2077,29 +2089,34 @@ class HomeController extends GetxController {
             if (authCont.user?.userId != null) {
               // Filter to show ONLY user's own posts
               List<ListingModel> userOwnPosts = newListings.where((listing) {
-                bool isOwnPost = listing.userId?.toString() == authCont.user?.userId?.toString();
+                bool isOwnPost = listing.userId?.toString() ==
+                    authCont.user?.userId?.toString();
                 return isOwnPost;
               }).toList();
 
               newListings = userOwnPosts;
-              Get.log("📍 SEARCH NO LOCATION: Showing ${newListings.length} of user's own posts only");
+              Get.log(
+                  "📍 SEARCH NO LOCATION: Showing ${newListings.length} of user's own posts only");
 
               // Clear list if no user posts found on first page
               if (newListings.isEmpty && currentSearchPage.value == 1) {
                 listingModelSearchList.clear();
                 hasMoreSearch.value = false; // Stop pagination if no user posts
-                Get.log("📍 SEARCH NO LOCATION: No user posts found - stopping pagination");
+                Get.log(
+                    "📍 SEARCH NO LOCATION: No user posts found - stopping pagination");
               }
             } else {
               // Not logged in + no location = show nothing
               newListings = [];
               listingModelSearchList.clear();
               hasMoreSearch.value = false;
-              Get.log("📍 SEARCH NO LOCATION + NOT LOGGED IN: Showing no posts");
+              Get.log(
+                  "📍 SEARCH NO LOCATION + NOT LOGGED IN: Showing no posts");
             }
           } else {
             // LOCATION SELECTED: Show items from that location (all users)
-            Get.log("📍 SEARCH LOCATION SELECTED: Showing ${newListings.length} posts from location: ${address}");
+            Get.log(
+                "📍 SEARCH LOCATION SELECTED: Showing ${newListings.length} posts from location: ${address}");
           }
 
           // Apply client-side price filtering
@@ -2115,26 +2132,34 @@ class HomeController extends GetxController {
           newListings = newListings.where((listing) {
             return listing.businessStatus == currentAccountType;
           }).toList();
-          Get.log("After business/personal filtering (${authCont.isBusinessAccount ? 'Business' : 'Personal'}): ${newListings.length} items");
+          Get.log(
+              "After business/personal filtering (${authCont.isBusinessAccount ? 'Business' : 'Personal'}): ${newListings.length} items");
 
           // Filter out duplicates for search results
           Set<String> existingSearchItemIds = listingModelSearchList
               .map((listing) => listing.itemId ?? '')
-              .where((id) => id.isNotEmpty)
               .toSet();
 
-          List<ListingModel> uniqueSearchListings = newListings.where((listing) {
+          List<ListingModel> uniqueSearchListings =
+              newListings.where((listing) {
             String itemId = listing.itemId ?? '';
-            return itemId.isNotEmpty && !existingSearchItemIds.contains(itemId);
+            // If itemId is empty/null, allow the item (don't filter out due to missing ID)
+            // Only filter out if we have a valid itemId that already exists
+            if (itemId.isEmpty) {
+              return true; // Allow items with no itemId
+            }
+            return !existingSearchItemIds.contains(itemId);
           }).toList();
 
-          Get.log("📝 Search: Filtered ${newListings.length - uniqueSearchListings.length} duplicate items");
-          Get.log("📝 Search: Adding ${uniqueSearchListings.length} unique items");
+          Get.log(
+              "📝 Search: Filtered ${newListings.length - uniqueSearchListings.length} duplicate items");
+          Get.log(
+              "📝 Search: Adding ${uniqueSearchListings.length} unique items");
 
           listingModelSearchList.addAll(uniqueSearchListings);
           currentSearchPage.value++; // Increment page correctly
-          hasMoreSearch.value =
-              dataListing.length == 15; // More pages available?
+          hasMoreSearch.value = dataListing
+              .isNotEmpty; // More pages available if API returned data
           listingModelList = listingModelSearchList;
 
           Get.log("=== PAGINATION UPDATE ===");

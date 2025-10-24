@@ -290,7 +290,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
     // Only load categories if not already loaded
     if (homeCont.categoriesModel == null ||
         homeCont.categoriesModel?.data?.isEmpty == true) {
-      homeCont.getCategories();
+      // Defer the call to after the widget is built to prevent setState during build
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        homeCont.getCategories();
+      });
     }
 
     // If we have selected categories, make sure the related data is loaded
@@ -299,14 +302,24 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
       // If we have a category but no subcategory data, load subcategories
       if (homeCont.subCategoriesModel == null) {
         homeCont.isNavigate = false; // Prevent navigation during initialization
-        homeCont.getSubCategories();
+        homeCont.isSearchScreen = true; // Temporarily set to prevent auto-navigation during initialization
+        // Defer the call to after the widget is built to prevent setState during build
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          homeCont.getSubCategories().then((_) {
+            // Reset the flag after loading
+            homeCont.isSearchScreen = false;
+          });
+        });
       }
 
       // If we have a subcategory but no sub-subcategory data, load sub-subcategories
       if (homeCont.selectedSubCategory != null &&
           homeCont.subSubCategoriesModel == null) {
         homeCont.isNavigate = false; // Prevent navigation during initialization
-        homeCont.getSubSubCategories();
+        // Defer the call to after the widget is built to prevent setState during build
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          homeCont.getSubSubCategories();
+        });
       }
     }
   }
@@ -474,7 +487,14 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
 
         // Load subcategories for the selected category when updating listing
         homeCont.isNavigate = false; // Prevent navigation during initialization
-        homeCont.getSubCategories();
+        homeCont.isSearchScreen = true; // Temporarily set to prevent auto-navigation in edit mode
+        // Defer the call to after the widget is built to prevent setState during build
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          homeCont.getSubCategories().then((_) {
+            // Reset the flag after loading
+            homeCont.isSearchScreen = false;
+          });
+        });
       }
       if (homeCont.listingModel?.subCategory != null) {
         homeCont.selectedSubCategory = sub.Data(
@@ -490,7 +510,11 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
 
         // Load sub-subcategories for the selected subcategory when updating listing
         homeCont.isNavigate = false; // Prevent navigation during initialization
-        homeCont.getSubSubCategories();
+        // Note: We don't need to set isSearchScreen here since getSubSubCategories doesn't have auto-navigation
+        // Defer the call to after the widget is built to prevent setState during build
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          homeCont.getSubSubCategories();
+        });
       }
       if (homeCont.listingModel?.subSubCategory != null) {
         homeCont.selectedSubSubCategory = subSub.Data(
@@ -523,7 +547,13 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
       homeCont.makeController.text =
           homeCont.listingModel?.additionalFeatures?.listingDetails?.make ?? "";
       homeCont.titleCont.text = homeCont.listingModel?.title ?? "";
-      homeCont.priceCont?.text = homeCont.listingModel?.price.toString() ?? "";
+      // Set price field - show empty if price is 0 or null
+      String rawPrice = homeCont.listingModel?.price?.toString() ?? "0";
+      if (rawPrice != "0" && rawPrice != "null") {
+        homeCont.priceCont?.text = PriceFormatter().formatNumber(int.parse(rawPrice));
+      } else {
+        homeCont.priceCont?.text = "";
+      }
       homeCont.selectedCurrency = homeCont.listingModel?.currency ?? "CUP";
       homeCont.descriptionCont.text = homeCont.listingModel?.description ?? "";
       locationCont.locationEditingController.value.text =
