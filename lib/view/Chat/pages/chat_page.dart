@@ -109,13 +109,9 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
     PushService.setAppLifecycleState(isInForeground);
 
     if (state == AppLifecycleState.resumed && mounted) {
-      print(
-          '🔄 ChatPage: App resumed - refreshing messages for chat ${widget.chatId}');
-
       // CRITICAL: Refresh messages for this specific chat when app resumes
       if (widget.chatId != null) {
         chatCont.refreshChatMessages(widget.chatId!);
-        print('✅ Messages refreshed for chat ${widget.chatId}');
       }
 
       // Also update read status and notifications
@@ -126,12 +122,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
         );
       }
     } else if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.inactive) {
-      print(
-          '📱 ChatPage: App backgrounded while chat ${widget.chatId} was open');
-      print(
-          '📱 Notifications will now be allowed for this chat while app is backgrounded');
-    }
+        state == AppLifecycleState.inactive) {}
   }
 
   @override
@@ -446,7 +437,8 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                   if (widget.remoteUid != null)
                     StreamBuilder<Map<String, dynamic>>(
                       stream: Stream.periodic(Duration(seconds: 30))
-                          .asyncMap((_) => chatCont.getUserPresence(widget.remoteUid!))
+                          .asyncMap((_) =>
+                              chatCont.getUserPresence(widget.remoteUid!))
                           .distinct(),
                       builder: (context, snapshot) {
                         if (snapshot.hasData && snapshot.data != null) {
@@ -1429,7 +1421,6 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
 
   Future uploadImage(var pickedFile) async {
     try {
-      print('🔄 Starting image upload process...');
       showLoading();
 
       String? imageUrl = await chatCont.uploadImage(pickedFile);
@@ -1437,12 +1428,9 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
       Get.back(); // Hide loading
 
       if (imageUrl != null) {
-        print('✅ Image uploaded successfully: $imageUrl');
         // Send image message
         await sendImageMessage(imageUrl);
-        print('✅ Image message sent successfully');
       } else {
-        print('❌ Image upload failed: uploadImage returned null');
         // Show error to user
         Get.snackbar(
           'Upload Failed'.tr,
@@ -1454,8 +1442,6 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
       }
     } catch (error) {
       Get.back(); // Hide loading
-
-      print('❌ Image upload error: ${error.toString()}');
 
       // Show error to user
       Get.snackbar(
@@ -1470,9 +1456,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
 
   Future sendImageMessage(String imageUrl) async {
     try {
-      print('📤 Sending image message with URL: $imageUrl');
       String? id = widget.chatId ?? widget.createChatid;
-      print('📤 Chat ID: $id');
 
       Map<String, dynamic> chatMessageData = {
         "message": imageUrl,

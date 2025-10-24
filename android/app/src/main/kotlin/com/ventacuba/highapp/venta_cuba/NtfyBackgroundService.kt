@@ -165,13 +165,11 @@ class NtfyBackgroundService : Service() {
             // The actual notification data is nested in the 'message' field (just like Flutter)
             val nestedMessage = json.optString("message", "")
             if (nestedMessage.isEmpty()) {
-                println("🔇 BACKGROUND: No nested message found")
                 return
             }
 
             // Parse the nested JSON
             val notificationData = JSONObject(nestedMessage)
-            println("🔍 BACKGROUND: Parsed notification data: $notificationData")
 
             // Extract the actual title and body from the nested data
             val title = notificationData.optString("title", "")
@@ -179,23 +177,19 @@ class NtfyBackgroundService : Service() {
 
             // Skip if no title or body
             if (title.isEmpty() || body.isEmpty()) {
-                println("🔇 BACKGROUND: Skipping message without content (title: '$title', body: '$body')")
                 return
             }
 
             // Skip if this is not a chat message (check for chat ID in click action)
             val clickAction = notificationData.optString("click", "")
             if (clickAction.isEmpty() || !clickAction.startsWith("myapp://chat/")) {
-                println("🔇 BACKGROUND: Skipping non-chat message")
                 return
             }
 
             // App is TERMINATED - sticky service shows notification
-            println("📨 STICKY SERVICE: Showing notification (app terminated)")
             showChatNotification(title, body, clickAction)
             
         } catch (e: Exception) {
-            println("❌ BACKGROUND: Error parsing message: ${e.message}")
         }
     }
     
@@ -300,7 +294,6 @@ class NtfyBackgroundService : Service() {
 
         // If no running processes, app is definitely terminated
         if (runningProcesses.isNullOrEmpty()) {
-            println("🔍 STICKY SERVICE: No running processes - app is terminated")
             return false
         }
 
@@ -309,32 +302,26 @@ class NtfyBackgroundService : Service() {
                 // Check if Flutter app process exists (any state except GONE)
                 return when (processInfo.importance) {
                     ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND -> {
-                        println("🔍 STICKY SERVICE: App is in FOREGROUND")
                         true // App is in foreground
                     }
                     ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE -> {
-                        println("🔍 STICKY SERVICE: App is VISIBLE")
                         true // App is visible
                     }
                     ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE,
                     ActivityManager.RunningAppProcessInfo.IMPORTANCE_TOP_SLEEPING,
                     ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED,
                     ActivityManager.RunningAppProcessInfo.IMPORTANCE_BACKGROUND -> {
-                        println("🔍 STICKY SERVICE: App is in BACKGROUND")
                         true // App is in background but still running
                     }
                     ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE -> {
-                        println("🔍 STICKY SERVICE: App process is GONE")
                         false // App process is gone
                     }
                     else -> {
-                        println("🔍 STICKY SERVICE: App importance: ${processInfo.importance}")
                         true // Assume app is running for other states
                     }
                 }
             }
         }
-        println("🔍 STICKY SERVICE: App process not found - app is terminated")
         return false
     }
 
@@ -380,7 +367,6 @@ class NtfyBackgroundService : Service() {
 
         // If no running processes, app is definitely terminated
         if (runningProcesses.isNullOrEmpty()) {
-            println("🔍 STICKY SERVICE: No running processes - app is TERMINATED")
             return false
         }
 
@@ -390,44 +376,35 @@ class NtfyBackgroundService : Service() {
                 // SERVICE state alone means only the sticky service is running
                 val isRunning = when (processInfo.importance) {
                     ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND -> {
-                        println("🔍 STICKY SERVICE: App is in FOREGROUND - let Flutter decide")
                         false // Let Flutter handle the notification logic
                     }
                     ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE -> {
-                        println("🔍 STICKY SERVICE: App is VISIBLE - let Flutter decide")
                         false // Let Flutter handle the notification logic
                     }
                     ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE -> {
                         // This might be just our sticky service - need to check further
                         // Check if MainActivity is alive
                         if (isMainActivityRunning()) {
-                            println("🔍 STICKY SERVICE: App has MainActivity running - let Flutter decide")
                             false // Let Flutter handle the notification logic
                         } else {
-                            println("🔍 STICKY SERVICE: Only sticky service running - app TERMINATED")
                             false
                         }
                     }
                     ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE -> {
                         // Just service running (likely our sticky service) - app is terminated
-                        println("🔍 STICKY SERVICE: Only SERVICE running (app terminated) - SHOW notification")
                         false
                     }
                     ActivityManager.RunningAppProcessInfo.IMPORTANCE_BACKGROUND -> {
-                        println("🔍 STICKY SERVICE: App is in BACKGROUND - SHOW notification")
                         false
                     }
                     ActivityManager.RunningAppProcessInfo.IMPORTANCE_TOP_SLEEPING -> {
-                        println("🔍 STICKY SERVICE: App is TOP_SLEEPING - SHOW notification")
                         false
                     }
                     ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED -> {
                         // App might be cached but check if activities are alive
-                        println("🔍 STICKY SERVICE: App is CACHED - checking MainActivity")
                         isMainActivityRunning()
                     }
                     else -> {
-                        println("🔍 STICKY SERVICE: App importance: ${processInfo.importance} - app TERMINATED")
                         false
                     }
                 }
@@ -435,7 +412,6 @@ class NtfyBackgroundService : Service() {
             }
         }
 
-        println("🔍 STICKY SERVICE: App process not found - app is TERMINATED")
         return false // App is terminated
     }
 
@@ -453,7 +429,6 @@ class NtfyBackgroundService : Service() {
                 }
             }
         } catch (e: Exception) {
-            println("🔍 Could not check MainActivity status: ${e.message}")
         }
         return false
     }

@@ -20,13 +20,9 @@ class ThemeController extends GetxController {
     try {
       final prefs = await SharedPreferences.getInstance();
       isDarkMode.value = prefs.getBool(_themeKey) ?? false;
-      print(
-          '🌙 Theme loaded from prefs: ${isDarkMode.value ? "Dark" : "Light"}');
       updateSystemUIOverlay();
       update(); // Notify GetBuilder
-    } catch (e) {
-      print('Error loading theme preference: $e');
-    }
+    } catch (e) {}
   }
 
   // Save theme preference to SharedPreferences
@@ -34,9 +30,7 @@ class ThemeController extends GetxController {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_themeKey, value);
-    } catch (e) {
-      print('Error saving theme preference: $e');
-    }
+    } catch (e) {}
   }
 
   // Toggle between light and dark mode
@@ -44,7 +38,6 @@ class ThemeController extends GetxController {
     isDarkMode.value = !isDarkMode.value;
     await _saveThemeToPrefs(isDarkMode.value);
     updateSystemUIOverlay();
-    print('🌙 Theme toggled to: ${isDarkMode.value ? "Dark" : "Light"}');
   }
 
   // Update system UI overlay style based on current theme

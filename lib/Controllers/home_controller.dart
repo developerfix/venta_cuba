@@ -1037,9 +1037,6 @@ class HomeController extends GetxController {
       final finalCount = listingModelList.length;
 
       if (finalCount < initialCount) {
-        print(
-            '🔄 Synced deletion: Removed item ${deletedItemId} from home screen list');
-
         // Trigger UI update for home screen
         update();
 
@@ -1061,8 +1058,6 @@ class HomeController extends GetxController {
 
       if (finalCount < initialCount) {
         final removedCount = initialCount - finalCount;
-        print(
-            '🔄 Bulk sync: Removed ${removedCount} items from home screen list');
 
         // Trigger UI update for home screen
         update();

@@ -105,10 +105,7 @@ class LocationController extends GetxController {
                       placeList[index]["description"];
 
       updateLocationList();
-    } catch (e, stackTrace) {
-      print("🔥 ❌ GEOCODING FAILED with error: $e");
-      print("🔥 🔍 Stack trace: $stackTrace");
-    }
+    } catch (e) {}
   }
 
   void onChange(String value) {
@@ -127,7 +124,6 @@ class LocationController extends GetxController {
     }
 
     try {
-      print("🔥 🔍 STARTING PLACES API SEARCH for: '$input'");
       String apiKey = "AIzaSyBx95Bvl9O-US2sQpqZ41GdsHIprnXvJv8";
       String baseURL =
           'https://maps.googleapis.com/maps/api/place/autocomplete/json';

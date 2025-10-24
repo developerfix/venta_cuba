@@ -55,7 +55,6 @@ class _ChatsState extends State<Chats> with WidgetsBindingObserver {
     super.didChangeAppLifecycleState(state);
 
     if (state == AppLifecycleState.resumed && mounted) {
-      print('🔄 Chat screen: App resumed - refreshing chat list');
       // Immediately refresh when app comes to foreground
       chatCont.refreshAllChatLists();
       chatCont.updateUnreadMessageIndicators();
@@ -91,8 +90,7 @@ class _ChatsState extends State<Chats> with WidgetsBindingObserver {
           chats = chatCont.getAllChats(authCont.user!.userId.toString());
         });
       }
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   @override
@@ -122,8 +120,10 @@ class _ChatsState extends State<Chats> with WidgetsBindingObserver {
               ),
               child: Text(
                 Platform.isIOS
-                    ? 'Notifications won\'t work outside the app because of network restrictions'.tr
-                    : 'Chat notifications won\'t work outside of the app for some phone models because of network restrictions. Just log in periodically to check your messages. We will find another solution in the next update. You may also receive duplicate messages.'.tr,
+                    ? 'Notifications won\'t work outside the app because of network restrictions'
+                        .tr
+                    : 'Chat notifications won\'t work outside of the app for some phone models because of network restrictions. Just log in periodically to check your messages. We will find another solution in the next update. You may also receive duplicate messages.'
+                        .tr,
                 style: TextStyle(
                   fontSize: 12.sp,
                   color: Colors.orange[700],
@@ -140,8 +140,7 @@ class _ChatsState extends State<Chats> with WidgetsBindingObserver {
   groupList() {
     if (chats == null) {
       return Center(
-        child: CircularProgressIndicator(
-            color: Theme.of(context).primaryColor),
+        child: CircularProgressIndicator(color: Theme.of(context).primaryColor),
       );
     }
 
@@ -149,149 +148,151 @@ class _ChatsState extends State<Chats> with WidgetsBindingObserver {
       builder: (authController) => StreamBuilder<List<Map<String, dynamic>>>(
         stream: chats,
         builder: (context, AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
-        if (snapshot.hasError) {
-          return Center(
-            child: Container(
-              padding: EdgeInsets.all(20),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error_outline, color: Colors.red, size: 48),
-                  SizedBox(height: 16),
-                  Text(
-                    "🔥 Supabase Error",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    "${snapshot.error}",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.red),
-                  ),
-                ],
+          if (snapshot.hasError) {
+            return Center(
+              child: Container(
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error_outline, color: Colors.red, size: 48),
+                    SizedBox(height: 16),
+                    Text(
+                      "🔥 Supabase Error",
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      "${snapshot.error}",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          );
-        }
-        
-        // make some checks
-        if (snapshot.hasData) {
-          if (snapshot.data != null) {
-            if (snapshot.data!.length != 0) {
-              // Filter and sort chats
-              List<Map<String, dynamic>> chatDocs = snapshot.data!
-                  .where((chat) {
-                    // Only show chats that have actual messages
-                    bool hasMessages = chat['is_messaged'] == true ||
-                        (chat['message'] != null &&
-                            chat['message'].toString().trim().isNotEmpty &&
-                            chat['message'] != "");
-                    return hasMessages;
-                  })
-                  .toList();
+            );
+          }
 
-              // Sort by time (already sorted by Supabase, but just in case)
-              chatDocs.sort((a, b) {
-                DateTime? timeA = a['time'] != null 
-                    ? DateTime.tryParse(a['time']) 
-                    : null;
-                DateTime? timeB = b['time'] != null 
-                    ? DateTime.tryParse(b['time']) 
-                    : null;
-                
-                if (timeA == null && timeB == null) return 0;
-                if (timeA == null) return 1;
-                if (timeB == null) return -1;
-                
-                return timeB.compareTo(timeA);
-              });
+          // make some checks
+          if (snapshot.hasData) {
+            if (snapshot.data != null) {
+              if (snapshot.data!.length != 0) {
+                // Filter and sort chats
+                List<Map<String, dynamic>> chatDocs =
+                    snapshot.data!.where((chat) {
+                  // Only show chats that have actual messages
+                  bool hasMessages = chat['is_messaged'] == true ||
+                      (chat['message'] != null &&
+                          chat['message'].toString().trim().isNotEmpty &&
+                          chat['message'] != "");
+                  return hasMessages;
+                }).toList();
 
-              return ListView.builder(
-                itemCount: chatDocs.length,
-                itemBuilder: (context, index) {
-                  var chat = chatDocs[index];
-                  String currentUserId = "${authCont.user?.userId}";
-                  
-                  if (chat['sender_id'] == currentUserId ||
-                      chat['send_to_id'] == currentUserId) {
-                    
-                    // Calculate unread status for this chat
-                    bool isUnread = false;
+                // Sort by time (already sorted by Supabase, but just in case)
+                chatDocs.sort((a, b) {
+                  DateTime? timeA =
+                      a['time'] != null ? DateTime.tryParse(a['time']) : null;
+                  DateTime? timeB =
+                      b['time'] != null ? DateTime.tryParse(b['time']) : null;
 
-                    // Check if there are unread messages based on read times
-                    if (chat['send_by'] != currentUserId) { // Last message wasn't sent by current user
-                      final isCurrentUserSender = chat['sender_id'] == currentUserId;
-                      final lastReadTime = isCurrentUserSender
-                          ? chat['sender_last_read_time']
-                          : chat['recipient_last_read_time'];
-                      final lastMessageTime = chat['time'];
+                  if (timeA == null && timeB == null) return 0;
+                  if (timeA == null) return 1;
+                  if (timeB == null) return -1;
 
-                      // Message is unread if no read time or message is newer than read time
-                      if (lastReadTime == null ||
-                          (lastMessageTime != null &&
-                           DateTime.parse(lastMessageTime).isAfter(DateTime.parse(lastReadTime)))) {
+                  return timeB.compareTo(timeA);
+                });
+
+                return ListView.builder(
+                  itemCount: chatDocs.length,
+                  itemBuilder: (context, index) {
+                    var chat = chatDocs[index];
+                    String currentUserId = "${authCont.user?.userId}";
+
+                    if (chat['sender_id'] == currentUserId ||
+                        chat['send_to_id'] == currentUserId) {
+                      // Calculate unread status for this chat
+                      bool isUnread = false;
+
+                      // Check if there are unread messages based on read times
+                      if (chat['send_by'] != currentUserId) {
+                        // Last message wasn't sent by current user
+                        final isCurrentUserSender =
+                            chat['sender_id'] == currentUserId;
+                        final lastReadTime = isCurrentUserSender
+                            ? chat['sender_last_read_time']
+                            : chat['recipient_last_read_time'];
+                        final lastMessageTime = chat['time'];
+
+                        // Message is unread if no read time or message is newer than read time
+                        if (lastReadTime == null ||
+                            (lastMessageTime != null &&
+                                DateTime.parse(lastMessageTime)
+                                    .isAfter(DateTime.parse(lastReadTime)))) {
+                          isUnread = true;
+                        }
+                      }
+
+                      // Also check the unread_count field if available
+                      if (chat['unread_count'] != null &&
+                          chat['unread_count'] > 0) {
                         isUnread = true;
                       }
+
+                      // Determine which user is the "other" user
+                      bool isCurrentUserSender =
+                          chat['sender_id'] == currentUserId;
+                      String remoteUserId = isCurrentUserSender
+                          ? chat['send_to_id']
+                          : chat['sender_id'];
+                      String remoteName = isCurrentUserSender
+                          ? chat['send_to_name']
+                          : chat['sender_name'];
+                      String remoteImage = isCurrentUserSender
+                          ? chat['send_to_image']
+                          : chat['sender_image'];
+                      String? remoteDeviceToken = isCurrentUserSender
+                          ? chat['send_to_device_token']
+                          : chat['user_device_token'];
+
+                      return GroupTile(
+                          userChatId: chat['id'],
+                          senderId: chat['sender_id'],
+                          listingImage: chat['listing_image'] ?? '',
+                          listingId: chat['listing_id'] ?? '',
+                          listingName: chat['listing_name'] ?? '',
+                          listingPrice: chat['listing_price'] ?? '',
+                          listingLocation: chat['listing_location'] ?? '',
+                          lastMessage: chat['message'] ?? '',
+                          messageType: chat['message_type'] ?? 'text',
+                          messageTime: chat['time'] != null
+                              ? DateTime.tryParse(chat['time'])
+                              : null,
+                          userName: remoteName,
+                          userImage: remoteImage,
+                          isUnread: isUnread,
+                          remoteUserId: remoteUserId,
+                          deviceToken: remoteDeviceToken,
+                          remoteUid: remoteUserId);
+                    } else {
+                      return Container();
                     }
-
-                    // Also check the unread_count field if available
-                    if (chat['unread_count'] != null && chat['unread_count'] > 0) {
-                      isUnread = true;
-                    }
-
-                    // Determine which user is the "other" user
-                    bool isCurrentUserSender = chat['sender_id'] == currentUserId;
-                    String remoteUserId = isCurrentUserSender 
-                        ? chat['send_to_id'] 
-                        : chat['sender_id'];
-                    String remoteName = isCurrentUserSender 
-                        ? chat['send_to_name'] 
-                        : chat['sender_name'];
-                    String remoteImage = isCurrentUserSender 
-                        ? chat['send_to_image'] 
-                        : chat['sender_image'];
-                    String? remoteDeviceToken = isCurrentUserSender 
-                        ? chat['send_to_device_token'] 
-                        : chat['user_device_token'];
-
-                    return GroupTile(
-                        userChatId: chat['id'],
-                        senderId: chat['sender_id'],
-                        listingImage: chat['listing_image'] ?? '',
-                        listingId: chat['listing_id'] ?? '',
-                        listingName: chat['listing_name'] ?? '',
-                        listingPrice: chat['listing_price'] ?? '',
-                        listingLocation: chat['listing_location'] ?? '',
-                        lastMessage: chat['message'] ?? '',
-                        messageType: chat['message_type'] ?? 'text',
-                        messageTime: chat['time'] != null 
-                            ? DateTime.tryParse(chat['time'])
-                            : null,
-                        userName: remoteName,
-                        userImage: remoteImage,
-                        isUnread: isUnread,
-                        remoteUserId: remoteUserId,
-                        deviceToken: remoteDeviceToken,
-                        remoteUid: remoteUserId);
-                  } else {
-                    return Container();
-                  }
-                },
-              );
+                  },
+                );
+              } else {
+                return noGroupWidget();
+              }
             } else {
               return noGroupWidget();
             }
           } else {
-            return noGroupWidget();
+            return Center(
+              child: CircularProgressIndicator(
+                  color: Theme.of(context).primaryColor),
+            );
           }
-        } else {
-          return Center(
-            child: CircularProgressIndicator(
-                color: Theme.of(context).primaryColor),
-          );
-        }
-          },
-        ),
+        },
+      ),
     );
   }
 

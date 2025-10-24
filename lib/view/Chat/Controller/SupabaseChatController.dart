@@ -207,19 +207,15 @@ class SupabaseChatController extends GetxController {
             schema: 'public',
             table: 'chats',
             callback: (payload) {
-              print('🔄 Chat table change detected: ${payload.eventType}');
               // Debounce the refresh to avoid too many updates
               _loadDebounceTimer?.cancel();
               _loadDebounceTimer = Timer(Duration(milliseconds: 300), () {
-                print('🔄 Refreshing chat list due to realtime update');
                 loadChats();
               });
             },
           )
           .subscribe();
-    } catch (e) {
-      print('Error setting up chat subscription: $e');
-    }
+    } catch (e) {}
 
     // Clean up when stream is canceled
     controller.onCancel = () {
@@ -231,8 +227,6 @@ class SupabaseChatController extends GetxController {
 
   // Method to manually refresh all active chat list streams
   void refreshAllChatLists() {
-    print(
-        '🔄 Manually refreshing ${_globalChatRefreshCallbacks.length} chat list streams');
     for (final callback in _globalChatRefreshCallbacks) {
       try {
         callback();
@@ -650,16 +644,13 @@ class SupabaseChatController extends GetxController {
         } catch (e) {
           // If chat creation fails (e.g., already exists due to race condition),
           // try to just insert the message
-          print('🔄 Chat creation failed, trying message insert only: $e');
           try {
             insertedMessage = await _supabase
                 .from('messages')
                 .insert(messageData)
                 .select()
                 .single();
-            print('✅ Message inserted successfully on retry');
           } catch (messageError) {
-            print('❌ Message insert also failed: $messageError');
             rethrow; // Only rethrow if both operations fail
           }
         }
@@ -682,8 +673,6 @@ class SupabaseChatController extends GetxController {
               msg['message'] == chatMessageData['message'] &&
               msg['send_by'] == chatMessageData['sendBy']) {
             optimisticIndex = i;
-            print(
-                '🔄 Found optimistic message to replace: ${msg['_optimistic_id']}');
             break;
           }
         }
@@ -691,8 +680,6 @@ class SupabaseChatController extends GetxController {
         if (optimisticIndex != -1) {
           // Replace the specific optimistic message with the real one
           _messageCache[chatId]![optimisticIndex] = insertedMessage;
-          print(
-              '🔄 Replaced optimistic message at index $optimisticIndex with real message');
         } else {
           // If not found, remove all matching optimistic messages and add real message
           _messageCache[chatId]!.removeWhere((msg) =>
@@ -700,7 +687,6 @@ class SupabaseChatController extends GetxController {
               msg['message'] == chatMessageData['message'] &&
               msg['send_by'] == chatMessageData['sendBy']);
           _messageCache[chatId]!.add(insertedMessage);
-          print('🔄 Removed optimistic messages and added real message');
         }
 
         // Emit updated cache immediately
@@ -1097,8 +1083,6 @@ class SupabaseChatController extends GetxController {
 
   // Force reconnect all realtime subscriptions
   void reconnectRealtimeSubscriptions() {
-    print('🔄 Reconnecting all realtime subscriptions...');
-
     // Unsubscribe from existing subscriptions
     _chatChannel?.unsubscribe();
     _messagesChannel?.unsubscribe();
@@ -1118,12 +1102,8 @@ class SupabaseChatController extends GetxController {
 
   // Method to refresh all active message streams (for individual chats)
   void refreshAllMessageStreams() {
-    print('🔄 Refreshing ${_messageStreams.length} active message streams');
-
     for (final chatId in _messageStreams.keys.toList()) {
       if (!_messageStreams[chatId]!.isClosed) {
-        print('🔄 Refreshing messages for chat: $chatId');
-
         // Force reload messages from database
         _loadMessagesForChat(chatId, useCache: false);
 
@@ -1139,8 +1119,6 @@ class SupabaseChatController extends GetxController {
 
   // Method to refresh a specific chat's messages (for when you're inside a chat)
   void refreshChatMessages(String chatId) {
-    print('🔄 Refreshing messages for specific chat: $chatId');
-
     if (_messageStreams.containsKey(chatId) &&
         !_messageStreams[chatId]!.isClosed) {
       // Force reload messages from database
@@ -1412,9 +1390,6 @@ class SupabaseChatController extends GetxController {
   // Upload image to Supabase storage
   Future<String?> uploadImage(dynamic imageFile) async {
     try {
-      print('🔄 SupabaseChatController: Starting image upload...');
-      print('🔄 Image file type: ${imageFile.runtimeType}');
-
       final fileName = 'chat_${DateTime.now().millisecondsSinceEpoch}.jpg';
 
       // Handle both XFile and File types
@@ -1426,21 +1401,16 @@ class SupabaseChatController extends GetxController {
         file = File(imageFile.path);
       }
 
-      print('🔄 Reading file bytes...');
       final bytes = await file.readAsBytes();
-      print('🔄 File size: ${bytes.length} bytes');
 
-      print('🔄 Uploading to Supabase storage...');
       await _supabase.storage.from('chat-images').uploadBinary(fileName, bytes);
 
       // Get public URL
       final publicUrl =
           _supabase.storage.from('chat-images').getPublicUrl(fileName);
 
-      print('✅ Upload successful! Public URL: $publicUrl');
       return publicUrl;
     } catch (e) {
-      print('❌ Error uploading image: $e');
       return null;
     }
   }
