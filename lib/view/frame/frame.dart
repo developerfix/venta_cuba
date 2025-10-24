@@ -70,6 +70,8 @@ class _FrameScreenState extends State<FrameScreen> {
     // This ensures the heart icon shows the correct state even when coming from favorite listings
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _updateSellerFavoriteStatus();
+      // Fetch fresh seller details to get updated profile image
+      _fetchLatestSellerDetails();
     });
 
     // center =
@@ -91,6 +93,18 @@ class _FrameScreenState extends State<FrameScreen> {
       print(
           "Frame: Updated isSellerFavorite for seller $currentSellerId: ${homeCont.listingModel!.isSellerFavorite}");
       homeCont.update();
+    }
+  }
+
+  /// Fetch latest seller details to get updated profile image
+  void _fetchLatestSellerDetails() async {
+    if (homeCont.listingModel?.user?.id != null) {
+      homeCont.sellerId = homeCont.listingModel!.user!.id.toString();
+      await homeCont.getSellerDetails(
+        homeCont.listingModel?.businessStatus ?? "0",
+        0,
+        false, // Don't navigate, just fetch data
+      );
     }
   }
 
@@ -845,8 +859,8 @@ class _FrameScreenState extends State<FrameScreen> {
                                           imageUrl: cont.listingModel
                                                       ?.businessStatus ==
                                                   "0"
-                                              ? "${cont.listingModel?.user?.profileImage}"
-                                              : "${cont.listingModel?.user?.businessLogo}",
+                                              ? "${cont.sellerDetailsModel?.data?.sellerAbout?.profileImage ?? cont.listingModel?.user?.profileImage}"
+                                              : "${cont.sellerDetailsModel?.data?.sellerAbout?.businessLogo ?? cont.listingModel?.user?.businessLogo}",
                                           imageBuilder:
                                               (context, imageProvider) =>
                                                   Container(
@@ -1561,8 +1575,8 @@ print("Successfully".tr);
                                   userImage: cont
                                               .listingModel?.businessStatus ==
                                           "0"
-                                      ? "${cont.listingModel?.user?.profileImage}"
-                                      : "${cont.listingModel?.user?.businessLogo}",
+                                      ? "${cont.sellerDetailsModel?.data?.sellerAbout?.profileImage ?? cont.listingModel?.user?.profileImage}"
+                                      : "${cont.sellerDetailsModel?.data?.sellerAbout?.businessLogo ?? cont.listingModel?.user?.businessLogo}",
                                   deviceToken:
                                       "${cont.listingModel?.user?.deviceToken}",
                                   listingImage:
