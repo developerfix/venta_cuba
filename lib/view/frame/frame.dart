@@ -949,7 +949,8 @@ class _FrameScreenState extends State<FrameScreen> {
                                         if (authCont.user?.email == "") {
                                           Navigator.push(
                                             context,
-                                            PremiumPageTransitions.slideFromBottom(Login()),
+                                            PremiumPageTransitions
+                                                .slideFromBottom(Login()),
                                           );
                                         } else {
                                           cont.listingModel?.isSellerFavorite ==
@@ -966,7 +967,7 @@ class _FrameScreenState extends State<FrameScreen> {
                                           cont.isLoading = false;
                                           cont.update();
                                           if (isAddedF) {
-print("Successfully".tr);
+                                            print("Successfully".tr);
                                             print(
                                                 "isSellerFavorite.............${cont.listingModel?.isSellerFavorite}");
                                             print(
@@ -1433,9 +1434,10 @@ print("Successfully".tr);
                                           onTap: () async {
                                             if (authCont.user?.email == "") {
                                               Navigator.push(
-                                            context,
-                                            PremiumPageTransitions.slideFromBottom(Login()),
-                                          );
+                                                context,
+                                                PremiumPageTransitions
+                                                    .slideFromBottom(Login()),
+                                              );
                                             } else {
                                               cont.listingId = cont
                                                   .listingModel?.id
@@ -1472,9 +1474,11 @@ print("Successfully".tr);
                                                 if (authCont.user?.email ==
                                                     "") {
                                                   Navigator.push(
-                                            context,
-                                            PremiumPageTransitions.slideFromBottom(Login()),
-                                          );
+                                                    context,
+                                                    PremiumPageTransitions
+                                                        .slideFromBottom(
+                                                            Login()),
+                                                  );
                                                 } else {
                                                   cont.listingModel
                                                               ?.isFavorite ==
@@ -1639,6 +1643,19 @@ class _ImageViewerPageState extends State<ImageViewerPage>
   late AnimationController _animationController;
   late Animation<double> _animation;
 
+  // Track transformation controllers for each image
+  late List<TransformationController> _transformationControllers;
+
+  bool get _isCurrentImageZoomed {
+    if (currentPage < _transformationControllers.length) {
+      final Matrix4 matrix = _transformationControllers[currentPage].value;
+      final double scaleX = matrix.getMaxScaleOnAxis();
+      return scaleX >
+          1.01; // Small threshold to account for floating point precision
+    }
+    return false;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -1651,23 +1668,37 @@ class _ImageViewerPageState extends State<ImageViewerPage>
           _opacity = 1.0 - (_dragOffset.abs() / 300).clamp(0, 0.7);
         });
       });
+
+    // Initialize transformation controllers for each image
+    _transformationControllers = List.generate(
+      widget.imageUrls.length,
+      (index) => TransformationController(),
+    );
   }
 
   @override
   void dispose() {
     _animationController.dispose();
+    // Dispose transformation controllers
+    for (final controller in _transformationControllers) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
   void _onVerticalDragUpdate(DragUpdateDetails details) {
-    setState(() {
-      _dragOffset += details.delta.dy;
-      _opacity = 1.0 - (_dragOffset.abs() / 300).clamp(0, 0.7);
-    });
+    // Only allow vertical drag when image is not zoomed
+    if (!_isCurrentImageZoomed) {
+      setState(() {
+        _dragOffset += details.delta.dy;
+        _opacity = 1.0 - (_dragOffset.abs() / 300).clamp(0, 0.7);
+      });
+    }
   }
 
   void _onVerticalDragEnd(DragEndDetails details) {
-    if (_dragOffset.abs() > 120) {
+    // Only allow dismiss when image is not zoomed
+    if (!_isCurrentImageZoomed && _dragOffset.abs() > 120) {
       Navigator.of(context).pop();
     } else {
       _animation = Tween<double>(begin: _dragOffset, end: 0)
@@ -1676,16 +1707,32 @@ class _ImageViewerPageState extends State<ImageViewerPage>
     }
   }
 
+  void _handleDoubleTap(int index) {
+    final Matrix4 matrix = _transformationControllers[index].value;
+    final double currentScale = matrix.getMaxScaleOnAxis();
+
+    if (currentScale <= 1.01) {
+      // Zoom in to 2x
+      _transformationControllers[index].value = Matrix4.identity()
+        ..scale(2.0, 2.0, 1.0);
+    } else {
+      // Zoom out to normal
+      _transformationControllers[index].value = Matrix4.identity();
+    }
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
-          // PageView to display images
+          // PageView to display images with smart gesture detection
           GestureDetector(
             onVerticalDragUpdate: _onVerticalDragUpdate,
             onVerticalDragEnd: _onVerticalDragEnd,
+            behavior: HitTestBehavior.deferToChild,
             child: Opacity(
               opacity: _opacity,
               child: Transform.translate(
@@ -1698,16 +1745,46 @@ class _ImageViewerPageState extends State<ImageViewerPage>
                     });
                   },
                   itemBuilder: (context, index) {
-                    return InteractiveViewer(
-                      panEnabled: true,
-                      boundaryMargin: EdgeInsets.all(20),
-                      minScale: 0.5,
-                      maxScale: 4.0,
-                      child: CachedNetworkImage(
-                        imageUrl: widget.imageUrls[index],
-                        fit: BoxFit.contain,
-                      ),
-                    );
+                    return GestureDetector(
+                        onDoubleTap: () => _handleDoubleTap(index),
+                        child: InteractiveViewer(
+                          transformationController:
+                              _transformationControllers[index],
+                          panEnabled: _isCurrentImageZoomed,
+                          scaleEnabled: true, // Always allow pinch zoom
+                          minScale: 0.3,
+                          maxScale: 8.0,
+                          child: CachedNetworkImage(
+                            imageUrl: widget.imageUrls[index],
+                            fit: BoxFit.contain,
+                            width: double.infinity,
+                            height: double.infinity,
+                            placeholder: (context, url) => Center(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.broken_image,
+                                    size: 64,
+                                    color: Colors.white54,
+                                  ),
+                                  SizedBox(height: 16),
+                                  Text(
+                                    'Image not available',
+                                    style: TextStyle(color: Colors.white54),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ));
                   },
                 ),
               ),

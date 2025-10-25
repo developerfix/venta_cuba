@@ -2997,34 +2997,75 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                 SizedBox(width: 10),
                                 widget.isUpdate
                                     ? Flexible(
-                                        child: InkWell(
-                                          onTap: () {
-                                            homeCont.lat = city?.latitude;
-                                            homeCont.lng = city?.longitude;
-                                            homeCont.addressCont.text =
-                                                "${city?.provinceName}, ${city?.cityName}";
-                                            cont.furnished = valueChoose ?? "";
-                                            cont.jobType = valueChooseJob ?? "";
-                                            // cont.addressCont.text =
-                                            //     locationCont.locationEditingController.value.text;
-                                            if (cont.titleCont.text.isEmpty) {
-                                              errorAlertToast(
-                                                  "Please Enter Title".tr);
-                                            } else if (cont
-                                                .descriptionCont.text.isEmpty) {
-                                              errorAlertToast(
-                                                  "Please Enter Description"
-                                                      .tr);
-                                            } else if (!_validateCategorySelection(
-                                                cont)) {
-                                              // Category validation with specific error messages
-                                              return;
-                                            } else {
-                                              cont.editListing(context);
-                                            }
-                                          },
-                                          child: MyButton(
-                                            text: 'Update'.tr,
+                                        child: Obx(
+                                          () => InkWell(
+                                            onTap: cont.isEditingListing.value
+                                                ? null
+                                                : () {
+                                                    homeCont.lat = city?.latitude;
+                                                    homeCont.lng = city?.longitude;
+                                                    homeCont.addressCont.text =
+                                                        "${city?.provinceName}, ${city?.cityName}";
+                                                    cont.furnished = valueChoose ?? "";
+                                                    cont.jobType = valueChooseJob ?? "";
+                                                    // cont.addressCont.text =
+                                                    //     locationCont.locationEditingController.value.text;
+                                                    if (cont.titleCont.text.isEmpty) {
+                                                      errorAlertToast(
+                                                          "Please Enter Title".tr);
+                                                    } else if (cont
+                                                        .descriptionCont.text.isEmpty) {
+                                                      errorAlertToast(
+                                                          "Please Enter Description"
+                                                              .tr);
+                                                    } else if (!_validateCategorySelection(
+                                                        cont)) {
+                                                      // Category validation with specific error messages
+                                                      return;
+                                                    } else {
+                                                      cont.editListing(context);
+                                                    }
+                                                  },
+                                            child: Container(
+                                              height: 50.h,
+                                              width: MediaQuery.of(context).size.width,
+                                              decoration: BoxDecoration(
+                                                  color: cont.isEditingListing.value
+                                                      ? Colors.grey
+                                                      : Color(0xFF0254B8),
+                                                  borderRadius: BorderRadius.circular(10)),
+                                              child: Center(
+                                                child: cont.isEditingListing.value
+                                                    ? Row(
+                                                        mainAxisAlignment: MainAxisAlignment.center,
+                                                        children: [
+                                                          SizedBox(
+                                                            width: 20,
+                                                            height: 20,
+                                                            child: CircularProgressIndicator(
+                                                              strokeWidth: 2,
+                                                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                                            ),
+                                                          ),
+                                                          SizedBox(width: 10),
+                                                          Text(
+                                                            'Updating...'.tr,
+                                                            style: TextStyle(
+                                                                fontSize: 18,
+                                                                fontWeight: FontWeight.w400,
+                                                                color: Colors.white),
+                                                          ),
+                                                        ],
+                                                      )
+                                                    : Text(
+                                                        'Update'.tr,
+                                                        style: TextStyle(
+                                                            fontSize: 18,
+                                                            fontWeight: FontWeight.w400,
+                                                            color: Colors.white),
+                                                      ),
+                                              ),
+                                            ),
                                           ),
                                         ),
                                       )

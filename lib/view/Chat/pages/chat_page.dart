@@ -436,12 +436,13 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                   // Show last active time or online status
                   if (widget.remoteUid != null)
                     StreamBuilder<Map<String, dynamic>>(
-                      stream: Stream.periodic(Duration(seconds: 30))
+                      stream: Stream.periodic(Duration(seconds: 15))
                           .asyncMap((_) =>
                               chatCont.getUserPresence(widget.remoteUid!))
                           .distinct(),
+                      initialData: {}, // Provide initial data to avoid loading state
                       builder: (context, snapshot) {
-                        if (snapshot.hasData && snapshot.data != null) {
+                        if (snapshot.hasData && snapshot.data != null && snapshot.data!.isNotEmpty) {
                           Map<String, dynamic> presenceData = snapshot.data!;
 
                           bool isOnline = chatCont.isUserOnline(presenceData);
@@ -461,12 +462,8 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                                 isOnline ? Colors.green : Colors.grey[600]!,
                           );
                         }
-                        return CustomText(
-                          text: "Checking status...".tr,
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w400,
-                          fontColor: Colors.grey[600]!,
-                        );
+                        // Show nothing instead of annoying "Checking status..."
+                        return SizedBox.shrink();
                       },
                     ),
                 ],

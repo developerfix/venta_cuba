@@ -99,6 +99,7 @@ class HomeController extends GetxController {
   RxBool loadingCategory = false.obs;
   RxBool loadingSubCategory = false.obs;
   RxBool loadingSubSubCategory = false.obs;
+  RxBool isEditingListing = false.obs;
 
   // Randomization control
   RxBool hasShuffledThisSession = false.obs;
@@ -378,9 +379,48 @@ class HomeController extends GetxController {
   Future<void> _loadSinglePage() async {
     Get.log("🔄 DEBUG: Loading single page ${currentPage.value}");
 
-    Response response = await api.postData(
-      "api/getListing?page=${currentPage.value}",
-      {
+    // Check if no location is selected
+    bool noLocationSelected = false;
+    if (address == null ||
+        address == '' ||
+        address == "4JF7+RM6, Av. Paseo, La Habana, Cuba" ||
+        (lat == "23.124792615936276" &&
+            lng == "-82.38597269330762" &&
+            radius == 50.0)) {
+      noLocationSelected = true;
+      Get.log("📍 _loadSinglePage: No location selected - loading user's own posts via dedicated API");
+    }
+
+    late Response response;
+
+    if (noLocationSelected) {
+      // When no location selected, call API specifically for user's own posts
+      Map<String, dynamic> requestData = {
+        'user_id': authCont.user?.userId ?? "",
+        'category_id': selectedCategory?.id ?? "",
+        'sub_category_id': selectedSubCategory?.id ?? "",
+        'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
+        'latitude': "",
+        'longitude': "",
+        'radius': "",
+        'min_price': '',
+        'max_price': '',
+        'search_by_title': '',
+      };
+
+      response = await api.postData(
+        "api/getListing?page=${currentPage.value}",
+        requestData,
+        headers: {
+          'Accept': 'application/json',
+          'Access-Control-Allow-Origin': "*",
+          'Authorization': 'Bearer ${authCont.user?.accessToken ?? tokenMain ?? ""}'
+        },
+        showdialog: false,
+      ).timeout(Duration(seconds: 30));
+    } else {
+      // Normal location-based API call
+      Map<String, dynamic> requestData = {
         'user_id': authCont.user?.userId ?? "",
         'category_id': selectedCategory?.id ?? "",
         'sub_category_id': selectedSubCategory?.id ?? "",
@@ -391,29 +431,55 @@ class HomeController extends GetxController {
         'min_price': '',
         'max_price': '',
         'search_by_title': ''
-      },
-      headers: {
-        'Accept': 'application/json',
-        'Access-Control-Allow-Origin': "*",
-        'Authorization': 'Bearer ${authCont.user?.accessToken ?? tokenMain ?? ""}'
-      },
-      showdialog: false,
-    ).timeout(Duration(seconds: 30));
+      };
+
+      response = await api.postData(
+        "api/getListing?page=${currentPage.value}",
+        requestData,
+        headers: {
+          'Accept': 'application/json',
+          'Access-Control-Allow-Origin': "*",
+          'Authorization': 'Bearer ${authCont.user?.accessToken ?? tokenMain ?? ""}'
+        },
+        showdialog: false,
+      ).timeout(Duration(seconds: 30));
+    }
 
     if (response.statusCode == 200) {
       List<dynamic> dataListing = response.body['data']['data'] ?? [];
       Get.log("🔄 DEBUG: Page ${currentPage.value} returned ${dataListing.length} items");
 
       if (dataListing.isNotEmpty) {
+        List<ListingModel> newListings = [];
+
+        // Parse items with error handling
         for (var element in dataListing) {
           try {
             if (element != null && element is Map<String, dynamic>) {
-              listingModelList.add(ListingModel.fromJson(element));
+              newListings.add(ListingModel.fromJson(element));
             }
           } catch (e) {
             Get.log("🔄 DEBUG: Error parsing item: $e");
           }
         }
+
+        // Apply user filtering when no location is selected
+        if (noLocationSelected) {
+          String currentUserId = authCont.user?.userId ?? "";
+          newListings = newListings.where((listing) {
+            return listing.userId == currentUserId;
+          }).toList();
+          Get.log("After user filtering (_loadSinglePage no location): ${newListings.length} items");
+        }
+
+        // Apply business/personal account filtering
+        String currentAccountType = authCont.isBusinessAccount ? "1" : "0";
+        newListings = newListings.where((listing) {
+          return listing.businessStatus == currentAccountType;
+        }).toList();
+
+        // Add filtered items to the main list
+        listingModelList.addAll(newListings);
         currentPage.value++;
       } else {
         hasMore.value = false;
@@ -537,21 +603,24 @@ class HomeController extends GetxController {
         }
       }
 
+      // Make API call based on location selection
+      Map<String, dynamic> requestData = {
+        'user_id': authCont.user?.userId ?? "",
+        'category_id': selectedCategory?.id ?? "",
+        'sub_category_id': selectedSubCategory?.id ?? "",
+        'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
+        'latitude': noLocationSelected ? "" : (lat ?? "23.124792615936276"),
+        'longitude': noLocationSelected ? "" : (lng ?? "-82.38597269330762"),
+        'radius': noLocationSelected ? "" : radius.toString(),
+        'min_price': '',
+        'max_price': '',
+        'search_by_title': ''
+      };
+
       Response response = await api
           .postData(
         "api/getListing?page=${currentPage.value}",
-        {
-          'user_id': authCont.user?.userId ?? "",
-          'category_id': selectedCategory?.id ?? "",
-          'sub_category_id': selectedSubCategory?.id ?? "",
-          'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
-          'latitude': lat ?? "23.124792615936276",
-          'longitude': lng ?? "-82.38597269330762",
-          'radius': radius.toString(),
-          'min_price': '',
-          'max_price': '',
-          'search_by_title': ''
-        },
+        requestData,
         headers: {
           'Accept': 'application/json',
           'Access-Control-Allow-Origin': "*",
@@ -585,37 +654,11 @@ class HomeController extends GetxController {
             }
           }
 
-          // Location-based filtering logic
+          // Log the results
           if (noLocationSelected) {
-            // NO LOCATION SELECTED: Show only current user's items
-            if (authCont.user?.userId != null) {
-              // Filter to show ONLY user's own posts
-              List<ListingModel> userOwnPosts = newListings.where((listing) {
-                bool isOwnPost = listing.userId?.toString() ==
-                    authCont.user?.userId?.toString();
-                return isOwnPost;
-              }).toList();
-
-              newListings = userOwnPosts;
-              Get.log(
-                  "📍 NO LOCATION: Showing ${newListings.length} of user's own posts only");
-
-              // Clear list if no user posts found on first page
-              if (newListings.isEmpty && currentPage.value == 1) {
-                listingModelList.clear();
-                hasMore.value = false; // Stop pagination if no user posts
-                Get.log(
-                    "📍 NO LOCATION: No user posts found - stopping pagination");
-              }
-            } else {
-              // Not logged in + no location = show nothing
-              newListings = [];
-              listingModelList.clear();
-              hasMore.value = false;
-              Get.log("📍 NO LOCATION + NOT LOGGED IN: Showing no posts");
-            }
+            Get.log(
+                "📍 NO LOCATION: API returned ${newListings.length} own posts");
           } else {
-            // LOCATION SELECTED: Show items from that location (all users)
             Get.log(
                 "📍 LOCATION SELECTED: Showing ${newListings.length} posts from location: ${address}");
           }
@@ -623,6 +666,15 @@ class HomeController extends GetxController {
           // Apply client-side category filtering for consistency with search
           newListings = applyCategoryFilter(newListings);
           Get.log("After category filtering: ${newListings.length} items");
+
+          // Apply user filtering when no location is selected
+          if (noLocationSelected) {
+            String currentUserId = authCont.user?.userId ?? "";
+            newListings = newListings.where((listing) {
+              return listing.userId == currentUserId;
+            }).toList();
+            Get.log("After user filtering (no location): ${newListings.length} items");
+          }
 
           // Apply business/personal account filtering
           String currentAccountType = authCont.isBusinessAccount ? "1" : "0";
@@ -1222,6 +1274,7 @@ class HomeController extends GetxController {
 
       if (finalCount < initialCount) {
         final removedCount = initialCount - finalCount;
+        Get.log("🗑️ Removed $removedCount expired listings from home screen");
 
         // Trigger UI update for home screen
         update();
@@ -1434,7 +1487,8 @@ class HomeController extends GetxController {
   Future addListing(BuildContext context) async {
     String tagsData = "";
     String price = "0";
-    String rawPrice = priceCont?.text.replaceAll(' ', '') ?? "0";
+    String rawPrice = priceCont?.text.replaceAll(RegExp(r'[^\d]'), '') ?? "0";
+    if (rawPrice.isEmpty) rawPrice = "0";
     (priceCont != null && priceCont!.text.isEmpty)
         ? price = "0"
         : price = rawPrice;
@@ -1631,6 +1685,9 @@ class HomeController extends GetxController {
   }
 
   Future editListing(BuildContext context) async {
+    isEditingListing.value = true;
+    update();
+
     String tagsData = "";
     for (int i = 0; i < tags.length; i++) {
       if (i == 0) {
@@ -1662,8 +1719,9 @@ class HomeController extends GetxController {
       },
       'video_link': youTubeController.text.trim(),
     });
-    // Remove spaces from price
-    String rawPrice = priceCont?.text.replaceAll(' ', '') ?? "0";
+    // Remove spaces and other formatting from price
+    String rawPrice = priceCont?.text.replaceAll(RegExp(r'[^\d]'), '') ?? "0";
+    if (rawPrice.isEmpty) rawPrice = "0";
 
     // Prepare request data
     Map<String, dynamic> requestData = {
@@ -1708,6 +1766,8 @@ class HomeController extends GetxController {
 
         if (processedImages.isEmpty) {
           print('Failed to process images. Please try again.');
+          isEditingListing.value = false;
+          update();
           return;
         }
 
@@ -1733,20 +1793,30 @@ class HomeController extends GetxController {
         print('❌ Error during image upload: $e');
         print(
             'Failed to upload images. Please check your connection and try again.');
+        isEditingListing.value = false;
+        update();
         return;
       }
     } else {
-      // Use JSON for text-only posts
-      response = await api.postData(
-        "api/editListing",
-        requestData,
-        headers: {
-          'Accept': 'application/json',
-          'Access-Control-Allow-Origin': "*",
-          'Authorization': 'Bearer $authToken'
-        },
-        showdialog: true,
-      );
+      try {
+        // Use JSON for text-only posts
+        response = await api.postData(
+          "api/editListing",
+          requestData,
+          headers: {
+            'Accept': 'application/json',
+            'Access-Control-Allow-Origin': "*",
+            'Authorization': 'Bearer $authToken'
+          },
+          showdialog: true,
+        );
+      } catch (e) {
+        print('❌ Error during text-only post update: $e');
+        print('Failed to update listing. Please check your connection and try again.');
+        isEditingListing.value = false;
+        update();
+        return;
+      }
     }
     if (response.statusCode == 200) {
       priceCont?.clear();
@@ -1797,6 +1867,9 @@ class HomeController extends GetxController {
     } else {
       print('Something went wrong\nPlease try again!'.tr);
     }
+
+    isEditingListing.value = false;
+    update();
   }
 
   Future<void> getCoordinatesFromAddress() async {
@@ -2154,15 +2227,28 @@ class HomeController extends GetxController {
           "Search Filters - Min: '${minPriceController.text.trim()}', Max: '${maxPriceController.text.trim()}', Search: '${searchController.text.trim()}'");
       Get.log("Location - Lat: '${lat}', Lng: '${lng}', Radius: '${radius}'");
 
+      // Check if no location is selected for search
+      bool noLocationSelected = false;
+      if (address == null ||
+          address == '' ||
+          address == "4JF7+RM6, Av. Paseo, La Habana, Cuba" ||
+          (lat == "23.124792615936276" &&
+              lng == "-82.38597269330762" &&
+              radius == 50.0)) {
+        noLocationSelected = true;
+        Get.log("📍 SEARCH: No location selected - will search only user's own posts");
+      }
+
       // Send appropriate category filters to backend
+      // Build request data based on location selection
       Map<String, dynamic> requestData = {
         'user_id': authCont.user?.userId ?? "",
         'category_id': selectedCategory?.id ?? "",
         'sub_category_id': selectedSubCategory?.id ?? "",
         'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
-        'latitude': lat ?? "23.124792615936276",
-        'longitude': lng ?? "-82.38597269330762",
-        'radius': radius.toString(),
+        'latitude': noLocationSelected ? "" : (lat ?? "23.124792615936276"),
+        'longitude': noLocationSelected ? "" : (lng ?? "-82.38597269330762"),
+        'radius': noLocationSelected ? "" : radius.toString(),
         'min_price': minPriceController.text.trim(),
         'max_price': maxPriceController.text.trim(),
         'search_by_title': searchController.text.trim(),
@@ -2242,38 +2328,11 @@ class HomeController extends GetxController {
                 "📍 SEARCH: No location selected - will filter to user's own posts only");
           }
 
-          // Location-based filtering logic
+          // Log the search results
           if (noLocationSelected) {
-            // NO LOCATION SELECTED: Show only current user's items
-            if (authCont.user?.userId != null) {
-              // Filter to show ONLY user's own posts
-              List<ListingModel> userOwnPosts = newListings.where((listing) {
-                bool isOwnPost = listing.userId?.toString() ==
-                    authCont.user?.userId?.toString();
-                return isOwnPost;
-              }).toList();
-
-              newListings = userOwnPosts;
-              Get.log(
-                  "📍 SEARCH NO LOCATION: Showing ${newListings.length} of user's own posts only");
-
-              // Clear list if no user posts found on first page
-              if (newListings.isEmpty && currentSearchPage.value == 1) {
-                listingModelSearchList.clear();
-                hasMoreSearch.value = false; // Stop pagination if no user posts
-                Get.log(
-                    "📍 SEARCH NO LOCATION: No user posts found - stopping pagination");
-              }
-            } else {
-              // Not logged in + no location = show nothing
-              newListings = [];
-              listingModelSearchList.clear();
-              hasMoreSearch.value = false;
-              Get.log(
-                  "📍 SEARCH NO LOCATION + NOT LOGGED IN: Showing no posts");
-            }
+            Get.log(
+                "📍 SEARCH NO LOCATION: API returned ${newListings.length} own posts");
           } else {
-            // LOCATION SELECTED: Show items from that location (all users)
             Get.log(
                 "📍 SEARCH LOCATION SELECTED: Showing ${newListings.length} posts from location: ${address}");
           }
@@ -2285,6 +2344,15 @@ class HomeController extends GetxController {
           // Apply client-side category filtering as backup
           newListings = applyCategoryFilter(newListings);
           Get.log("After category filtering: ${newListings.length} items");
+
+          // Apply user filtering when no location is selected
+          if (noLocationSelected) {
+            String currentUserId = authCont.user?.userId ?? "";
+            newListings = newListings.where((listing) {
+              return listing.userId == currentUserId;
+            }).toList();
+            Get.log("After user filtering (no location search): ${newListings.length} items");
+          }
 
           // Apply business/personal account filtering
           String currentAccountType = authCont.isBusinessAccount ? "1" : "0";

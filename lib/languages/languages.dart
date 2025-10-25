@@ -347,8 +347,10 @@ class Languages extends Translations {
           "Account Settings": "Account Settings",
           "Profile Details": "Profile Details",
           "Notifications": "Notifications",
-          "Notifications won't work outside the app because of network restrictions": "Chat notifications won't work outside of the app because of network restrictions. Log in periodically to check your messages. We will find another solution in the next update.",
-          "Chat notifications won't work outside of the app for some phone models because of network restrictions. Just log in periodically to check your messages. We will find another solution in the next update. You may also receive duplicate messages.": "Chat notifications won't work outside of the app for some phone models because of network restrictions. Just log in periodically to check your messages. We will find another solution in the next update. You may also receive duplicate messages.",
+          "Notifications won't work outside the app because of network restrictions":
+              "Chat notifications won't work outside of the app because of network restrictions. Log in periodically to check your messages. We will find another solution in the next update.",
+          "Chat notifications won't work outside of the app for some phone models because of network restrictions. Just log in periodically to check your messages. We will find another solution in the next update. You may also receive duplicate notifications.":
+              "Chat notifications won't work outside of the app for some phone models because of network restrictions. Just log in periodically to check your messages. We will find another solution in the next update. You may also receive duplicate notifications.",
           "My Ratings": "My Ratings",
           "Saved Searches": "Saved Searches",
           "Favorite Listings": "Favorite Listings",
@@ -989,12 +991,18 @@ It is not allowed to use our member-to-member communication resources to send sp
               'Image upload not authorized. Storage policies need configuration.',
           'Image upload failed. Storage bucket may not be configured.':
               'Image upload failed. Storage bucket may not be configured.',
-          'Failed to upload image. Please try again.': 'Failed to upload image. Please try again.',
-          'Image storage not configured. Please contact support.': 'Image storage not configured. Please contact support.',
-          'Image upload not authorized. Please check your permissions.': 'Image upload not authorized. Please check your permissions.',
-          'Permission denied for image upload.': 'Permission denied for image upload.',
-          'Camera permission is required to take photos.': 'Camera permission is required to take photos.',
-          'Photo library permission is required to select images.': 'Photo library permission is required to select images.',
+          'Failed to upload image. Please try again.':
+              'Failed to upload image. Please try again.',
+          'Image storage not configured. Please contact support.':
+              'Image storage not configured. Please contact support.',
+          'Image upload not authorized. Please check your permissions.':
+              'Image upload not authorized. Please check your permissions.',
+          'Permission denied for image upload.':
+              'Permission denied for image upload.',
+          'Camera permission is required to take photos.':
+              'Camera permission is required to take photos.',
+          'Photo library permission is required to select images.':
+              'Photo library permission is required to select images.',
           'Failed to open camera': 'Failed to open camera',
           'Failed to open gallery': 'Failed to open gallery',
           'Failed to send image': 'Failed to send image',
@@ -1816,8 +1824,10 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
           "Account Settings": "Configuraciones De La Cuenta",
           "Profile Details": "Detalles Del Perfil",
           "Notifications": "Notificaciones",
-          "Notifications won't work outside the app because of network restrictions": "Las notificaciones de chat no funcionarán fuera de la aplicación debido a restricciones de red. Inicia sesión periódicamente para revisar tus mensajes. Encontraremos otra solución en la próxima actualización.",
-          "Chat notifications won't work outside of the app for some phone models because of network restrictions. Just log in periodically to check your messages. We will find another solution in the next update. You may also receive duplicate messages.": "Es posible que las notificaciones de chat no funcionaran en algunos modelos de teléfono debido a restricciones de red. Abre la app periódicamente para revisar tus mensajes. Encontraremos otra solución en la próxima actualización. También puede recibir mensajes duplicados.",
+          "Notifications won't work outside the app because of network restrictions":
+              "Las notificaciones de chat no funcionarán fuera de la aplicación debido a restricciones de red. Inicia sesión periódicamente para revisar tus mensajes. Encontraremos otra solución en la próxima actualización.",
+          "Chat notifications won't work outside of the app for some phone models because of network restrictions. Just log in periodically to check your messages. We will find another solution in the next update. You may also receive duplicate notifications.":
+              "Es posible que las notificaciones de chat no funcionaran en algunos modelos de teléfono debido a restricciones de red. Abre la app periódicamente para revisar tus mensajes. Encontraremos otra solución en la próxima actualización. También puede recibir notificaciones duplicados.",
           "My Ratings": "Mis calificaciones",
 
           "Saved Searches": "Búsquedas guardadas",
@@ -1914,7 +1924,8 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
           "Please Enter Business City": "Por favor ingrese la ciudad comercial",
           "Please Enter Business Address":
               "Por favor ingrese la dirección comercial",
-          'Please Enter Business Name_2': "Por favor ingrese el nombre comercial",
+          'Please Enter Business Name_2':
+              "Por favor ingrese el nombre comercial",
           "Maximum 50mb Size": "Tamaño máximo de 50 MB",
           "Upload Your Image Here": "Sube tu imagen aquí",
           "Processing images...": "Procesando imágenes...",
@@ -2060,12 +2071,18 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
               'Carga de imagen no autorizada. Las políticas de almacenamiento necesitan configuración.',
           'Image upload failed. Storage bucket may not be configured.':
               'Error al subir imagen. El almacenamiento puede no estar configurado.',
-          'Failed to upload image. Please try again.': 'Error al subir imagen. Inténtalo de nuevo.',
-          'Image storage not configured. Please contact support.': 'Almacenamiento de imágenes no configurado. Contacta soporte.',
-          'Image upload not authorized. Please check your permissions.': 'Carga de imagen no autorizada. Verifica tus permisos.',
-          'Permission denied for image upload.': 'Permiso denegado para subir imagen.',
-          'Camera permission is required to take photos.': 'Se requiere permiso de cámara para tomar fotos.',
-          'Photo library permission is required to select images.': 'Se requiere permiso de galería para seleccionar imágenes.',
+          'Failed to upload image. Please try again.':
+              'Error al subir imagen. Inténtalo de nuevo.',
+          'Image storage not configured. Please contact support.':
+              'Almacenamiento de imágenes no configurado. Contacta soporte.',
+          'Image upload not authorized. Please check your permissions.':
+              'Carga de imagen no autorizada. Verifica tus permisos.',
+          'Permission denied for image upload.':
+              'Permiso denegado para subir imagen.',
+          'Camera permission is required to take photos.':
+              'Se requiere permiso de cámara para tomar fotos.',
+          'Photo library permission is required to select images.':
+              'Se requiere permiso de galería para seleccionar imágenes.',
           'Failed to open camera': 'Error al abrir cámara',
           'Failed to open gallery': 'Error al abrir galería',
           'Failed to send image': 'Error al enviar imagen',

@@ -99,6 +99,9 @@ class _ChatsState extends State<Chats> with WidgetsBindingObserver {
         appBar: AppBar(
           elevation: 0,
           automaticallyImplyLeading: false,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          surfaceTintColor: Colors.transparent,
+          scrolledUnderElevation: 0,
           title: CustomText(
             text: "Message".tr,
             fontSize: 20..sp,
@@ -122,7 +125,7 @@ class _ChatsState extends State<Chats> with WidgetsBindingObserver {
                 Platform.isIOS
                     ? 'Notifications won\'t work outside the app because of network restrictions'
                         .tr
-                    : 'Chat notifications won\'t work outside of the app for some phone models because of network restrictions. Just log in periodically to check your messages. We will find another solution in the next update. You may also receive duplicate messages.'
+                    : 'Chat notifications won\'t work outside of the app for some phone models because of network restrictions. Just log in periodically to check your messages. We will find another solution in the next update. You may also receive duplicate notifications.'
                         .tr,
                 style: TextStyle(
                   fontSize: 12.sp,
