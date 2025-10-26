@@ -134,6 +134,19 @@ class ApiClient extends GetxService {
                 List<dynamic> userListings = userResponseData['data'];
                 print("🚨 Found ${userListings.length} user listings");
 
+                // Log and fix the isFavorite status of user's own posts
+                for (var listing in userListings) {
+                  String postId = listing['id']?.toString() ?? 'unknown';
+                  String isFavorite = listing['is_favorite']?.toString() ?? 'unknown';
+                  print("🚨 User's post ID=$postId, isFavorite=$isFavorite");
+
+                  // Fix: User's own posts should never be marked as favorite
+                  // Add both field names since model expects camelCase but API uses snake_case
+                  listing['is_favorite'] = "0";  // snake_case for API compatibility
+                  listing['isFavorite'] = "0";   // camelCase for ListingModel
+                  print("🚨 Fixed: User's post ID=$postId now has is_favorite=0 and isFavorite=0");
+                }
+
                 // Convert to the same format as getListing API response
                 var formattedResponse = {
                   "status": true,
