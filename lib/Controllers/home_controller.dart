@@ -52,6 +52,10 @@ List<String> beforeData = [];
 
 //Your package is in pending, waiting for admin approval.
 class HomeController extends GetxController {
+  HomeController() {
+    Get.log("🎯 HOME CONTROLLER CONSTRUCTOR CALLED - NEW VERSION!");
+  }
+
   TextEditingController? priceCont = TextEditingController();
   TextEditingController addressCont = TextEditingController();
   TextEditingController addressController = TextEditingController();
@@ -328,14 +332,14 @@ class HomeController extends GetxController {
             break;
           }
         } else {
-          Get.log("🧪 DEBUG: Page $page failed with status ${response.statusCode}");
+          Get.log(
+              "🧪 DEBUG: Page $page failed with status ${response.statusCode}");
           break;
         }
       }
 
       Get.log("🧪 DEBUG: Total items loaded: ${listingModelList.length}");
       listingModelList.shuffle();
-
     } catch (e) {
       Get.log("🧪 DEBUG: Error in testLoadManyItems: $e");
     } finally {
@@ -355,7 +359,8 @@ class HomeController extends GetxController {
       // Load enough pages to ensure scrollability (at least 10 items)
       for (int i = 0; i < 15 && hasMore.value; i++) {
         await _loadSinglePage();
-        if (listingModelList.length >= 20) break; // Stop if we have enough items
+        if (listingModelList.length >= 20)
+          break; // Stop if we have enough items
       }
 
       // Apply initial shuffle
@@ -365,7 +370,6 @@ class HomeController extends GetxController {
       } else {
         await shuffleListingsOnLogin();
       }
-
     } catch (e) {
       Get.log("🔄 DEBUG: Error in _loadInitialPages: $e");
     } finally {
@@ -377,7 +381,7 @@ class HomeController extends GetxController {
 
   // Load a single page (helper method)
   Future<void> _loadSinglePage() async {
-    Get.log("🔄 DEBUG: Loading single page ${currentPage.value}");
+    Get.log("🔄 DEBUG: _loadSinglePage called! Loading single page ${currentPage.value}");
 
     // Check if no location is selected
     bool noLocationSelected = false;
@@ -388,7 +392,8 @@ class HomeController extends GetxController {
             lng == "-82.38597269330762" &&
             radius == 50.0)) {
       noLocationSelected = true;
-      Get.log("📍 _loadSinglePage: No location selected - loading user's own posts via dedicated API");
+      Get.log(
+          "📍 _loadSinglePage: No location selected - loading user's own posts via dedicated API");
     }
 
     late Response response;
@@ -408,16 +413,19 @@ class HomeController extends GetxController {
         'search_by_title': '',
       };
 
-      response = await api.postData(
-        "api/getListing?page=${currentPage.value}",
-        requestData,
-        headers: {
-          'Accept': 'application/json',
-          'Access-Control-Allow-Origin': "*",
-          'Authorization': 'Bearer ${authCont.user?.accessToken ?? tokenMain ?? ""}'
-        },
-        showdialog: false,
-      ).timeout(Duration(seconds: 30));
+      response = await api
+          .postData(
+            "api/getListing?page=${currentPage.value}",
+            requestData,
+            headers: {
+              'Accept': 'application/json',
+              'Access-Control-Allow-Origin': "*",
+              'Authorization':
+                  'Bearer ${authCont.user?.accessToken ?? tokenMain ?? ""}'
+            },
+            showdialog: false,
+          )
+          .timeout(Duration(seconds: 30));
     } else {
       // Normal location-based API call
       Map<String, dynamic> requestData = {
@@ -433,21 +441,25 @@ class HomeController extends GetxController {
         'search_by_title': ''
       };
 
-      response = await api.postData(
-        "api/getListing?page=${currentPage.value}",
-        requestData,
-        headers: {
-          'Accept': 'application/json',
-          'Access-Control-Allow-Origin': "*",
-          'Authorization': 'Bearer ${authCont.user?.accessToken ?? tokenMain ?? ""}'
-        },
-        showdialog: false,
-      ).timeout(Duration(seconds: 30));
+      response = await api
+          .postData(
+            "api/getListing?page=${currentPage.value}",
+            requestData,
+            headers: {
+              'Accept': 'application/json',
+              'Access-Control-Allow-Origin': "*",
+              'Authorization':
+                  'Bearer ${authCont.user?.accessToken ?? tokenMain ?? ""}'
+            },
+            showdialog: false,
+          )
+          .timeout(Duration(seconds: 30));
     }
 
     if (response.statusCode == 200) {
       List<dynamic> dataListing = response.body['data']['data'] ?? [];
-      Get.log("🔄 DEBUG: Page ${currentPage.value} returned ${dataListing.length} items");
+      Get.log(
+          "🔄 DEBUG: Page ${currentPage.value} returned ${dataListing.length} items");
 
       if (dataListing.isNotEmpty) {
         List<ListingModel> newListings = [];
@@ -469,7 +481,8 @@ class HomeController extends GetxController {
           newListings = newListings.where((listing) {
             return listing.userId == currentUserId;
           }).toList();
-          Get.log("After user filtering (_loadSinglePage no location): ${newListings.length} items");
+          Get.log(
+              "After user filtering (_loadSinglePage no location): ${newListings.length} items");
         }
 
         // Apply business/personal account filtering
@@ -506,7 +519,9 @@ class HomeController extends GetxController {
         currentPage.value = 1;
         hasMore.value = true;
         await getCategories();
+        Get.log("🏠 homeData: About to call getListing()");
         await getListing();
+        Get.log("🏠 homeData: getListing() completed");
         // Load favorite sellers list silently to ensure it's available for checking
         await _loadFavoriteSellersSilently();
         saveLocationAndRadius();
@@ -521,38 +536,21 @@ class HomeController extends GetxController {
   }
 
   void onScroll() {
-    if (!scrollsController.hasClients) return;
-    if (isFetching.value) return;
-
-    double pixels = scrollsController.position.pixels;
-    double maxExtent = scrollsController.position.maxScrollExtent;
-    double triggerPoint = maxExtent * 0.8; // Trigger at 80% of scroll
-
-    if (pixels >= triggerPoint && maxExtent > 0) {
+    if (isFetching.value || !scrollsController.hasClients) return;
+    if (scrollsController.position.pixels >=
+        scrollsController.position.maxScrollExtent - 100) {
       if (!isPostLoading.value && hasMore.value) {
-        Get.log("📜 Loading more items...");
-        isFetching.value = true; // Prevent multiple triggers
-        getListing(isLoadMore: true).then((_) {
-          isFetching.value = false;
-        }).catchError((e) {
-          isFetching.value = false;
-        });
+        Get.log("onScroll: Triggering getListing, page=${currentPage.value}");
+        getListing(isLoadMore: true);
       }
     }
   }
 
   Future<void> getListing({bool isLoadMore = false}) async {
-    if (isPostLoading.value || isFetching.value) return;
-
+    Get.log("🚀 NEW getListing method called! isLoadMore: $isLoadMore");
+    if (isPostLoading.value) return;
     isPostLoading.value = true;
-    isFetching.value = true;
     update();
-
-    // For initial load, load multiple pages to ensure scrollability
-    if (!isLoadMore && currentPage.value == 1) {
-      await _loadInitialPages();
-      return;
-    }
 
     try {
       await getCoordinatesFromAddress();
@@ -568,11 +566,10 @@ class HomeController extends GetxController {
         return;
       }
 
-      Get.log("Fetching Page: ${currentPage.value}");
+      Get.log("🔄 NEW getListing: Fetching Page: ${currentPage.value}");
 
-      // Check if no location is selected
+      // Check if no location is selected (NEW CODE LOGIC)
       bool noLocationSelected = false;
-      // Check for default location or empty location
       if (address == null ||
           address == '' ||
           address == "4JF7+RM6, Av. Paseo, La Habana, Cuba" ||
@@ -580,30 +577,10 @@ class HomeController extends GetxController {
               lng == "-82.38597269330762" &&
               radius == 50.0)) {
         noLocationSelected = true;
-        Get.log(
-            "📍 No location selected - will filter to user's own posts only");
+        Get.log("📍 No location selected - will filter to user's own posts only");
       }
 
-      // Check authentication status before making API call
-      if (authCont.user?.accessToken == null ||
-          authCont.user?.accessToken == "") {
-        if (tokenMain == null || tokenMain == "") {
-          Get.log(
-              "⚠️ No authentication token - stopping API calls to prevent infinite loading");
-
-          // For no location + no auth: show empty list
-          if (noLocationSelected) {
-            listingModelList.clear();
-            hasMore.value = false;
-          }
-
-          isPostLoading.value = false;
-          update();
-          return;
-        }
-      }
-
-      // Make API call based on location selection
+      // API CALL - Different logic based on location selection
       Map<String, dynamic> requestData = {
         'user_id': authCont.user?.userId ?? "",
         'category_id': selectedCategory?.id ?? "",
@@ -617,99 +594,70 @@ class HomeController extends GetxController {
         'search_by_title': ''
       };
 
-      Response response = await api
-          .postData(
+      Response response = await api.postData(
         "api/getListing?page=${currentPage.value}",
         requestData,
         headers: {
           'Accept': 'application/json',
           'Access-Control-Allow-Origin': "*",
-          'Authorization':
-              'Bearer ${authCont.user?.accessToken ?? tokenMain ?? ""}'
+          'Authorization': 'Bearer ${authCont.user?.accessToken ?? tokenMain ?? ""}'
         },
         showdialog: false,
-      )
-          .timeout(Duration(seconds: 30), onTimeout: () {
-        Get.log("⏱️ API call timed out - returning empty response");
-        return Response(statusCode: 408, body: {'error': 'timeout'});
-      });
+      );
 
       if (response.statusCode == 200) {
         List<dynamic> dataListing = response.body['data']['data'] ?? [];
+        Get.log("HOME POST COUNT ${dataListing.length}");
 
         if (dataListing.isNotEmpty) {
-          List<ListingModel> newListings = [];
-
-          // Parse each item with error handling to prevent crashes
-          for (var element in dataListing) {
-            try {
-              if (element != null && element is Map<String, dynamic>) {
-                // Parse the item - ListingModel.fromJson handles null values gracefully
-                newListings.add(ListingModel.fromJson(element));
-              }
-            } catch (e, stackTrace) {
-              Get.log("Error parsing listing item: $e", isError: true);
-              Get.log("Stack trace: $stackTrace", isError: true);
-              Get.log("Problematic element: $element", isError: true);
-            }
-          }
-
-          // Log the results
-          if (noLocationSelected) {
-            Get.log(
-                "📍 NO LOCATION: API returned ${newListings.length} own posts");
-          } else {
-            Get.log(
-                "📍 LOCATION SELECTED: Showing ${newListings.length} posts from location: ${address}");
-          }
+          List<ListingModel> newListings =
+              dataListing.map((e) => ListingModel.fromJson(e)).toList();
 
           // Apply client-side category filtering for consistency with search
           newListings = applyCategoryFilter(newListings);
           Get.log("After category filtering: ${newListings.length} items");
 
-          // Apply user filtering when no location is selected
+          // Apply user filtering when no location is selected (NEW CODE LOGIC)
           if (noLocationSelected) {
             String currentUserId = authCont.user?.userId ?? "";
+            Get.log("🔍 DEBUGGING: Current user ID: '${currentUserId}'");
+            Get.log("🔍 DEBUGGING: Total listings before user filter: ${newListings.length}");
+
+            // Debug: Show user IDs of all listings
+            for (int i = 0; i < newListings.length && i < 5; i++) {
+              Get.log("🔍 DEBUGGING: Listing ${i + 1} user_id: '${newListings[i].userId}', title: '${newListings[i].title}'");
+            }
+
             newListings = newListings.where((listing) {
-              return listing.userId == currentUserId;
+              bool matches = listing.userId == currentUserId;
+              if (!matches) {
+                Get.log("🔍 DEBUGGING: Filtered out listing '${listing.title}' (user_id: '${listing.userId}' != '${currentUserId}')");
+              }
+              return matches;
             }).toList();
             Get.log("After user filtering (no location): ${newListings.length} items");
           }
 
-          // Apply business/personal account filtering
+          // Apply business/personal account filtering (was missing!)
           String currentAccountType = authCont.isBusinessAccount ? "1" : "0";
+          Get.log("🔍 DEBUGGING: Account type filter - isBusinessAccount: ${authCont.isBusinessAccount}, looking for businessStatus: '${currentAccountType}'");
+
+          for (int i = 0; i < newListings.length && i < 5; i++) {
+            Get.log("🔍 DEBUGGING: Listing ${i + 1} businessStatus: '${newListings[i].businessStatus}', title: '${newListings[i].title}'");
+          }
+
           newListings = newListings.where((listing) {
-            return listing.businessStatus == currentAccountType;
-          }).toList();
-          Get.log(
-              "After business/personal filtering (${authCont.isBusinessAccount ? 'Business' : 'Personal'}): ${newListings.length} items");
-
-          // Filter out duplicates before adding to list
-          Set<String> existingItemIds =
-              listingModelList.map((listing) => listing.itemId ?? '').toSet();
-
-          List<ListingModel> uniqueNewListings = newListings.where((listing) {
-            String itemId = listing.itemId ?? '';
-            // If itemId is empty/null, allow the item (don't filter out due to missing ID)
-            // Only filter out if we have a valid itemId that already exists
-            if (itemId.isEmpty) {
-              return true; // Allow items with no itemId
+            bool matches = listing.businessStatus == currentAccountType;
+            if (!matches) {
+              Get.log("🔍 DEBUGGING: Filtered out listing '${listing.title}' (businessStatus: '${listing.businessStatus}' != '${currentAccountType}')");
             }
-            return !existingItemIds.contains(itemId);
+            return matches;
           }).toList();
+          Get.log("After business/personal filtering (${authCont.isBusinessAccount ? 'Business' : 'Personal'}): ${newListings.length} items");
 
-          Get.log(
-              "📝 Filtered ${newListings.length - uniqueNewListings.length} duplicate items");
-          Get.log("📝 Adding ${uniqueNewListings.length} unique items");
+          listingModelList.addAll(newListings);
 
-          // Always shuffle new items before adding them to the list
-          // This ensures randomization on both initial load and scroll
-          uniqueNewListings.shuffle();
-          Get.log("📝 Shuffled ${uniqueNewListings.length} unique new items");
-
-          listingModelList.addAll(uniqueNewListings);
-
-          // Additional shuffle for entire list on first load
+          // Shuffle listings on first load
           if (currentPage.value == 1) {
             if (shouldShuffleOnLocationChange) {
               // Always shuffle when location changes
@@ -721,51 +669,22 @@ class HomeController extends GetxController {
             }
           }
 
-          // Only increment page if we actually added items
-          if (uniqueNewListings.isNotEmpty) {
-            currentPage.value++;
-            // Continue pagination if API returned data (even if less than 15)
-            // Only stop if API returns empty array
-            hasMore.value = dataListing.isNotEmpty;
-            Get.log(
-                "📝 SUCCESS: Added ${uniqueNewListings.length} items, page now ${currentPage.value}, API returned ${dataListing.length} items, hasMore=${hasMore.value}");
-          } else {
-            // If this is a load more request and no items were added, stop pagination
-            if (isLoadMore) {
-              hasMore.value = false;
-              Get.log(
-                  "📝 LOAD MORE: No unique items added - stopping pagination");
-            } else {
-              // Initial load - keep trying if API returned any data
-              hasMore.value = dataListing.isNotEmpty;
-              if (hasMore.value) {
-                currentPage.value++; // Increment to try next page
-              }
-              Get.log(
-                  "📝 INITIAL LOAD: No unique items, API returned ${dataListing.length} items, hasMore=${hasMore.value}, page=${currentPage.value}");
-            }
-          }
+          currentPage.value++;
+          hasMore.value = dataListing.length == 15;  // Simple pagination logic from old code
         } else {
           hasMore.value = false;
         }
         saveLocationAndRadius();
-      } else if (response.statusCode == 408) {
-        // Handle timeout
-        hasMore.value = false; // Stop further requests
       } else {
         Get.log("API error: ${response.statusCode}, ${response.body}",
             isError: true);
-
-        // For authentication errors, stop further requests to prevent loops
-        if (response.statusCode == 401) {
-          hasMore.value = false;
-        } else {}
+        print('Failed to fetch listings. Please try again.'.tr);
       }
-    } catch (e) {
-      //
+    } catch (e, stackTrace) {
+      Get.log("Error in getListing: $e\n$stackTrace", isError: true);
+      print('Something went wrong. Please try again.'.tr);
     } finally {
       isPostLoading.value = false;
-      isFetching.value = false;
       update();
     }
   }
@@ -1812,7 +1731,8 @@ class HomeController extends GetxController {
         );
       } catch (e) {
         print('❌ Error during text-only post update: $e');
-        print('Failed to update listing. Please check your connection and try again.');
+        print(
+            'Failed to update listing. Please check your connection and try again.');
         isEditingListing.value = false;
         update();
         return;
@@ -2236,7 +2156,8 @@ class HomeController extends GetxController {
               lng == "-82.38597269330762" &&
               radius == 50.0)) {
         noLocationSelected = true;
-        Get.log("📍 SEARCH: No location selected - will search only user's own posts");
+        Get.log(
+            "📍 SEARCH: No location selected - will search only user's own posts");
       }
 
       // Send appropriate category filters to backend
@@ -2351,7 +2272,8 @@ class HomeController extends GetxController {
             newListings = newListings.where((listing) {
               return listing.userId == currentUserId;
             }).toList();
-            Get.log("After user filtering (no location search): ${newListings.length} items");
+            Get.log(
+                "After user filtering (no location search): ${newListings.length} items");
           }
 
           // Apply business/personal account filtering
@@ -3199,7 +3121,9 @@ class HomeController extends GetxController {
                     {
                       selectedSubCategory = null,
                       selectedSubSubCategory = null,
-                      Get.back(),
+                      // Don't call Get.back() when in edit mode (isNavigate = false)
+                      // The Get.back() was causing the edit screen to close unexpectedly
+                      if (isNavigate) Get.back(),
                     }
                   else
                     {update()}
@@ -3300,11 +3224,15 @@ class HomeController extends GetxController {
     if (response.statusCode == 200) {
       subSubCategoriesModel = SubSubCategoriesModel.fromJson(response.body);
       isType = 2;
-      currentPage.value = 1;
-      hasMore.value = true;
-      listingModelList.clear();
-      currentSearchPage.value = 1;
-      listingModelSearchList.clear();
+
+      // Only clear listings and reset pagination when navigating (not during edit initialization)
+      if (isNavigate) {
+        currentPage.value = 1;
+        hasMore.value = true;
+        listingModelList.clear();
+        currentSearchPage.value = 1;
+        listingModelSearchList.clear();
+      }
       update();
 
       // Check if this is being called from search screen
@@ -3327,10 +3255,14 @@ class HomeController extends GetxController {
                             // Reset price filter when category changes in search screen
                             minPriceController.clear(),
                             maxPriceController.clear(),
-                            Get.back(),
+                            // Don't call Get.back() when in edit mode (isNavigate = false)
+                            if (isNavigate) Get.back(),
                             getListingSearch()
                           }
-                        : Get.back()
+                        : {
+                            // Don't call Get.back() when in edit mode (isNavigate = false)
+                            if (isNavigate) Get.back()
+                          }
                   }
                 else
                   {

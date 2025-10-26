@@ -64,7 +64,8 @@
       "MultiEdit(**)",
       "Bash(git rev-parse:*)",
       "Bash(sed:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(nc localhost 12345)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",

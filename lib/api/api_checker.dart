@@ -30,10 +30,10 @@ class ApiChecker {
     dynamic response = Response(
       body: responseBody,
       bodyString: respons.body.toString(),
-      request: Request(
+      request: respons.request != null ? Request(
           headers: respons.request!.headers,
           method: respons.request!.method,
-          url: respons.request!.url),
+          url: respons.request!.url) : null,
       headers: respons.headers,
       statusCode: respons.statusCode,
       statusText: respons.reasonPhrase,
