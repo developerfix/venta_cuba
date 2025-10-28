@@ -1636,22 +1636,25 @@ class ImageViewerPage extends StatefulWidget {
 }
 
 class _ImageViewerPageState extends State<ImageViewerPage>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   int currentPage = 0;
   double _dragOffset = 0.0;
   double _opacity = 1.0;
-  late AnimationController _animationController;
-  late Animation<double> _animation;
+  late AnimationController _slideAnimationController;
+  late AnimationController _scaleAnimationController;
+  late Animation<double> _slideAnimation;
+  late PageController _pageController;
 
-  // Track transformation controllers for each image
   late List<TransformationController> _transformationControllers;
+  bool _isDragging = false;
+  bool _isZooming = false;
+  int _lastPointerCount = 0;
 
   bool get _isCurrentImageZoomed {
     if (currentPage < _transformationControllers.length) {
       final Matrix4 matrix = _transformationControllers[currentPage].value;
-      final double scaleX = matrix.getMaxScaleOnAxis();
-      return scaleX >
-          1.01; // Small threshold to account for floating point precision
+      final double scale = matrix.getMaxScaleOnAxis();
+      return scale > 1.05;
     }
     return false;
   }
@@ -1659,169 +1662,291 @@ class _ImageViewerPageState extends State<ImageViewerPage>
   @override
   void initState() {
     super.initState();
-    _animationController =
-        AnimationController(vsync: this, duration: Duration(milliseconds: 200));
-    _animation = Tween<double>(begin: 0, end: 0).animate(_animationController)
+    _pageController = PageController();
+
+    _slideAnimationController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 250)
+    );
+
+    _scaleAnimationController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 200)
+    );
+
+    _slideAnimation = Tween<double>(begin: 0, end: 0)
+        .animate(CurvedAnimation(
+          parent: _slideAnimationController,
+          curve: Curves.easeOutCubic,
+        ))
       ..addListener(() {
         setState(() {
-          _dragOffset = _animation.value;
-          _opacity = 1.0 - (_dragOffset.abs() / 300).clamp(0, 0.7);
+          _dragOffset = _slideAnimation.value;
+          _opacity = 1.0 - (_dragOffset.abs() / 400).clamp(0.0, 0.8);
         });
       });
 
-    // Initialize transformation controllers for each image
     _transformationControllers = List.generate(
       widget.imageUrls.length,
       (index) => TransformationController(),
     );
+
+    for (int i = 0; i < _transformationControllers.length; i++) {
+      _transformationControllers[i].addListener(() {
+        if (mounted) {
+          setState(() {});
+        }
+      });
+    }
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
-    // Dispose transformation controllers
+    _slideAnimationController.dispose();
+    _scaleAnimationController.dispose();
+    _pageController.dispose();
     for (final controller in _transformationControllers) {
       controller.dispose();
     }
     super.dispose();
   }
 
-  void _onVerticalDragUpdate(DragUpdateDetails details) {
-    // Only allow vertical drag when image is not zoomed
-    if (!_isCurrentImageZoomed) {
+  void _handlePointerDown(PointerDownEvent event) {
+    _lastPointerCount++;
+    if (_lastPointerCount >= 2) {
+      _isZooming = true;
+      _isDragging = false;
+    }
+  }
+
+  void _handlePointerUp(PointerUpEvent event) {
+    _lastPointerCount--;
+    if (_lastPointerCount <= 0) {
+      _lastPointerCount = 0;
+      _isZooming = false;
+    }
+  }
+
+  void _handleVerticalDragStart(DragStartDetails details) {
+    if (!_isCurrentImageZoomed && !_isZooming && _lastPointerCount <= 1) {
+      _isDragging = true;
+      _slideAnimationController.stop();
+    }
+  }
+
+  void _handleVerticalDragUpdate(DragUpdateDetails details) {
+    if (_isDragging && !_isCurrentImageZoomed && !_isZooming) {
       setState(() {
         _dragOffset += details.delta.dy;
-        _opacity = 1.0 - (_dragOffset.abs() / 300).clamp(0, 0.7);
+        _opacity = 1.0 - (_dragOffset.abs() / 400).clamp(0.0, 0.8);
       });
     }
   }
 
-  void _onVerticalDragEnd(DragEndDetails details) {
-    // Only allow dismiss when image is not zoomed
-    if (!_isCurrentImageZoomed && _dragOffset.abs() > 120) {
-      Navigator.of(context).pop();
+  void _handleVerticalDragEnd(DragEndDetails details) {
+    if (!_isDragging) return;
+
+    _isDragging = false;
+
+    final velocity = details.velocity.pixelsPerSecond.dy;
+    final shouldDismiss = _dragOffset.abs() > 150 || velocity.abs() > 800;
+
+    if (shouldDismiss && !_isCurrentImageZoomed) {
+      final targetOffset = _dragOffset > 0 ? 600.0 : -600.0;
+      _slideAnimation = Tween<double>(begin: _dragOffset, end: targetOffset)
+          .animate(CurvedAnimation(
+            parent: _slideAnimationController,
+            curve: Curves.easeOutCubic,
+          ));
+
+      _slideAnimationController.forward().then((_) {
+        if (mounted) {
+          Navigator.of(context).pop();
+        }
+      });
     } else {
-      _animation = Tween<double>(begin: _dragOffset, end: 0)
-          .animate(_animationController);
-      _animationController.forward(from: 0);
+      _slideAnimation = Tween<double>(begin: _dragOffset, end: 0.0)
+          .animate(CurvedAnimation(
+            parent: _slideAnimationController,
+            curve: Curves.easeOutBack,
+          ));
+      _slideAnimationController.forward(from: 0);
     }
   }
 
-  void _handleDoubleTap(int index) {
-    final Matrix4 matrix = _transformationControllers[index].value;
+  void _handleDoubleTap() {
+    final controller = _transformationControllers[currentPage];
+    final Matrix4 matrix = controller.value;
     final double currentScale = matrix.getMaxScaleOnAxis();
 
-    if (currentScale <= 1.01) {
-      // Zoom in to 2x
-      _transformationControllers[index].value = Matrix4.identity()
-        ..scale(2.0, 2.0, 1.0);
+    Matrix4 targetMatrix;
+    if (currentScale <= 1.05) {
+      targetMatrix = Matrix4.identity()..scale(2.5);
     } else {
-      // Zoom out to normal
-      _transformationControllers[index].value = Matrix4.identity();
+      targetMatrix = Matrix4.identity();
     }
-    setState(() {});
+
+    Animation<Matrix4> animation = Matrix4Tween(
+      begin: matrix,
+      end: targetMatrix,
+    ).animate(CurvedAnimation(
+      parent: _scaleAnimationController,
+      curve: Curves.easeInOut,
+    ));
+
+    void listener() {
+      controller.value = animation.value;
+    }
+
+    animation.addListener(listener);
+    _scaleAnimationController.forward(from: 0).then((_) {
+      animation.removeListener(listener);
+    });
+  }
+
+  void _resetCurrentImageZoom() {
+    if (_isCurrentImageZoomed) {
+      final controller = _transformationControllers[currentPage];
+      Animation<Matrix4> animation = Matrix4Tween(
+        begin: controller.value,
+        end: Matrix4.identity(),
+      ).animate(CurvedAnimation(
+        parent: _scaleAnimationController,
+        curve: Curves.easeInOut,
+      ));
+
+      void listener() {
+        controller.value = animation.value;
+      }
+
+      animation.addListener(listener);
+      _scaleAnimationController.forward(from: 0).then((_) {
+        animation.removeListener(listener);
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Stack(
-        children: [
-          // PageView to display images with smart gesture detection
-          GestureDetector(
-            onVerticalDragUpdate: _onVerticalDragUpdate,
-            onVerticalDragEnd: _onVerticalDragEnd,
-            behavior: HitTestBehavior.deferToChild,
-            child: Opacity(
-              opacity: _opacity,
-              child: Transform.translate(
-                offset: Offset(0, _dragOffset),
-                child: PageView.builder(
-                  itemCount: widget.imageUrls.length,
-                  onPageChanged: (page) {
-                    setState(() {
-                      currentPage = page;
-                    });
-                  },
-                  itemBuilder: (context, index) {
-                    return GestureDetector(
-                        onDoubleTap: () => _handleDoubleTap(index),
+      backgroundColor: Colors.black,
+      body: Listener(
+        onPointerDown: _handlePointerDown,
+        onPointerUp: _handlePointerUp,
+        child: Stack(
+          children: [
+            GestureDetector(
+              onVerticalDragStart: _handleVerticalDragStart,
+              onVerticalDragUpdate: _handleVerticalDragUpdate,
+              onVerticalDragEnd: _handleVerticalDragEnd,
+              onTap: () => Navigator.of(context).pop(),
+              child: Container(
+                color: Colors.black.withOpacity(_opacity),
+                child: Transform.translate(
+                  offset: Offset(0, _dragOffset),
+                  child: PageView.builder(
+                    controller: _pageController,
+                    itemCount: widget.imageUrls.length,
+                    onPageChanged: (page) {
+                      _resetCurrentImageZoom();
+                      setState(() {
+                        currentPage = page;
+                      });
+                    },
+                    itemBuilder: (context, index) {
+                      return GestureDetector(
+                        onDoubleTap: _handleDoubleTap,
                         child: InteractiveViewer(
-                          transformationController:
-                              _transformationControllers[index],
-                          panEnabled: _isCurrentImageZoomed,
-                          scaleEnabled: true, // Always allow pinch zoom
-                          minScale: 0.3,
-                          maxScale: 8.0,
-                          child: CachedNetworkImage(
-                            imageUrl: widget.imageUrls[index],
-                            fit: BoxFit.contain,
-                            width: double.infinity,
-                            height: double.infinity,
-                            placeholder: (context, url) => Center(
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor:
-                                    AlwaysStoppedAnimation<Color>(Colors.white),
-                              ),
-                            ),
-                            errorWidget: (context, url, error) => Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.broken_image,
-                                    size: 64,
-                                    color: Colors.white54,
+                          transformationController: _transformationControllers[index],
+                          panEnabled: true,
+                          scaleEnabled: true,
+                          minScale: 0.5,
+                          maxScale: 5.0,
+                          clipBehavior: Clip.none,
+                          constrained: false,
+                          child: Container(
+                            width: MediaQuery.of(context).size.width,
+                            height: MediaQuery.of(context).size.height,
+                            child: Center(
+                              child: CachedNetworkImage(
+                                imageUrl: widget.imageUrls[index],
+                                fit: BoxFit.contain,
+                                placeholder: (context, url) => Center(
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                   ),
-                                  SizedBox(height: 16),
-                                  Text(
-                                    'Image not available',
-                                    style: TextStyle(color: Colors.white54),
+                                ),
+                                errorWidget: (context, url, error) => Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.broken_image,
+                                        size: 64,
+                                        color: Colors.white54,
+                                      ),
+                                      SizedBox(height: 16),
+                                      Text(
+                                        'Image not available',
+                                        style: TextStyle(color: Colors.white54),
+                                      ),
+                                    ],
                                   ),
-                                ],
+                                ),
                               ),
                             ),
                           ),
-                        ));
-                  },
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
-          ),
-          // Top bar with image index and close button
-          Positioned(
-            top: 40, // Adjust this padding as per your design
-            left: 20,
-            right: 20,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  icon: Icon(Icons.close,
-                      color: Theme.of(context).iconTheme.color, size: 28),
-                  onPressed: () {
-                    Navigator.pop(context); // Close the image viewer
-                  },
-                ),
-                // Image index (1/8)
-                Text(
-                  "${currentPage + 1}/${widget.imageUrls.length}",
-                  style: TextStyle(
-                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 10,
+              left: 20,
+              right: 20,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Container(
+                      padding: EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.5),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
                   ),
-                ),
-                SizedBox(
-                  width: 10,
-                )
-                // Close button (X)
-              ],
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      "${currentPage + 1} / ${widget.imageUrls.length}",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
