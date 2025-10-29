@@ -44,17 +44,17 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>$(PRODUCT_NAME) needs access to camera to upload posts, update profile picture, and send photos in chat.</string>
+	<string>This app needs access to camera to upload posts, update profile picture, and send photos in chat.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>$(PRODUCT_NAME) needs access to save photos to your library.</string>
+	<string>This app needs access to save photos to your library.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Need access location to nearby result showing.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>Need access location to nearby result showing.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>$(PRODUCT_NAME)Need access location to nearby result showing.</string>
+	<string>This app need access location to nearby result showing.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>$(PRODUCT_NAME) needs access to photos to upload posts, update profile picture, and send photos in chat.</string>
+	<string>This app needs access to photos to upload posts, update profile picture, and send photos in chat.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
