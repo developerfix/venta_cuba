@@ -201,16 +201,6 @@ class _VendorScreenState extends State<VendorScreen> {
                       ),
                       Container(
                         height: 58..h,
-                        decoration: BoxDecoration(
-                            color: Theme.of(context).brightness == Brightness.dark
-                                ? Colors.black
-                                : Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                                color: Theme.of(context).brightness == Brightness.dark
-                                    ? Colors.white
-                                    : Colors.black,
-                                width: 1)),
                         child: TextField(
                           controller: cont.businessNameCont,
                           inputFormatters: [
@@ -221,6 +211,11 @@ class _VendorScreenState extends State<VendorScreen> {
                           decoration: InputDecoration(
                             hintText: "i.e NEWTECH".tr,
                             border: InputBorder.none,
+                            filled: true,
+                            fillColor:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.black
+                                    : Colors.white,
                             contentPadding: EdgeInsets.symmetric(
                                 vertical: 20, horizontal: 20),
                           ),
@@ -393,8 +388,8 @@ class _VendorScreenState extends State<VendorScreen> {
                               color: Colors.transparent,
                               borderRadius: BorderRadius.circular(5),
                               border: Border.all(
-                                  color:
-                                      AppColors.k0xFFA9ABAC.withValues(alpha: .33))),
+                                  color: AppColors.k0xFFA9ABAC
+                                      .withValues(alpha: .33))),
                           child: Center(
                             child: DropdownButtonHideUnderline(
                               child: DropdownButton2<CustomProvinceNameList>(
@@ -547,8 +542,8 @@ class _VendorScreenState extends State<VendorScreen> {
                               color: Colors.transparent,
                               borderRadius: BorderRadius.circular(5),
                               border: Border.all(
-                                  color:
-                                      AppColors.k0xFFA9ABAC.withValues(alpha: .33))),
+                                  color: AppColors.k0xFFA9ABAC
+                                      .withValues(alpha: .33))),
                           child: Center(
                             child: DropdownButtonHideUnderline(
                               child: DropdownButton2<CustomCitiesList>(
