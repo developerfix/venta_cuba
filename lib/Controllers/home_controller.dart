@@ -166,6 +166,11 @@ class HomeController extends GetxController {
   RxBool shouldFetchData =
       false.obs; // Flag to determine if data should be fetched
 
+  // Define separate pagination variables for search
+  var currentSearchPage = 1.obs;
+  var hasMoreSearch = true.obs;
+  var isSearchLoading = false.obs;
+
   // Method to shuffle listings for new login sessions only
   Future<void> shuffleListingsOnLogin() async {
     try {
@@ -655,7 +660,26 @@ class HomeController extends GetxController {
           }).toList();
           Get.log("After business/personal filtering (${authCont.isBusinessAccount ? 'Business' : 'Personal'}): ${newListings.length} items");
 
-          listingModelList.addAll(newListings);
+          // Apply duplicate filtering to prevent duplicate items when loading more pages
+          Set<String> existingIds = <String>{};
+          for (var listing in listingModelList) {
+            String id = listing.id?.toString() ?? '';
+            if (id.isNotEmpty) {
+              existingIds.add(id);
+            }
+          }
+
+          // Filter out duplicates
+          List<ListingModel> uniqueNewListings = [];
+          for (var listing in newListings) {
+            String id = listing.id?.toString() ?? '';
+            if (id.isNotEmpty && !existingIds.contains(id)) {
+              uniqueNewListings.add(listing);
+            }
+          }
+          Get.log("After duplicate filtering (home): ${uniqueNewListings.length} items (removed ${newListings.length - uniqueNewListings.length} duplicates)");
+
+          listingModelList.addAll(uniqueNewListings);
 
           // Shuffle listings on first load
           if (currentPage.value == 1) {
@@ -1864,6 +1888,7 @@ class HomeController extends GetxController {
     }
   }
 
+
   // Future getListing() async {
   //   isPostLoading.value = true;
   //   update();
@@ -2115,11 +2140,6 @@ class HomeController extends GetxController {
     }
   }
 
-// Define separate pagination variables for search
-  var currentSearchPage = 1.obs;
-  var hasMoreSearch = true.obs;
-  var isSearchLoading = false.obs;
-
   Future<void> getListingSearch({bool isLoadMore = false}) async {
     if (isSearchLoading.value) return;
 
@@ -2266,49 +2286,9 @@ class HomeController extends GetxController {
           newListings = applyCategoryFilter(newListings);
           Get.log("After category filtering: ${newListings.length} items");
 
-          // Apply user filtering when no location is selected
-          if (noLocationSelected) {
-            String currentUserId = authCont.user?.userId ?? "";
-            newListings = newListings.where((listing) {
-              return listing.userId == currentUserId;
-            }).toList();
-            Get.log(
-                "After user filtering (no location search): ${newListings.length} items");
-          }
-
-          // Apply business/personal account filtering
-          String currentAccountType = authCont.isBusinessAccount ? "1" : "0";
-          newListings = newListings.where((listing) {
-            return listing.businessStatus == currentAccountType;
-          }).toList();
-          Get.log(
-              "After business/personal filtering (${authCont.isBusinessAccount ? 'Business' : 'Personal'}): ${newListings.length} items");
-
-          // Filter out duplicates for search results
-          Set<String> existingSearchItemIds = listingModelSearchList
-              .map((listing) => listing.itemId ?? '')
-              .toSet();
-
-          List<ListingModel> uniqueSearchListings =
-              newListings.where((listing) {
-            String itemId = listing.itemId ?? '';
-            // If itemId is empty/null, allow the item (don't filter out due to missing ID)
-            // Only filter out if we have a valid itemId that already exists
-            if (itemId.isEmpty) {
-              return true; // Allow items with no itemId
-            }
-            return !existingSearchItemIds.contains(itemId);
-          }).toList();
-
-          Get.log(
-              "📝 Search: Filtered ${newListings.length - uniqueSearchListings.length} duplicate items");
-          Get.log(
-              "📝 Search: Adding ${uniqueSearchListings.length} unique items");
-
-          listingModelSearchList.addAll(uniqueSearchListings);
+          listingModelSearchList.addAll(newListings);
           currentSearchPage.value++; // Increment page correctly
-          hasMoreSearch.value = dataListing
-              .isNotEmpty; // More pages available if API returned data
+          hasMoreSearch.value = dataListing.length == 15; // More pages available if exactly 15 items returned
           listingModelList = listingModelSearchList;
 
           Get.log("=== PAGINATION UPDATE ===");
@@ -2489,38 +2469,6 @@ class HomeController extends GetxController {
       return true;
     }).toList();
   }
-
-  // Future getListingSearch({bool isLoadingShow = true}) async {
-  //   Response response = await api.postWithForm(
-  //       "api/getListing",
-  //       {
-  //         'user_id': authCont.user?.userId ?? "",
-  //         'category_id': selectedCategory?.id ?? "",
-  //         'sub_category_id': selectedSubCategory?.id ?? "",
-  //         'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
-  //         'min_price': minPriceController.text.trim(),
-  //         'max_price': maxPriceController.text.trim(),
-  //         'search_by_title': searchController.text.trim(),
-  //         // 'latitude': searchLatitude,
-  //         // 'longitude': searchLongitude,
-  //         // 'radius': "$radius",
-  //       },
-  //       showdialog: isLoadingShow);
-  //   if (response.statusCode == 200) {
-  //     List<dynamic> dataListing = [];
-  //     dataListing.addAll(response.body['data']['data']);
-  //     listingModelSearchList.clear();
-  //     String isBusinessType = isBusinessAccount ? "1" : "0";
-  //     dataListing.forEach((element) {
-  //       //    if (element["business_status"].toString() == isBusinessType) {
-  //       listingModelSearchList.add(ListingModel.fromJson(element));
-  //       //  }
-  //     });
-  //     update();
-  //   } else {
-  //     errorAlertToast('Something went wrong\nPlease try again!'.tr);
-  //   }
-  // }
 
   Future getListingDetails(String listingId, {bool showDialog = true}) async {
     try {
