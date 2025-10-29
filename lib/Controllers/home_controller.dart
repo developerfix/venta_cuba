@@ -2286,7 +2286,22 @@ class HomeController extends GetxController {
           newListings = applyCategoryFilter(newListings);
           Get.log("After category filtering: ${newListings.length} items");
 
-          listingModelSearchList.addAll(newListings);
+          // Filter duplicates based on titles
+          Set<String> existingTitles = listingModelSearchList
+              .where((item) => item.title != null && item.title!.isNotEmpty)
+              .map((item) => item.title!.toLowerCase().trim())
+              .toSet();
+
+          List<ListingModel> uniqueItems = newListings.where((item) {
+            if (item.title == null || item.title!.isEmpty) {
+              return true; // Allow items with no title
+            }
+            String itemTitle = item.title!.toLowerCase().trim();
+            return !existingTitles.contains(itemTitle);
+          }).toList();
+
+          Get.log("Filtered ${newListings.length - uniqueItems.length} duplicate titles");
+          listingModelSearchList.addAll(uniqueItems);
           currentSearchPage.value++; // Increment page correctly
           hasMoreSearch.value = dataListing.length == 15; // More pages available if exactly 15 items returned
           listingModelList = listingModelSearchList;
