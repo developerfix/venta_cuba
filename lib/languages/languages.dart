@@ -999,8 +999,6 @@ It is not allowed to use our member-to-member communication resources to send sp
               'Image upload not authorized. Please check your permissions.',
           'Permission denied for image upload.':
               'Permission denied for image upload.',
-          'Camera permission is required to take photos.':
-              'Camera permission is required to take photos.',
           'Photo library permission is required to select images.':
               'Photo library permission is required to select images.',
           'Failed to open camera': 'Failed to open camera',
@@ -2079,8 +2077,6 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
               'Carga de imagen no autorizada. Verifica tus permisos.',
           'Permission denied for image upload.':
               'Permiso denegado para subir imagen.',
-          'Camera permission is required to take photos.':
-              'Se requiere permiso de cámara para tomar fotos.',
           'Photo library permission is required to select images.':
               'Se requiere permiso de galería para seleccionar imágenes.',
           'Failed to open camera': 'Error al abrir cámara',
