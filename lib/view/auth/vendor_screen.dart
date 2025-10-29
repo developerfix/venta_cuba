@@ -213,9 +213,9 @@ class _VendorScreenState extends State<VendorScreen> {
                             border: InputBorder.none,
                             filled: true,
                             fillColor:
-                                Theme.of(context).brightness == Brightness.dark
-                                    ? Colors.black
-                                    : Colors.white,
+                                Theme.of(context).brightness == Brightness.light
+                                    ? Colors.white
+                                    : null,
                             contentPadding: EdgeInsets.symmetric(
                                 vertical: 20, horizontal: 20),
                           ),
