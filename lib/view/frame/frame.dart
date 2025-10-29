@@ -188,7 +188,7 @@ class _FrameScreenState extends State<FrameScreen> {
                             decoration: BoxDecoration(
                               image: DecorationImage(
                                 image: imageProvider,
-                                fit: BoxFit.cover,
+                                fit: BoxFit.fitWidth,
                               ),
                             ),
                           ),
@@ -1595,4 +1595,3 @@ class _FrameScreenState extends State<FrameScreen> {
     );
   }
 }
-
