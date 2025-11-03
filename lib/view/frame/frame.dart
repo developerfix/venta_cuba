@@ -1663,15 +1663,13 @@ class _FullScreenCarouselState extends State<FullScreenCarousel> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          FullScreenGallery(
-            images: widget.images,
-            initialIndex: widget.initialIndex,
-          ),
-        ],
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: FullScreenGallery(
+          images: widget.images,
+          initialIndex: widget.initialIndex,
+        ),
       ),
     );
   }
@@ -1698,53 +1696,10 @@ class _FullScreenGalleryState extends State<FullScreenGallery> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    return Column(
       children: [
-        GestureDetector(
-          onVerticalDragUpdate: (details) {
-            setState(() {
-              offset += details.delta.dy;
-            });
-          },
-          onVerticalDragEnd: (details) {
-            if (offset > 120) {
-              Navigator.pop(context);
-            } else {
-              setState(() => offset = 0);
-            }
-          },
-          child: Transform.translate(
-            offset: Offset(0, offset),
-            child: PhotoViewGestureDetectorScope(
-              axis: Axis.horizontal,
-              child: CarouselSlider(
-                options: CarouselOptions(
-                  viewportFraction: 1,
-                  initialPage: widget.initialIndex,
-                  height: MediaQuery.of(context).size.height,
-                  onPageChanged: (index, reason) {
-                    setState(() {
-                      currentIndex = index;
-                    });
-                  },
-                ),
-                items: widget.images.map((url) {
-                  return PhotoView(
-                    minScale: PhotoViewComputedScale.contained,
-                    maxScale: PhotoViewComputedScale.covered * 3,
-                    imageProvider: CachedNetworkImageProvider(url),
-                  );
-                }).toList(),
-              ),
-            ),
-          ),
-        ),
-
-        /// --- ✅ numbering (top center) ---
-        Positioned(
-          top: 40,
-          left: 0,
-          right: 0,
+        SizedBox(
+          height: 40,
           child: Text(
             "${currentIndex + 1} / ${widget.images.length}",
             textAlign: TextAlign.center,
@@ -1755,12 +1710,49 @@ class _FullScreenGalleryState extends State<FullScreenGallery> {
             ),
           ),
         ),
-
-        /// --- ✅ dots (bottom center) ---
-        Positioned(
-          bottom: 30,
-          left: 0,
-          right: 0,
+        Expanded(
+          child: GestureDetector(
+            onVerticalDragUpdate: (details) {
+              setState(() {
+                offset += details.delta.dy;
+              });
+            },
+            onVerticalDragEnd: (details) {
+              if (offset > 120) {
+                Navigator.pop(context);
+              } else {
+                setState(() => offset = 0);
+              }
+            },
+            child: Transform.translate(
+              offset: Offset(0, offset),
+              child: PhotoViewGestureDetectorScope(
+                axis: Axis.horizontal,
+                child: CarouselSlider(
+                  options: CarouselOptions(
+                    viewportFraction: 1,
+                    initialPage: widget.initialIndex,
+                    height: MediaQuery.of(context).size.height,
+                    onPageChanged: (index, reason) {
+                      setState(() {
+                        currentIndex = index;
+                      });
+                    },
+                  ),
+                  items: widget.images.map((url) {
+                    return PhotoView(
+                      minScale: PhotoViewComputedScale.contained,
+                      maxScale: PhotoViewComputedScale.covered * 3,
+                      imageProvider: CachedNetworkImageProvider(url),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+          ),
+        ),
+        SizedBox(
+          height: 40,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(
