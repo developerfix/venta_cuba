@@ -386,7 +386,8 @@ class HomeController extends GetxController {
 
   // Load a single page (helper method)
   Future<void> _loadSinglePage() async {
-    Get.log("🔄 DEBUG: _loadSinglePage called! Loading single page ${currentPage.value}");
+    Get.log(
+        "🔄 DEBUG: _loadSinglePage called! Loading single page ${currentPage.value}");
 
     // Check if no location is selected
     bool noLocationSelected = false;
@@ -582,7 +583,8 @@ class HomeController extends GetxController {
               lng == "-82.38597269330762" &&
               radius == 50.0)) {
         noLocationSelected = true;
-        Get.log("📍 No location selected - will filter to user's own posts only");
+        Get.log(
+            "📍 No location selected - will filter to user's own posts only");
       }
 
       // API CALL - Different logic based on location selection
@@ -605,7 +607,8 @@ class HomeController extends GetxController {
         headers: {
           'Accept': 'application/json',
           'Access-Control-Allow-Origin': "*",
-          'Authorization': 'Bearer ${authCont.user?.accessToken ?? tokenMain ?? ""}'
+          'Authorization':
+              'Bearer ${authCont.user?.accessToken ?? tokenMain ?? ""}'
         },
         showdialog: false,
       );
@@ -626,39 +629,47 @@ class HomeController extends GetxController {
           if (noLocationSelected) {
             String currentUserId = authCont.user?.userId ?? "";
             Get.log("🔍 DEBUGGING: Current user ID: '${currentUserId}'");
-            Get.log("🔍 DEBUGGING: Total listings before user filter: ${newListings.length}");
+            Get.log(
+                "🔍 DEBUGGING: Total listings before user filter: ${newListings.length}");
 
             // Debug: Show user IDs of all listings
             for (int i = 0; i < newListings.length && i < 5; i++) {
-              Get.log("🔍 DEBUGGING: Listing ${i + 1} user_id: '${newListings[i].userId}', title: '${newListings[i].title}'");
+              Get.log(
+                  "🔍 DEBUGGING: Listing ${i + 1} user_id: '${newListings[i].userId}', title: '${newListings[i].title}'");
             }
 
             newListings = newListings.where((listing) {
               bool matches = listing.userId == currentUserId;
               if (!matches) {
-                Get.log("🔍 DEBUGGING: Filtered out listing '${listing.title}' (user_id: '${listing.userId}' != '${currentUserId}')");
+                Get.log(
+                    "🔍 DEBUGGING: Filtered out listing '${listing.title}' (user_id: '${listing.userId}' != '${currentUserId}')");
               }
               return matches;
             }).toList();
-            Get.log("After user filtering (no location): ${newListings.length} items");
+            Get.log(
+                "After user filtering (no location): ${newListings.length} items");
           }
 
           // Apply business/personal account filtering (was missing!)
           String currentAccountType = authCont.isBusinessAccount ? "1" : "0";
-          Get.log("🔍 DEBUGGING: Account type filter - isBusinessAccount: ${authCont.isBusinessAccount}, looking for businessStatus: '${currentAccountType}'");
+          Get.log(
+              "🔍 DEBUGGING: Account type filter - isBusinessAccount: ${authCont.isBusinessAccount}, looking for businessStatus: '${currentAccountType}'");
 
           for (int i = 0; i < newListings.length && i < 5; i++) {
-            Get.log("🔍 DEBUGGING: Listing ${i + 1} businessStatus: '${newListings[i].businessStatus}', title: '${newListings[i].title}'");
+            Get.log(
+                "🔍 DEBUGGING: Listing ${i + 1} businessStatus: '${newListings[i].businessStatus}', title: '${newListings[i].title}'");
           }
 
           newListings = newListings.where((listing) {
             bool matches = listing.businessStatus == currentAccountType;
             if (!matches) {
-              Get.log("🔍 DEBUGGING: Filtered out listing '${listing.title}' (businessStatus: '${listing.businessStatus}' != '${currentAccountType}')");
+              Get.log(
+                  "🔍 DEBUGGING: Filtered out listing '${listing.title}' (businessStatus: '${listing.businessStatus}' != '${currentAccountType}')");
             }
             return matches;
           }).toList();
-          Get.log("After business/personal filtering (${authCont.isBusinessAccount ? 'Business' : 'Personal'}): ${newListings.length} items");
+          Get.log(
+              "After business/personal filtering (${authCont.isBusinessAccount ? 'Business' : 'Personal'}): ${newListings.length} items");
 
           // Apply duplicate filtering to prevent duplicate items when loading more pages
           Set<String> existingIds = <String>{};
@@ -677,7 +688,8 @@ class HomeController extends GetxController {
               uniqueNewListings.add(listing);
             }
           }
-          Get.log("After duplicate filtering (home): ${uniqueNewListings.length} items (removed ${newListings.length - uniqueNewListings.length} duplicates)");
+          Get.log(
+              "After duplicate filtering (home): ${uniqueNewListings.length} items (removed ${newListings.length - uniqueNewListings.length} duplicates)");
 
           listingModelList.addAll(uniqueNewListings);
 
@@ -694,7 +706,8 @@ class HomeController extends GetxController {
           }
 
           currentPage.value++;
-          hasMore.value = dataListing.length == 15;  // Simple pagination logic from old code
+          hasMore.value =
+              dataListing.length == 15; // Simple pagination logic from old code
         } else {
           hasMore.value = false;
         }
@@ -1888,7 +1901,6 @@ class HomeController extends GetxController {
     }
   }
 
-
   // Future getListing() async {
   //   isPostLoading.value = true;
   //   update();
@@ -2300,10 +2312,12 @@ class HomeController extends GetxController {
             return !existingTitles.contains(itemTitle);
           }).toList();
 
-          Get.log("Filtered ${newListings.length - uniqueItems.length} duplicate titles");
+          Get.log(
+              "Filtered ${newListings.length - uniqueItems.length} duplicate titles");
           listingModelSearchList.addAll(uniqueItems);
           currentSearchPage.value++; // Increment page correctly
-          hasMoreSearch.value = dataListing.length == 15; // More pages available if exactly 15 items returned
+          hasMoreSearch.value = dataListing.length ==
+              15; // More pages available if exactly 15 items returned
           listingModelList = listingModelSearchList;
 
           Get.log("=== PAGINATION UPDATE ===");

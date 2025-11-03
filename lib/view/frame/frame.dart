@@ -2,14 +2,15 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 
-import 'package:insta_image_viewer/insta_image_viewer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as map;
 
 import 'package:lottie/lottie.dart';
+import 'package:photo_view/photo_view.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:venta_cuba/view/Chat/custom_text.dart';
 import 'package:venta_cuba/view/Navigation%20bar/post.dart';
@@ -121,8 +122,15 @@ class _FrameScreenState extends State<FrameScreen> {
 
   late map.GoogleMapController mapController;
   bool _isMapLoading = true;
-
+  int _currentImageIndex = 0;
+  PageController _pageController = PageController();
   // San Francisco Coordinates
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   void _onMapCreated(map.GoogleMapController controller) {
     try {
@@ -174,35 +182,68 @@ class _FrameScreenState extends State<FrameScreen> {
                 SingleChildScrollView(
                   child: Column(
                     children: [
-                      InstaImageViewer(
-                        child: CachedNetworkImage(
-                          height: 400..h,
-                          width: MediaQuery.of(context).size.width,
-                          imageUrl: cont.listingModel!.gallery != null &&
-                                  cont.listingModel!.gallery!.isNotEmpty
-                              ? "${cont.listingModel?.gallery?.first}"
-                              : "",
-                          imageBuilder: (context, imageProvider) => Container(
-                            height: 400..h,
-                            width: MediaQuery.of(context).size.width,
-                            decoration: BoxDecoration(
-                              image: DecorationImage(
-                                image: imageProvider,
-                                fit: BoxFit.fitWidth,
-                              ),
+                      Container(
+                        height: 400.h,
+                        width: MediaQuery.of(context).size.width,
+                        child: Stack(
+                          children: [
+                            // Image Carousel with PageView
+                            PageView.builder(
+                              itemCount:
+                                  cont.listingModel!.gallery?.length ?? 0,
+                              onPageChanged: (index) {
+                                setState(() {
+                                  _currentImageIndex = index;
+                                });
+                              },
+                              itemBuilder: (context, index) {
+                                return GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => FullScreenCarousel(
+                                          images: cont.listingModel!.gallery!,
+                                          initialIndex: index,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: Hero(
+                                    tag: cont.listingModel!.gallery![index],
+                                    child: Image.network(
+                                      cont.listingModel!.gallery![index],
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
-                          ),
-                          placeholder: (context, url) => SizedBox(
-                            height: 400..h,
-                            width: MediaQuery.of(context).size.width,
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
+
+                            // Image Counter Badge - Bottom Right
+                            if (cont.listingModel!.gallery != null &&
+                                cont.listingModel!.gallery!.length > 1)
+                              Positioned(
+                                bottom: 20,
+                                right: 20,
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.6),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    '${_currentImageIndex + 1}/${cont.listingModel!.gallery!.length}',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                          errorWidget: (context, url, error) =>
-                              Center(child: Text("No Image".tr)),
+                          ],
                         ),
                       ),
                       Padding(
@@ -1592,6 +1633,151 @@ class _FrameScreenState extends State<FrameScreen> {
           );
         },
       ),
+    );
+  }
+}
+
+class FullScreenCarousel extends StatefulWidget {
+  final List<String> images;
+  final int initialIndex;
+
+  const FullScreenCarousel({
+    required this.images,
+    required this.initialIndex,
+  });
+
+  @override
+  _FullScreenCarouselState createState() => _FullScreenCarouselState();
+}
+
+class _FullScreenCarouselState extends State<FullScreenCarousel> {
+  late PageController pageController;
+  late int currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    currentIndex = widget.initialIndex;
+    pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          FullScreenGallery(
+            images: widget.images,
+            initialIndex: widget.initialIndex,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class FullScreenGallery extends StatefulWidget {
+  final List<String> images;
+  final int initialIndex;
+  const FullScreenGallery(
+      {required this.images, this.initialIndex = 0, super.key});
+
+  @override
+  State<FullScreenGallery> createState() => _FullScreenGalleryState();
+}
+
+class _FullScreenGalleryState extends State<FullScreenGallery> {
+  double offset = 0;
+  late int currentIndex;
+  @override
+  void initState() {
+    super.initState();
+    currentIndex = widget.initialIndex; // Initialize with the passed index
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        GestureDetector(
+          onVerticalDragUpdate: (details) {
+            setState(() {
+              offset += details.delta.dy;
+            });
+          },
+          onVerticalDragEnd: (details) {
+            if (offset > 120) {
+              Navigator.pop(context);
+            } else {
+              setState(() => offset = 0);
+            }
+          },
+          child: Transform.translate(
+            offset: Offset(0, offset),
+            child: PhotoViewGestureDetectorScope(
+              axis: Axis.horizontal,
+              child: CarouselSlider(
+                options: CarouselOptions(
+                  viewportFraction: 1,
+                  initialPage: widget.initialIndex,
+                  height: MediaQuery.of(context).size.height,
+                  onPageChanged: (index, reason) {
+                    setState(() {
+                      currentIndex = index;
+                    });
+                  },
+                ),
+                items: widget.images.map((url) {
+                  return PhotoView(
+                    minScale: PhotoViewComputedScale.contained,
+                    maxScale: PhotoViewComputedScale.covered * 3,
+                    imageProvider: CachedNetworkImageProvider(url),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ),
+
+        /// --- ✅ numbering (top center) ---
+        Positioned(
+          top: 40,
+          left: 0,
+          right: 0,
+          child: Text(
+            "${currentIndex + 1} / ${widget.images.length}",
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+
+        /// --- ✅ dots (bottom center) ---
+        Positioned(
+          bottom: 30,
+          left: 0,
+          right: 0,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              widget.images.length,
+              (index) => Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                width: currentIndex == index ? 10 : 7,
+                height: currentIndex == index ? 10 : 7,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: currentIndex == index ? Colors.white : Colors.white54,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

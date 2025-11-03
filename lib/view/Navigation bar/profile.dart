@@ -37,7 +37,6 @@ class _ProfileState extends State<Profile> {
   final locationCont = Get.put(LocationController());
   final themeController = Get.put(ThemeController());
 
-
   List<Widget> _buildStarRating(double rating) {
     List<Widget> stars = [];
     for (int i = 0; i < 5; i++) {
@@ -416,7 +415,8 @@ class _ProfileState extends State<Profile> {
                                     child: SvgPicture.asset(
                                       'assets/icons/reload.svg',
                                       colorFilter: ColorFilter.mode(
-                                        Theme.of(context).iconTheme.color ?? Colors.grey,
+                                        Theme.of(context).iconTheme.color ??
+                                            Colors.grey,
                                         BlendMode.srcIn,
                                       ),
                                     )),
@@ -502,7 +502,8 @@ class _ProfileState extends State<Profile> {
                               child: SvgPicture.asset(
                                 'assets/icons/person.svg',
                                 colorFilter: ColorFilter.mode(
-                                  Theme.of(context).iconTheme.color ?? Colors.grey,
+                                  Theme.of(context).iconTheme.color ??
+                                      Colors.grey,
                                   BlendMode.srcIn,
                                 ),
                               ),
@@ -606,7 +607,8 @@ class _ProfileState extends State<Profile> {
                                 child: SvgPicture.asset(
                                   'assets/icons/heartSimple.svg',
                                   colorFilter: ColorFilter.mode(
-                                    Theme.of(context).iconTheme.color ?? Colors.grey,
+                                    Theme.of(context).iconTheme.color ??
+                                        Colors.grey,
                                     BlendMode.srcIn,
                                   ),
                                 ),
@@ -680,9 +682,10 @@ class _ProfileState extends State<Profile> {
                       height: 15..h,
                     ),
                     GestureDetector(
-                        onTap: () {
-                          homeCont.promoCodesAndPackage();
-                        },
+                        onTap: null,
+                        // onTap: () {
+                        //   homeCont.promoCodesAndPackage();
+                        // },
                         child: ProfileList(text: 'Promotional Codes'.tr)),
                     SizedBox(
                       height: 35..h,
