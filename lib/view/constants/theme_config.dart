@@ -53,7 +53,7 @@ class ThemeConfig {
       ),
 
       // Premium Card Theme with advanced shadows
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: Colors.white,
         elevation: 8,
         shadowColor: Colors.black.withValues(alpha:0.08),
@@ -143,7 +143,7 @@ class ThemeConfig {
       ),
 
       // Premium Dialog Theme
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: const Color(0xFFFFFFFF),
         elevation: 24,
         shadowColor: Colors.black.withValues(alpha:0.2),
@@ -217,7 +217,7 @@ class ThemeConfig {
       ),
 
       // Premium Dark Card Theme
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: const Color(0xFF2C2C2C),
         elevation: 12,
         shadowColor: Colors.black.withValues(alpha:0.3),
@@ -282,7 +282,7 @@ class ThemeConfig {
       ),
 
       // Dialog Theme
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: const Color(0xFF2C2C2C),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),

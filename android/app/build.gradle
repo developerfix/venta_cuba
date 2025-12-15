@@ -23,7 +23,7 @@ def flutterVersionName = localProperties.getProperty('flutter.versionName') ?: '
 
 android {
     namespace "com.ventacuba.highapp.venta_cuba"
-    compileSdkVersion 35
+    compileSdkVersion 36
     ndkVersion "29.0.13113456"
 
     compileOptions {
