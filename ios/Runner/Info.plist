@@ -47,12 +47,6 @@
 	<string>This app needs access to camera to upload posts, update profile picture, and send photos in chat.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>This app needs access to save photos to your library.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Need access location to nearby result showing.</string>
-	<key>NSLocationAlwaysUsageDescription</key>
-	<string>Need access location to nearby result showing.</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app need access location to nearby result showing.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app needs access to photos to upload posts, update profile picture, and send photos in chat.</string>
 	<key>NSAppTransportSecurity</key>

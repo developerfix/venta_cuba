@@ -22,7 +22,6 @@ import 'package:venta_cuba/view/Navigation%20bar/navigation_bar.dart';
 import 'package:venta_cuba/view/constants/Colors.dart';
 import 'package:venta_cuba/view/privacy_policy/privacy_policy_screen.dart';
 import '../../Controllers/auth_controller.dart';
-import '../../Controllers/location_controller.dart';
 import '../../Utils/funcations.dart';
 import '../../cities_list/cites_list.dart';
 import '../../util/my_button.dart';
@@ -192,7 +191,6 @@ class Post extends StatefulWidget {
 class _PostState extends State<Post> with SingleTickerProviderStateMixin {
   final homeCont = Get.find<HomeController>();
   final authCont = Get.put(AuthController());
-  final locationCont = Get.find<LocationController>();
   TextAlign _textAlignment = TextAlign.left;
   bool _isBold = false;
   bool _isItalic = false;
@@ -556,8 +554,6 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
       }
       homeCont.selectedCurrency = homeCont.listingModel?.currency ?? "CUP";
       homeCont.descriptionCont.text = homeCont.listingModel?.description ?? "";
-      locationCont.locationEditingController.value.text =
-          homeCont.listingModel?.address ?? "";
       homeCont.listingModel?.tag?.forEach((element) {
         homeCont.tags.add(element);
       });
@@ -1729,7 +1725,8 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           ? TextDecoration.underline
                                           : TextDecoration.none,
                                     ),
-                                    maxLines: 5,
+                                    minLines: 5,
+                                    maxLines: null,
                                     inputFormatters: [
                                       CapitalizeFirstLetterFormatter(),
                                     ],
@@ -2670,7 +2667,6 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Container(
-                                      height: 58..h,
                                       decoration: BoxDecoration(
                                           color: Theme.of(context).brightness ==
                                                   Brightness.dark
@@ -2687,6 +2683,8 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                               width: 1)),
                                       child: TextField(
                                         controller: cont.websiteController,
+                                        minLines: 1,
+                                        maxLines: 3,
                                         decoration: InputDecoration(
                                           hintText: "Website (Optional)".tr,
                                           filled: true,
@@ -2698,7 +2696,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           focusedErrorBorder: InputBorder.none,
                                           disabledBorder: InputBorder.none,
                                           contentPadding: EdgeInsets.symmetric(
-                                              vertical: 20, horizontal: 20),
+                                              vertical: 16, horizontal: 20),
                                         ),
                                         cursorColor: Theme.of(context)
                                             .textTheme
@@ -2710,7 +2708,6 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                       height: 5..h,
                                     ),
                                     Container(
-                                      height: 58..h,
                                       decoration: BoxDecoration(
                                           color: Theme.of(context).brightness ==
                                                   Brightness.dark
@@ -2727,6 +2724,8 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                               width: 1)),
                                       child: TextField(
                                         controller: cont.phoneController,
+                                        minLines: 1,
+                                        maxLines: 3,
                                         decoration: InputDecoration(
                                           hintText:
                                               "Phone number (Optional)".tr,
@@ -2739,7 +2738,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           focusedErrorBorder: InputBorder.none,
                                           disabledBorder: InputBorder.none,
                                           contentPadding: EdgeInsets.symmetric(
-                                              vertical: 20, horizontal: 20),
+                                              vertical: 16, horizontal: 20),
                                         ),
                                         cursorColor: Theme.of(context)
                                             .textTheme
@@ -2751,7 +2750,6 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                       height: 5..h,
                                     ),
                                     Container(
-                                      height: 58..h,
                                       decoration: BoxDecoration(
                                           color: Theme.of(context).brightness ==
                                                   Brightness.dark
@@ -2768,6 +2766,8 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                               width: 1)),
                                       child: TextField(
                                         controller: cont.conditionController,
+                                        minLines: 1,
+                                        maxLines: 3,
                                         decoration: InputDecoration(
                                           hintText: "Condition (Optional)".tr,
                                           filled: true,
@@ -2779,7 +2779,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           focusedErrorBorder: InputBorder.none,
                                           disabledBorder: InputBorder.none,
                                           contentPadding: EdgeInsets.symmetric(
-                                              vertical: 20, horizontal: 20),
+                                              vertical: 16, horizontal: 20),
                                         ),
                                         cursorColor: Theme.of(context)
                                             .textTheme
@@ -2791,7 +2791,6 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                       height: 5..h,
                                     ),
                                     Container(
-                                      height: 58..h,
                                       decoration: BoxDecoration(
                                           color: Theme.of(context).brightness ==
                                                   Brightness.dark
@@ -2808,6 +2807,8 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                               width: 1)),
                                       child: TextField(
                                         controller: cont.fulfillmentController,
+                                        minLines: 1,
+                                        maxLines: 3,
                                         decoration: InputDecoration(
                                           hintText: "Fulfillment (Optional)".tr,
                                           filled: true,
@@ -2819,7 +2820,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           focusedErrorBorder: InputBorder.none,
                                           disabledBorder: InputBorder.none,
                                           contentPadding: EdgeInsets.symmetric(
-                                              vertical: 20, horizontal: 20),
+                                              vertical: 16, horizontal: 20),
                                         ),
                                         cursorColor: Theme.of(context)
                                             .textTheme
@@ -2831,7 +2832,6 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                       height: 5..h,
                                     ),
                                     Container(
-                                      height: 58..h,
                                       decoration: BoxDecoration(
                                           color: Theme.of(context).brightness ==
                                                   Brightness.dark
@@ -2848,6 +2848,8 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                               width: 1)),
                                       child: TextField(
                                         controller: cont.paymentController,
+                                        minLines: 1,
+                                        maxLines: 3,
                                         decoration: InputDecoration(
                                           hintText: "Payment (Optional)".tr,
                                           filled: true,
@@ -2859,7 +2861,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           focusedErrorBorder: InputBorder.none,
                                           disabledBorder: InputBorder.none,
                                           contentPadding: EdgeInsets.symmetric(
-                                              vertical: 20, horizontal: 20),
+                                              vertical: 16, horizontal: 20),
                                         ),
                                         cursorColor: Theme.of(context)
                                             .textTheme

@@ -11,7 +11,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
-import 'package:venta_cuba/Controllers/location_controller.dart';
 
 import 'package:venta_cuba/Models/AllPromoCodesModel.dart';
 import 'package:venta_cuba/Models/CheckUserPackageModle.dart';
@@ -96,7 +95,7 @@ class HomeController extends GetxController {
   CategoriesModel? categoriesModel;
   SubCategoriesModel? subCategoriesModel;
   SubSubCategoriesModel? subSubCategoriesModel;
-  double radius = 50.0;
+  double radius = 500.0;
   RxBool loadingHome = true.obs;
   String? selectedCurrency = 'CUP'; // Default currency
   RxBool isPostLoading = false.obs;
@@ -396,7 +395,7 @@ class HomeController extends GetxController {
         address == "4JF7+RM6, Av. Paseo, La Habana, Cuba" ||
         (lat == "23.124792615936276" &&
             lng == "-82.38597269330762" &&
-            radius == 50.0)) {
+            radius == 500.0)) {
       noLocationSelected = true;
       Get.log(
           "📍 _loadSinglePage: No location selected - loading user's own posts via dedicated API");
@@ -574,32 +573,24 @@ class HomeController extends GetxController {
 
       Get.log("🔄 NEW getListing: Fetching Page: ${currentPage.value}");
 
-      // Check if no location is selected (NEW CODE LOGIC)
-      bool noLocationSelected = false;
-      if (address == null ||
-          address == '' ||
-          address == "4JF7+RM6, Av. Paseo, La Habana, Cuba" ||
-          (lat == "23.124792615936276" &&
-              lng == "-82.38597269330762" &&
-              radius == 50.0)) {
-        noLocationSelected = true;
-        Get.log(
-            "📍 No location selected - will filter to user's own posts only");
-      }
-
-      // API CALL - Different logic based on location selection
+      // ALWAYS fetch ALL posts from API (no location filtering on backend)
+      // We'll filter client-side by province/municipality for accuracy
       Map<String, dynamic> requestData = {
         'user_id': authCont.user?.userId ?? "",
         'category_id': selectedCategory?.id ?? "",
         'sub_category_id': selectedSubCategory?.id ?? "",
         'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
-        'latitude': noLocationSelected ? "" : (lat ?? "23.124792615936276"),
-        'longitude': noLocationSelected ? "" : (lng ?? "-82.38597269330762"),
-        'radius': noLocationSelected ? "" : radius.toString(),
+        'latitude': "",  // Empty - get all posts
+        'longitude': "", // Empty - get all posts
+        'radius': "",    // Empty - get all posts
         'min_price': '',
         'max_price': '',
         'search_by_title': ''
       };
+
+      Get.log("🌍 FETCHING ALL POSTS - Will filter client-side by province/municipality");
+      Get.log("📍 Selected Address: '$address'");
+      Get.log("📊 ACCOUNT TYPE - isBusinessAccount: ${authCont.isBusinessAccount}");
 
       Response response = await api.postData(
         "api/getListing?page=${currentPage.value}",
@@ -615,40 +606,50 @@ class HomeController extends GetxController {
 
       if (response.statusCode == 200) {
         List<dynamic> dataListing = response.body['data']['data'] ?? [];
-        Get.log("HOME POST COUNT ${dataListing.length}");
+        Get.log("📦 HOME POST COUNT FROM API: ${dataListing.length}");
+
+        // Debug: Show first few posts with their distances
+        if (dataListing.length > 0) {
+          Get.log("🔍 FIRST 5 POSTS FROM API:");
+          for (int i = 0; i < dataListing.length && i < 5; i++) {
+            var post = dataListing[i];
+            Get.log("  Post ${i+1}: ID=${post['id']}, Title='${post['title']}', Distance=${post['distance'] ?? 'N/A'}km, User=${post['user_id']}, Business=${post['business_status']}");
+          }
+        }
 
         if (dataListing.isNotEmpty) {
           List<ListingModel> newListings =
               dataListing.map((e) => ListingModel.fromJson(e)).toList();
 
+          // DEBUG: Print ALL unique provinces in the data
+          print("🟢🟢🟢 VENTA CUBA API PROVINCES START 🟢🟢🟢");
+          print("═══════════════════════════════════════════════════");
+          print("📊 ANALYZING ALL ${newListings.length} POSTS FROM API");
+          Set<String> allProvinces = {};
+          for (var listing in newListings) {
+            String? address = listing.address?.trim();
+            if (address != null && address.isNotEmpty && address != 'null') {
+              List<String> parts = address.split(',').map((s) => s.trim()).toList();
+              if (parts.isNotEmpty) {
+                allProvinces.add(parts[0]);
+              }
+            }
+          }
+          print("🗺️ FOUND ${allProvinces.length} UNIQUE PROVINCES IN API DATA:");
+          List<String> sortedProvinces = allProvinces.toList()..sort();
+          for (int i = 0; i < sortedProvinces.length; i++) {
+            print("   ${i + 1}. '${sortedProvinces[i]}'");
+          }
+          print("═══════════════════════════════════════════════════");
+          print("🟢🟢🟢 VENTA CUBA API PROVINCES END 🟢🟢🟢");
+
           // Apply client-side category filtering for consistency with search
           newListings = applyCategoryFilter(newListings);
           Get.log("After category filtering: ${newListings.length} items");
 
-          // Apply user filtering when no location is selected (NEW CODE LOGIC)
-          if (noLocationSelected) {
-            String currentUserId = authCont.user?.userId ?? "";
-            Get.log("🔍 DEBUGGING: Current user ID: '${currentUserId}'");
-            Get.log(
-                "🔍 DEBUGGING: Total listings before user filter: ${newListings.length}");
-
-            // Debug: Show user IDs of all listings
-            for (int i = 0; i < newListings.length && i < 5; i++) {
-              Get.log(
-                  "🔍 DEBUGGING: Listing ${i + 1} user_id: '${newListings[i].userId}', title: '${newListings[i].title}'");
-            }
-
-            newListings = newListings.where((listing) {
-              bool matches = listing.userId == currentUserId;
-              if (!matches) {
-                Get.log(
-                    "🔍 DEBUGGING: Filtered out listing '${listing.title}' (user_id: '${listing.userId}' != '${currentUserId}')");
-              }
-              return matches;
-            }).toList();
-            Get.log(
-                "After user filtering (no location): ${newListings.length} items");
-          }
+          // ALWAYS apply province/municipality filtering based on user selection
+          newListings = await _applyLocationFilter(newListings);
+          Get.log("After province/municipality filtering: ${newListings.length} items");
 
           // Apply business/personal account filtering (was missing!)
           String currentAccountType = authCont.isBusinessAccount ? "1" : "0";
@@ -706,8 +707,9 @@ class HomeController extends GetxController {
           }
 
           currentPage.value++;
-          hasMore.value =
-              dataListing.length == 15; // Simple pagination logic from old code
+          // Continue loading if we got any data from the API
+          // The API returns 15 items per page by default
+          hasMore.value = dataListing.length >= 15;
         } else {
           hasMore.value = false;
         }
@@ -1829,15 +1831,119 @@ class HomeController extends GetxController {
     update();
   }
 
+  Future<List<ListingModel>> _applyLocationFilter(List<ListingModel> listings) async {
+    try {
+      // Load selected provinces and municipalities from SharedPreferences
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      List<String> selectedProvinceNames = prefs.getStringList("selectedProvinceNames") ?? [];
+      List<String> selectedCityNames = prefs.getStringList("selectedCityNames") ?? [];
+      bool isAllProvinces = prefs.getBool("isAllProvinces") ?? true; // Default to true on first load
+      bool isAllCities = prefs.getBool("isAllCities") ?? false;
+
+      Get.log("📍 LOCATION FILTER - Provinces: $selectedProvinceNames, Cities: $selectedCityNames, AllProvinces: $isAllProvinces, AllCities: $isAllCities");
+
+      // Debug: Show what addresses are in the first 15 posts
+      Get.log("🔍 DEBUG: First 15 posts addresses:");
+      for (int i = 0; i < listings.length && i < 15; i++) {
+        String address = listings[i].address ?? "NULL";
+        List<String> addressParts = address.split(',').map((s) => s.trim()).toList();
+        String province = addressParts.isNotEmpty ? addressParts[0] : "NULL";
+        Get.log("  Post ${i+1}: Address='$address' -> Province='$province'");
+      }
+
+      // Show unique province names in the data
+      Set<String> uniqueProvinces = {};
+      for (var listing in listings) {
+        String? address = listing.address?.trim();
+        if (address != null && address.isNotEmpty && address != 'null') {
+          List<String> parts = address.split(',').map((s) => s.trim()).toList();
+          if (parts.isNotEmpty) {
+            uniqueProvinces.add(parts[0]);
+          }
+        }
+      }
+      Get.log("🗺️ UNIQUE PROVINCES IN DATA (${uniqueProvinces.length}): ${uniqueProvinces.toList().join(', ')}");
+
+      // If "All provinces" selected OR no location set yet, show all posts
+      if (isAllProvinces) {
+        Get.log("📍 All provinces selected - showing all ${listings.length} posts");
+        return listings;
+      }
+
+      // If no provinces selected (shouldn't happen, but just in case), show all
+      if (selectedProvinceNames.isEmpty) {
+        Get.log("📍 No provinces selected - showing all ${listings.length} posts");
+        return listings;
+      }
+
+      // Filter by province and municipality
+      Get.log("📍 Starting filter with ${listings.length} total posts");
+      List<ListingModel> filtered = listings.where((listing) {
+        // Parse address field: "Province, Municipality" format
+        String? address = listing.address?.trim();
+
+        // If post has no address data, EXCLUDE it
+        if (address == null || address.isEmpty || address == 'null') {
+          // Get.log("  ⚠️ No address data: ${listing.title} - excluding from results");
+          return false;
+        }
+
+        // Split address by comma to get province and municipality
+        List<String> addressParts = address.split(',').map((s) => s.trim()).toList();
+        String? postProvince = addressParts.isNotEmpty ? addressParts[0] : null;
+        String? postCity = addressParts.length > 1 ? addressParts[1] : null;
+
+        if (postProvince == null || postProvince.isEmpty) {
+          return false;
+        }
+
+        // Check if post is in selected provinces
+        bool provinceMatch = selectedProvinceNames.any((selectedProvince) =>
+            postProvince.toLowerCase() == selectedProvince.toLowerCase());
+
+        if (!provinceMatch) {
+          // Detailed debug: show why province didn't match
+          Get.log("  ❌ Rejected: '${listing.title}' - Province: '$postProvince' (lowercase: '${postProvince.toLowerCase()}')");
+          Get.log("     Selected provinces: ${selectedProvinceNames.map((p) => "'$p' (lowercase: '${p.toLowerCase()}')").join(', ')}");
+          return false; // Post not in selected provinces
+        }
+
+        // If "All municipalities" selected for these provinces, accept all posts from selected provinces
+        if (isAllCities || selectedCityNames.isEmpty) {
+          Get.log("  ✅ Accepted: ${listing.title} - Province: $postProvince (All municipalities)");
+          return true;
+        }
+
+        // Check if post is in selected municipalities
+        bool cityMatch = selectedCityNames.any((selectedCity) =>
+            postCity?.toLowerCase() == selectedCity.toLowerCase());
+
+        if (cityMatch) {
+          Get.log("  ✅ Accepted: ${listing.title} - Province: $postProvince, City: $postCity");
+        } else {
+          Get.log("  ❌ Rejected: ${listing.title} - Province: $postProvince, City: $postCity (not in selected cities)");
+        }
+
+        return cityMatch;
+      }).toList();
+
+      return filtered;
+    } catch (e) {
+      Get.log("Error in _applyLocationFilter: $e", isError: true);
+      return listings; // Return unfiltered list on error
+    }
+  }
+
   Future<void> getCoordinatesFromAddress() async {
     try {
-      final locationCont = Get.put(LocationController());
-      if (locationCont.lat != null && locationCont.lng != null) {
-        lat = locationCont.lat.toString();
-        lng = locationCont.lng.toString();
-        Get.log("Coordinates from LocationController: $lat, $lng");
+      // Skip geocoding if we already have valid lat/lng coordinates
+      if (lat != null && lat!.isNotEmpty && lat != "" &&
+          lng != null && lng!.isNotEmpty && lng != "" &&
+          lat != "23.124792615936276") { // Skip if not the default fallback
+        Get.log("Using existing coordinates: $lat, $lng, radius: $radius");
         return;
       }
+
       String latestAddress = 'Habana, Cuba';
       if (address != null && address!.isNotEmpty) {
         latestAddress = address!;
@@ -2186,7 +2292,7 @@ class HomeController extends GetxController {
           address == "4JF7+RM6, Av. Paseo, La Habana, Cuba" ||
           (lat == "23.124792615936276" &&
               lng == "-82.38597269330762" &&
-              radius == 50.0)) {
+              radius == 500.0)) {
         noLocationSelected = true;
         Get.log(
             "📍 SEARCH: No location selected - will search only user's own posts");
@@ -2275,7 +2381,7 @@ class HomeController extends GetxController {
               address == "4JF7+RM6, Av. Paseo, La Habana, Cuba" ||
               (lat == "23.124792615936276" &&
                   lng == "-82.38597269330762" &&
-                  radius == 50.0)) {
+                  radius == 500.0)) {
             noLocationSelected = true;
             Get.log(
                 "📍 SEARCH: No location selected - will filter to user's own posts only");

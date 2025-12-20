@@ -75,13 +75,6 @@ dependencies:
   shimmer: ^3.0.0
   visibility_detector: ^0.4.0+2
 
-  # GOOGLE MAPS
-  google_maps_flutter: ^2.10.0
-  geolocator: ^13.0.2
-  easy_image_viewer: ^1.5.1
-  # insta_image_viewer: ^1.0.4
-  # widget_zoom: ^0.0.4
-
   twilio_flutter:
 
 dev_dependencies:

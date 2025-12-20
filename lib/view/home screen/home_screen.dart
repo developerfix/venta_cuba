@@ -25,7 +25,8 @@ import 'package:venta_cuba/view/widgets/scroll_to_top_button.dart';
 
 import '../../Controllers/auth_controller.dart';
 import '../../Share Preferences/Share Preferences.dart';
-import '../Search_Places_Screen/searchAndCurrentLocationPage.dart';
+import '../../cities_list/cites_list.dart';
+import '../widgets/location_dialog.dart';
 import '../auth/login.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -44,8 +45,10 @@ class _HomeScreenState extends State<HomeScreen> {
           await SharedPreferences.getInstance();
       setState(() {
         homeCont.address = sharedPreferences.getString("saveAddress") ?? "";
+        homeCont.lat = sharedPreferences.getString("saveLat") ?? "";
+        homeCont.lng = sharedPreferences.getString("saveLng") ?? "";
         homeCont.radius =
-            double.parse(sharedPreferences.getString("saveRadius") ?? "50.0");
+            double.parse(sharedPreferences.getString("saveRadius") ?? "500.0");
       });
       if (homeCont.hasLocationOrRadiusChanged()) {
         homeCont.shouldFetchData.value = true;
@@ -97,8 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // Background data loading
   Future<void> _loadDataInBackground() async {
     try {
-      if (Get.previousRoute == "/login" ||
-          Get.previousRoute != "/SearchAndCurrentLocationPage") {
+      if (Get.previousRoute == "/login") {
         // Run operations in parallel where possible
         await Future.wait<void>([
           homeCont.fetchAccountType(),
@@ -114,7 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
           homeCont.ensureScrollListenerAttached();
         }
       } else {
-        Get.log('Coming from SearchAndCurrentLocationPage, checking for changes');
+        Get.log('Checking for location changes');
         homeCont.shouldFetchData.value = true;
         await getAdd();
 
@@ -194,7 +196,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                         child: SvgPicture.asset(
                                             'assets/icons/heartadd.svg',
                                             colorFilter: ColorFilter.mode(
-                                              Theme.of(context).iconTheme.color ?? Colors.grey,
+                                              Theme.of(context)
+                                                      .iconTheme
+                                                      .color ??
+                                                  Colors.grey,
                                               BlendMode.srcIn,
                                             ))),
                                   ),
@@ -213,7 +218,10 @@ class _HomeScreenState extends State<HomeScreen> {
                               style: TextStyle(
                                   fontSize: 25.sp,
                                   fontWeight: FontWeight.w600,
-                                  color: Theme.of(context).textTheme.titleLarge?.color),
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .titleLarge
+                                      ?.color),
                             ),
                           ),
                           SizedBox(
@@ -236,7 +244,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
                                       Navigator.push(
                                         context,
-                                        PremiumPageTransitions.slideFromRight(const Search()),
+                                        PremiumPageTransitions.slideFromRight(
+                                            const Search()),
                                       ).then((value) {
                                         getAdd();
                                         cont.currentPage.value = 1;
@@ -275,65 +284,280 @@ class _HomeScreenState extends State<HomeScreen> {
                             height: 20.h,
                           ),
                           InkWell(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                PremiumPageTransitions.slideFromRight(SearchAndCurrentLocationPage()),
-                              ).then((_) {
+                            onTap: () async {
+                              // Load previously selected provinces and cities
+                              SharedPreferences prefs =
+                                  await SharedPreferences.getInstance();
+
+                              // Get saved province and city names
+                              List<String> savedProvinceNames = prefs
+                                      .getStringList("selectedProvinceNames") ??
+                                  [];
+                              List<String> savedCityNames =
+                                  prefs.getStringList("selectedCityNames") ??
+                                      [];
+                              bool savedIsAllProvinces =
+                                  prefs.getBool("isAllProvinces") ?? true;
+                              bool savedIsAllCities =
+                                  prefs.getBool("isAllCities") ?? false;
+
+                              // Convert saved names back to objects
+                              List<CustomProvinceNameList> initialProvinces =
+                                  provinceName
+                                      .where((p) => savedProvinceNames
+                                          .contains(p.provinceName))
+                                      .toList();
+
+                              List<CustomCitiesList> initialCities = citiesList
+                                  .where((c) =>
+                                      savedCityNames.contains(c.cityName))
+                                  .toList();
+
+                              // Show location dialog
+                              final result =
+                                  await showDialog<Map<String, dynamic>>(
+                                context: context,
+                                builder: (context) => LocationDialog(
+                                  initialProvinces: initialProvinces,
+                                  initialCities: initialCities,
+                                  isAllProvinces: savedIsAllProvinces,
+                                  isAllCities: savedIsAllCities,
+                                ),
+                              );
+
+                              // Handle result
+                              if (result != null) {
+                                final provinces = result['provinces']
+                                    as List<CustomProvinceNameList>;
+                                final cities =
+                                    result['cities'] as List<CustomCitiesList>;
+                                final isAllProvinces =
+                                    result['isAllProvinces'] as bool;
+                                final isAllCities =
+                                    result['isAllCities'] as bool;
+
+                                SharedPreferences prefs =
+                                    await SharedPreferences.getInstance();
+                                String newAddress = "";
+
+                                // Generate address string based on selection
+                                if (isAllProvinces) {
+                                  newAddress = "All provinces".tr;
+                                  await prefs.setString(
+                                      "saveAddress", newAddress);
+                                  await prefs.setString(
+                                      "saveLat", "23.1136"); // Center of Cuba
+                                  await prefs.setString("saveLng", "-82.3666");
+                                  // Use larger radius to cover all of Cuba (Cuba is ~1250km long)
+                                  // Using 1000km to ensure full coverage from east to west
+                                  await prefs.setString("saveRadius", "1000.0");
+                                } else if (provinces.isNotEmpty) {
+                                  // Provinces are selected
+                                  if (provinces.length == 1) {
+                                    // Single province
+                                    if (cities.isEmpty) {
+                                      // Single province, no specific cities (all municipalities)
+                                      newAddress =
+                                          "${provinces[0].provinceName}";
+                                      // Get first city from this province for coordinates
+                                      final provinceCities = citiesList
+                                          .where((city) =>
+                                              city.provinceName ==
+                                              provinces[0].provinceName)
+                                          .toList();
+                                      if (provinceCities.isNotEmpty) {
+                                        await prefs.setString("saveLat",
+                                            provinceCities[0].latitude.trim());
+                                        await prefs.setString("saveLng",
+                                            provinceCities[0].longitude.trim());
+                                      } else {
+                                        await prefs.setString(
+                                            "saveLat", "23.1136");
+                                        await prefs.setString(
+                                            "saveLng", "-82.3666");
+                                      }
+                                    } else if (cities.length == 1) {
+                                      // Single province, single city
+                                      newAddress =
+                                          "${provinces[0].provinceName}, ${cities[0].cityName}";
+                                      await prefs.setString(
+                                          "saveLat", cities[0].latitude.trim());
+                                      await prefs.setString("saveLng",
+                                          cities[0].longitude.trim());
+                                    } else {
+                                      // Single province, multiple cities
+                                      newAddress =
+                                          "${provinces[0].provinceName} - ${cities.length} ${"municipalities".tr}";
+                                      await prefs.setString(
+                                          "saveLat", cities[0].latitude.trim());
+                                      await prefs.setString("saveLng",
+                                          cities[0].longitude.trim());
+                                    }
+                                  } else {
+                                    // Multiple provinces
+                                    if (cities.isEmpty) {
+                                      // Multiple provinces, no specific cities
+                                      newAddress =
+                                          "${provinces.length} ${"provinces".tr}";
+                                    } else {
+                                      // Multiple provinces and cities
+                                      newAddress =
+                                          "${provinces.length} ${"provinces".tr} - ${cities.length} ${"municipalities".tr}";
+                                    }
+                                    // Use Cuba center for multiple provinces with larger radius
+                                    // Cuba is ~1250km long, so we need at least 700km radius to cover all
+                                    await prefs.setString("saveLat", "23.1136");
+                                    await prefs.setString(
+                                        "saveLng", "-82.3666");
+                                  }
+                                  await prefs.setString(
+                                      "saveAddress", newAddress);
+                                  // Use larger radius for multiple provinces to cover all of Cuba
+                                  await prefs.setString(
+                                      "saveRadius",
+                                      provinces.length > 1
+                                          ? "1000.0"
+                                          : "500.0");
+                                }
+
+                                // Save selected province and city names for persistence
+                                List<String> provinceNames = provinces
+                                    .map((p) => p.provinceName)
+                                    .toList();
+                                List<String> cityNames =
+                                    cities.map((c) => c.cityName).toList();
+                                await prefs.setStringList(
+                                    "selectedProvinceNames", provinceNames);
+                                await prefs.setStringList(
+                                    "selectedCityNames", cityNames);
+                                await prefs.setBool(
+                                    "isAllProvinces", isAllProvinces);
+                                await prefs.setBool("isAllCities", isAllCities);
+
+                                // Load the saved lat/lng values back into controller
+                                String savedLat =
+                                    prefs.getString("saveLat") ?? "23.1136";
+                                String savedLng =
+                                    prefs.getString("saveLng") ?? "-82.3666";
+                                double savedRadius = double.parse(
+                                    prefs.getString("saveRadius") ?? "500.0");
+
                                 setState(() {
-                                  getAdd();
+                                  cont.address = newAddress;
+                                  cont.lat = savedLat;
+                                  cont.lng = savedLng;
+                                  cont.radius = savedRadius;
+
                                   // Always force shuffle when returning from location selection
                                   cont.forceShuffleAfterLocationChange();
-                                  if (cont.hasLocationOrRadiusChanged()) {
-                                    cont.shouldFetchData.value = true;
-                                    cont.listingModelList.clear();
-                                    cont.currentPage.value = 1;
-                                    cont.hasMore.value = true;
-                                    cont.homeData();
-                                  } else {
-                                    // Even if location didn't change, shuffle the existing list
-                                    cont.shuffleListingsOnLocationChange();
-                                  }
+                                  cont.shouldFetchData.value = true;
+                                  cont.listingModelList.clear();
+                                  cont.currentPage.value = 1;
+                                  cont.hasMore.value = true;
+                                  cont.homeData();
                                 });
-                              });
+                              }
                             },
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                SvgPicture.asset('assets/icons/location.svg',
-                                    colorFilter: ColorFilter.mode(
-                                      Theme.of(context).iconTheme.color ?? Colors.grey,
-                                      BlendMode.srcIn,
-                                    )),
-                                SizedBox(
-                                  width: 5.w,
+                            child: Container(
+                              width: MediaQuery.of(context).size.width,
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 16.w, vertical: 14.h),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? Color(0xFF2C2C2C)
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(12.r),
+                                border: Border.all(
+                                  color: Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.white.withValues(alpha: 0.2)
+                                      : Colors.grey.shade300,
+                                  width: 1.5,
                                 ),
-                                SizedBox(
-                                  width: 290.w,
-                                  // height: 20.h,
-                                  child: cont.address == ''
-                                      ? Text(
-                                          'Click here to enter a location to see publications near you.'
-                                              .tr,
-                                          // overflow: TextOverflow.clip,
-                                          style: TextStyle(
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.05),
+                                    blurRadius: 8,
+                                    offset: Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: EdgeInsets.all(8.w),
+                                    decoration: BoxDecoration(
+                                      color: Color(0xFF0254B8)
+                                          .withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(8.r),
+                                    ),
+                                    child: SvgPicture.asset(
+                                      'assets/icons/location.svg',
+                                      width: 20.w,
+                                      height: 20.h,
+                                      colorFilter: ColorFilter.mode(
+                                        Color(0xFF0254B8),
+                                        BlendMode.srcIn,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 12.w),
+                                  Expanded(
+                                    child: cont.address == ''
+                                        ? Text(
+                                            'Click here to enter a location to see publications near you.'
+                                                .tr,
+                                            style: TextStyle(
                                               fontSize: 14.sp,
                                               fontWeight: FontWeight.w500,
-                                              color: AppColors.k0xFF403C3C),
-                                        )
-                                      : Text(
-                                          cont.address != ''
-                                              ? "${cont.address} ${"within the".tr} ${cont.radius.toInt()} km"
-                                              : '${cont.address}',
-
-                                          // overflow: TextOverflow.clip,
-                                          style: TextStyle(
-                                              fontSize: 17.sp,
-                                              fontWeight: FontWeight.w500,
-                                              color: AppColors.k0xFF403C3C),
-                                        ),
-                                )
-                              ],
+                                              color: Theme.of(context)
+                                                          .brightness ==
+                                                      Brightness.dark
+                                                  ? Colors.white70
+                                                  : AppColors.k0xFF403C3C,
+                                            ),
+                                          )
+                                        : Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Selected Location'.tr,
+                                                style: TextStyle(
+                                                  fontSize: 12.sp,
+                                                  fontWeight: FontWeight.w400,
+                                                  color: Theme.of(context)
+                                                              .brightness ==
+                                                          Brightness.dark
+                                                      ? Colors.white54
+                                                      : Colors.grey.shade600,
+                                                ),
+                                              ),
+                                              SizedBox(height: 4.h),
+                                              Text(
+                                                "${cont.address}",
+                                                style: TextStyle(
+                                                  fontSize: 15.sp,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Theme.of(context)
+                                                              .brightness ==
+                                                          Brightness.dark
+                                                      ? Colors.white
+                                                      : AppColors.k0xFF403C3C,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                  ),
+                                  SizedBox(width: 8.w),
+                                  Icon(
+                                    Icons.arrow_forward_ios,
+                                    size: 16.sp,
+                                    color: Color(0xFF0254B8),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                           SizedBox(height: 25.h),
@@ -359,7 +583,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                   cont.selectedSubSubCategory = null;
                                   Navigator.push(
                                     context,
-                                    PremiumPageTransitions.slideFromRight(const SelectCategories()),
+                                    PremiumPageTransitions.slideFromRight(
+                                        const SelectCategories()),
                                   ).then((value) {
                                     cont.currentPage.value = 1;
                                     cont.hasMore.value = true;

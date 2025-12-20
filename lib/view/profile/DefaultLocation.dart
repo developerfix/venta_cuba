@@ -105,12 +105,14 @@ class _DefaultLocationState extends State<DefaultLocation> {
                                 // padding: EdgeInsets.only(left: 10),
                                 alignment: Alignment.centerLeft,
                                 decoration: BoxDecoration(
-                                    color: Theme.of(context).brightness == Brightness.dark
+                                    color: Theme.of(context).brightness ==
+                                            Brightness.dark
                                         ? Colors.black
                                         : Colors.white,
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
-                                        color: Theme.of(context).brightness == Brightness.dark
+                                        color: Theme.of(context).brightness ==
+                                                Brightness.dark
                                             ? Colors.white
                                             : Colors.black,
                                         width: 1)),
@@ -118,6 +120,7 @@ class _DefaultLocationState extends State<DefaultLocation> {
                                   child:
                                       DropdownButton2<CustomProvinceNameList>(
                                     isExpanded: true,
+
                                     hint: Text(
                                       'Select province'.tr,
                                       style: TextStyle(
@@ -157,8 +160,17 @@ class _DefaultLocationState extends State<DefaultLocation> {
                                           EdgeInsets.symmetric(horizontal: 10),
                                       height: 40,
                                     ),
-                                    dropdownStyleData: const DropdownStyleData(
-                                        maxHeight: 600, useRootNavigator: true),
+                                    dropdownStyleData: DropdownStyleData(
+                                      maxHeight: 600,
+                                      useRootNavigator: true,
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? Colors.black
+                                            : Colors.white,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
                                     menuItemStyleData: const MenuItemStyleData(
                                       height: 40,
                                     ),
@@ -184,7 +196,7 @@ class _DefaultLocationState extends State<DefaultLocation> {
                                               horizontal: 10,
                                               vertical: 8,
                                             ),
-                                            hintText: 'Search your province',
+                                            hintText: 'Search your province'.tr,
                                             hintStyle:
                                                 const TextStyle(fontSize: 16),
                                             border: OutlineInputBorder(
@@ -216,12 +228,14 @@ class _DefaultLocationState extends State<DefaultLocation> {
                                 // padding: EdgeInsets.only(left: 10),
                                 alignment: Alignment.centerLeft,
                                 decoration: BoxDecoration(
-                                    color: Theme.of(context).brightness == Brightness.dark
+                                    color: Theme.of(context).brightness ==
+                                            Brightness.dark
                                         ? Colors.black
                                         : Colors.white,
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
-                                        color: Theme.of(context).brightness == Brightness.dark
+                                        color: Theme.of(context).brightness ==
+                                                Brightness.dark
                                             ? Colors.white
                                             : Colors.black,
                                         width: 1)),
@@ -229,7 +243,7 @@ class _DefaultLocationState extends State<DefaultLocation> {
                                   child: DropdownButton2<CustomCitiesList>(
                                     isExpanded: true,
                                     hint: Text(
-                                      'Select city'.tr,
+                                      'Select municipality'.tr,
                                       style: TextStyle(
                                         fontSize: 14,
                                         color: Theme.of(context).hintColor,
@@ -267,8 +281,17 @@ class _DefaultLocationState extends State<DefaultLocation> {
                                           EdgeInsets.symmetric(horizontal: 10),
                                       height: 40,
                                     ),
-                                    dropdownStyleData: const DropdownStyleData(
-                                        maxHeight: 600, useRootNavigator: true),
+                                    dropdownStyleData: DropdownStyleData(
+                                      maxHeight: 600,
+                                      useRootNavigator: true,
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? Colors.black
+                                            : Colors.white,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
                                     menuItemStyleData: const MenuItemStyleData(
                                       height: 40,
                                     ),
@@ -292,7 +315,8 @@ class _DefaultLocationState extends State<DefaultLocation> {
                                               horizontal: 10,
                                               vertical: 8,
                                             ),
-                                            hintText: 'Search your city',
+                                            hintText:
+                                                'Search your municipality'.tr,
                                             hintStyle:
                                                 const TextStyle(fontSize: 16),
                                             border: OutlineInputBorder(

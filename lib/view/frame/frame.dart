@@ -7,7 +7,6 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart' as map;
 
 import 'package:lottie/lottie.dart';
 import 'package:photo_view/photo_view.dart';
@@ -109,42 +108,13 @@ class _FrameScreenState extends State<FrameScreen> {
     }
   }
 
-  static Future<void> openMap(double latitude, double longitude) async {
-    String googleUrl =
-        'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude';
-    if (await canLaunchUrl(Uri.parse(googleUrl))) {
-      await launchUrl(Uri.parse(googleUrl));
-    } else {
-      print("Could not open the map.");
-      throw 'Could not open the map.';
-    }
-  }
-
-  late map.GoogleMapController mapController;
-  bool _isMapLoading = true;
   int _currentImageIndex = 0;
   PageController _pageController = PageController();
-  // San Francisco Coordinates
 
   @override
   void dispose() {
     _pageController.dispose();
     super.dispose();
-  }
-
-  void _onMapCreated(map.GoogleMapController controller) {
-    try {
-      print("🔥 🗺️ Google Maps controller created successfully!");
-      mapController = controller;
-      setState(() {
-        _isMapLoading = false;
-      });
-    } catch (e) {
-      print("🔥 ❌ ERROR creating Google Maps controller: $e");
-      setState(() {
-        _isMapLoading = false;
-      });
-    }
   }
 
   @override
@@ -325,6 +295,7 @@ class _FrameScreenState extends State<FrameScreen> {
                             SizedBox(height: 10..h),
                             Text(
                               '${cont.listingModel?.description}',
+                              textAlign: TextAlign.justify,
                               style: TextStyle(
                                   fontSize: 15..sp,
                                   fontWeight: FontWeight.w400,
@@ -477,26 +448,28 @@ class _FrameScreenState extends State<FrameScreen> {
                                       ?.color),
                             ),
                             SizedBox(height: 10..h),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Website'.tr,
-                                  style: TextStyle(
-                                      fontSize: 15..sp,
-                                      fontWeight: FontWeight.w400,
-                                      color: Theme.of(context)
-                                          .textTheme
-                                          .bodyLarge
-                                          ?.color),
-                                ),
-                                if (_isValidOptionalDetail(cont
-                                    .listingModel
-                                    ?.additionalFeatures
-                                    ?.optionalDetails
-                                    ?.website))
+                            if (_isValidOptionalDetail(cont
+                                .listingModel
+                                ?.additionalFeatures
+                                ?.optionalDetails
+                                ?.website))
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Website'.tr,
+                                    style: TextStyle(
+                                        fontSize: 15..sp,
+                                        fontWeight: FontWeight.w600,
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.color),
+                                  ),
+                                  SizedBox(height: 4.h),
                                   Text(
                                     '${cont.listingModel?.additionalFeatures?.optionalDetails?.website}',
+                                    textAlign: TextAlign.justify,
                                     style: TextStyle(
                                         fontSize: 15.sp,
                                         fontWeight: FontWeight.w400,
@@ -505,28 +478,31 @@ class _FrameScreenState extends State<FrameScreen> {
                                             .bodyLarge
                                             ?.color),
                                   ),
-                              ],
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Phone Number'.tr,
-                                  style: TextStyle(
-                                      fontSize: 15..sp,
-                                      fontWeight: FontWeight.w400,
-                                      color: Theme.of(context)
-                                          .textTheme
-                                          .bodyLarge
-                                          ?.color),
-                                ),
-                                if (_isValidOptionalDetail(cont
-                                    .listingModel
-                                    ?.additionalFeatures
-                                    ?.optionalDetails
-                                    ?.phoneNumber))
+                                  SizedBox(height: 12.h),
+                                ],
+                              ),
+                            if (_isValidOptionalDetail(cont
+                                .listingModel
+                                ?.additionalFeatures
+                                ?.optionalDetails
+                                ?.phoneNumber))
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Phone Number'.tr,
+                                    style: TextStyle(
+                                        fontSize: 15..sp,
+                                        fontWeight: FontWeight.w600,
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.color),
+                                  ),
+                                  SizedBox(height: 4.h),
                                   Text(
                                     '${cont.listingModel?.additionalFeatures?.optionalDetails?.phoneNumber}',
+                                    textAlign: TextAlign.justify,
                                     style: TextStyle(
                                         fontSize: 15..sp,
                                         fontWeight: FontWeight.w400,
@@ -535,28 +511,31 @@ class _FrameScreenState extends State<FrameScreen> {
                                             .bodyLarge
                                             ?.color),
                                   ),
-                              ],
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Condition'.tr,
-                                  style: TextStyle(
-                                      fontSize: 15..sp,
-                                      fontWeight: FontWeight.w400,
-                                      color: Theme.of(context)
-                                          .textTheme
-                                          .bodyLarge
-                                          ?.color),
-                                ),
-                                if (_isValidOptionalDetail(cont
-                                    .listingModel
-                                    ?.additionalFeatures
-                                    ?.optionalDetails
-                                    ?.condition))
+                                  SizedBox(height: 12.h),
+                                ],
+                              ),
+                            if (_isValidOptionalDetail(cont
+                                .listingModel
+                                ?.additionalFeatures
+                                ?.optionalDetails
+                                ?.condition))
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Condition'.tr,
+                                    style: TextStyle(
+                                        fontSize: 15..sp,
+                                        fontWeight: FontWeight.w600,
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.color),
+                                  ),
+                                  SizedBox(height: 4.h),
                                   Text(
                                     '${cont.listingModel?.additionalFeatures?.optionalDetails?.condition}',
+                                    textAlign: TextAlign.justify,
                                     style: TextStyle(
                                         fontSize: 15..sp,
                                         fontWeight: FontWeight.w400,
@@ -565,28 +544,31 @@ class _FrameScreenState extends State<FrameScreen> {
                                             .bodyLarge
                                             ?.color),
                                   ),
-                              ],
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Fulfillment'.tr,
-                                  style: TextStyle(
-                                      fontSize: 15..sp,
-                                      fontWeight: FontWeight.w400,
-                                      color: Theme.of(context)
-                                          .textTheme
-                                          .bodyLarge
-                                          ?.color),
-                                ),
-                                if (_isValidOptionalDetail(cont
-                                    .listingModel
-                                    ?.additionalFeatures
-                                    ?.optionalDetails
-                                    ?.fulfillment))
+                                  SizedBox(height: 12.h),
+                                ],
+                              ),
+                            if (_isValidOptionalDetail(cont
+                                .listingModel
+                                ?.additionalFeatures
+                                ?.optionalDetails
+                                ?.fulfillment))
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Fulfillment'.tr,
+                                    style: TextStyle(
+                                        fontSize: 15..sp,
+                                        fontWeight: FontWeight.w600,
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.color),
+                                  ),
+                                  SizedBox(height: 4.h),
                                   Text(
                                     '${cont.listingModel?.additionalFeatures?.optionalDetails?.fulfillment}',
+                                    textAlign: TextAlign.justify,
                                     style: TextStyle(
                                         fontSize: 15..sp,
                                         fontWeight: FontWeight.w400,
@@ -595,28 +577,31 @@ class _FrameScreenState extends State<FrameScreen> {
                                             .bodyLarge
                                             ?.color),
                                   ),
-                              ],
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Payment'.tr,
-                                  style: TextStyle(
-                                      fontSize: 15..sp,
-                                      fontWeight: FontWeight.w400,
-                                      color: Theme.of(context)
-                                          .textTheme
-                                          .bodyLarge
-                                          ?.color),
-                                ),
-                                if (_isValidOptionalDetail(cont
-                                    .listingModel
-                                    ?.additionalFeatures
-                                    ?.optionalDetails
-                                    ?.payment))
+                                  SizedBox(height: 12.h),
+                                ],
+                              ),
+                            if (_isValidOptionalDetail(cont
+                                .listingModel
+                                ?.additionalFeatures
+                                ?.optionalDetails
+                                ?.payment))
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Payment'.tr,
+                                    style: TextStyle(
+                                        fontSize: 15..sp,
+                                        fontWeight: FontWeight.w600,
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.color),
+                                  ),
+                                  SizedBox(height: 4.h),
                                   Text(
                                     '${cont.listingModel?.additionalFeatures?.optionalDetails?.payment}',
+                                    textAlign: TextAlign.justify,
                                     style: TextStyle(
                                         fontSize: 15..sp,
                                         fontWeight: FontWeight.w400,
@@ -625,8 +610,9 @@ class _FrameScreenState extends State<FrameScreen> {
                                             .bodyLarge
                                             ?.color),
                                   ),
-                              ],
-                            ),
+                                  SizedBox(height: 12.h),
+                                ],
+                              ),
                             SizedBox(height: 9..h),
                             Divider(),
                             Text(
@@ -676,115 +662,39 @@ class _FrameScreenState extends State<FrameScreen> {
                                       ?.color),
                             ),
                             SizedBox(height: 10..h),
-                            InkWell(
-                              onTap: () => openMap(
-                                  double.parse(
-                                      homeCont.listingModel!.latitude!),
-                                  double.parse(
-                                      homeCont.listingModel!.longitude!)),
-                              child: Container(
-                                padding: EdgeInsets.all(5),
-                                decoration: BoxDecoration(
-                                    border: Border.all(
-                                        color: Theme.of(context).dividerColor)),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    SizedBox(
-                                      height: 150,
-                                      width: double.maxFinite,
-                                      child: Stack(
-                                        children: [
-                                          map.GoogleMap(
-                                            zoomControlsEnabled: false,
-                                            myLocationButtonEnabled: false,
-                                            rotateGesturesEnabled: false,
-                                            scrollGesturesEnabled: false,
-                                            zoomGesturesEnabled: false,
-                                            onMapCreated: _onMapCreated,
-                                            initialCameraPosition:
-                                                map.CameraPosition(
-                                              target: map.LatLng(
-                                                  double.parse(homeCont
-                                                              .listingModel
-                                                              ?.latitude
-                                                              .toString() ==
-                                                          "null"
-                                                      ? "0.0"
-                                                      : homeCont.listingModel!
-                                                          .latitude
-                                                          .toString()),
-                                                  double.parse(homeCont
-                                                              .listingModel
-                                                              ?.longitude
-                                                              .toString() ==
-                                                          'null'
-                                                      ? "0.0"
-                                                      : homeCont.listingModel!
-                                                          .longitude
-                                                          .toString())),
-                                              zoom: 11.0,
-                                            ),
-                                            markers: {
-                                              map.Marker(
-                                                markerId: map.MarkerId("1"),
-                                                position: map.LatLng(
-                                                    double.parse(homeCont
-                                                                .listingModel
-                                                                ?.latitude
-                                                                .toString() ==
-                                                            "null"
-                                                        ? "0.0"
-                                                        : homeCont.listingModel!
-                                                            .latitude
-                                                            .toString()),
-                                                    double.parse(homeCont
-                                                                .listingModel
-                                                                ?.longitude
-                                                                .toString() ==
-                                                            'null'
-                                                        ? "0.0"
-                                                        : homeCont.listingModel!
-                                                            .longitude
-                                                            .toString())),
-                                                infoWindow: map.InfoWindow(
-                                                  title: 'Marker Title',
-                                                  snippet: 'Marker Snippet',
-                                                ),
-                                              ),
-                                            },
-                                          ),
-                                          Center(
-                                            child: Container(
-                                              height: 100,
-                                              width: 100,
-                                              decoration: BoxDecoration(
-                                                  shape: BoxShape.circle,
-                                                  border: Border.all(
-                                                      color:
-                                                          Colors.blueAccent)),
-                                            ),
-                                          ),
-                                          if (_isMapLoading)
-                                            Center(
-                                              child:
-                                                  CircularProgressIndicator(),
-                                            ),
-                                        ],
+                            Container(
+                              padding: EdgeInsets.all(15.w),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.grey[900]
+                                    : Colors.grey[100],
+                                borderRadius: BorderRadius.circular(12.r),
+                                border: Border.all(
+                                  color: Theme.of(context).dividerColor,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.location_on,
+                                    color: Color(0xFF0254B8),
+                                    size: 24.sp,
+                                  ),
+                                  SizedBox(width: 12.w),
+                                  Expanded(
+                                    child: Text(
+                                      '${cont.listingModel?.address ?? "Ubicación no disponible"}',
+                                      style: TextStyle(
+                                        fontSize: 15.sp,
+                                        fontWeight: FontWeight.w500,
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.color,
                                       ),
                                     ),
-                                    Text(
-                                      '${cont.listingModel?.address}',
-                                      style: TextStyle(
-                                          fontSize: 15..sp,
-                                          fontWeight: FontWeight.w400,
-                                          color: Theme.of(context)
-                                              .textTheme
-                                              .bodyLarge
-                                              ?.color),
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
                             Divider(),

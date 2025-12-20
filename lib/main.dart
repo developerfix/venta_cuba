@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:venta_cuba/Controllers/location_controller.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
 import 'package:venta_cuba/Controllers/theme_controller.dart';
 import 'package:venta_cuba/Services/Supabase/supabase_service.dart';
@@ -71,7 +70,6 @@ void main() async {
 
   // Start app immediately
   runApp(const MyApp());
-
 }
 
 // Initialize services in background without blocking startup
@@ -83,9 +81,7 @@ void _initializeServicesInBackground() {
 
       // Initialize other services in background
       await _initializePremiumFeatures();
-
-    } catch (e) {
-    }
+    } catch (e) {}
   });
 }
 
@@ -113,7 +109,6 @@ Future<void> _initializePremiumFeatures() async {
       _initializeNotificationManager().timeout(const Duration(seconds: 10)),
       _initializePremiumSystems().timeout(const Duration(seconds: 3)),
     ]).timeout(const Duration(seconds: 15));
-
   } catch (e) {
     // Don't let initialization errors block the app
   }
@@ -180,8 +175,7 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
               : Get.put(SupabaseChatController(), permanent: true);
           chatCont.setUserOffline(authCont.user!.userId.toString());
         }
-      } catch (e) {
-      }
+      } catch (e) {}
     }
   }
 
@@ -191,8 +185,7 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
       if (Platform.isAndroid) {
         await platform.invokeMethod('restoreNotification');
       }
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   Future<void> _handleAppResume() async {
@@ -219,8 +212,7 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
         // Update PushService badge count and reconnect if needed
         await PushService.onAppResumed();
       }
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 }
 
@@ -232,8 +224,6 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  // Delay LocationController initialization to avoid circular dependencies
-  LocationController? locationCont;
   late final ThemeController themeController;
   String languageCode = 'es';
   String countryCode = 'ES';
@@ -242,7 +232,6 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-
 
     themeController = Get.put(ThemeController());
 
@@ -254,7 +243,6 @@ class _MyAppState extends State<MyApp> {
 
     // Load locale in background
     Future.microtask(() => _loadLocale());
-
   }
 
   void _initializeServicesInBackground() async {
@@ -271,8 +259,7 @@ class _MyAppState extends State<MyApp> {
           url: AppConfig.supabaseUrl,
           anonKey: AppConfig.supabaseAnonKey,
         ).timeout(const Duration(seconds: 10));
-      } catch (e) {
-      }
+      } catch (e) {}
     }
 
     // Check location preferences

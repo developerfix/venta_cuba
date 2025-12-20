@@ -7,7 +7,6 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
 import 'package:venta_cuba/Controllers/home_controller.dart';
-import 'package:venta_cuba/Controllers/location_controller.dart';
 import 'package:venta_cuba/Controllers/theme_controller.dart';
 import 'package:venta_cuba/util/profile_list.dart';
 import 'package:venta_cuba/view/auth/vendor_screen.dart';
@@ -34,7 +33,6 @@ class Profile extends StatefulWidget {
 
 class _ProfileState extends State<Profile> {
   final homeCont = Get.put(HomeController());
-  final locationCont = Get.put(LocationController());
   final themeController = Get.put(ThemeController());
 
   List<Widget> _buildStarRating(double rating) {

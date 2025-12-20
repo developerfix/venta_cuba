@@ -13,7 +13,6 @@ import 'package:venta_cuba/view/auth/login.dart';
 import 'package:venta_cuba/view/constants/Colors.dart';
 
 import '../../Controllers/home_controller.dart';
-import '../../Controllers/location_controller.dart';
 import '../../Utils/funcations.dart';
 import '../../cities_list/cites_list.dart';
 
@@ -26,7 +25,6 @@ class VendorScreen extends StatefulWidget {
 
 class _VendorScreenState extends State<VendorScreen> {
   final authCont = Get.put(AuthController());
-  final locationCont = Get.put(LocationController());
   final homeCont = Get.put(HomeController());
 
   void imagePickerOption(String imageType) {
