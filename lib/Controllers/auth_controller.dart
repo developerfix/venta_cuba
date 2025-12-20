@@ -573,6 +573,7 @@ class AuthController extends GetxController {
           'password': passCont.text.trim(),
           'device_token': deviceToken
         },
+        showdialog: false, // Don't show loading dialog, button progress indicator is enough
       ).timeout(
         Duration(seconds: 10),
         onTimeout: () {
