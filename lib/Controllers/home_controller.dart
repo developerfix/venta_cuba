@@ -571,8 +571,6 @@ class HomeController extends GetxController {
         return;
       }
 
-      Get.log("🔄 NEW getListing: Fetching Page: ${currentPage.value}");
-
       // ALWAYS fetch ALL posts from API (no location filtering on backend)
       // We'll filter client-side by province/municipality for accuracy
       Map<String, dynamic> requestData = {
@@ -592,21 +590,56 @@ class HomeController extends GetxController {
       Get.log("📍 Selected Address: '$address'");
       Get.log("📊 ACCOUNT TYPE - isBusinessAccount: ${authCont.isBusinessAccount}");
 
-      Response response = await api.postData(
-        "api/getListing?page=${currentPage.value}",
-        requestData,
-        headers: {
-          'Accept': 'application/json',
-          'Access-Control-Allow-Origin': "*",
-          'Authorization':
-              'Bearer ${authCont.user?.accessToken ?? tokenMain ?? ""}'
-        },
-        showdialog: false,
-      );
+      // On first load, fetch multiple pages to ensure we have data from all provinces
+      List<dynamic> allDataListing = [];
+      int pagesToFetch = !isLoadMore ? 5 : 1; // Fetch 5 pages on first load, 1 page when scrolling
 
-      if (response.statusCode == 200) {
-        List<dynamic> dataListing = response.body['data']['data'] ?? [];
-        Get.log("📦 HOME POST COUNT FROM API: ${dataListing.length}");
+      Get.log("🔄 Fetching ${pagesToFetch} page(s) starting from page ${currentPage.value}");
+
+      for (int i = 0; i < pagesToFetch; i++) {
+        int pageNum = currentPage.value + i;
+        Get.log("📄 Fetching page $pageNum...");
+
+        Response response = await api.postData(
+          "api/getListing?page=$pageNum",
+          requestData,
+          headers: {
+            'Accept': 'application/json',
+            'Access-Control-Allow-Origin': "*",
+            'Authorization':
+                'Bearer ${authCont.user?.accessToken ?? tokenMain ?? ""}'
+          },
+          showdialog: false,
+        );
+
+        if (response.statusCode == 200) {
+          List<dynamic> pageData = response.body['data']['data'] ?? [];
+          Get.log("📦 Page $pageNum returned ${pageData.length} posts");
+
+          if (pageData.isEmpty) {
+            Get.log("⚠️ Page $pageNum is empty, stopping pagination");
+            hasMore.value = false;
+            break;
+          }
+
+          allDataListing.addAll(pageData);
+
+          // If this page has less than 15 items, it's the last page
+          if (pageData.length < 15) {
+            Get.log("⚠️ Page $pageNum has only ${pageData.length} items, stopping pagination");
+            hasMore.value = false;
+            break;
+          }
+        } else {
+          Get.log("API error on page $pageNum: ${response.statusCode}", isError: true);
+          break;
+        }
+      }
+
+      Get.log("📦 TOTAL POSTS FETCHED FROM ${pagesToFetch} PAGE(S): ${allDataListing.length}");
+
+      if (allDataListing.isNotEmpty) {
+        List<dynamic> dataListing = allDataListing;
 
         // Debug: Show first few posts with their distances
         if (dataListing.length > 0) {
@@ -706,18 +739,19 @@ class HomeController extends GetxController {
             }
           }
 
-          currentPage.value++;
-          // Continue loading if we got any data from the API
-          // The API returns 15 items per page by default
-          hasMore.value = dataListing.length >= 15;
+          // Update current page based on how many pages we fetched
+          currentPage.value += pagesToFetch;
+
+          // Continue loading if the last page had 15 items
+          // hasMore is already set in the loop above
         } else {
           hasMore.value = false;
         }
         saveLocationAndRadius();
       } else {
-        Get.log("API error: ${response.statusCode}, ${response.body}",
-            isError: true);
-        print('Failed to fetch listings. Please try again.'.tr);
+        // No data fetched from any page
+        Get.log("No data fetched from API", isError: true);
+        hasMore.value = false;
       }
     } catch (e, stackTrace) {
       Get.log("Error in getListing: $e\n$stackTrace", isError: true);

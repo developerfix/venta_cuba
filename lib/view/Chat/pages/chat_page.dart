@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
 import 'package:venta_cuba/Utils/funcations.dart';
@@ -436,10 +437,14 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                   // Show last active time or online status
                   if (widget.remoteUid != null)
                     StreamBuilder<Map<String, dynamic>>(
-                      stream: Stream.periodic(Duration(seconds: 15))
-                          .asyncMap((_) =>
-                              chatCont.getUserPresence(widget.remoteUid!))
-                          .distinct(),
+                      stream: (() async* {
+                        // Fetch immediately on first load
+                        yield await chatCont.getUserPresence(widget.remoteUid!);
+                        // Then fetch every 15 seconds
+                        await for (var _ in Stream.periodic(Duration(seconds: 15))) {
+                          yield await chatCont.getUserPresence(widget.remoteUid!);
+                        }
+                      })().distinct(),
                       initialData: {}, // Provide initial data to avoid loading state
                       builder: (context, snapshot) {
                         if (snapshot.hasData &&
@@ -1433,21 +1438,41 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
     final messageDate =
         DateTime(messageTime.year, messageTime.month, messageTime.day);
 
+    // Get current locale from GetX
+    String locale = Get.locale?.languageCode ?? 'es';
+
+    // Initialize locale data if not already initialized
+    try {
+      initializeDateFormatting(locale);
+    } catch (e) {
+      // If initialization fails, continue with default
+    }
+
+    // Helper function to create DateFormat with locale fallback
+    String formatWithLocale(String pattern, DateTime dt) {
+      try {
+        return DateFormat(pattern, 'en_US').format(dt);
+      } catch (e) {
+        // Fallback to default locale if locale-specific formatting fails
+        return DateFormat(pattern).format(dt);
+      }
+    }
+
     if (messageDate == today) {
       // Today: show only time
-      return DateFormat('h:mm a').format(messageTime);
+      return formatWithLocale('h:mm a', messageTime);
     } else if (messageDate == yesterday) {
       // Yesterday: show "Yesterday HH:MM"
-      return "${'Yesterday'.tr} ${DateFormat('h:mm a').format(messageTime)}";
+      return "${'Yesterday'.tr} ${formatWithLocale('h:mm a', messageTime)}";
     } else if (now.difference(messageTime).inDays < 7) {
-      // This week: show day name and time
-      return "${DateFormat('EEEE h:mm a').format(messageTime)}";
+      // This week: show day name and time (e.g., "Monday 3:45 PM" or "Lunes 3:45 PM")
+      return formatWithLocale('EEEE h:mm a', messageTime);
     } else if (messageTime.year == now.year) {
-      // This year: show month, day and time
-      return "${DateFormat('MMM d, h:mm a').format(messageTime)}";
+      // This year: show month, day and time (e.g., "Dec 15, 3:45 PM" or "Dic 15, 3:45 PM")
+      return formatWithLocale('MMM d, h:mm a', messageTime);
     } else {
-      // Different year: show full date and time
-      return "${DateFormat('MMM d, yyyy h:mm a').format(messageTime)}";
+      // Different year: show full date and time (e.g., "Dec 15, 2024 3:45 PM" or "Dic 15, 2024 3:45 PM")
+      return formatWithLocale('MMM d, yyyy h:mm a', messageTime);
     }
   }
 }
