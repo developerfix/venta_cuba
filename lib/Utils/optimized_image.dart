@@ -281,6 +281,21 @@ class OptimizedCacheManager {
     if (stats.totalSizeMB > 200) {
       await smartCacheCleanup();
     }
+
+    // Clear profile picture cache to fix any mixed-up cached images
+    // This is a one-time fix for the profile picture bug
+    await _clearProfilePictureCache();
+  }
+
+  /// Clear profile picture cache to fix mixed-up user images
+  static Future<void> _clearProfilePictureCache() async {
+    try {
+      // Clear the default cache manager
+      await DefaultCacheManager().emptyCache();
+      print("✅ Profile picture cache cleared to fix mixed-up images");
+    } catch (e) {
+      print("⚠️ Failed to clear profile cache: $e");
+    }
   }
 }
 

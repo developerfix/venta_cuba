@@ -63,6 +63,7 @@ class HomeController extends GetxController {
   RxList<UploadingImage> uploadingImages = <UploadingImage>[].obs;
   Rx<bool> isLoadingImages = false.obs;
   bool isLoading = false;
+  bool needsRefreshAfterAccountSwitch = false; // Flag to trigger refresh when account type changes
   int isSelectedReport = 0;
   double subtotal = 0.0;
   TextEditingController makeController = TextEditingController();
@@ -490,11 +491,8 @@ class HomeController extends GetxController {
               "After user filtering (_loadSinglePage no location): ${newListings.length} items");
         }
 
-        // Apply business/personal account filtering
-        String currentAccountType = authCont.isBusinessAccount ? "1" : "0";
-        newListings = newListings.where((listing) {
-          return listing.businessStatus == currentAccountType;
-        }).toList();
+        // Homepage shows ALL items (both business and personal)
+        // No business/personal filtering on homepage
 
         // Add filtered items to the main list
         listingModelList.addAll(newListings);
@@ -684,26 +682,8 @@ class HomeController extends GetxController {
           newListings = await _applyLocationFilter(newListings);
           Get.log("After province/municipality filtering: ${newListings.length} items");
 
-          // Apply business/personal account filtering (was missing!)
-          String currentAccountType = authCont.isBusinessAccount ? "1" : "0";
-          Get.log(
-              "🔍 DEBUGGING: Account type filter - isBusinessAccount: ${authCont.isBusinessAccount}, looking for businessStatus: '${currentAccountType}'");
-
-          for (int i = 0; i < newListings.length && i < 5; i++) {
-            Get.log(
-                "🔍 DEBUGGING: Listing ${i + 1} businessStatus: '${newListings[i].businessStatus}', title: '${newListings[i].title}'");
-          }
-
-          newListings = newListings.where((listing) {
-            bool matches = listing.businessStatus == currentAccountType;
-            if (!matches) {
-              Get.log(
-                  "🔍 DEBUGGING: Filtered out listing '${listing.title}' (businessStatus: '${listing.businessStatus}' != '${currentAccountType}')");
-            }
-            return matches;
-          }).toList();
-          Get.log(
-              "After business/personal filtering (${authCont.isBusinessAccount ? 'Business' : 'Personal'}): ${newListings.length} items");
+          // Homepage shows ALL items (both business and personal)
+          // No business/personal filtering on homepage
 
           // Apply duplicate filtering to prevent duplicate items when loading more pages
           Set<String> existingIds = <String>{};
@@ -2437,6 +2417,13 @@ class HomeController extends GetxController {
           // Apply client-side category filtering as backup
           newListings = applyCategoryFilter(newListings);
           Get.log("After category filtering: ${newListings.length} items");
+
+          // Apply business/personal account filtering
+          String currentAccountType = authCont.isBusinessAccount ? "1" : "0";
+          newListings = newListings.where((listing) {
+            return listing.businessStatus == currentAccountType;
+          }).toList();
+          Get.log("After business/personal filtering (${authCont.isBusinessAccount ? 'Business' : 'Personal'}): ${newListings.length} items");
 
           // Filter duplicates based on titles
           Set<String> existingTitles = listingModelSearchList

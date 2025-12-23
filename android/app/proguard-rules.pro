@@ -71,3 +71,43 @@
 # Keep Flutter deferred components
 -keep class io.flutter.embedding.engine.deferredcomponents.** { *; }
 -dontwarn io.flutter.embedding.engine.deferredcomponents.**
+
+# CRITICAL: Keep all Dart/Flutter model classes for JSON serialization
+# This prevents R8/ProGuard from obfuscating field names which breaks API calls
+-keep class * {
+    @com.google.gson.annotations.SerializedName <fields>;
+}
+-keepclassmembers class * {
+    @com.google.gson.annotations.SerializedName <fields>;
+}
+
+# Keep all model classes (adjust package name if needed)
+-keep class com.ventacuba.highapp.venta_cuba.** { *; }
+
+# Keep GetX Connect classes for API calls
+-keep class io.flutter.plugins.** { *; }
+-keepclassmembers class ** {
+    @android.webkit.JavascriptInterface <methods>;
+}
+
+# Keep JSON models - prevent field name obfuscation
+-keepattributes Signature
+-keepattributes *Annotation*
+-keepattributes EnclosingMethod
+-keepattributes InnerClasses
+
+# Prevent obfuscation of any class with "Model" in the name
+-keep class **.*Model { *; }
+-keep class **.*Model$* { *; }
+
+# Keep all classes that might be used for JSON serialization
+-keepclassmembers class * {
+    <init>();
+}
+-keepclassmembers class * {
+    *** fromJson(...);
+    *** toJson(...);
+}
+
+# Disable obfuscation entirely for debug purposes (you can re-enable optimization later)
+-dontobfuscate

@@ -382,6 +382,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                 height: 50.h,
                 width: 50.w,
                 imageUrl: "${widget.userImage}",
+                cacheKey: "user_${widget.remoteUid}_${widget.userImage}", // Unique cache key per user
                 imageBuilder: (context, imageProvider) => Container(
                   height: 180.h,
                   width: MediaQuery.of(context).size.width,

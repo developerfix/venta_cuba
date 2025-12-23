@@ -105,6 +105,10 @@ class _FrameScreenState extends State<FrameScreen> {
         0,
         false, // Don't navigate, just fetch data
       );
+      // Trigger rebuild to show updated profile image
+      if (mounted) {
+        setState(() {});
+      }
     }
   }
 
@@ -777,11 +781,13 @@ class _FrameScreenState extends State<FrameScreen> {
                                         borderRadius:
                                             BorderRadius.circular(600.r),
                                         child: CachedNetworkImage(
+                                          key: ValueKey("seller_${cont.listingModel?.userId}_${cont.sellerDetailsModel?.data?.sellerAbout?.profileImage ?? cont.listingModel?.user?.profileImage}"),
                                           imageUrl: cont.listingModel
                                                       ?.businessStatus ==
                                                   "0"
                                               ? "${cont.sellerDetailsModel?.data?.sellerAbout?.profileImage ?? cont.listingModel?.user?.profileImage}"
                                               : "${cont.sellerDetailsModel?.data?.sellerAbout?.businessLogo ?? cont.listingModel?.user?.businessLogo}",
+                                          cacheKey: "seller_profile_${cont.listingModel?.userId}_${cont.listingModel?.businessStatus == "0" ? cont.sellerDetailsModel?.data?.sellerAbout?.profileImage ?? cont.listingModel?.user?.profileImage : cont.sellerDetailsModel?.data?.sellerAbout?.businessLogo ?? cont.listingModel?.user?.businessLogo}",
                                           imageBuilder:
                                               (context, imageProvider) =>
                                                   Container(

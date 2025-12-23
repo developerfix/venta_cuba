@@ -39,6 +39,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final homeCont = Get.put(HomeController());
   final authCont = Get.put(AuthController());
+  bool _isCheckingForRefresh = false; // Prevent multiple simultaneous checks
+
   Future<void> getAdd() async {
     try {
       SharedPreferences sharedPreferences =
@@ -76,6 +78,82 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     // Initialize UI immediately, load data in background
     _initializeAsync();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Check for refresh needs whenever the screen becomes visible
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Prevent multiple simultaneous checks
+      if (_isCheckingForRefresh) return;
+      _isCheckingForRefresh = true;
+
+      try {
+        // Check for account switch refresh
+        if (homeCont.needsRefreshAfterAccountSwitch) {
+          await _handleAccountSwitchRefresh();
+          return; // Don't check location if we just did account switch refresh
+        }
+
+        // Check for location changes
+        await getAdd(); // Load saved location preferences
+        if (homeCont.hasLocationOrRadiusChanged()) {
+          Get.log("🗺️ Location or radius changed - Refreshing homepage");
+          if (!mounted) return; // Don't proceed if widget is not mounted
+
+          homeCont.listingModelList.clear();
+          homeCont.currentPage.value = 1;
+          homeCont.hasMore.value = true;
+
+          // Trigger UI update immediately to show loading state
+          homeCont.update();
+
+          // Refresh homepage - use getListing instead of homeData to avoid ScrollController issues
+          await homeCont.getListing(isLoadMore: false);
+
+          // Save the new location
+          homeCont.saveLocationAndRadius();
+
+          // Force UI update after data loads
+          homeCont.update();
+        }
+      } finally {
+        _isCheckingForRefresh = false;
+      }
+    });
+  }
+
+  // Handle refresh after account switch
+  Future<void> _handleAccountSwitchRefresh() async {
+    if (!homeCont.needsRefreshAfterAccountSwitch) return;
+
+    Get.log("🔄 Refresh flag detected - Refreshing homepage after account switch");
+    homeCont.needsRefreshAfterAccountSwitch = false; // Clear the flag
+
+    // Clear current listings and force refresh
+    homeCont.listingModelList.clear();
+    homeCont.currentPage.value = 1;
+    homeCont.hasMore.value = true;
+
+    // Trigger UI update immediately to show loading state
+    homeCont.update();
+
+    // Refresh homepage
+    await homeCont.getListing(isLoadMore: false);
+
+    // Force another UI update after data loads
+    homeCont.update();
+
+    // Clear search results if there's an active search
+    if (homeCont.listingModelSearchList.isNotEmpty) {
+      Get.log("🔍 Clearing search results...");
+      homeCont.currentSearchPage.value = 1;
+      homeCont.listingModelSearchList.clear();
+      homeCont.update();
+    }
+
+    Get.log("✅ Homepage refreshed with ${authCont.isBusinessAccount ? 'Business' : 'Personal'} items");
   }
 
   // Non-blocking initialization
