@@ -2292,9 +2292,14 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                 height: 40,
                                               ),
                                               dropdownStyleData:
-                                                  const DropdownStyleData(
+                                                  DropdownStyleData(
                                                       maxHeight: 600,
-                                                      useRootNavigator: true),
+                                                      useRootNavigator: true,
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.white,
+                                                        borderRadius: BorderRadius.circular(8),
+                                                      ),
+                                                  ),
                                               menuItemStyleData:
                                                   const MenuItemStyleData(
                                                 height: 40,
@@ -2330,7 +2335,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                         vertical: 8,
                                                       ),
                                                       hintText:
-                                                          'Search your province',
+                                                          'Search your province'.tr,
                                                       hintStyle:
                                                           const TextStyle(
                                                               fontSize: 16),
@@ -2455,9 +2460,14 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                 height: 40,
                                               ),
                                               dropdownStyleData:
-                                                  const DropdownStyleData(
+                                                  DropdownStyleData(
                                                       maxHeight: 600,
-                                                      useRootNavigator: true),
+                                                      useRootNavigator: true,
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.white,
+                                                        borderRadius: BorderRadius.circular(8),
+                                                      ),
+                                                  ),
                                               menuItemStyleData:
                                                   const MenuItemStyleData(
                                                 height: 40,
@@ -2491,7 +2501,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                         vertical: 8,
                                                       ),
                                                       hintText:
-                                                          'Search your city',
+                                                          'Search your municipality'.tr,
                                                       hintStyle:
                                                           const TextStyle(
                                                               fontSize: 16),
@@ -2922,7 +2932,6 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                       height: 10..h,
                                     ),
                                     Container(
-                                      height: 58..h,
                                       decoration: BoxDecoration(
                                           color: Theme.of(context).brightness ==
                                                   Brightness.dark
@@ -2939,6 +2948,8 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                               width: 1)),
                                       child: TextField(
                                         controller: cont.youTubeController,
+                                        minLines: 1,
+                                        maxLines: 3,
                                         decoration: InputDecoration(
                                           hintText: "Video link (Optional)".tr,
                                           filled: true,
@@ -2950,7 +2961,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                           focusedErrorBorder: InputBorder.none,
                                           disabledBorder: InputBorder.none,
                                           contentPadding: EdgeInsets.symmetric(
-                                              vertical: 20, horizontal: 20),
+                                              vertical: 16, horizontal: 20),
                                         ),
                                         cursorColor: Theme.of(context)
                                             .textTheme
