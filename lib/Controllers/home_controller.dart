@@ -682,8 +682,8 @@ class HomeController extends GetxController {
           newListings = await _applyLocationFilter(newListings);
           Get.log("After province/municipality filtering: ${newListings.length} items");
 
-          // Homepage shows ALL items (both business and personal)
-          // No business/personal filtering on homepage
+          // Show ALL items (both business and personal) everywhere
+          // No business/personal account filtering
 
           // Apply duplicate filtering to prevent duplicate items when loading more pages
           Set<String> existingIds = <String>{};
@@ -2418,12 +2418,8 @@ class HomeController extends GetxController {
           newListings = applyCategoryFilter(newListings);
           Get.log("After category filtering: ${newListings.length} items");
 
-          // Apply business/personal account filtering
-          String currentAccountType = authCont.isBusinessAccount ? "1" : "0";
-          newListings = newListings.where((listing) {
-            return listing.businessStatus == currentAccountType;
-          }).toList();
-          Get.log("After business/personal filtering (${authCont.isBusinessAccount ? 'Business' : 'Personal'}): ${newListings.length} items");
+          // Show ALL items (both business and personal) in search results
+          // No business/personal account filtering
 
           // Filter duplicates based on titles
           Set<String> existingTitles = listingModelSearchList

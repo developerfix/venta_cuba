@@ -155,6 +155,27 @@ class _Navigation_BarState extends State<Navigation_Bar>
               if (index == 0) {
                 cont.currentIndexBottomAppBar = index;
                 cont.update();
+
+                // Check if we need to refresh homepage after account switch
+                if (home.needsRefreshAfterAccountSwitch) {
+                  home.needsRefreshAfterAccountSwitch = false;
+                  Get.log("🔄 Home tab tapped - Refreshing after account switch");
+
+                  // Refresh homepage
+                  Future.delayed(Duration(milliseconds: 100), () async {
+                    home.listingModelList.clear();
+                    home.currentPage.value = 1;
+                    home.hasMore.value = true;
+                    home.loadingHome.value = true;
+                    home.update();
+
+                    await home.getListing(isLoadMore: false);
+
+                    home.loadingHome.value = false;
+                    home.update();
+                    Get.log("✅ Homepage refreshed successfully");
+                  });
+                }
               } else {
                 if (authCont.user?.email == "") {
                   // Navigate to login with premium transition
@@ -303,7 +324,7 @@ class _Navigation_BarState extends State<Navigation_Bar>
                     );
                   },
                 ),
-                label: 'Post'.tr,
+                label: 'Publish'.tr,
               ),
               BottomNavigationBarItem(
                 icon: AnimatedBuilder(

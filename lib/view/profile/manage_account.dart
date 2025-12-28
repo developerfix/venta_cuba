@@ -6,7 +6,6 @@ import 'package:venta_cuba/view/constants/Colors.dart';
 import 'package:venta_cuba/view/profile/request_account_deletion.dart';
 
 import '../../Controllers/auth_controller.dart';
-import '../../Controllers/home_controller.dart';
 import '../auth/vendor_screen.dart';
 
 class ManageAccount extends StatefulWidget {
@@ -104,16 +103,7 @@ class _ManageAccountState extends State<ManageAccount> {
                     authCont.update();
                     authCont.changeAccountType();
 
-                    // Set flag to trigger refresh when homepage becomes visible
-                    try {
-                      final homeCont = Get.find<HomeController>();
-                      homeCont.needsRefreshAfterAccountSwitch = true;
-                      Get.log("🔄 Account switched to ${authCont.isBusinessAccount ? 'Business' : 'Personal'} - Refresh flag set");
-                    } catch (e) {
-                      Get.log("⚠️ Error setting refresh flag: $e");
-                    }
-
-                    // Close dialog and ManageAccount screen
+                    // Close dialogs
                     Get.close(2);
                   }
                 },
