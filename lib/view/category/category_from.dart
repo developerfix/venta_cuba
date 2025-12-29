@@ -26,14 +26,43 @@ class CategoryFrom extends StatefulWidget {
 
 class _CategoryFromState extends State<CategoryFrom> {
   final authCont = Get.put(AuthController());
+
+  // Handle back navigation and reload homepage
+  Future<void> _handleBackNavigation() async {
+    final cont = Get.find<HomeController>();
+    cont.selectedCategory = null;
+    cont.selectedSubCategory = null;
+    cont.selectedSubSubCategory = null;
+
+    // Clear and reload homepage data
+    cont.listingModelList.clear();
+    cont.currentPage.value = 1;
+    cont.hasMore.value = true;
+    cont.update();
+
+    Get.log("⬅️ Going back - Reloading homepage");
+
+    // Reload homepage after navigation
+    Future.delayed(Duration(milliseconds: 100), () async {
+      await cont.getListing(isLoadMore: false);
+      cont.update();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SelectionArea(
-      child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        body: GetBuilder<HomeController>(
-          builder: (cont) {
-            return Padding(
+    return PopScope(
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) {
+          await _handleBackNavigation();
+        }
+      },
+      child: SelectionArea(
+        child: Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          body: GetBuilder<HomeController>(
+            builder: (cont) {
+              return Padding(
               padding: const EdgeInsets.all(20),
               child: SafeArea(
                 child: Column(
@@ -43,8 +72,27 @@ class _CategoryFromState extends State<CategoryFrom> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         GestureDetector(
-                          onTap: () {
+                          onTap: () async {
+                            // Clear category filter and reload homepage
+                            final cont = Get.find<HomeController>();
+                            cont.selectedCategory = null;
+                            cont.selectedSubCategory = null;
+                            cont.selectedSubSubCategory = null;
+
+                            // Clear and reload homepage data
+                            cont.listingModelList.clear();
+                            cont.currentPage.value = 1;
+                            cont.hasMore.value = true;
+                            cont.update();
+
+                            Get.log("⬅️ Going back - Reloading homepage");
                             Navigator.of(context).pop();
+
+                            // Reload homepage after navigation
+                            Future.delayed(Duration(milliseconds: 100), () async {
+                              await cont.getListing(isLoadMore: false);
+                              cont.update();
+                            });
                           },
                           child: Icon(
                             Icons.arrow_back_ios,
@@ -431,6 +479,7 @@ class _CategoryFromState extends State<CategoryFrom> {
             );
           },
         ),
+      ),
       ),
     );
   }

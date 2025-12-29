@@ -156,6 +156,13 @@ class _Navigation_BarState extends State<Navigation_Bar>
                 cont.currentIndexBottomAppBar = index;
                 cont.update();
 
+                // Clear category selection when returning to homepage
+                home.selectedCategory = null;
+                home.selectedSubCategory = null;
+                home.selectedSubSubCategory = null;
+                home.update();
+                Get.log("🏠 Home tab tapped - Category filter cleared");
+
                 // Check if we need to refresh homepage after account switch
                 if (home.needsRefreshAfterAccountSwitch) {
                   home.needsRefreshAfterAccountSwitch = false;
