@@ -622,8 +622,10 @@ class HomeController extends GetxController {
 
           allDataListing.addAll(pageData);
 
-          // If this page has less than 15 items, it's the last page
-          if (pageData.length < 15) {
+          // Only check if it's the last page when we're on the LAST page we're fetching
+          // or when loading more (single page)
+          bool isLastPageInBatch = (i == pagesToFetch - 1);
+          if (pageData.length < 15 && (isLoadMore || isLastPageInBatch)) {
             Get.log("⚠️ Page $pageNum has only ${pageData.length} items, stopping pagination");
             hasMore.value = false;
             break;
@@ -1845,64 +1847,37 @@ class HomeController extends GetxController {
     update();
   }
 
-  Future<List<ListingModel>> _applyLocationFilter(List<ListingModel> listings) async {
+  Future<List<ListingModel>> _applyLocationFilter(List<ListingModel> listings, {bool isSearchPage = false}) async {
     try {
       // Load selected provinces and municipalities from SharedPreferences
       SharedPreferences prefs = await SharedPreferences.getInstance();
       List<String> selectedProvinceNames = prefs.getStringList("selectedProvinceNames") ?? [];
       List<String> selectedCityNames = prefs.getStringList("selectedCityNames") ?? [];
-      bool isAllProvinces = prefs.getBool("isAllProvinces") ?? true; // Default to true on first load
+      bool isAllProvinces = prefs.getBool("isAllProvinces") ?? true;
       bool isAllCities = prefs.getBool("isAllCities") ?? false;
 
-      Get.log("📍 LOCATION FILTER - Provinces: $selectedProvinceNames, Cities: $selectedCityNames, AllProvinces: $isAllProvinces, AllCities: $isAllCities");
+      String pageType = isSearchPage ? "Search" : "Homepage";
+      Get.log("📍 LOCATION FILTER ($pageType) - Provinces: $selectedProvinceNames, AllProvinces: $isAllProvinces");
 
-      // Debug: Show what addresses are in the first 15 posts
-      Get.log("🔍 DEBUG: First 15 posts addresses:");
-      for (int i = 0; i < listings.length && i < 15; i++) {
-        String address = listings[i].address ?? "NULL";
-        List<String> addressParts = address.split(',').map((s) => s.trim()).toList();
-        String province = addressParts.isNotEmpty ? addressParts[0] : "NULL";
-        Get.log("  Post ${i+1}: Address='$address' -> Province='$province'");
-      }
-
-      // Show unique province names in the data
-      Set<String> uniqueProvinces = {};
-      for (var listing in listings) {
-        String? address = listing.address?.trim();
-        if (address != null && address.isNotEmpty && address != 'null') {
-          List<String> parts = address.split(',').map((s) => s.trim()).toList();
-          if (parts.isNotEmpty) {
-            uniqueProvinces.add(parts[0]);
-          }
-        }
-      }
-      Get.log("🗺️ UNIQUE PROVINCES IN DATA (${uniqueProvinces.length}): ${uniqueProvinces.toList().join(', ')}");
-
-      // If "All provinces" selected OR no location set yet, show all posts
+      // If "All provinces" selected, show all posts
       if (isAllProvinces) {
         Get.log("📍 All provinces selected - showing all ${listings.length} posts");
         return listings;
       }
 
-      // If no provinces selected (shouldn't happen, but just in case), show all
+      // If no provinces selected, show all
       if (selectedProvinceNames.isEmpty) {
         Get.log("📍 No provinces selected - showing all ${listings.length} posts");
         return listings;
       }
 
       // Filter by province and municipality
-      Get.log("📍 Starting filter with ${listings.length} total posts");
       List<ListingModel> filtered = listings.where((listing) {
-        // Parse address field: "Province, Municipality" format
         String? address = listing.address?.trim();
-
-        // If post has no address data, EXCLUDE it
         if (address == null || address.isEmpty || address == 'null') {
-          // Get.log("  ⚠️ No address data: ${listing.title} - excluding from results");
           return false;
         }
 
-        // Split address by comma to get province and municipality
         List<String> addressParts = address.split(',').map((s) => s.trim()).toList();
         String? postProvince = addressParts.isNotEmpty ? addressParts[0] : null;
         String? postCity = addressParts.length > 1 ? addressParts[1] : null;
@@ -1911,40 +1886,31 @@ class HomeController extends GetxController {
           return false;
         }
 
-        // Check if post is in selected provinces
+        // Check province match
         bool provinceMatch = selectedProvinceNames.any((selectedProvince) =>
             postProvince.toLowerCase() == selectedProvince.toLowerCase());
 
         if (!provinceMatch) {
-          // Detailed debug: show why province didn't match
-          Get.log("  ❌ Rejected: '${listing.title}' - Province: '$postProvince' (lowercase: '${postProvince.toLowerCase()}')");
-          Get.log("     Selected provinces: ${selectedProvinceNames.map((p) => "'$p' (lowercase: '${p.toLowerCase()}')").join(', ')}");
-          return false; // Post not in selected provinces
+          return false;
         }
 
-        // If "All municipalities" selected for these provinces, accept all posts from selected provinces
+        // If "All municipalities" selected, accept all posts from selected provinces
         if (isAllCities || selectedCityNames.isEmpty) {
-          Get.log("  ✅ Accepted: ${listing.title} - Province: $postProvince (All municipalities)");
           return true;
         }
 
-        // Check if post is in selected municipalities
+        // Check municipality match
         bool cityMatch = selectedCityNames.any((selectedCity) =>
             postCity?.toLowerCase() == selectedCity.toLowerCase());
-
-        if (cityMatch) {
-          Get.log("  ✅ Accepted: ${listing.title} - Province: $postProvince, City: $postCity");
-        } else {
-          Get.log("  ❌ Rejected: ${listing.title} - Province: $postProvince, City: $postCity (not in selected cities)");
-        }
 
         return cityMatch;
       }).toList();
 
+      Get.log("📍 Filtered from ${listings.length} to ${filtered.length} posts");
       return filtered;
     } catch (e) {
       Get.log("Error in _applyLocationFilter: $e", isError: true);
-      return listings; // Return unfiltered list on error
+      return listings;
     }
   }
 
@@ -2417,6 +2383,10 @@ class HomeController extends GetxController {
           // Apply client-side category filtering as backup
           newListings = applyCategoryFilter(newListings);
           Get.log("After category filtering: ${newListings.length} items");
+
+          // Apply province/municipality filtering for search page
+          newListings = await _applyLocationFilter(newListings, isSearchPage: true);
+          Get.log("After location filtering (search): ${newListings.length} items");
 
           // Show ALL items (both business and personal) in search results
           // No business/personal account filtering
