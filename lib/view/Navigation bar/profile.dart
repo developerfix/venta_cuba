@@ -198,7 +198,7 @@ class _ProfileState extends State<Profile> {
                 ),
               ),
               InkWell(
-                onTap: () {
+                onTap: () async {
                   if (authCont.user?.businessName == "") {
                     Navigator.of(context).pop();
                     Get.to(VendorScreen());
@@ -209,6 +209,24 @@ class _ProfileState extends State<Profile> {
 
                     authCont.changeAccountType();
                     homeCont.fetchAccountType();
+                    
+                    // Switch to homepage and reload items for better UX
+                    authCont.currentIndexBottomAppBar = 0;
+                    authCont.update();
+                    
+                    // Refresh homepage listings with new account type
+                    homeCont.listingModelList.clear();
+                    homeCont.currentPage.value = 1;
+                    homeCont.hasMore.value = true;
+                    homeCont.loadingHome.value = true;
+                    homeCont.update();
+                    
+                    await homeCont.getListing(isLoadMore: false);
+                    
+                    homeCont.loadingHome.value = false;
+                    homeCont.update();
+                    
+                    Get.log("🔄 Account switched - Redirected to homepage and refreshed listings");
                   }
                 },
                 child: Container(
