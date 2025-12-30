@@ -550,7 +550,7 @@ class HomeController extends GetxController {
   }
 
   Future<void> getListing({bool isLoadMore = false}) async {
-    Get.log("🚀 NEW getListing method called! isLoadMore: $isLoadMore");
+    Get.log("🚀 getListing called! isLoadMore: $isLoadMore");
     if (isPostLoading.value) return;
     isPostLoading.value = true;
     update();
@@ -569,8 +569,7 @@ class HomeController extends GetxController {
         return;
       }
 
-      // ALWAYS fetch ALL posts from API (no location filtering on backend)
-      // We'll filter client-side by province/municipality for accuracy
+      // Request data - fetch all posts from API (no location filtering on backend)
       Map<String, dynamic> requestData = {
         'user_id': authCont.user?.userId ?? "",
         'category_id': selectedCategory?.id ?? "",
@@ -584,19 +583,34 @@ class HomeController extends GetxController {
         'search_by_title': ''
       };
 
-      Get.log("🌍 FETCHING ALL POSTS - Will filter client-side by province/municipality");
+      Get.log("🌍 Fetching posts - Will filter client-side by province/municipality");
       Get.log("📍 Selected Address: '$address'");
-      Get.log("📊 ACCOUNT TYPE - isBusinessAccount: ${authCont.isBusinessAccount}");
 
-      // On first load, fetch multiple pages to ensure we have data from all provinces
-      List<dynamic> allDataListing = [];
-      int pagesToFetch = !isLoadMore ? 5 : 1; // Fetch 5 pages on first load, 1 page when scrolling
+      // SMART PAGINATION: Fetch pages until we have minimum results after filtering
+      // This ensures we always have content even when location filter is active
+      const int minResultsToShow = 10; // Minimum posts to show after filtering
+      const int maxPagesToFetch = 10; // Safety limit to prevent infinite loops
+      
+      List<ListingModel> filteredResults = [];
+      int pagesFetched = 0;
+      bool reachedEnd = false;
 
-      Get.log("🔄 Fetching ${pagesToFetch} page(s) starting from page ${currentPage.value}");
+      // Get existing IDs to filter duplicates
+      Set<String> existingIds = <String>{};
+      for (var listing in listingModelList) {
+        String id = listing.id?.toString() ?? '';
+        if (id.isNotEmpty) {
+          existingIds.add(id);
+        }
+      }
 
-      for (int i = 0; i < pagesToFetch; i++) {
-        int pageNum = currentPage.value + i;
-        Get.log("📄 Fetching page $pageNum...");
+      // Keep fetching until we have enough filtered results or reach the end
+      while (filteredResults.length < minResultsToShow && 
+             pagesFetched < maxPagesToFetch && 
+             !reachedEnd) {
+        
+        int pageNum = currentPage.value + pagesFetched;
+        Get.log("📄 Fetching page $pageNum (have ${filteredResults.length} filtered results so far)...");
 
         Response response = await api.postData(
           "api/getListing?page=$pageNum",
@@ -615,124 +629,73 @@ class HomeController extends GetxController {
           Get.log("📦 Page $pageNum returned ${pageData.length} posts");
 
           if (pageData.isEmpty) {
-            Get.log("⚠️ Page $pageNum is empty, stopping pagination");
+            Get.log("⚠️ Page $pageNum is empty, reached end of data");
+            reachedEnd = true;
             hasMore.value = false;
             break;
           }
 
-          allDataListing.addAll(pageData);
+          // Convert to ListingModel
+          List<ListingModel> pageListings =
+              pageData.map((e) => ListingModel.fromJson(e)).toList();
 
-          // Only check if it's the last page when we're on the LAST page we're fetching
-          // or when loading more (single page)
-          bool isLastPageInBatch = (i == pagesToFetch - 1);
-          if (pageData.length < 15 && (isLoadMore || isLastPageInBatch)) {
-            Get.log("⚠️ Page $pageNum has only ${pageData.length} items, stopping pagination");
-            hasMore.value = false;
-            break;
+          // Apply category filtering
+          pageListings = applyCategoryFilter(pageListings);
+
+          // Apply location filtering
+          pageListings = await _applyLocationFilter(pageListings);
+
+          // Filter out duplicates
+          for (var listing in pageListings) {
+            String id = listing.id?.toString() ?? '';
+            if (id.isNotEmpty && !existingIds.contains(id)) {
+              existingIds.add(id);
+              filteredResults.add(listing);
+            }
           }
+
+          Get.log("📊 After filtering page $pageNum: ${filteredResults.length} total filtered results");
+
+          // Check if this was the last page
+          if (pageData.length < 15) {
+            Get.log("⚠️ Page $pageNum has only ${pageData.length} items, likely last page");
+            reachedEnd = true;
+            hasMore.value = false;
+          }
+
+          pagesFetched++;
         } else {
           Get.log("API error on page $pageNum: ${response.statusCode}", isError: true);
           break;
         }
       }
 
-      Get.log("📦 TOTAL POSTS FETCHED FROM ${pagesToFetch} PAGE(S): ${allDataListing.length}");
+      Get.log("📦 FETCHED ${pagesFetched} page(s), got ${filteredResults.length} filtered results");
 
-      if (allDataListing.isNotEmpty) {
-        List<dynamic> dataListing = allDataListing;
+      if (filteredResults.isNotEmpty) {
+        listingModelList.addAll(filteredResults);
 
-        // Debug: Show first few posts with their distances
-        if (dataListing.length > 0) {
-          Get.log("🔍 FIRST 5 POSTS FROM API:");
-          for (int i = 0; i < dataListing.length && i < 5; i++) {
-            var post = dataListing[i];
-            Get.log("  Post ${i+1}: ID=${post['id']}, Title='${post['title']}', Distance=${post['distance'] ?? 'N/A'}km, User=${post['user_id']}, Business=${post['business_status']}");
+        // Shuffle listings on first load
+        if (!isLoadMore && listingModelList.isNotEmpty) {
+          if (shouldShuffleOnLocationChange) {
+            shuffleListingsOnLocationChange();
+            shouldShuffleOnLocationChange = false;
+          } else {
+            await shuffleListingsOnLogin();
           }
         }
 
-        if (dataListing.isNotEmpty) {
-          List<ListingModel> newListings =
-              dataListing.map((e) => ListingModel.fromJson(e)).toList();
+        // Update current page
+        currentPage.value += pagesFetched;
 
-          // DEBUG: Print ALL unique provinces in the data
-          print("🟢🟢🟢 VENTA CUBA API PROVINCES START 🟢🟢🟢");
-          print("═══════════════════════════════════════════════════");
-          print("📊 ANALYZING ALL ${newListings.length} POSTS FROM API");
-          Set<String> allProvinces = {};
-          for (var listing in newListings) {
-            String? address = listing.address?.trim();
-            if (address != null && address.isNotEmpty && address != 'null') {
-              List<String> parts = address.split(',').map((s) => s.trim()).toList();
-              if (parts.isNotEmpty) {
-                allProvinces.add(parts[0]);
-              }
-            }
-          }
-          print("🗺️ FOUND ${allProvinces.length} UNIQUE PROVINCES IN API DATA:");
-          List<String> sortedProvinces = allProvinces.toList()..sort();
-          for (int i = 0; i < sortedProvinces.length; i++) {
-            print("   ${i + 1}. '${sortedProvinces[i]}'");
-          }
-          print("═══════════════════════════════════════════════════");
-          print("🟢🟢🟢 VENTA CUBA API PROVINCES END 🟢🟢🟢");
-
-          // Apply client-side category filtering for consistency with search
-          newListings = applyCategoryFilter(newListings);
-          Get.log("After category filtering: ${newListings.length} items");
-
-          // ALWAYS apply province/municipality filtering based on user selection
-          newListings = await _applyLocationFilter(newListings);
-          Get.log("After province/municipality filtering: ${newListings.length} items");
-
-          // Show ALL items (both business and personal) everywhere
-          // No business/personal account filtering
-
-          // Apply duplicate filtering to prevent duplicate items when loading more pages
-          Set<String> existingIds = <String>{};
-          for (var listing in listingModelList) {
-            String id = listing.id?.toString() ?? '';
-            if (id.isNotEmpty) {
-              existingIds.add(id);
-            }
-          }
-
-          // Filter out duplicates
-          List<ListingModel> uniqueNewListings = [];
-          for (var listing in newListings) {
-            String id = listing.id?.toString() ?? '';
-            if (id.isNotEmpty && !existingIds.contains(id)) {
-              uniqueNewListings.add(listing);
-            }
-          }
-          Get.log(
-              "After duplicate filtering (home): ${uniqueNewListings.length} items (removed ${newListings.length - uniqueNewListings.length} duplicates)");
-
-          listingModelList.addAll(uniqueNewListings);
-
-          // Shuffle listings on first load
-          if (currentPage.value == 1) {
-            if (shouldShuffleOnLocationChange) {
-              // Always shuffle when location changes
-              shuffleListingsOnLocationChange();
-              shouldShuffleOnLocationChange = false; // Reset flag
-            } else {
-              // Regular login-based shuffle
-              await shuffleListingsOnLogin();
-            }
-          }
-
-          // Update current page based on how many pages we fetched
-          currentPage.value += pagesToFetch;
-
-          // Continue loading if the last page had 15 items
-          // hasMore is already set in the loop above
-        } else {
-          hasMore.value = false;
+        // If we couldn't get minimum results even after fetching all available pages
+        if (!reachedEnd && filteredResults.length < minResultsToShow) {
+          Get.log("⚠️ Could only get ${filteredResults.length} results after $pagesFetched pages");
         }
+
         saveLocationAndRadius();
       } else {
-        // No data fetched from any page
-        Get.log("No data fetched from API", isError: true);
+        Get.log("No matching posts found for selected location", isError: true);
         hasMore.value = false;
       }
     } catch (e, stackTrace) {
@@ -740,6 +703,7 @@ class HomeController extends GetxController {
       print('Something went wrong. Please try again.'.tr);
     } finally {
       isPostLoading.value = false;
+      loadingHome.value = false;
       update();
     }
   }
@@ -2251,7 +2215,7 @@ class HomeController extends GetxController {
       if (!isLoadMore) {
         currentSearchPage.value = 1;
         listingModelSearchList.clear();
-        hasMoreSearch.value = true; // Reset hasMore when fetching fresh data
+        hasMoreSearch.value = true;
       }
 
       if (!hasMoreSearch.value) {
@@ -2260,179 +2224,123 @@ class HomeController extends GetxController {
         return;
       }
 
-      Get.log("Fetching Search Page: ${currentSearchPage.value}");
-      Get.log(
-          "Search Filters - Min: '${minPriceController.text.trim()}', Max: '${maxPriceController.text.trim()}', Search: '${searchController.text.trim()}'");
-      Get.log("Location - Lat: '${lat}', Lng: '${lng}', Radius: '${radius}'");
+      Get.log("🔍 Search - Fetching Page: ${currentSearchPage.value}");
 
-      // Check if no location is selected for search
-      bool noLocationSelected = false;
-      if (address == null ||
-          address == '' ||
-          address == "4JF7+RM6, Av. Paseo, La Habana, Cuba" ||
-          (lat == "23.124792615936276" &&
-              lng == "-82.38597269330762" &&
-              radius == 500.0)) {
-        noLocationSelected = true;
-        Get.log(
-            "📍 SEARCH: No location selected - will search only user's own posts");
-      }
-
-      // Send appropriate category filters to backend
-      // Build request data based on location selection
+      // Build request data - fetch all posts, filter client-side
       Map<String, dynamic> requestData = {
         'user_id': authCont.user?.userId ?? "",
         'category_id': selectedCategory?.id ?? "",
         'sub_category_id': selectedSubCategory?.id ?? "",
         'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
-        'latitude': noLocationSelected ? "" : (lat ?? "23.124792615936276"),
-        'longitude': noLocationSelected ? "" : (lng ?? "-82.38597269330762"),
-        'radius': noLocationSelected ? "" : radius.toString(),
+        'latitude': "",  // Empty - get all posts, filter client-side
+        'longitude': "", // Empty - get all posts, filter client-side
+        'radius': "",    // Empty - get all posts, filter client-side
         'min_price': minPriceController.text.trim(),
         'max_price': maxPriceController.text.trim(),
         'search_by_title': searchController.text.trim(),
       };
 
-      Get.log("=== SEARCH REQUEST DEBUG ===");
-      Get.log("Search Text: '${searchController.text.trim()}'");
-      Get.log("Selected Category ID: ${selectedCategory?.id}");
-      Get.log("Selected Category Name: ${selectedCategory?.name}");
-      Get.log("Selected SubCategory ID: ${selectedSubCategory?.id}");
-      Get.log("Selected SubCategory Name: ${selectedSubCategory?.name}");
-      Get.log("Selected SubSubCategory ID: ${selectedSubSubCategory?.id}");
-      Get.log("Selected SubSubCategory Name: ${selectedSubSubCategory?.name}");
-      Get.log("Min Price: '${minPriceController.text.trim()}'");
-      Get.log("Max Price: '${maxPriceController.text.trim()}'");
-      Get.log("Latitude: ${lat}");
-      Get.log("Longitude: ${lng}");
-      Get.log("Radius: ${radius}");
-      Get.log("Full Request Data: $requestData");
+      Get.log("🔍 Search Text: '${searchController.text.trim()}'");
+      Get.log("🔍 Category: ${selectedCategory?.name}");
 
-      Response response = await api.postData(
-        "api/getListing?page=${currentSearchPage.value}",
-        requestData,
-        headers: {
-          'Accept': 'application/json',
-          'Access-Control-Allow-Origin': "*",
-          'Authorization': 'Bearer ${authCont.user?.accessToken}'
-        },
-        showdialog: false,
-      );
+      // SMART PAGINATION: Fetch pages until we have minimum results after filtering
+      const int minResultsToShow = 10;
+      const int maxPagesToFetch = 10;
+      
+      List<ListingModel> filteredResults = [];
+      int pagesFetched = 0;
+      bool reachedEnd = false;
 
-      Get.log("Response Status: ${response.statusCode}");
-      Get.log("Response Body: ${response.body}");
+      // Get existing titles to filter duplicates
+      Set<String> existingTitles = listingModelSearchList
+          .where((item) => item.title != null && item.title!.isNotEmpty)
+          .map((item) => item.title!.toLowerCase().trim())
+          .toSet();
 
-      if (response.statusCode == 200) {
-        List<dynamic> dataListing = response.body['data']['data'] ?? [];
-        Get.log("=== SEARCH RESPONSE DEBUG ===");
-        Get.log("API returned ${dataListing.length} items");
+      // Keep fetching until we have enough filtered results or reach the end
+      while (filteredResults.length < minResultsToShow && 
+             pagesFetched < maxPagesToFetch && 
+             !reachedEnd) {
+        
+        int pageNum = currentSearchPage.value + pagesFetched;
+        Get.log("🔍 Fetching search page $pageNum (have ${filteredResults.length} filtered results)...");
 
-        if (dataListing.isNotEmpty) {
-          List<ListingModel> newListings = [];
+        Response response = await api.postData(
+          "api/getListing?page=$pageNum",
+          requestData,
+          headers: {
+            'Accept': 'application/json',
+            'Access-Control-Allow-Origin': "*",
+            'Authorization': 'Bearer ${authCont.user?.accessToken}'
+          },
+          showdialog: false,
+        );
 
-          // Parse each search item with error handling to prevent crashes
-          for (var element in dataListing) {
+        if (response.statusCode == 200) {
+          List<dynamic> pageData = response.body['data']['data'] ?? [];
+          Get.log("🔍 Page $pageNum returned ${pageData.length} items");
+
+          if (pageData.isEmpty) {
+            Get.log("⚠️ Page $pageNum is empty, reached end");
+            reachedEnd = true;
+            hasMoreSearch.value = false;
+            break;
+          }
+
+          // Parse listings
+          List<ListingModel> pageListings = [];
+          for (var element in pageData) {
             try {
               if (element != null && element is Map<String, dynamic>) {
-                // Parse the item - ListingModel.fromJson handles null values gracefully
-                newListings.add(ListingModel.fromJson(element));
+                pageListings.add(ListingModel.fromJson(element));
               }
-            } catch (e, stackTrace) {
-              Get.log("Search: Error parsing listing item: $e", isError: true);
-              Get.log("Search: Stack trace: $stackTrace", isError: true);
-              Get.log("Search: Problematic element: $element", isError: true);
+            } catch (e) {
+              Get.log("Error parsing search item: $e", isError: true);
             }
           }
 
-          // Debug: Log first few items to verify category filtering
-          for (int i = 0;
-              i < (newListings.length > 3 ? 3 : newListings.length);
-              i++) {
-            Get.log(
-                "Item ${i + 1}: '${newListings[i].title}' - Category: ${newListings[i].category?.name} (ID: ${newListings[i].category?.id})");
-          }
+          // Apply filters
+          pageListings = applyPriceFilter(pageListings);
+          pageListings = applyCategoryFilter(pageListings);
+          pageListings = await _applyLocationFilter(pageListings, isSearchPage: true);
 
-          // LOCATION-BASED FILTERING LOGIC (same as home page)
-          // Check if no location is selected
-          bool noLocationSelected = false;
-          // Check for default location or empty location
-          if (address == null ||
-              address == '' ||
-              address == "4JF7+RM6, Av. Paseo, La Habana, Cuba" ||
-              (lat == "23.124792615936276" &&
-                  lng == "-82.38597269330762" &&
-                  radius == 500.0)) {
-            noLocationSelected = true;
-            Get.log(
-                "📍 SEARCH: No location selected - will filter to user's own posts only");
-          }
-
-          // Log the search results
-          if (noLocationSelected) {
-            Get.log(
-                "📍 SEARCH NO LOCATION: API returned ${newListings.length} own posts");
-          } else {
-            Get.log(
-                "📍 SEARCH LOCATION SELECTED: Showing ${newListings.length} posts from location: ${address}");
-          }
-
-          // Apply client-side price filtering
-          newListings = applyPriceFilter(newListings);
-          Get.log("After price filtering: ${newListings.length} items");
-
-          // Apply client-side category filtering as backup
-          newListings = applyCategoryFilter(newListings);
-          Get.log("After category filtering: ${newListings.length} items");
-
-          // Apply province/municipality filtering for search page
-          newListings = await _applyLocationFilter(newListings, isSearchPage: true);
-          Get.log("After location filtering (search): ${newListings.length} items");
-
-          // Show ALL items (both business and personal) in search results
-          // No business/personal account filtering
-
-          // Filter duplicates based on titles
-          Set<String> existingTitles = listingModelSearchList
-              .where((item) => item.title != null && item.title!.isNotEmpty)
-              .map((item) => item.title!.toLowerCase().trim())
-              .toSet();
-
-          List<ListingModel> uniqueItems = newListings.where((item) {
-            if (item.title == null || item.title!.isEmpty) {
-              return true; // Allow items with no title
+          // Filter duplicates
+          for (var listing in pageListings) {
+            String title = listing.title?.toLowerCase().trim() ?? '';
+            if (title.isEmpty || !existingTitles.contains(title)) {
+              if (title.isNotEmpty) existingTitles.add(title);
+              filteredResults.add(listing);
             }
-            String itemTitle = item.title!.toLowerCase().trim();
-            return !existingTitles.contains(itemTitle);
-          }).toList();
+          }
 
-          Get.log(
-              "Filtered ${newListings.length - uniqueItems.length} duplicate titles");
-          listingModelSearchList.addAll(uniqueItems);
-          currentSearchPage.value++; // Increment page correctly
-          hasMoreSearch.value = dataListing.length ==
-              15; // More pages available if exactly 15 items returned
-          listingModelList = listingModelSearchList;
+          Get.log("🔍 After filtering: ${filteredResults.length} total results");
 
-          Get.log("=== PAGINATION UPDATE ===");
-          Get.log("Added ${newListings.length} new items");
-          Get.log("Total search results: ${listingModelSearchList.length}");
-          Get.log("Next page will be: ${currentSearchPage.value}");
-          Get.log(
-              "Has more pages: ${hasMoreSearch.value} (based on API returning ${dataListing.length} items)");
+          // Check if last page
+          if (pageData.length < 15) {
+            reachedEnd = true;
+            hasMoreSearch.value = false;
+          }
 
-          // Apply sorting after fetching data
-          applySortingToSearchList();
-          Get.log(
-              "Final search results count: ${listingModelSearchList.length}");
-          update();
+          pagesFetched++;
         } else {
-          hasMoreSearch.value = false;
-          Get.log("No more search results available");
+          Get.log("Search API error: ${response.statusCode}", isError: true);
+          break;
         }
-      } else {
-        Get.log("API Error: ${response.statusCode}, ${response.body}",
-            isError: true);
-        print('Something went wrong\nPlease try again!'.tr);
+      }
+
+      Get.log("🔍 SEARCH: Fetched $pagesFetched page(s), got ${filteredResults.length} results");
+
+      if (filteredResults.isNotEmpty) {
+        listingModelSearchList.addAll(filteredResults);
+        currentSearchPage.value += pagesFetched;
+        listingModelList = listingModelSearchList;
+        
+        // Apply sorting
+        applySortingToSearchList();
+        Get.log("🔍 Final search results: ${listingModelSearchList.length}");
+      } else if (!isLoadMore) {
+        Get.log("🔍 No search results found");
+        hasMoreSearch.value = false;
       }
     } catch (e, stackTrace) {
       Get.log("Error in getListingSearch: $e\n$stackTrace", isError: true);
