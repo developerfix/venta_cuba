@@ -2499,7 +2499,7 @@ class _CategorySelectionDialogState extends State<CategorySelectionDialog> {
                             ?.color
                             ?.withValues(alpha: 0.7),
                       ),
-                      textAlign: TextAlign.justify,
+                      textAlign: TextAlign.left,
                     ),
                   ),
                   SizedBox(height: 12),

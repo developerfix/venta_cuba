@@ -299,7 +299,7 @@ class _FrameScreenState extends State<FrameScreen> {
                             SizedBox(height: 10..h),
                             Text(
                               '${cont.listingModel?.description}',
-                              textAlign: TextAlign.justify,
+                              textAlign: TextAlign.left,
                               style: TextStyle(
                                   fontSize: 15..sp,
                                   fontWeight: FontWeight.w400,
@@ -473,7 +473,7 @@ class _FrameScreenState extends State<FrameScreen> {
                                   SizedBox(height: 4.h),
                                   Text(
                                     '${cont.listingModel?.additionalFeatures?.optionalDetails?.website}',
-                                    textAlign: TextAlign.justify,
+                                    textAlign: TextAlign.left,
                                     style: TextStyle(
                                         fontSize: 15.sp,
                                         fontWeight: FontWeight.w400,
@@ -506,7 +506,7 @@ class _FrameScreenState extends State<FrameScreen> {
                                   SizedBox(height: 4.h),
                                   Text(
                                     '${cont.listingModel?.additionalFeatures?.optionalDetails?.phoneNumber}',
-                                    textAlign: TextAlign.justify,
+                                    textAlign: TextAlign.left,
                                     style: TextStyle(
                                         fontSize: 15..sp,
                                         fontWeight: FontWeight.w400,
@@ -539,7 +539,7 @@ class _FrameScreenState extends State<FrameScreen> {
                                   SizedBox(height: 4.h),
                                   Text(
                                     '${cont.listingModel?.additionalFeatures?.optionalDetails?.condition}',
-                                    textAlign: TextAlign.justify,
+                                    textAlign: TextAlign.left,
                                     style: TextStyle(
                                         fontSize: 15..sp,
                                         fontWeight: FontWeight.w400,
@@ -572,7 +572,7 @@ class _FrameScreenState extends State<FrameScreen> {
                                   SizedBox(height: 4.h),
                                   Text(
                                     '${cont.listingModel?.additionalFeatures?.optionalDetails?.fulfillment}',
-                                    textAlign: TextAlign.justify,
+                                    textAlign: TextAlign.left,
                                     style: TextStyle(
                                         fontSize: 15..sp,
                                         fontWeight: FontWeight.w400,
@@ -605,7 +605,7 @@ class _FrameScreenState extends State<FrameScreen> {
                                   SizedBox(height: 4.h),
                                   Text(
                                     '${cont.listingModel?.additionalFeatures?.optionalDetails?.payment}',
-                                    textAlign: TextAlign.justify,
+                                    textAlign: TextAlign.left,
                                     style: TextStyle(
                                         fontSize: 15..sp,
                                         fontWeight: FontWeight.w400,

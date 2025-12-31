@@ -27,7 +27,7 @@ class ListingView extends StatelessWidget {
         final shuffledList = cont.listingModelList;
 
         return GridView.builder(
-          itemCount: shuffledList.length + 1,
+          itemCount: shuffledList.length + (cont.hasMore.value && cont.isPostLoading.value ? 1 : 0),
           physics: NeverScrollableScrollPhysics(),
           shrinkWrap: true,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -39,18 +39,11 @@ class ListingView extends StatelessWidget {
           itemBuilder: (BuildContext context, int index) {
             if (index == shuffledList.length) {
               // Show loading indicator when loading more items
-              if (cont.hasMore.value && cont.isPostLoading.value) {
-                return Container(
-                  height: 100,
-                  child: Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                );
-              }
-              // Always show a small spacer to ensure scroll detection works
               return Container(
-                height: 50,
-                child: SizedBox.shrink(),
+                height: 100,
+                child: Center(
+                  child: CircularProgressIndicator(),
+                ),
               );
             }
             // Safety check to prevent RangeError
