@@ -154,35 +154,12 @@ class _Navigation_BarState extends State<Navigation_Bar>
               }
               if (index == 0) {
                 cont.currentIndexBottomAppBar = index;
-                cont.update();
-
+                
                 // Clear category selection when returning to homepage
                 home.selectedCategory = null;
                 home.selectedSubCategory = null;
                 home.selectedSubSubCategory = null;
-                home.update();
-                Get.log("🏠 Home tab tapped - Category filter cleared");
-
-                // Check if we need to refresh homepage after account switch
-                if (home.needsRefreshAfterAccountSwitch) {
-                  home.needsRefreshAfterAccountSwitch = false;
-                  Get.log("🔄 Home tab tapped - Refreshing after account switch");
-
-                  // Refresh homepage
-                  Future.delayed(Duration(milliseconds: 100), () async {
-                    home.listingModelList.clear();
-                    home.currentPage.value = 1;
-                    home.hasMore.value = true;
-                    home.loadingHome.value = true;
-                    home.update();
-
-                    await home.getListing(isLoadMore: false);
-
-                    home.loadingHome.value = false;
-                    home.update();
-                    Get.log("✅ Homepage refreshed successfully");
-                  });
-                }
+                cont.update();
               } else {
                 if (authCont.user?.email == "") {
                   // Navigate to login with premium transition

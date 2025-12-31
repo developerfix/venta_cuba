@@ -23,6 +23,16 @@ class ListingView extends StatelessWidget {
     return GetBuilder<HomeController>(
       init: homeCont,
       builder: (cont) {
+        // Show loading indicator when list is empty
+        if (cont.listingModelList.isEmpty) {
+          return Container(
+            height: 200,
+            child: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+        
         // Use the already shuffled list from controller
         final shuffledList = cont.listingModelList;
 

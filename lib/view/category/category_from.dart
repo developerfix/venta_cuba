@@ -27,80 +27,34 @@ class CategoryFrom extends StatefulWidget {
 class _CategoryFromState extends State<CategoryFrom> {
   final authCont = Get.put(AuthController());
 
-  // Handle back navigation and reload homepage
-  Future<void> _handleBackNavigation() async {
-    final cont = Get.find<HomeController>();
-    cont.selectedCategory = null;
-    cont.selectedSubCategory = null;
-    cont.selectedSubSubCategory = null;
-
-    // Clear and reload homepage data
-    cont.listingModelList.clear();
-    cont.currentPage.value = 1;
-    cont.hasMore.value = true;
-    cont.update();
-
-    Get.log("⬅️ Going back - Reloading homepage");
-
-    // Reload homepage after navigation
-    Future.delayed(Duration(milliseconds: 100), () async {
-      await cont.getListing(isLoadMore: false);
-      cont.update();
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      onPopInvokedWithResult: (didPop, result) async {
-        if (didPop) {
-          await _handleBackNavigation();
-        }
-      },
-      child: SelectionArea(
-        child: Scaffold(
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          body: GetBuilder<HomeController>(
-            builder: (cont) {
-              return Padding(
-              padding: const EdgeInsets.all(20),
-              child: SafeArea(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        GestureDetector(
-                          onTap: () async {
-                            // Clear category filter and reload homepage
-                            final cont = Get.find<HomeController>();
-                            cont.selectedCategory = null;
-                            cont.selectedSubCategory = null;
-                            cont.selectedSubSubCategory = null;
-
-                            // Clear and reload homepage data
-                            cont.listingModelList.clear();
-                            cont.currentPage.value = 1;
-                            cont.hasMore.value = true;
-                            cont.update();
-
-                            Get.log("⬅️ Going back - Reloading homepage");
-                            Navigator.of(context).pop();
-
-                            // Reload homepage after navigation
-                            Future.delayed(Duration(milliseconds: 100), () async {
-                              await cont.getListing(isLoadMore: false);
-                              cont.update();
-                            });
-                          },
-                          child: Icon(
-                            Icons.arrow_back_ios,
-                            size: 20,
-                          ),
+    return SelectionArea(
+      child: Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: GetBuilder<HomeController>(
+          builder: (cont) {
+            return Padding(
+            padding: const EdgeInsets.all(20),
+            child: SafeArea(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          // Just go back - don't touch homepage list
+                          Navigator.of(context).pop();
+                        },
+                        child: Icon(
+                          Icons.arrow_back_ios,
+                          size: 20,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
+                  ),
                     SizedBox(
                       height: 20..h,
                     ),
@@ -117,7 +71,8 @@ class _CategoryFromState extends State<CategoryFrom> {
                       onTap: () {
                         cont.selectedSubCategory = null;
                         cont.selectedSubSubCategory = null;
-                        cont.listingModelList.clear();
+                        // DON'T clear listingModelList - that's the homepage list!
+                        // Only clear search list
                         cont.isSearchLoading.value = false;
                         cont.listingModelSearchList.clear();
                         cont.update();
@@ -479,7 +434,6 @@ class _CategoryFromState extends State<CategoryFrom> {
             );
           },
         ),
-      ),
       ),
     );
   }

@@ -418,11 +418,10 @@ class _SubSubCategoriesState extends State<SubSubCategories> {
                                           cont.selectedSubSubCategory = cont
                                               .subSubCategoriesModel
                                               ?.data?[index];
-                                          cont.currentPage.value = 1;
-                                          cont.hasMore.value = true;
-                                          // cont.getListing();
-                                          cont.getListingSearch();
-                                          cont.listingModelList.clear();
+                                          cont.currentSearchPage.value = 1;
+                                          cont.hasMoreSearch.value = true;
+                                          cont.listingModelSearchList.clear();
+                                          cont.getListingSearch(); // Use search list for category-filtered results
                                           Navigator.push(context, PremiumPageTransitions.slideFromRight(ShowAllListingSub()));
                                         },
                                         child: ProfileList(

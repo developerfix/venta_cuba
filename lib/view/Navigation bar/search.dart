@@ -227,11 +227,10 @@ class _SearchState extends State<Search> {
 
     // Perform initial search when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (homeCont.listingModelSearchList.isEmpty) {
-        homeCont.currentSearchPage.value = 1;
-        homeCont.listingModelSearchList.clear();
-        homeCont.getListingSearch();
-      }
+      // Always do a fresh search when entering search screen
+      homeCont.currentSearchPage.value = 1;
+      homeCont.listingModelSearchList.clear();
+      homeCont.getListingSearch();
     });
   }
 
@@ -270,8 +269,7 @@ class _SearchState extends State<Search> {
                           children: [
                             GestureDetector(
                                 onTap: () {
-                                  // Only clear category when coming from home screen (isSearchFrom == 0)
-                                  // Preserve category when coming from category screen (isSearchFrom == 1)
+                                  // Clear filters when going back
                                   if (widget.isSearchFrom == 0) {
                                     cont.selectedCategory = null;
                                   }

@@ -64,6 +64,7 @@ class HomeController extends GetxController {
   Rx<bool> isLoadingImages = false.obs;
   bool isLoading = false;
   bool needsRefreshAfterAccountSwitch = false; // Flag to trigger refresh when account type changes
+  bool needsHomepageRefresh = false; // Flag to trigger refresh when returning from search/category
   int isSelectedReport = 0;
   double subtotal = 0.0;
   TextEditingController makeController = TextEditingController();
@@ -512,6 +513,11 @@ class HomeController extends GetxController {
       bool locationChanged = hasLocationOrRadiusChanged();
 
       if (locationChanged || listingModelList.isEmpty) {
+        // IMPORTANT: Clear category filters for homepage - homepage shows ALL items
+        selectedCategory = null;
+        selectedSubCategory = null;
+        selectedSubSubCategory = null;
+        
         // Set flag to shuffle on location change
         if (locationChanged) {
           shouldShuffleOnLocationChange = true;
@@ -595,12 +601,17 @@ class HomeController extends GetxController {
       int pagesFetched = 0;
       bool reachedEnd = false;
 
-      // Get existing IDs to filter duplicates
+      // Get existing IDs and titles to filter duplicates (use both for robustness)
       Set<String> existingIds = <String>{};
+      Set<String> existingTitles = <String>{};
       for (var listing in listingModelList) {
         String id = listing.id?.toString() ?? '';
+        String title = listing.title?.toLowerCase().trim() ?? '';
         if (id.isNotEmpty) {
           existingIds.add(id);
+        }
+        if (title.isNotEmpty) {
+          existingTitles.add(title);
         }
       }
 
@@ -645,13 +656,26 @@ class HomeController extends GetxController {
           // Apply location filtering
           pageListings = await _applyLocationFilter(pageListings);
 
-          // Filter out duplicates
+          // Filter out duplicates (check both ID and title)
           for (var listing in pageListings) {
             String id = listing.id?.toString() ?? '';
-            if (id.isNotEmpty && !existingIds.contains(id)) {
-              existingIds.add(id);
-              filteredResults.add(listing);
+            String title = listing.title?.toLowerCase().trim() ?? '';
+            
+            // Skip if ID already exists
+            if (id.isNotEmpty && existingIds.contains(id)) {
+              continue;
             }
+            
+            // Skip if exact same title already exists (backup check)
+            if (title.isNotEmpty && existingTitles.contains(title)) {
+              Get.log("⚠️ Duplicate title found: '$title'");
+              continue;
+            }
+            
+            // Add to sets and results
+            if (id.isNotEmpty) existingIds.add(id);
+            if (title.isNotEmpty) existingTitles.add(title);
+            filteredResults.add(listing);
           }
 
           Get.log("📊 After filtering page $pageNum: ${filteredResults.length} total filtered results");
@@ -675,14 +699,10 @@ class HomeController extends GetxController {
       if (filteredResults.isNotEmpty) {
         listingModelList.addAll(filteredResults);
 
-        // Shuffle listings on first load
+        // Always shuffle on refresh/reload (not on load more)
         if (!isLoadMore && listingModelList.isNotEmpty) {
-          if (shouldShuffleOnLocationChange) {
-            shuffleListingsOnLocationChange();
-            shouldShuffleOnLocationChange = false;
-          } else {
-            await shuffleListingsOnLogin();
-          }
+          Get.log("🔀 Shuffling homepage items...");
+          listingModelList.shuffle();
         }
 
         // Update current page
@@ -2251,11 +2271,19 @@ class HomeController extends GetxController {
       int pagesFetched = 0;
       bool reachedEnd = false;
 
-      // Get existing titles to filter duplicates
-      Set<String> existingTitles = listingModelSearchList
-          .where((item) => item.title != null && item.title!.isNotEmpty)
-          .map((item) => item.title!.toLowerCase().trim())
-          .toSet();
+      // Get existing IDs and titles to filter duplicates (use both for robustness)
+      Set<String> existingIds = <String>{};
+      Set<String> existingTitles = <String>{};
+      for (var listing in listingModelSearchList) {
+        String id = listing.id?.toString() ?? '';
+        String title = listing.title?.toLowerCase().trim() ?? '';
+        if (id.isNotEmpty) {
+          existingIds.add(id);
+        }
+        if (title.isNotEmpty) {
+          existingTitles.add(title);
+        }
+      }
 
       // Keep fetching until we have enough filtered results or reach the end
       while (filteredResults.length < minResultsToShow && 
@@ -2304,13 +2332,26 @@ class HomeController extends GetxController {
           pageListings = applyCategoryFilter(pageListings);
           pageListings = await _applyLocationFilter(pageListings, isSearchPage: true);
 
-          // Filter duplicates
+          // Filter duplicates (check both ID and title)
           for (var listing in pageListings) {
+            String id = listing.id?.toString() ?? '';
             String title = listing.title?.toLowerCase().trim() ?? '';
-            if (title.isEmpty || !existingTitles.contains(title)) {
-              if (title.isNotEmpty) existingTitles.add(title);
-              filteredResults.add(listing);
+            
+            // Skip if ID already exists
+            if (id.isNotEmpty && existingIds.contains(id)) {
+              continue;
             }
+            
+            // Skip if exact same title already exists (backup check)
+            if (title.isNotEmpty && existingTitles.contains(title)) {
+              Get.log("🔍 Duplicate title found in search: '$title'");
+              continue;
+            }
+            
+            // Add to sets and results
+            if (id.isNotEmpty) existingIds.add(id);
+            if (title.isNotEmpty) existingTitles.add(title);
+            filteredResults.add(listing);
           }
 
           Get.log("🔍 After filtering: ${filteredResults.length} total results");
@@ -2333,7 +2374,8 @@ class HomeController extends GetxController {
       if (filteredResults.isNotEmpty) {
         listingModelSearchList.addAll(filteredResults);
         currentSearchPage.value += pagesFetched;
-        listingModelList = listingModelSearchList;
+        // DO NOT overwrite listingModelList - keep homepage and search lists separate
+        // listingModelList = listingModelSearchList; // REMOVED - was causing homepage to show search results
         
         // Apply sorting
         applySortingToSearchList();

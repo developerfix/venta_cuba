@@ -72,7 +72,7 @@ class _ShowAllListingSubState extends State<ShowAllListingSub> {
                     ),
                     Expanded(
                         child: GridView.builder(
-                      itemCount: cont.listingModelList.length,
+                      itemCount: cont.listingModelSearchList.length,
                       // physics: NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -85,7 +85,7 @@ class _ShowAllListingSubState extends State<ShowAllListingSub> {
                         return GestureDetector(
                             onTap: () {
                               cont.isListing = 0;
-                              cont.listingModel = cont.listingModelList[index];
+                              cont.listingModel = cont.listingModelSearchList[index];
                               Navigator.push(
                                   context,
                                   PremiumPageTransitions.slideFromRight(
@@ -140,13 +140,13 @@ class _ShowAllListingSubState extends State<ShowAllListingSub> {
                                                 .size
                                                 .width,
                                             imageUrl: cont
-                                                            .listingModelList[
+                                                            .listingModelSearchList[
                                                                 index]
                                                             .gallery !=
                                                         null &&
-                                                    cont.listingModelList[index]
+                                                    cont.listingModelSearchList[index]
                                                         .gallery!.isNotEmpty
-                                                ? "${cont.listingModelList[index].gallery?.first}"
+                                                ? "${cont.listingModelSearchList[index].gallery?.first}"
                                                 : "",
                                             imageBuilder:
                                                 (context, imageProvider) =>
@@ -185,7 +185,7 @@ class _ShowAllListingSubState extends State<ShowAllListingSub> {
                                           SizedBox(
                                             height: 20.h,
                                             child: Text(
-                                              cont.listingModelList[index]
+                                              cont.listingModelSearchList[index]
                                                       .title ??
                                                   "",
                                               textAlign: TextAlign.center,
@@ -205,7 +205,7 @@ class _ShowAllListingSubState extends State<ShowAllListingSub> {
                                           SizedBox(
                                             height: 16.h,
                                             child: Text(
-                                              '${cont.listingModelList[index].address ?? ""}',
+                                              '${cont.listingModelSearchList[index].address ?? ""}',
                                               textAlign: TextAlign.center,
                                               overflow: TextOverflow.ellipsis,
                                               style: TextStyle(
@@ -221,11 +221,11 @@ class _ShowAllListingSubState extends State<ShowAllListingSub> {
                                             height: 16.h,
                                             child: SelectionArea(
                                               child: Text(
-                                                cont.listingModelList[index]
+                                                cont.listingModelSearchList[index]
                                                             .price ==
                                                         "0"
                                                     ? " "
-                                                    : "${PriceFormatter().formatNumber(int.parse(cont.listingModelList[index].price ?? '0'))}\$ ${PriceFormatter().getCurrency(cont.listingModelList[index].currency)}",
+                                                    : "${PriceFormatter().formatNumber(int.parse(cont.listingModelSearchList[index].price ?? '0'))}\$ ${PriceFormatter().getCurrency(cont.listingModelSearchList[index].currency)}",
                                                 textAlign: TextAlign.center,
                                                 overflow: TextOverflow.ellipsis,
                                                 style: TextStyle(
@@ -253,13 +253,13 @@ class _ShowAllListingSubState extends State<ShowAllListingSub> {
                                         Navigator.push(context, PremiumPageTransitions.slideFromBottom(Login()));
                                       } else {
                                         cont.listingModel =
-                                            cont.listingModelList[index];
-                                        cont.listingModelList[index]
+                                            cont.listingModelSearchList[index];
+                                        cont.listingModelSearchList[index]
                                                     .isFavorite ==
                                                 "0"
-                                            ? cont.listingModelList[index]
+                                            ? cont.listingModelSearchList[index]
                                                 .isFavorite = "1"
-                                            : cont.listingModelList[index]
+                                            : cont.listingModelSearchList[index]
                                                 .isFavorite = "0";
                                         cont.update();
                                         bool isAddedF =
@@ -267,11 +267,11 @@ class _ShowAllListingSubState extends State<ShowAllListingSub> {
                                         if (isAddedF) {
                                           // Sync with other lists
                                           String itemId = cont
-                                                  .listingModelList[index]
+                                                  .listingModelSearchList[index]
                                                   .itemId ??
                                               "";
                                           String newFavoriteStatus = cont
-                                                  .listingModelList[index]
+                                                  .listingModelSearchList[index]
                                                   .isFavorite ??
                                               "0";
 
@@ -301,12 +301,12 @@ class _ShowAllListingSubState extends State<ShowAllListingSub> {
                                           cont.update();
                                           errorAlertToast("Successfully".tr);
                                         } else {
-                                          cont.listingModelList[index]
+                                          cont.listingModelSearchList[index]
                                                       .isFavorite ==
                                                   "0"
-                                              ? cont.listingModelList[index]
+                                              ? cont.listingModelSearchList[index]
                                                   .isFavorite = "1"
-                                              : cont.listingModelList[index]
+                                              : cont.listingModelSearchList[index]
                                                   .isFavorite = "0";
                                         }
                                       }
@@ -322,7 +322,7 @@ class _ShowAllListingSubState extends State<ShowAllListingSub> {
                                       child: SvgPicture.asset(
                                         'assets/icons/heart1.svg',
                                         colorFilter: ColorFilter.mode(
-                                            cont.listingModelList[index]
+                                            cont.listingModelSearchList[index]
                                                         .isFavorite ==
                                                     '0'
                                                 ? AppColors.k0xFF9F9F9F
