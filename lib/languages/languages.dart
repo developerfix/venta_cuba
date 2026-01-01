@@ -934,8 +934,7 @@ It is not allowed to use our member-to-member communication resources to send sp
           'ago_2': "ago",
           "please select": "Please select somthing from list",
           "Your VentaCuba Otp code is": "Your VentaCuba Otp code is",
-          'Click here to enter a location to see publications near you.':
-              'Click here to enter a location to see publications near you.',
+          'Choose a location': 'Choose a location',
           // Remove all favourites translations
           "Remove All Listings": "Remove All Listings",
           "Remove All Sellers": "Remove All Sellers",
@@ -2023,8 +2022,7 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
           "Create an account": "Crea una cuenta",
           "Don’t have an account?": "¿No tienes una cuenta?",
           "Video Picked Successfully": "Vídeo seleccionado correctamente",
-          'Click here to enter a location to see publications near you.':
-              'Haga clic aquí para ingresar una ubicación para ver publicaciones cerca de usted.',
+          'Choose a location': 'Elige una ubicación',
           'Notification permissions ready': 'Permisos de notificaciones listos',
           'Error checking notification permissions':
               'Error al verificar permisos de notificaciones',

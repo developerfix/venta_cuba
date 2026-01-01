@@ -132,7 +132,9 @@ class _LocationDialogState extends State<LocationDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Dialog(
+      backgroundColor: isDark ? Color(0xFF1E1E1E) : Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16.r),
       ),
@@ -332,7 +334,7 @@ class _LocationDialogState extends State<LocationDialog> {
                           borderRadius: BorderRadius.circular(8.r),
                         ),
                         side: BorderSide(
-                          color: Color(0xFF0254B8),
+                          color: isDark ? Colors.white : Color(0xFF0254B8),
                         ),
                       ),
                       child: Text(
@@ -340,7 +342,7 @@ class _LocationDialogState extends State<LocationDialog> {
                         style: TextStyle(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w500,
-                          color: Color(0xFF0254B8),
+                          color: isDark ? Colors.white : Color(0xFF0254B8),
                         ),
                       ),
                     ),
@@ -432,10 +434,9 @@ class _ProvinceSelectorState extends State<_ProvinceSelector> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? Colors.black
-          : Colors.white,
+      backgroundColor: isDark ? Colors.black : Colors.white,
       appBar: AppBar(
         backgroundColor: Color(0xFF0254B8),
         leading: IconButton(
@@ -490,6 +491,7 @@ class _ProvinceSelectorState extends State<_ProvinceSelector> {
                         fontWeight: tempIsAllProvincesSelected
                             ? FontWeight.w600
                             : FontWeight.normal,
+                        color: isDark ? Colors.white : Colors.black,
                       ),
                     ),
                   ),
@@ -499,7 +501,7 @@ class _ProvinceSelectorState extends State<_ProvinceSelector> {
               ),
             ),
           ),
-          Divider(height: 1, thickness: 1),
+          Divider(height: 1, thickness: 1, color: isDark ? Colors.grey.shade700 : null),
           // Individual provinces
           ...provinceName.map((province) {
             final isSelected = tempSelectedProvinces.contains(province);
@@ -533,6 +535,7 @@ class _ProvinceSelectorState extends State<_ProvinceSelector> {
                               fontWeight: isSelected
                                   ? FontWeight.w600
                                   : FontWeight.normal,
+                              color: isDark ? Colors.white : Colors.black,
                             ),
                           ),
                         ),
@@ -542,7 +545,7 @@ class _ProvinceSelectorState extends State<_ProvinceSelector> {
                     ),
                   ),
                 ),
-                Divider(height: 1, thickness: 1),
+                Divider(height: 1, thickness: 1, color: isDark ? Colors.grey.shade700 : null),
               ],
             );
           }).toList(),
@@ -581,10 +584,9 @@ class _MunicipalitySelectorState extends State<_MunicipalitySelector> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? Colors.black
-          : Colors.white,
+      backgroundColor: isDark ? Colors.black : Colors.white,
       appBar: AppBar(
         backgroundColor: Color(0xFF0254B8),
         leading: IconButton(
@@ -639,6 +641,7 @@ class _MunicipalitySelectorState extends State<_MunicipalitySelector> {
                         fontWeight: tempIsAllCitiesSelected
                             ? FontWeight.w600
                             : FontWeight.normal,
+                        color: isDark ? Colors.white : Colors.black,
                       ),
                     ),
                   ),
@@ -648,7 +651,7 @@ class _MunicipalitySelectorState extends State<_MunicipalitySelector> {
               ),
             ),
           ),
-          Divider(height: 1, thickness: 1),
+          Divider(height: 1, thickness: 1, color: isDark ? Colors.grey.shade700 : null),
           // Individual cities
           ...widget.availableCities.map((city) {
             final isSelected = tempSelectedCities.contains(city);
@@ -682,6 +685,7 @@ class _MunicipalitySelectorState extends State<_MunicipalitySelector> {
                               fontWeight: isSelected
                                   ? FontWeight.w600
                                   : FontWeight.normal,
+                              color: isDark ? Colors.white : Colors.black,
                             ),
                           ),
                         ),
@@ -691,7 +695,7 @@ class _MunicipalitySelectorState extends State<_MunicipalitySelector> {
                     ),
                   ),
                 ),
-                Divider(height: 1, thickness: 1),
+                Divider(height: 1, thickness: 1, color: isDark ? Colors.grey.shade700 : null),
               ],
             );
           }).toList(),

@@ -248,7 +248,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                     child: Container(
                                       height: 54.h,
                                       decoration: BoxDecoration(
-                                        color: AppColors.k0xFFF0F1F1,
+                                        color: Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? Color(0xFF2C2C2C)
+                                            : AppColors.k0xFFF0F1F1,
                                         borderRadius:
                                             BorderRadius.circular(100),
                                       ),
@@ -256,12 +259,18 @@ class _HomeScreenState extends State<HomeScreen> {
                                         children: [
                                           SizedBox(width: 8),
                                           Icon(Icons.search_rounded,
-                                              color: Color(0xFFA9ABAC)),
+                                              color: Theme.of(context).brightness ==
+                                                      Brightness.dark
+                                                  ? Colors.white70
+                                                  : Color(0xFFA9ABAC)),
                                           SizedBox(width: 8),
                                           CustomText(
                                             text:
                                                 'What are you looking for?'.tr,
-                                            fontColor: Color(0xFFA9ABAC),
+                                            fontColor: Theme.of(context).brightness ==
+                                                    Brightness.dark
+                                                ? Colors.white70
+                                                : Color(0xFFA9ABAC),
                                           )
                                         ],
                                       ),
@@ -479,8 +488,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                   Container(
                                     padding: EdgeInsets.all(8.w),
                                     decoration: BoxDecoration(
-                                      color: Color(0xFF0254B8)
-                                          .withValues(alpha: 0.1),
+                                      color: Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? Colors.white.withValues(alpha: 0.1)
+                                          : Color(0xFF0254B8).withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(8.r),
                                     ),
                                     child: SvgPicture.asset(
@@ -488,7 +499,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                       width: 20.w,
                                       height: 20.h,
                                       colorFilter: ColorFilter.mode(
-                                        Color(0xFF0254B8),
+                                        Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? Colors.white
+                                            : Color(0xFF0254B8),
                                         BlendMode.srcIn,
                                       ),
                                     ),
@@ -497,8 +511,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   Expanded(
                                     child: cont.address == ''
                                         ? Text(
-                                            'Click here to enter a location to see publications near you.'
-                                                .tr,
+                                            'Choose a location'.tr,
                                             style: TextStyle(
                                               fontSize: 14.sp,
                                               fontWeight: FontWeight.w500,
@@ -545,7 +558,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                   Icon(
                                     Icons.arrow_forward_ios,
                                     size: 16.sp,
-                                    color: Color(0xFF0254B8),
+                                    color: Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Colors.white
+                                        : Color(0xFF0254B8),
                                   ),
                                 ],
                               ),

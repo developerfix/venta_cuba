@@ -478,6 +478,8 @@ class AuthController extends GetxController {
 
       if (isLogin) {
         // Navigate immediately, load user details in background
+        // Reset to homepage tab
+        currentIndexBottomAppBar = 0;
         Get.offAll(() => Navigation_Bar());
 
         // Load user details after navigation (non-blocking)
@@ -698,6 +700,8 @@ class AuthController extends GetxController {
       businessAddressCont.clear();
       businessLogo = null;
       onUpdateUserData(response.body);
+      // Reset to homepage tab
+      currentIndexBottomAppBar = 0;
       Get.offAll(Navigation_Bar());
     } else {
       // Something went wrong
@@ -992,6 +996,10 @@ class AuthController extends GetxController {
     }
 
     update();
+    
+    // Reset to homepage tab before navigating
+    currentIndexBottomAppBar = 0;
+    
     Get.offAll(Navigation_Bar());
   }
 
@@ -1045,7 +1053,36 @@ class AuthController extends GetxController {
       await prefs.remove('lastLng');
       await prefs.remove('lastRadius');
       await prefs.remove('saveAddress');
+      await prefs.remove('saveLat');
+      await prefs.remove('saveLng');
       await prefs.remove('saveRadius');
+      
+      // Clear location selection preferences
+      await prefs.remove('selectedProvinceNames');
+      await prefs.remove('selectedCityNames');
+      await prefs.setBool('isAllProvinces', true);
+      await prefs.setBool('isAllCities', false);
+
+      // Reset homepage to default state
+      try {
+        final homeCont = Get.find<HomeController>();
+        homeCont.address = "";
+        homeCont.lat = "";
+        homeCont.lng = "";
+        homeCont.radius = 500.0;
+        homeCont.lastLat = null;
+        homeCont.lastLng = null;
+        homeCont.lastRadius = 500.0;
+        homeCont.listingModelList.clear();
+        homeCont.listingModelSearchList.clear();
+        homeCont.currentPage.value = 1;
+        homeCont.hasMore.value = true;
+        homeCont.selectedCategory = null;
+        homeCont.selectedSubCategory = null;
+        homeCont.selectedSubSubCategory = null;
+      } catch (e) {
+        // HomeController might not exist yet
+      }
 
       // Reset unread message count
       unreadMessageCount.value = 0;
@@ -1066,6 +1103,21 @@ class AuthController extends GetxController {
         SharedPreferences prefs = await SharedPreferences.getInstance();
         prefs.remove('token');
         prefs.remove('user_data');
+        await prefs.remove('saveAddress');
+        await prefs.remove('saveLat');
+        await prefs.remove('saveLng');
+        await prefs.remove('saveRadius');
+
+        // Reset homepage to default state
+        try {
+          final homeCont = Get.find<HomeController>();
+          homeCont.address = "";
+          homeCont.lat = "";
+          homeCont.lng = "";
+          homeCont.radius = 500.0;
+          homeCont.listingModelList.clear();
+          homeCont.listingModelSearchList.clear();
+        } catch (e) {}
 
         // Reset unread message count
         unreadMessageCount.value = 0;
