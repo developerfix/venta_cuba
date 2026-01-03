@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
 import 'package:venta_cuba/Controllers/home_controller.dart';
+import 'package:venta_cuba/Controllers/homepage_controller.dart';
 import 'package:venta_cuba/view/Navigation%20bar/post.dart';
 import 'package:venta_cuba/view/auth/login.dart';
 import 'package:venta_cuba/view/constants/Colors.dart';
@@ -13,18 +14,26 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 final authCont = Get.find<AuthController>();
 
+/// ListingView for HOMEPAGE ONLY - uses HomepageController
+/// This is completely separate from Search and Category screens
 class ListingView extends StatelessWidget {
   const ListingView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final homeCont =
-        Get.find<HomeController>(); // Use existing controller instance
-    return GetBuilder<HomeController>(
-      init: homeCont,
+    // Use HomepageController for homepage listings - SEPARATE from search/category
+    final homepageCont = Get.put(HomepageController());
+    // HomeController is only used for navigation to detail screen
+    final homeCont = Get.put(HomeController());
+    
+    return GetBuilder<HomepageController>(
+      init: homepageCont,
       builder: (cont) {
-        // Show loading indicator when list is empty
-        if (cont.listingModelList.isEmpty) {
+        // Show loading indicator when:
+        // 1. Actually loading AND list is empty, OR
+        // 2. Initial load hasn't completed yet (prevents flash of empty state)
+        if (cont.homepageListings.isEmpty &&
+            (cont.isLoading.value || !cont.hasInitialLoadCompleted.value)) {
           return Container(
             height: 200,
             child: Center(
@@ -33,11 +42,51 @@ class ListingView extends StatelessWidget {
           );
         }
         
-        // Use the already shuffled list from controller
-        final shuffledList = cont.listingModelList;
+        // Show empty state ONLY when:
+        // 1. List is empty AND
+        // 2. NOT loading AND
+        // 3. Initial load has completed (we've actually tried to fetch data)
+        if (cont.homepageListings.isEmpty &&
+            !cont.isLoading.value &&
+            cont.hasInitialLoadCompleted.value) {
+          return Container(
+            height: 200,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.inbox_outlined,
+                    size: 48,
+                    color: Colors.grey,
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'No listings found'.tr,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Try selecting a different location'.tr,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        // Use HomepageController's list - completely separate from search/category
+        final listings = cont.homepageListings;
 
         return GridView.builder(
-          itemCount: shuffledList.length + (cont.hasMore.value && cont.isPostLoading.value ? 1 : 0),
+          itemCount: listings.length + (cont.hasMore.value && cont.isLoading.value ? 1 : 0),
           physics: NeverScrollableScrollPhysics(),
           shrinkWrap: true,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -47,7 +96,7 @@ class ListingView extends StatelessWidget {
             crossAxisSpacing: 10,
           ),
           itemBuilder: (BuildContext context, int index) {
-            if (index == shuffledList.length) {
+            if (index == listings.length) {
               // Show loading indicator when loading more items
               return Container(
                 height: 100,
@@ -57,18 +106,17 @@ class ListingView extends StatelessWidget {
               );
             }
             // Safety check to prevent RangeError
-            if (index >= shuffledList.length) {
-              return SizedBox.shrink(); // Return empty widget if index is out of bounds
+            if (index >= listings.length) {
+              return SizedBox.shrink();
             }
-            final item = shuffledList[index];
+            final item = listings[index];
             return RepaintBoundary(
-              // Isolate repaints for better performance
               child: GestureDetector(
                 onTap: () async {
-                  cont.isListing = 0;
-                  cont.listingModel = item; // Use shuffled item
+                  // Use HomeController for navigation (shared for detail view)
+                  homeCont.isListing = 0;
+                  homeCont.listingModel = item;
 
-                  // Premium navigation with hero animation
                   await Navigator.push(
                     context,
                     PremiumPageTransitions.slideFromRight(
@@ -175,7 +223,6 @@ class ListingView extends StatelessWidget {
                                         : "${PriceFormatter().formatNumber(int.parse(item.price ?? '0'))}\$ ${PriceFormatter().getCurrency(item.currency)}",
                                     textAlign: TextAlign.center,
                                     overflow: TextOverflow.ellipsis,
-                                    // "${item.id}",
                                     style: TextStyle(
                                         fontSize: 14..sp,
                                         fontWeight: FontWeight.w600,
@@ -197,30 +244,17 @@ class ListingView extends StatelessWidget {
                           if (authCont.user?.email == "") {
                             Get.to(Login());
                           } else {
-                            cont.listingModel = item; // Use shuffled item
+                            homeCont.listingModel = item;
                             String originalFavoriteStatus =
                                 item.isFavorite ?? "0";
                             item.isFavorite =
                                 item.isFavorite == "0" ? "1" : "0";
                             cont.update();
-                            bool isAddedF = await cont.favouriteItem();
+                            bool isAddedF = await homeCont.favouriteItem();
                             if (isAddedF) {
-                              // Sync with favorites list
-                              cont.syncFavoriteStatusInFavoritesList(
+                              // Update in HomepageController list
+                              cont.updateFavoriteStatus(
                                   item.itemId ?? "", item.isFavorite ?? "0");
-
-                              // Update search list to keep it in sync
-                              for (int i = 0;
-                                  i < cont.listingModelSearchList.length;
-                                  i++) {
-                                if (cont.listingModelSearchList[i].itemId ==
-                                    item.itemId) {
-                                  cont.listingModelSearchList[i].isFavorite =
-                                      item.isFavorite;
-                                  break;
-                                }
-                              }
-                              cont.update();
                             } else {
                               // Revert the change if API call failed
                               item.isFavorite = originalFavoriteStatus;

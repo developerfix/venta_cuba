@@ -21,6 +21,7 @@ import '../view/auth/login.dart';
 import 'package:http/http.dart' as http;
 import '../view/Chat/Controller/SupabaseChatController.dart';
 import 'home_controller.dart';
+import 'homepage_controller.dart';
 // Firebase removed for Cuba compatibility
 // import '../Services/Firebase/firebase_messaging_service.dart';
 import '../Services/push_service.dart';
@@ -979,6 +980,59 @@ class AuthController extends GetxController {
     changeAccountType();
     fetchAccountType();
     await getuserDetail();
+    
+    // Set default location to "All provinces" on fresh login
+    try {
+      SharedPreferences loginPrefs = await SharedPreferences.getInstance();
+      
+      // Always reset to "All provinces" on new login
+      // Store the English key - translation will be applied when displayed
+      await loginPrefs.setString('saveAddress', 'All provinces');
+      await loginPrefs.setString('saveLat', '23.1136');
+      await loginPrefs.setString('saveLng', '-82.3666');
+      await loginPrefs.setString('saveRadius', '1000.0');
+      await loginPrefs.setBool('isAllProvinces', true);
+      await loginPrefs.setBool('isAllCities', false);
+      await loginPrefs.setStringList('selectedProvinceNames', []);
+      await loginPrefs.setStringList('selectedCityNames', []);
+      
+      // Also clear the lastLat/lastLng to force a fresh load
+      await loginPrefs.remove('lastLat');
+      await loginPrefs.remove('lastLng');
+      await loginPrefs.remove('lastRadius');
+      
+      Get.log("🔐 Login: Set default location to All provinces");
+      
+      // Update HomeController with default location
+      try {
+        final homeCont = Get.find<HomeController>();
+        homeCont.address = 'All provinces';
+        homeCont.lat = '23.1136';
+        homeCont.lng = '-82.3666';
+        homeCont.radius = 1000.0;
+        homeCont.lastLat = null;
+        homeCont.lastLng = null;
+        homeCont.lastRadius = 1000.0;
+        homeCont.hasInitialLoadCompleted.value = false; // Reset for fresh load
+        homeCont.listingModelList.clear();
+        homeCont.currentPage.value = 1;
+        homeCont.hasMore.value = true;
+        Get.log("🔐 Login: Reset HomeController to All provinces");
+      } catch (e) {
+        Get.log("🔐 Login: HomeController not found yet - will be initialized with defaults from SharedPreferences");
+      }
+      
+      // Update HomepageController with default location
+      try {
+        final homepageCont = Get.find<HomepageController>();
+        await homepageCont.resetToAllProvinces();
+        Get.log("🔐 Login: Reset HomepageController to All provinces");
+      } catch (e) {
+        Get.log("🔐 Login: HomepageController not found yet - will be initialized with defaults from SharedPreferences");
+      }
+    } catch (e) {
+      Get.log("🔐 Login: Error setting defaults: $e", isError: true);
+    }
 
     // Initialize services
     try {
@@ -1057,32 +1111,64 @@ class AuthController extends GetxController {
       await prefs.remove('saveLng');
       await prefs.remove('saveRadius');
       
-      // Clear location selection preferences
+      // Clear location selection preferences and set defaults for next login
       await prefs.remove('selectedProvinceNames');
       await prefs.remove('selectedCityNames');
-      await prefs.setBool('isAllProvinces', true);
+      await prefs.setBool('isAllProvinces', true);  // Default to all provinces
       await prefs.setBool('isAllCities', false);
+      
+      // Set default address for next login
+      await prefs.setString('saveAddress', 'All provinces');
+      await prefs.setString('saveLat', '23.1136');
+      await prefs.setString('saveLng', '-82.3666');
+      await prefs.setString('saveRadius', '1000.0');
 
       // Reset homepage to default state
       try {
         final homeCont = Get.find<HomeController>();
-        homeCont.address = "";
-        homeCont.lat = "";
-        homeCont.lng = "";
-        homeCont.radius = 500.0;
+        homeCont.address = "All provinces";
+        homeCont.lat = "23.1136";
+        homeCont.lng = "-82.3666";
+        homeCont.radius = 1000.0;
         homeCont.lastLat = null;
         homeCont.lastLng = null;
-        homeCont.lastRadius = 500.0;
+        homeCont.lastRadius = 1000.0;
         homeCont.listingModelList.clear();
         homeCont.listingModelSearchList.clear();
         homeCont.currentPage.value = 1;
         homeCont.hasMore.value = true;
+        homeCont.hasInitialLoadCompleted.value = false;
+        homeCont.isPostLoading.value = false; // Reset loading state
         homeCont.selectedCategory = null;
         homeCont.selectedSubCategory = null;
         homeCont.selectedSubSubCategory = null;
       } catch (e) {
         // HomeController might not exist yet
       }
+      
+      // Reset HomepageController to default state
+      try {
+        final homepageCont = Get.find<HomepageController>();
+        homepageCont.homepageListings.clear();
+        homepageCont.address = "All provinces";
+        homepageCont.lat = "23.1136";
+        homepageCont.lng = "-82.3666";
+        homepageCont.radius = 1000.0;
+        homepageCont.currentPage.value = 1;
+        homepageCont.hasMore.value = true;
+        homepageCont.hasInitialLoadCompleted.value = false;
+        homepageCont.isLoading.value = false; // Reset loading state
+      } catch (e) {
+        // HomepageController might not exist yet
+      }
+      
+      // Delete controllers to force fresh initialization on next login
+      try {
+        Get.delete<HomepageController>(force: true);
+      } catch (e) {}
+      try {
+        Get.delete<HomeController>(force: true);
+      } catch (e) {}
 
       // Reset unread message count
       unreadMessageCount.value = 0;
@@ -1107,16 +1193,46 @@ class AuthController extends GetxController {
         await prefs.remove('saveLat');
         await prefs.remove('saveLng');
         await prefs.remove('saveRadius');
+        
+        // Set default location for next login
+        await prefs.setBool('isAllProvinces', true);
+        await prefs.setBool('isAllCities', false);
+        await prefs.setString('saveAddress', 'All provinces');
+        await prefs.setString('saveLat', '23.1136');
+        await prefs.setString('saveLng', '-82.3666');
+        await prefs.setString('saveRadius', '1000.0');
 
         // Reset homepage to default state
         try {
           final homeCont = Get.find<HomeController>();
-          homeCont.address = "";
-          homeCont.lat = "";
-          homeCont.lng = "";
-          homeCont.radius = 500.0;
+          homeCont.address = "All provinces";
+          homeCont.lat = "23.1136";
+          homeCont.lng = "-82.3666";
+          homeCont.radius = 1000.0;
           homeCont.listingModelList.clear();
           homeCont.listingModelSearchList.clear();
+          homeCont.hasInitialLoadCompleted.value = false;
+          homeCont.isPostLoading.value = false;
+        } catch (e) {}
+        
+        // Reset HomepageController
+        try {
+          final homepageCont = Get.find<HomepageController>();
+          homepageCont.homepageListings.clear();
+          homepageCont.address = "All provinces";
+          homepageCont.lat = "23.1136";
+          homepageCont.lng = "-82.3666";
+          homepageCont.radius = 1000.0;
+          homepageCont.hasInitialLoadCompleted.value = false;
+          homepageCont.isLoading.value = false;
+        } catch (e) {}
+        
+        // Delete controllers to force fresh initialization on next login
+        try {
+          Get.delete<HomepageController>(force: true);
+        } catch (e) {}
+        try {
+          Get.delete<HomeController>(force: true);
         } catch (e) {}
 
         // Reset unread message count

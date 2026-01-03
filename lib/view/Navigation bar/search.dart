@@ -284,12 +284,14 @@ class _SearchState extends State<Search> {
                             Container(
                               width: MediaQuery.of(context).size.width * .75,
                               decoration: BoxDecoration(
-                                color: Theme.of(context).brightness == Brightness.dark
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
                                     ? Colors.black
                                     : Colors.white,
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                    color: Theme.of(context).brightness == Brightness.dark
+                                    color: Theme.of(context).brightness ==
+                                            Brightness.dark
                                         ? Colors.white
                                         : Colors.black,
                                     width: 1),
@@ -303,10 +305,8 @@ class _SearchState extends State<Search> {
                                   // Trigger rebuild to show/hide close icon
                                   cont.update();
 
-                                  // Trigger search immediately when text changes
-                                  cont.currentSearchPage.value = 1;
-                                  cont.listingModelSearchList.clear();
-                                  cont.getListingSearch();
+                                  // Use debounced search to prevent rapid-fire API calls
+                                  cont.searchWithDebounce();
                                 },
                                 onSubmitted: (value) {
                                   // Reset price filter when search is submitted
@@ -348,7 +348,10 @@ class _SearchState extends State<Search> {
                                         child: SvgPicture.asset(
                                             'assets/icons/search.svg',
                                             colorFilter: ColorFilter.mode(
-                                              Theme.of(context).iconTheme.color ?? Colors.grey,
+                                              Theme.of(context)
+                                                      .iconTheme
+                                                      .color ??
+                                                  Colors.grey,
                                               BlendMode.srcIn,
                                             )),
                                       ),
@@ -409,8 +412,8 @@ class _SearchState extends State<Search> {
                                 child: Container(
                                   padding: EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                      color:
-                                          AppColors.k0xFF0254B8.withValues(alpha: .2),
+                                      color: AppColors.k0xFF0254B8
+                                          .withValues(alpha: .2),
                                       borderRadius: BorderRadius.circular(60)),
                                   child: Center(
                                     child: SvgPicture.asset(
@@ -464,7 +467,10 @@ class _SearchState extends State<Search> {
                                             child: SvgPicture.asset(
                                               'assets/icons/drop.svg',
                                               colorFilter: ColorFilter.mode(
-                                                Theme.of(context).iconTheme.color ?? Colors.grey,
+                                                Theme.of(context)
+                                                        .iconTheme
+                                                        .color ??
+                                                    Colors.grey,
                                                 BlendMode.srcIn,
                                               ),
                                             ),
@@ -600,10 +606,17 @@ class _SearchState extends State<Search> {
                                                     ),
                                                     child: SvgPicture.asset(
                                                       'assets/icons/category.svg',
-                                                      colorFilter: ColorFilter.mode(
+                                                      colorFilter:
+                                                          ColorFilter.mode(
                                                         isListView
-                                                            ? (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.grey)
-                                                            : Theme.of(context).colorScheme.onPrimary,
+                                                            ? (Theme.of(context)
+                                                                    .textTheme
+                                                                    .bodyLarge
+                                                                    ?.color ??
+                                                                Colors.grey)
+                                                            : Theme.of(context)
+                                                                .colorScheme
+                                                                .onPrimary,
                                                         BlendMode.srcIn,
                                                       ),
                                                     ),
@@ -634,10 +647,17 @@ class _SearchState extends State<Search> {
                                                     ),
                                                     child: SvgPicture.asset(
                                                       'assets/icons/list1.svg',
-                                                      colorFilter: ColorFilter.mode(
+                                                      colorFilter:
+                                                          ColorFilter.mode(
                                                         isListView
-                                                            ? Theme.of(context).colorScheme.onPrimary
-                                                            : (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.grey),
+                                                            ? Theme.of(context)
+                                                                .colorScheme
+                                                                .onPrimary
+                                                            : (Theme.of(context)
+                                                                    .textTheme
+                                                                    .bodyLarge
+                                                                    ?.color ??
+                                                                Colors.grey),
                                                         BlendMode.srcIn,
                                                       ),
                                                     ),
@@ -708,41 +728,90 @@ class _SearchState extends State<Search> {
                               ),
                             ),
                             // Content
-                            isListView
-                                ? SliverList(
-                                    delegate: SliverChildBuilderDelegate(
-                                      (BuildContext context, int index) {
-                                        return Padding(
-                                          padding:
-                                              EdgeInsets.only(bottom: 20.h),
-                                          child: listItem(
-                                              cont.listingModelSearchList[
-                                                  index],
-                                              index),
-                                        );
-                                      },
-                                      childCount:
-                                          cont.listingModelSearchList.length,
-                                    ),
-                                  )
-                                : SliverGrid(
-                                    gridDelegate:
-                                        SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: 2,
-                                      childAspectRatio: 0.50.r,
-                                      mainAxisSpacing: 15,
-                                      crossAxisSpacing: 10,
-                                    ),
-                                    delegate: SliverChildBuilderDelegate(
-                                      (BuildContext context, int index) {
-                                        return gridItem(
-                                            cont.listingModelSearchList[index],
-                                            index);
-                                      },
-                                      childCount:
-                                          cont.listingModelSearchList.length,
+                            // Show loading when searching and no results yet
+                            if (cont.isSearchLoading.value &&
+                                cont.listingModelSearchList.isEmpty)
+                              SliverToBoxAdapter(
+                                child: Container(
+                                  height: 200,
+                                  child: Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                ),
+                              )
+                            // Show empty state when not loading and no results
+                            else if (!cont.isSearchLoading.value &&
+                                cont.listingModelSearchList.isEmpty)
+                              SliverToBoxAdapter(
+                                child: Container(
+                                  height: 200,
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.search_off,
+                                          size: 48,
+                                          color: Colors.grey,
+                                        ),
+                                        SizedBox(height: 16),
+                                        Text(
+                                          'No results found'.tr,
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text(
+                                          'Try different keywords or filters'
+                                              .tr,
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.grey.shade400,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
+                                ),
+                              )
+                            // Show list/grid when there are results
+                            else if (isListView)
+                              SliverList(
+                                delegate: SliverChildBuilderDelegate(
+                                  (BuildContext context, int index) {
+                                    return Padding(
+                                      padding: EdgeInsets.only(bottom: 20.h),
+                                      child: listItem(
+                                          cont.listingModelSearchList[index],
+                                          index),
+                                    );
+                                  },
+                                  childCount:
+                                      cont.listingModelSearchList.length,
+                                ),
+                              )
+                            else
+                              SliverGrid(
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  childAspectRatio: 0.50.r,
+                                  mainAxisSpacing: 15,
+                                  crossAxisSpacing: 10,
+                                ),
+                                delegate: SliverChildBuilderDelegate(
+                                  (BuildContext context, int index) {
+                                    return gridItem(
+                                        cont.listingModelSearchList[index],
+                                        index);
+                                  },
+                                  childCount:
+                                      cont.listingModelSearchList.length,
+                                ),
+                              ),
                             // Loading indicator for pagination
                             if (cont.isSearchLoading.value &&
                                 cont.listingModelSearchList.isNotEmpty)
@@ -957,7 +1026,8 @@ class _SearchState extends State<Search> {
                     'assets/icons/heart1.svg',
                     colorFilter: ColorFilter.mode(
                       homeCont.listingModelSearchList.isNotEmpty &&
-                              homeCont.listingModelSearchList[index].isFavorite ==
+                              homeCont.listingModelSearchList[index]
+                                      .isFavorite ==
                                   '0'
                           ? Theme.of(context).unselectedWidgetColor
                           : Colors.red,
@@ -1687,9 +1757,10 @@ class _PokeToDialBottomSheetContentState
                               ? Colors.black
                               : Colors.white,
                           border: Border.all(
-                            color: Theme.of(context).brightness == Brightness.dark
-                                ? Colors.white
-                                : Colors.black,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.white
+                                    : Colors.black,
                             width: 1,
                           )),
                       child: Center(
@@ -1697,10 +1768,8 @@ class _PokeToDialBottomSheetContentState
                           controller: cont.minPriceController,
                           textAlign: TextAlign.center,
                           keyboardType: TextInputType.number,
-                          cursorColor: Theme.of(context)
-                              .textTheme
-                              .bodyLarge
-                              ?.color,
+                          cursorColor:
+                              Theme.of(context).textTheme.bodyLarge?.color,
                           decoration: InputDecoration(
                               filled: true,
                               fillColor: Colors.transparent,
@@ -1730,9 +1799,10 @@ class _PokeToDialBottomSheetContentState
                               ? Colors.black
                               : Colors.white,
                           border: Border.all(
-                            color: Theme.of(context).brightness == Brightness.dark
-                                ? Colors.white
-                                : Colors.black,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.white
+                                    : Colors.black,
                             width: 1,
                           )),
                       child: Center(
@@ -1740,10 +1810,8 @@ class _PokeToDialBottomSheetContentState
                         controller: cont.maxPriceController,
                         textAlign: TextAlign.center,
                         keyboardType: TextInputType.number,
-                        cursorColor: Theme.of(context)
-                            .textTheme
-                            .bodyLarge
-                            ?.color,
+                        cursorColor:
+                            Theme.of(context).textTheme.bodyLarge?.color,
                         decoration: InputDecoration(
                             filled: true,
                             fillColor: Colors.transparent,

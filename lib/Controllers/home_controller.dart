@@ -63,8 +63,10 @@ class HomeController extends GetxController {
   RxList<UploadingImage> uploadingImages = <UploadingImage>[].obs;
   Rx<bool> isLoadingImages = false.obs;
   bool isLoading = false;
-  bool needsRefreshAfterAccountSwitch = false; // Flag to trigger refresh when account type changes
-  bool needsHomepageRefresh = false; // Flag to trigger refresh when returning from search/category
+  bool needsRefreshAfterAccountSwitch =
+      false; // Flag to trigger refresh when account type changes
+  bool needsHomepageRefresh =
+      false; // Flag to trigger refresh when returning from search/category
   int isSelectedReport = 0;
   double subtotal = 0.0;
   TextEditingController makeController = TextEditingController();
@@ -101,6 +103,8 @@ class HomeController extends GetxController {
   RxBool loadingHome = true.obs;
   String? selectedCurrency = 'CUP'; // Default currency
   RxBool isPostLoading = false.obs;
+  RxBool hasInitialLoadCompleted =
+      false.obs; // Track if first load has completed
   RxBool loadingCategory = false.obs;
   RxBool loadingSubCategory = false.obs;
   RxBool loadingSubSubCategory = false.obs;
@@ -172,6 +176,10 @@ class HomeController extends GetxController {
   var hasMoreSearch = true.obs;
   var isSearchLoading = false.obs;
 
+  // Debounce timer for search
+  Timer? _searchDebounceTimer;
+  int _searchRequestId = 0; // To track and cancel stale search requests
+
   // Method to shuffle listings for new login sessions only
   Future<void> shuffleListingsOnLogin() async {
     try {
@@ -233,17 +241,19 @@ class HomeController extends GetxController {
     // Attach scroll listener for infinite scroll
     scrollsController.addListener(onScroll);
     searchScrollController.addListener(onScrollSearch);
-    Get.log("📜 Scroll listeners attached in onInit");
+    Get.log("📜 HomeController: Scroll listeners attached in onInit");
 
     // Reset shuffle session on app start (fresh app launch)
-    // This ensures shuffling happens when app is reopened
     resetShuffleSession().then((_) {
-      Get.log("📝 Shuffle session reset on app initialization");
+      Get.log("📝 HomeController: Shuffle session reset on app initialization");
     });
   }
 
   @override
   void onClose() {
+    // Cancel any pending debounce timer
+    _searchDebounceTimer?.cancel();
+
     scrollsController.removeListener(onScroll);
     searchScrollController.removeListener(onScrollSearch);
     scrollsController.dispose();
@@ -517,7 +527,7 @@ class HomeController extends GetxController {
         selectedCategory = null;
         selectedSubCategory = null;
         selectedSubSubCategory = null;
-        
+
         // Set flag to shuffle on location change
         if (locationChanged) {
           shouldShuffleOnLocationChange = true;
@@ -545,7 +555,7 @@ class HomeController extends GetxController {
   }
 
   void onScroll() {
-    if (isFetching.value || !scrollsController.hasClients) return;
+    if (!scrollsController.hasClients) return;
     if (scrollsController.position.pixels >=
         scrollsController.position.maxScrollExtent - 100) {
       if (!isPostLoading.value && hasMore.value) {
@@ -581,22 +591,24 @@ class HomeController extends GetxController {
         'category_id': selectedCategory?.id ?? "",
         'sub_category_id': selectedSubCategory?.id ?? "",
         'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
-        'latitude': "",  // Empty - get all posts
+        'latitude': "", // Empty - get all posts
         'longitude': "", // Empty - get all posts
-        'radius': "",    // Empty - get all posts
+        'radius': "", // Empty - get all posts
         'min_price': '',
         'max_price': '',
         'search_by_title': ''
       };
 
-      Get.log("🌍 Fetching posts - Will filter client-side by province/municipality");
+      Get.log(
+          "🌍 Fetching posts - Will filter client-side by province/municipality");
       Get.log("📍 Selected Address: '$address'");
 
       // SMART PAGINATION: Fetch pages until we have minimum results after filtering
       // This ensures we always have content even when location filter is active
-      const int minResultsToShow = 10; // Minimum posts to show after filtering
+      final int minResultsToShow =
+          isLoadMore ? 5 : 10; // Less for load more, more for initial load
       const int maxPagesToFetch = 10; // Safety limit to prevent infinite loops
-      
+
       List<ListingModel> filteredResults = [];
       int pagesFetched = 0;
       bool reachedEnd = false;
@@ -616,12 +628,12 @@ class HomeController extends GetxController {
       }
 
       // Keep fetching until we have enough filtered results or reach the end
-      while (filteredResults.length < minResultsToShow && 
-             pagesFetched < maxPagesToFetch && 
-             !reachedEnd) {
-        
+      while (filteredResults.length < minResultsToShow &&
+          pagesFetched < maxPagesToFetch &&
+          !reachedEnd) {
         int pageNum = currentPage.value + pagesFetched;
-        Get.log("📄 Fetching page $pageNum (have ${filteredResults.length} filtered results so far)...");
+        Get.log(
+            "📄 Fetching page $pageNum (have ${filteredResults.length} filtered results so far)...");
 
         Response response = await api.postData(
           "api/getListing?page=$pageNum",
@@ -660,41 +672,45 @@ class HomeController extends GetxController {
           for (var listing in pageListings) {
             String id = listing.id?.toString() ?? '';
             String title = listing.title?.toLowerCase().trim() ?? '';
-            
+
             // Skip if ID already exists
             if (id.isNotEmpty && existingIds.contains(id)) {
               continue;
             }
-            
+
             // Skip if exact same title already exists (backup check)
             if (title.isNotEmpty && existingTitles.contains(title)) {
               Get.log("⚠️ Duplicate title found: '$title'");
               continue;
             }
-            
+
             // Add to sets and results
             if (id.isNotEmpty) existingIds.add(id);
             if (title.isNotEmpty) existingTitles.add(title);
             filteredResults.add(listing);
           }
 
-          Get.log("📊 After filtering page $pageNum: ${filteredResults.length} total filtered results");
+          Get.log(
+              "📊 After filtering page $pageNum: ${filteredResults.length} total filtered results");
 
           // Check if this was the last page
           if (pageData.length < 15) {
-            Get.log("⚠️ Page $pageNum has only ${pageData.length} items, likely last page");
+            Get.log(
+                "⚠️ Page $pageNum has only ${pageData.length} items, likely last page");
             reachedEnd = true;
             hasMore.value = false;
           }
 
           pagesFetched++;
         } else {
-          Get.log("API error on page $pageNum: ${response.statusCode}", isError: true);
+          Get.log("API error on page $pageNum: ${response.statusCode}",
+              isError: true);
           break;
         }
       }
 
-      Get.log("📦 FETCHED ${pagesFetched} page(s), got ${filteredResults.length} filtered results");
+      Get.log(
+          "📦 FETCHED ${pagesFetched} page(s), got ${filteredResults.length} filtered results");
 
       if (filteredResults.isNotEmpty) {
         listingModelList.addAll(filteredResults);
@@ -710,7 +726,8 @@ class HomeController extends GetxController {
 
         // If we couldn't get minimum results even after fetching all available pages
         if (!reachedEnd && filteredResults.length < minResultsToShow) {
-          Get.log("⚠️ Could only get ${filteredResults.length} results after $pagesFetched pages");
+          Get.log(
+              "⚠️ Could only get ${filteredResults.length} results after $pagesFetched pages");
         }
 
         saveLocationAndRadius();
@@ -724,6 +741,8 @@ class HomeController extends GetxController {
     } finally {
       isPostLoading.value = false;
       loadingHome.value = false;
+      hasInitialLoadCompleted.value =
+          true; // Mark that initial load has completed
       update();
     }
   }
@@ -747,9 +766,32 @@ class HomeController extends GetxController {
   // Load last location and radius from cache
   Future<void> loadLastLocationAndRadius() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    // Load saved address and location settings
+    String? savedAddress = prefs.getString('saveAddress');
+    if (savedAddress == null || savedAddress.isEmpty) {
+      // Set default to All provinces
+      await prefs.setString('saveAddress', 'All provinces');
+      await prefs.setString('saveLat', '23.1136');
+      await prefs.setString('saveLng', '-82.3666');
+      await prefs.setString('saveRadius', '1000.0');
+      await prefs.setBool('isAllProvinces', true);
+      await prefs.setBool('isAllCities', false);
+      savedAddress = 'All provinces';
+    }
+
+    // Update current location values from saved preferences
+    address = savedAddress;
+    lat = prefs.getString('saveLat') ?? '23.1136';
+    lng = prefs.getString('saveLng') ?? '-82.3666';
+    radius = double.parse(prefs.getString('saveRadius') ?? '1000.0');
+
+    // Load last known values for comparison
     lastLat = prefs.getString('lastLat') ?? lat;
     lastLng = prefs.getString('lastLng') ?? lng;
     lastRadius = prefs.getDouble('lastRadius') ?? radius;
+
+    update();
   }
 
 // Date Setting on post
@@ -1831,27 +1873,33 @@ class HomeController extends GetxController {
     update();
   }
 
-  Future<List<ListingModel>> _applyLocationFilter(List<ListingModel> listings, {bool isSearchPage = false}) async {
+  Future<List<ListingModel>> _applyLocationFilter(List<ListingModel> listings,
+      {bool isSearchPage = false}) async {
     try {
       // Load selected provinces and municipalities from SharedPreferences
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      List<String> selectedProvinceNames = prefs.getStringList("selectedProvinceNames") ?? [];
-      List<String> selectedCityNames = prefs.getStringList("selectedCityNames") ?? [];
+      List<String> selectedProvinceNames =
+          prefs.getStringList("selectedProvinceNames") ?? [];
+      List<String> selectedCityNames =
+          prefs.getStringList("selectedCityNames") ?? [];
       bool isAllProvinces = prefs.getBool("isAllProvinces") ?? true;
       bool isAllCities = prefs.getBool("isAllCities") ?? false;
 
       String pageType = isSearchPage ? "Search" : "Homepage";
-      Get.log("📍 LOCATION FILTER ($pageType) - Provinces: $selectedProvinceNames, AllProvinces: $isAllProvinces");
+      Get.log(
+          "📍 LOCATION FILTER ($pageType) - Provinces: $selectedProvinceNames, AllProvinces: $isAllProvinces");
 
       // If "All provinces" selected, show all posts
       if (isAllProvinces) {
-        Get.log("📍 All provinces selected - showing all ${listings.length} posts");
+        Get.log(
+            "📍 All provinces selected - showing all ${listings.length} posts");
         return listings;
       }
 
       // If no provinces selected, show all
       if (selectedProvinceNames.isEmpty) {
-        Get.log("📍 No provinces selected - showing all ${listings.length} posts");
+        Get.log(
+            "📍 No provinces selected - showing all ${listings.length} posts");
         return listings;
       }
 
@@ -1862,7 +1910,8 @@ class HomeController extends GetxController {
           return false;
         }
 
-        List<String> addressParts = address.split(',').map((s) => s.trim()).toList();
+        List<String> addressParts =
+            address.split(',').map((s) => s.trim()).toList();
         String? postProvince = addressParts.isNotEmpty ? addressParts[0] : null;
         String? postCity = addressParts.length > 1 ? addressParts[1] : null;
 
@@ -1890,7 +1939,8 @@ class HomeController extends GetxController {
         return cityMatch;
       }).toList();
 
-      Get.log("📍 Filtered from ${listings.length} to ${filtered.length} posts");
+      Get.log(
+          "📍 Filtered from ${listings.length} to ${filtered.length} posts");
       return filtered;
     } catch (e) {
       Get.log("Error in _applyLocationFilter: $e", isError: true);
@@ -1901,9 +1951,14 @@ class HomeController extends GetxController {
   Future<void> getCoordinatesFromAddress() async {
     try {
       // Skip geocoding if we already have valid lat/lng coordinates
-      if (lat != null && lat!.isNotEmpty && lat != "" &&
-          lng != null && lng!.isNotEmpty && lng != "" &&
-          lat != "23.124792615936276") { // Skip if not the default fallback
+      if (lat != null &&
+          lat!.isNotEmpty &&
+          lat != "" &&
+          lng != null &&
+          lng!.isNotEmpty &&
+          lng != "" &&
+          lat != "23.124792615936276") {
+        // Skip if not the default fallback
         Get.log("Using existing coordinates: $lat, $lng, radius: $radius");
         return;
       }
@@ -2222,8 +2277,33 @@ class HomeController extends GetxController {
     }
   }
 
+  /// Debounced search - call this from UI on text change
+  /// This prevents rapid-fire API calls when user is typing
+  void searchWithDebounce() {
+    _searchDebounceTimer?.cancel();
+    _searchDebounceTimer = Timer(const Duration(milliseconds: 400), () {
+      currentSearchPage.value = 1;
+      listingModelSearchList.clear();
+      hasMoreSearch.value = true;
+      getListingSearch();
+    });
+  }
+
   Future<void> getListingSearch({bool isLoadMore = false}) async {
-    if (isSearchLoading.value) return;
+    // Cancel any pending debounce timer if this is a direct call
+    if (!isLoadMore) {
+      _searchDebounceTimer?.cancel();
+    }
+
+    // Increment request ID to invalidate any pending requests
+    final int currentRequestId = ++_searchRequestId;
+
+    if (isSearchLoading.value && !isLoadMore) {
+      // If a new search is triggered while loading, cancel the current one
+      Get.log("🔍 New search triggered, cancelling previous...");
+    }
+
+    if (isSearchLoading.value && isLoadMore) return;
 
     isSearchLoading.value = true;
     update();
@@ -2252,9 +2332,9 @@ class HomeController extends GetxController {
         'category_id': selectedCategory?.id ?? "",
         'sub_category_id': selectedSubCategory?.id ?? "",
         'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
-        'latitude': "",  // Empty - get all posts, filter client-side
+        'latitude': "", // Empty - get all posts, filter client-side
         'longitude': "", // Empty - get all posts, filter client-side
-        'radius': "",    // Empty - get all posts, filter client-side
+        'radius': "", // Empty - get all posts, filter client-side
         'min_price': minPriceController.text.trim(),
         'max_price': maxPriceController.text.trim(),
         'search_by_title': searchController.text.trim(),
@@ -2266,7 +2346,7 @@ class HomeController extends GetxController {
       // SMART PAGINATION: Fetch pages until we have minimum results after filtering
       const int minResultsToShow = 10;
       const int maxPagesToFetch = 10;
-      
+
       List<ListingModel> filteredResults = [];
       int pagesFetched = 0;
       bool reachedEnd = false;
@@ -2286,12 +2366,15 @@ class HomeController extends GetxController {
       }
 
       // Keep fetching until we have enough filtered results or reach the end
-      while (filteredResults.length < minResultsToShow && 
-             pagesFetched < maxPagesToFetch && 
-             !reachedEnd) {
-        
+      while (filteredResults.length < minResultsToShow &&
+          pagesFetched < maxPagesToFetch &&
+          !reachedEnd &&
+          currentRequestId == _searchRequestId) {
+        // Stop if request is stale
+
         int pageNum = currentSearchPage.value + pagesFetched;
-        Get.log("🔍 Fetching search page $pageNum (have ${filteredResults.length} filtered results)...");
+        Get.log(
+            "🔍 Fetching search page $pageNum (have ${filteredResults.length} filtered results)...");
 
         Response response = await api.postData(
           "api/getListing?page=$pageNum",
@@ -2330,31 +2413,33 @@ class HomeController extends GetxController {
           // Apply filters
           pageListings = applyPriceFilter(pageListings);
           pageListings = applyCategoryFilter(pageListings);
-          pageListings = await _applyLocationFilter(pageListings, isSearchPage: true);
+          pageListings =
+              await _applyLocationFilter(pageListings, isSearchPage: true);
 
           // Filter duplicates (check both ID and title)
           for (var listing in pageListings) {
             String id = listing.id?.toString() ?? '';
             String title = listing.title?.toLowerCase().trim() ?? '';
-            
+
             // Skip if ID already exists
             if (id.isNotEmpty && existingIds.contains(id)) {
               continue;
             }
-            
+
             // Skip if exact same title already exists (backup check)
             if (title.isNotEmpty && existingTitles.contains(title)) {
               Get.log("🔍 Duplicate title found in search: '$title'");
               continue;
             }
-            
+
             // Add to sets and results
             if (id.isNotEmpty) existingIds.add(id);
             if (title.isNotEmpty) existingTitles.add(title);
             filteredResults.add(listing);
           }
 
-          Get.log("🔍 After filtering: ${filteredResults.length} total results");
+          Get.log(
+              "🔍 After filtering: ${filteredResults.length} total results");
 
           // Check if last page
           if (pageData.length < 15) {
@@ -2369,14 +2454,22 @@ class HomeController extends GetxController {
         }
       }
 
-      Get.log("🔍 SEARCH: Fetched $pagesFetched page(s), got ${filteredResults.length} results");
+      Get.log(
+          "🔍 SEARCH: Fetched $pagesFetched page(s), got ${filteredResults.length} results");
+
+      // Check if this request is still valid (not superseded by a newer search)
+      if (currentRequestId != _searchRequestId) {
+        Get.log(
+            "🔍 Search request $currentRequestId is stale, ignoring results");
+        return;
+      }
 
       if (filteredResults.isNotEmpty) {
         listingModelSearchList.addAll(filteredResults);
         currentSearchPage.value += pagesFetched;
         // DO NOT overwrite listingModelList - keep homepage and search lists separate
         // listingModelList = listingModelSearchList; // REMOVED - was causing homepage to show search results
-        
+
         // Apply sorting
         applySortingToSearchList();
         Get.log("🔍 Final search results: ${listingModelSearchList.length}");

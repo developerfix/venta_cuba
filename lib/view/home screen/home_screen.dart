@@ -9,6 +9,7 @@ import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:venta_cuba/Controllers/home_controller.dart';
+import 'package:venta_cuba/Controllers/homepage_controller.dart';
 import 'package:venta_cuba/Utils/funcations.dart';
 import 'package:venta_cuba/util/categories.dart';
 import 'package:venta_cuba/view/Chat/custom_text.dart';
@@ -37,31 +38,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  // Use separate HomepageController for homepage-specific state
+  final homepageCont = Get.put(HomepageController());
+  // Keep HomeController for categories and other shared functionality
   final homeCont = Get.put(HomeController());
   final authCont = Get.put(AuthController());
-
-  Future<void> getAdd() async {
-    try {
-      SharedPreferences sharedPreferences =
-          await SharedPreferences.getInstance();
-      setState(() {
-        homeCont.address = sharedPreferences.getString("saveAddress") ?? "";
-        homeCont.lat = sharedPreferences.getString("saveLat") ?? "";
-        homeCont.lng = sharedPreferences.getString("saveLng") ?? "";
-        homeCont.radius =
-            double.parse(sharedPreferences.getString("saveRadius") ?? "500.0");
-      });
-      if (homeCont.hasLocationOrRadiusChanged()) {
-        homeCont.shouldFetchData.value = true;
-        homeCont.listingModelList.clear();
-        homeCont.currentPage.value = 1;
-        homeCont.hasMore.value = true;
-      }
-    } catch (e) {
-      Get.log("Error in getAdd: $e", isError: true);
-      print('Failed to load saved address. Using default.'.tr);
-    }
-  }
 
   UserPreferences userPreferences = UserPreferences();
   Future<void> getSaveHistory() async {
@@ -75,51 +56,77 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialize UI immediately, load data in background
     _initializeAsync();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Only check for location changes on first load, not on every rebuild
-    // This prevents unnecessary refreshes when returning from other screens
   }
 
   // Non-blocking initialization
   void _initializeAsync() async {
     try {
-      // Quick state reset
-      homeCont.selectedCategory = null;
-      homeCont.selectedSubCategory = null;
-      homeCont.selectedSubSubCategory = null;
-
       // Heavy operations in background
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         await _loadDataInBackground();
       });
     } catch (e, stackTrace) {
       Get.log("Error in initState: $e\n$stackTrace", isError: true);
-      homeCont.loadingHome.value = false;
       print('Failed to initialize home screen. Please try again.'.tr);
     }
   }
 
-  // Background data loading
+  // Background data loading - uses HomepageController for listings (SEPARATE from search/category)
   Future<void> _loadDataInBackground() async {
     try {
-      await getAdd();
       await getSaveHistory();
-      
-      // Always load data if list is empty
-      if (homeCont.listingModelList.isEmpty) {
-        Get.log('📦 Homepage list is empty - Loading data...');
-        homeCont.currentPage.value = 1;
-        homeCont.hasMore.value = true;
-        await homeCont.homeData();
+
+      // Load saved location from SharedPreferences
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? savedAddress = prefs.getString("saveAddress");
+      bool isAllProvinces = prefs.getBool("isAllProvinces") ?? true;
+
+      Get.log(
+          "🏠 HomeScreen: Loading data - savedAddress: $savedAddress, isAllProvinces: $isAllProvinces");
+
+      // If no saved address, set default to "All provinces"
+      if (savedAddress == null || savedAddress.isEmpty) {
+        savedAddress = "All provinces";
+        await prefs.setString("saveAddress", savedAddress);
+        await prefs.setString("saveLat", "23.1136");
+        await prefs.setString("saveLng", "-82.3666");
+        await prefs.setString("saveRadius", "1000.0");
+        await prefs.setBool("isAllProvinces", true);
+        await prefs.setBool("isAllCities", false);
+        await prefs.setStringList("selectedProvinceNames", []);
+        await prefs.setStringList("selectedCityNames", []);
+        Get.log("🏠 HomeScreen: No saved address, set defaults");
+      }
+
+      // Update HomeController with saved address for UI display only
+      homeCont.address = savedAddress;
+      homeCont.lat = prefs.getString("saveLat") ?? "23.1136";
+      homeCont.lng = prefs.getString("saveLng") ?? "-82.3666";
+      homeCont.radius = double.parse(prefs.getString("saveRadius") ?? "1000.0");
+      homeCont.update();
+
+      Get.log(
+          "🏠 HomeScreen: Updated homeCont.address to: ${homeCont.address}");
+
+      // Load categories using HomeController
+      await homeCont.getCategories();
+
+      // Load listings using HomepageController (SEPARATE from search/category)
+      // Always load if list is empty OR initial load hasn't completed
+      if (homepageCont.homepageListings.isEmpty ||
+          !homepageCont.hasInitialLoadCompleted.value) {
+        Get.log(
+            '🏠 HomeScreen: Loading via HomepageController - isEmpty: ${homepageCont.homepageListings.isEmpty}, hasInitialLoadCompleted: ${homepageCont.hasInitialLoadCompleted.value}');
+        await homepageCont.loadHomepageData(forceRefresh: true);
       } else {
-        // Ensure scroll listener is attached even if data doesn't need refreshing
-        homeCont.ensureScrollListenerAttached();
+        Get.log(
+            '🏠 HomeScreen: Data already loaded, count: ${homepageCont.homepageListings.length}');
       }
     } catch (e) {
       Get.log("Error loading background data: $e", isError: true);
@@ -150,17 +157,14 @@ class _HomeScreenState extends State<HomeScreen> {
               // :
               RefreshIndicator(
                 onRefresh: () async {
-                  homeCont.shouldFetchData.value = true;
-                  homeCont.selectedCategory = null;
-                  homeCont.selectedSubCategory = null;
-                  homeCont.selectedSubSubCategory = null;
-                  homeCont.listingModelList.clear();
-                  homeCont.currentPage.value = 1;
-                  homeCont.hasMore.value = true;
-                  await homeCont.getListing();
+                  // Refresh homepage using HomepageController (SEPARATE from search/category)
+                  homepageCont.homepageListings.clear();
+                  homepageCont.currentPage.value = 1;
+                  homepageCont.hasMore.value = true;
+                  await homepageCont.loadHomepageData(forceRefresh: true);
                 },
                 child: SingleChildScrollView(
-                  controller: cont.scrollsController,
+                  controller: homepageCont.scrollController,
                   child: SafeArea(
                     child: Padding(
                       padding: const EdgeInsets.all(20),
@@ -241,8 +245,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                         cont.selectedCategory = null;
                                         cont.selectedSubCategory = null;
                                         cont.selectedSubSubCategory = null;
+
+                                        // Ensure scroll listener is still attached after returning from search
+                                        cont.ensureScrollListenerAttached();
                                         cont.update();
-                                        getAdd();
+
+                                        // Only reload location, don't trigger full data refresh
+                                        // Homepage data should remain unchanged
                                       });
                                     },
                                     child: Container(
@@ -259,7 +268,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                         children: [
                                           SizedBox(width: 8),
                                           Icon(Icons.search_rounded,
-                                              color: Theme.of(context).brightness ==
+                                              color: Theme.of(context)
+                                                          .brightness ==
                                                       Brightness.dark
                                                   ? Colors.white70
                                                   : Color(0xFFA9ABAC)),
@@ -267,10 +277,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                           CustomText(
                                             text:
                                                 'What are you looking for?'.tr,
-                                            fontColor: Theme.of(context).brightness ==
-                                                    Brightness.dark
-                                                ? Colors.white70
-                                                : Color(0xFFA9ABAC),
+                                            fontColor:
+                                                Theme.of(context).brightness ==
+                                                        Brightness.dark
+                                                    ? Colors.white70
+                                                    : Color(0xFFA9ABAC),
                                           )
                                         ],
                                       ),
@@ -342,7 +353,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
                                 // Generate address string based on selection
                                 if (isAllProvinces) {
-                                  newAddress = "All provinces".tr;
+                                  newAddress =
+                                      "All provinces"; // Store English key, translate when displaying
                                   await prefs.setString(
                                       "saveAddress", newAddress);
                                   await prefs.setString(
@@ -443,19 +455,25 @@ class _HomeScreenState extends State<HomeScreen> {
                                     prefs.getString("saveRadius") ?? "500.0");
 
                                 setState(() {
+                                  // Update HomeController address for UI display
                                   cont.address = newAddress;
                                   cont.lat = savedLat;
                                   cont.lng = savedLng;
                                   cont.radius = savedRadius;
-
-                                  // Always force shuffle when returning from location selection
-                                  cont.forceShuffleAfterLocationChange();
-                                  cont.shouldFetchData.value = true;
-                                  cont.listingModelList.clear();
-                                  cont.currentPage.value = 1;
-                                  cont.hasMore.value = true;
-                                  cont.homeData();
                                 });
+
+                                // Update HomepageController and reload data (SEPARATE from search/category)
+                                homepageCont.address = newAddress;
+                                homepageCont.lat = savedLat;
+                                homepageCont.lng = savedLng;
+                                homepageCont.radius = savedRadius;
+                                homepageCont.homepageListings.clear();
+                                homepageCont.currentPage.value = 1;
+                                homepageCont.hasMore.value = true;
+                                homepageCont.hasInitialLoadCompleted.value =
+                                    false;
+                                await homepageCont.loadHomepageData(
+                                    forceRefresh: true);
                               }
                             },
                             child: Container(
@@ -491,7 +509,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                       color: Theme.of(context).brightness ==
                                               Brightness.dark
                                           ? Colors.white.withValues(alpha: 0.1)
-                                          : Color(0xFF0254B8).withValues(alpha: 0.1),
+                                          : Color(0xFF0254B8)
+                                              .withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(8.r),
                                     ),
                                     child: SvgPicture.asset(
@@ -540,7 +559,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                               ),
                                               SizedBox(height: 4.h),
                                               Text(
-                                                "${cont.address}",
+                                                cont.address == "All provinces"
+                                                    ? "All provinces".tr
+                                                    : "${cont.address}",
                                                 style: TextStyle(
                                                   fontSize: 15.sp,
                                                   fontWeight: FontWeight.w600,
@@ -597,6 +618,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                     cont.selectedCategory = null;
                                     cont.selectedSubCategory = null;
                                     cont.selectedSubSubCategory = null;
+
+                                    // Ensure scroll listener is still attached after returning
+                                    cont.ensureScrollListenerAttached();
                                     cont.update();
                                   });
                                 },
@@ -656,7 +680,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               // Scroll to top button
               ScrollToTopButton(
-                scrollController: cont.scrollsController,
+                scrollController: homepageCont.scrollController,
               ),
             ],
           );

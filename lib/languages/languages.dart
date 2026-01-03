@@ -1022,6 +1022,11 @@ It is not allowed to use our member-to-member communication resources to send sp
           'Selected Location': 'Selected Location',
           'Image_3': 'Image',
           'Video': 'Video',
+          // Empty state translations
+          'No listings found': 'No listings found',
+          'Try selecting a different location': 'Try selecting a different location',
+          'No results found': 'No results found',
+          'Try different keywords or filters': 'Try different keywords or filters',
         },
         "es_ES": {
           'upload_video':
@@ -2104,6 +2109,11 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
           'Selected Location': 'Ubicación seleccionada',
           'Image_3': 'Imagen',
           'Video': 'Video',
+          // Empty state translations
+          'No listings found': 'No se encontraron anuncios',
+          'Try selecting a different location': 'Intenta seleccionar una ubicación diferente',
+          'No results found': 'No se encontraron resultados',
+          'Try different keywords or filters': 'Prueba con diferentes palabras clave o filtros',
         }
       };
 }
