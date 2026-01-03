@@ -185,6 +185,22 @@ class _SearchState extends State<Search> {
     print(add);
   }
 
+  String _getLocationDisplayText(
+      String? savedAddress, String? controllerAddress) {
+    // Priority: savedAddress from SharedPreferences, then controller address
+    String displayAddress = savedAddress != null && savedAddress.isNotEmpty
+        ? savedAddress
+        : (controllerAddress ?? '');
+
+    // Translate "All provinces" to Spanish when needed
+    if (displayAddress == 'All provinces') {
+      return 'All provinces'.tr;
+    }
+
+    // Return the address as-is for other cases
+    return displayAddress;
+  }
+
   @override
   void dispose() {
     // Remove scroll listener before disposing
@@ -532,9 +548,8 @@ class _SearchState extends State<Search> {
                                       Icon(Icons.location_on_outlined),
                                       Expanded(
                                         child: Text(
-                                          add != ''
-                                              ? "$add "
-                                              : '${cont.address}',
+                                          _getLocationDisplayText(
+                                              add, cont.address),
                                           overflow: TextOverflow.ellipsis,
                                           style: TextStyle(
                                               color: Theme.of(context)
