@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
 import 'package:venta_cuba/Controllers/home_controller.dart';
+import 'package:venta_cuba/Controllers/homepage_controller.dart';
 import 'package:venta_cuba/Controllers/theme_controller.dart';
 import 'package:venta_cuba/util/profile_list.dart';
 import 'package:venta_cuba/view/auth/vendor_screen.dart';
@@ -33,6 +34,7 @@ class Profile extends StatefulWidget {
 
 class _ProfileState extends State<Profile> {
   final homeCont = Get.put(HomeController());
+  final homePageCont = Get.put(HomepageController());
   final themeController = Get.put(ThemeController());
 
   List<Widget> _buildStarRating(double rating) {
@@ -124,7 +126,6 @@ class _ProfileState extends State<Profile> {
   }
 
   void _showAlertDialog(BuildContext context) {
-    // Create an AlertDialog
     AlertDialog alert = AlertDialog(
         content: Column(
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -140,9 +141,7 @@ class _ProfileState extends State<Profile> {
             color: AppColors.k0xFF9F9F9F,
           ),
         ),
-        SizedBox(
-          height: 10..h,
-        ),
+        SizedBox(height: 10..h),
         Text(
           authCont.user?.businessName == ""
               ? 'Want to Switch to Business Account'.tr
@@ -155,9 +154,7 @@ class _ProfileState extends State<Profile> {
               color: Theme.of(context).textTheme.titleLarge?.color),
           textAlign: TextAlign.center,
         ),
-        SizedBox(
-          height: 15..h,
-        ),
+        SizedBox(height: 15..h),
         Text(
           'Your account is switch to other one'.tr,
           style: TextStyle(
@@ -166,9 +163,7 @@ class _ProfileState extends State<Profile> {
               color: AppColors.k0xFF9F9F9F),
           textAlign: TextAlign.center,
         ),
-        SizedBox(
-          height: 30..h,
-        ),
+        SizedBox(height: 30..h),
         Container(
           height: 40..h,
           child: Row(
@@ -203,30 +198,67 @@ class _ProfileState extends State<Profile> {
                     Navigator.of(context).pop();
                     Get.to(VendorScreen());
                   } else {
-                    authCont.isBusinessAccount = !authCont.isBusinessAccount;
+                    // Close dialog first
                     Navigator.of(context).pop();
-                    authCont.update();
 
-                    authCont.changeAccountType();
-                    homeCont.fetchAccountType();
-                    
-                    // Switch to homepage and reload items for better UX
-                    authCont.currentIndexBottomAppBar = 0;
-                    authCont.update();
-                    
-                    // Refresh homepage listings with new account type
-                    homeCont.listingModelList.clear();
-                    homeCont.currentPage.value = 1;
-                    homeCont.hasMore.value = true;
+                    // Show loading
+
                     homeCont.loadingHome.value = true;
                     homeCont.update();
-                    
-                    await homeCont.getListing(isLoadMore: false);
-                    
-                    homeCont.loadingHome.value = false;
-                    homeCont.update();
-                    
-                    Get.log("🔄 Account switched - Redirected to homepage and refreshed listings");
+
+                    // Switch account type locally
+                    authCont.isBusinessAccount = !authCont.isBusinessAccount;
+                    authCont.update();
+
+                    // Update on server
+                    await authCont.changeAccountType();
+                    await homeCont.fetchAccountType();
+
+                    // Switch to homepage tab
+                    authCont.currentIndexBottomAppBar = 0;
+                    authCont.update();
+
+                    // FORCE complete reset of all data
+                    homeCont.listingModelList.clear();
+                    homeCont.listingModelSearchList.clear();
+                    homeCont.currentPage.value = 1;
+                    homeCont.hasMore.value = true;
+                    homeCont.shouldShuffleOnLocationChange = false;
+
+                    // FORCE location change to trigger reload
+                    homeCont.lastLat = null;
+                    homeCont.lastLng = null;
+                    homeCont.lastRadius = null;
+
+                    // Clear categories to show all items
+                    homeCont.selectedCategory = null;
+                    homeCont.selectedSubCategory = null;
+                    homeCont.selectedSubSubCategory = null;
+
+                    // Ensure scroll listeners are attached
+                    homeCont.ensureScrollListenerAttached();
+
+                    try {
+                      await homePageCont.forceRefresh();
+                      // Get categories first
+                      await homeCont.getCategories();
+
+                      // Then load listings directly
+                      await homeCont.getListing(isLoadMore: false);
+
+                      // Save location
+                      homeCont.saveLocationAndRadius();
+
+                      Get.log(
+                          "✅ Account switched successfully - Homepage reloaded");
+                    } catch (e) {
+                      Get.log("❌ Error during account switch reload: $e");
+                      print(
+                          'Failed to reload data. Please refresh manually.'.tr);
+                    } finally {
+                      homeCont.loadingHome.value = false;
+                      homeCont.update();
+                    }
                   }
                 },
                 child: Container(
@@ -253,7 +285,6 @@ class _ProfileState extends State<Profile> {
       ],
     ));
 
-    // Show the AlertDialog
     showDialog(
       context: context,
       builder: (BuildContext context) {

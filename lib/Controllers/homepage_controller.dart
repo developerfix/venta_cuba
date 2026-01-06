@@ -16,18 +16,18 @@ class HomepageController extends GetxController {
   // Homepage specific state
   List<ListingModel> homepageListings = [];
   ScrollController scrollController = ScrollController();
-  
+
   RxBool isLoading = false.obs;
   RxBool hasInitialLoadCompleted = false.obs;
   RxInt currentPage = 1.obs;
   RxBool hasMore = true.obs;
-  
+
   // Location state (homepage specific)
   String address = "";
   String lat = "23.124792615936276";
   String lng = "-82.38597269330762";
   double radius = 500.0;
-  
+
   // Track last location to detect changes
   String? _lastLat;
   String? _lastLng;
@@ -51,7 +51,7 @@ class HomepageController extends GetxController {
   Future<void> _loadSavedLocation() async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      
+
       // Check if location is saved, if not set default to "All provinces"
       String? savedAddress = prefs.getString("saveAddress");
       if (savedAddress == null || savedAddress.isEmpty) {
@@ -65,13 +65,14 @@ class HomepageController extends GetxController {
         await prefs.setStringList("selectedProvinceNames", []);
         await prefs.setStringList("selectedCityNames", []);
       }
-      
+
       address = prefs.getString("saveAddress") ?? "All provinces";
       lat = prefs.getString("saveLat") ?? "23.1136";
       lng = prefs.getString("saveLng") ?? "-82.3666";
       radius = double.parse(prefs.getString("saveRadius") ?? "1000.0");
-      
-      Get.log("📍 HomepageController: Loaded address: $address, isAllProvinces: ${prefs.getBool('isAllProvinces')}");
+
+      Get.log(
+          "📍 HomepageController: Loaded address: $address, isAllProvinces: ${prefs.getBool('isAllProvinces')}");
       update();
     } catch (e) {
       Get.log("Error loading saved location: $e", isError: true);
@@ -81,7 +82,7 @@ class HomepageController extends GetxController {
   /// Refresh location from SharedPreferences (call when returning to homepage)
   Future<void> refreshLocation() async {
     await _loadSavedLocation();
-    
+
     // Check if location changed
     if (_hasLocationChanged()) {
       Get.log("Homepage: Location changed, reloading data...");
@@ -102,8 +103,8 @@ class HomepageController extends GetxController {
   /// Scroll listener for infinite scroll
   void _onScroll() {
     if (!scrollController.hasClients) return;
-    
-    if (scrollController.position.pixels >= 
+
+    if (scrollController.position.pixels >=
         scrollController.position.maxScrollExtent - 100) {
       if (!isLoading.value && hasMore.value) {
         Get.log("Homepage: Scroll triggered, loading more...");
@@ -113,9 +114,10 @@ class HomepageController extends GetxController {
   }
 
   /// Main method to load homepage data
-  Future<void> loadHomepageData({bool isLoadMore = false, bool forceRefresh = false}) async {
+  Future<void> loadHomepageData(
+      {bool isLoadMore = false, bool forceRefresh = false}) async {
     if (isLoading.value) return;
-    
+
     isLoading.value = true;
     update();
 
@@ -151,7 +153,7 @@ class HomepageController extends GetxController {
 
       final int minResultsToShow = isLoadMore ? 5 : 10;
       const int maxPagesToFetch = 10;
-      
+
       List<ListingModel> filteredResults = [];
       int pagesFetched = 0;
       bool reachedEnd = false;
@@ -161,19 +163,19 @@ class HomepageController extends GetxController {
           .where((id) => id.isNotEmpty)
           .toSet();
 
-      while (filteredResults.length < minResultsToShow && 
-             pagesFetched < maxPagesToFetch && 
-             !reachedEnd) {
-        
+      while (filteredResults.length < minResultsToShow &&
+          pagesFetched < maxPagesToFetch &&
+          !reachedEnd) {
         int pageNum = currentPage.value + pagesFetched;
-        
+
         Response response = await api.postData(
           "api/getListing?page=$pageNum",
           requestData,
           headers: {
             'Accept': 'application/json',
             'Access-Control-Allow-Origin': "*",
-            'Authorization': 'Bearer ${authCont.user?.accessToken ?? tokenMain ?? ""}'
+            'Authorization':
+                'Bearer ${authCont.user?.accessToken ?? tokenMain ?? ""}'
           },
           showdialog: false,
         );
@@ -188,9 +190,8 @@ class HomepageController extends GetxController {
             break;
           }
 
-          List<ListingModel> pageListings = pageData
-              .map((e) => ListingModel.fromJson(e))
-              .toList();
+          List<ListingModel> pageListings =
+              pageData.map((e) => ListingModel.fromJson(e)).toList();
 
           pageListings = await _applyLocationFilter(pageListings);
 
@@ -218,15 +219,19 @@ class HomepageController extends GetxController {
 
       if (filteredResults.isNotEmpty) {
         homepageListings.addAll(filteredResults);
-        
+
         if (!isLoadMore && homepageListings.isNotEmpty) {
           homepageListings.shuffle();
         }
-        
-        currentPage.value += pagesFetched;
+
         _saveLastLocation();
       }
 
+      // FIX: Current page ko hamesha update karein agar pages fetch huye hain
+      // Chahay filteredResults empty hi kyun na ho
+      if (pagesFetched > 0) {
+        currentPage.value += pagesFetched;
+      }
     } catch (e, stackTrace) {
       Get.log("Homepage: Error loading data: $e\n$stackTrace", isError: true);
     } finally {
@@ -236,11 +241,14 @@ class HomepageController extends GetxController {
     }
   }
 
-  Future<List<ListingModel>> _applyLocationFilter(List<ListingModel> listings) async {
+  Future<List<ListingModel>> _applyLocationFilter(
+      List<ListingModel> listings) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      List<String> selectedProvinceNames = prefs.getStringList("selectedProvinceNames") ?? [];
-      List<String> selectedCityNames = prefs.getStringList("selectedCityNames") ?? [];
+      List<String> selectedProvinceNames =
+          prefs.getStringList("selectedProvinceNames") ?? [];
+      List<String> selectedCityNames =
+          prefs.getStringList("selectedCityNames") ?? [];
       bool isAllProvinces = prefs.getBool("isAllProvinces") ?? true;
       bool isAllCities = prefs.getBool("isAllCities") ?? false;
 
@@ -250,11 +258,14 @@ class HomepageController extends GetxController {
 
       return listings.where((listing) {
         String? listingAddress = listing.address?.trim();
-        if (listingAddress == null || listingAddress.isEmpty || listingAddress == 'null') {
+        if (listingAddress == null ||
+            listingAddress.isEmpty ||
+            listingAddress == 'null') {
           return false;
         }
 
-        List<String> addressParts = listingAddress.split(',').map((s) => s.trim()).toList();
+        List<String> addressParts =
+            listingAddress.split(',').map((s) => s.trim()).toList();
         String? postProvince = addressParts.isNotEmpty ? addressParts[0] : null;
         String? postCity = addressParts.length > 1 ? addressParts[1] : null;
 
@@ -296,7 +307,7 @@ class HomepageController extends GetxController {
     await _loadSavedLocation();
     await loadHomepageData(forceRefresh: true);
   }
-  
+
   /// Reset to default "All provinces" state - called on login
   Future<void> resetToAllProvinces() async {
     try {
@@ -311,7 +322,7 @@ class HomepageController extends GetxController {
       await prefs.setBool("isAllCities", false);
       await prefs.setStringList("selectedProvinceNames", []);
       await prefs.setStringList("selectedCityNames", []);
-      
+
       // Also clear lastLat/lastLng to force fresh load
       await prefs.remove("lastLat");
       await prefs.remove("lastLng");
@@ -335,14 +346,13 @@ class HomepageController extends GetxController {
       _lastRadius = null;
 
       update();
-      
+
       Get.log("📍 HomepageController: Reset to All provinces");
 
       Get.log("Homepage: Reset to All provinces");
 
       // Load data with the default location
       await loadHomepageData();
-
     } catch (e) {
       Get.log("Error resetting to all provinces: $e", isError: true);
     }

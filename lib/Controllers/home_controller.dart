@@ -3324,6 +3324,7 @@ class HomeController extends GetxController {
     loadingSubSubCategory = true.obs;
     loadingCategory = true.obs;
     update();
+
     Response response = await api.postWithForm(
         "api/getSubSubCategories",
         {
@@ -3331,9 +3332,11 @@ class HomeController extends GetxController {
           'sub_category_id': selectedSubCategory?.id.toString(),
         },
         showdialog: false);
+
     loadingSubSubCategory = false.obs;
     loadingCategory = false.obs;
     update();
+
     if (response.statusCode == 200) {
       subSubCategoriesModel = SubSubCategoriesModel.fromJson(response.body);
       isType = 2;
@@ -3354,41 +3357,34 @@ class HomeController extends GetxController {
         update();
       } else {
         // Original navigation logic for other screens
-        isNavigate
-            ? {
-                getListingSearch(),
-                Get.to(SubSubCategories()),
-              }
-            : {
-                if (subSubCategoriesModel?.data?.isEmpty ?? false)
-                  {
-                    selectedSubSubCategory = null,
-                    isSearchScreen
-                        ? {
-                            // Reset price filter when category changes in search screen
-                            minPriceController.clear(),
-                            maxPriceController.clear(),
-                            // Don't call Get.back() when in edit mode (isNavigate = false)
-                            if (isNavigate) Get.back(),
-                            getListingSearch()
-                          }
-                        : {
-                            // Don't call Get.back() when in edit mode (isNavigate = false)
-                            if (isNavigate) Get.back()
-                          }
-                  }
-                else
-                  {
-                    // Reset price filter when category changes in search screen
-                    if (isSearchScreen)
-                      {
-                        minPriceController.clear(),
-                        maxPriceController.clear(),
-                      },
-                    getListingSearch(),
-                    update()
-                  }
-              };
+        if (isNavigate) {
+          // Wait for search results before navigating
+          await getListingSearch();
+          Get.to(SubSubCategories());
+        } else {
+          if (subSubCategoriesModel?.data?.isEmpty ?? false) {
+            selectedSubSubCategory = null;
+            if (isSearchScreen) {
+              // Reset price filter when category changes in search screen
+              minPriceController.clear();
+              maxPriceController.clear();
+              // Don't call Get.back() when in edit mode (isNavigate = false)
+              if (isNavigate) Get.back();
+              await getListingSearch();
+            } else {
+              // Don't call Get.back() when in edit mode (isNavigate = false)
+              if (isNavigate) Get.back();
+            }
+          } else {
+            // Reset price filter when category changes in search screen
+            if (isSearchScreen) {
+              minPriceController.clear();
+              maxPriceController.clear();
+            }
+            await getListingSearch();
+            update();
+          }
+        }
       }
     } else {
       print('Something went wrong\nPlease try again!'.tr);

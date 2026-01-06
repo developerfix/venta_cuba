@@ -569,15 +569,18 @@ class AuthController extends GetxController {
       }
 
       // Add timeout to API call to prevent hanging
-      Response response = await api.postData(
+      Response response = await api
+          .postData(
         "api/login",
         {
           'email': emailCont.text.trim(),
           'password': passCont.text.trim(),
           'device_token': deviceToken
         },
-        showdialog: false, // Don't show loading dialog, button progress indicator is enough
-      ).timeout(
+        showdialog:
+            false, // Don't show loading dialog, button progress indicator is enough
+      )
+          .timeout(
         Duration(seconds: 10),
         onTimeout: () {
           throw Exception(
@@ -916,23 +919,27 @@ class AuthController extends GetxController {
     }
   }
 
+  String _getLinkOrNull(String value) {
+    return value.trim().isEmpty ? 'null' : value.trim();
+  }
+
+// Then you can refactor the methods like this:
   Future saveSocialMediaLink() async {
     Response response = await api.postWithForm(
       "api/save-social-media-link",
       {
-        'instagram_link': instagramLinkCont.text.trim(),
-        'facebook_link': facebookLinkCont.text.trim(),
-        'pinterest_link': pinterestLinkCont.text.trim(),
-        'twitter_link': twitterLinkCont.text.trim(),
-        'linkedin_link': linkedinLinkCont.text.trim(),
-        'tiktok_link': tiktokLinkCont.text.trim(),
-        'youtube_link': youtubeLinkCont.text.trim()
+        'instagram_link': _getLinkOrNull(instagramLinkCont.text),
+        'facebook_link': _getLinkOrNull(facebookLinkCont.text),
+        'pinterest_link': _getLinkOrNull(pinterestLinkCont.text),
+        'twitter_link': _getLinkOrNull(twitterLinkCont.text),
+        'linkedin_link': _getLinkOrNull(linkedinLinkCont.text),
+        'tiktok_link': _getLinkOrNull(tiktokLinkCont.text),
+        'youtube_link': _getLinkOrNull(youtubeLinkCont.text)
       },
     );
     if (response.statusCode == 200) {
       onUpdateUserData(response.body);
       Get.back();
-      // Media links Added successfully
     } else {
       // Something went wrong
     }
@@ -942,19 +949,18 @@ class AuthController extends GetxController {
     Response response = await api.postWithForm(
       "api/save-business-social-media-link",
       {
-        'business_instagram_link': instagramLinkCont.text.trim(),
-        'business_facebook_link': facebookLinkCont.text.trim(),
-        'business_pinterest_link': pinterestLinkCont.text.trim(),
-        'business_twitter_link': twitterLinkCont.text.trim(),
-        'business_linkedin_link': linkedinLinkCont.text.trim(),
-        'business_tiktok_link': tiktokLinkCont.text.trim(),
-        'business_youtube_link': youtubeLinkCont.text.trim()
+        'business_instagram_link': _getLinkOrNull(instagramLinkCont.text),
+        'business_facebook_link': _getLinkOrNull(facebookLinkCont.text),
+        'business_pinterest_link': _getLinkOrNull(pinterestLinkCont.text),
+        'business_twitter_link': _getLinkOrNull(twitterLinkCont.text),
+        'business_linkedin_link': _getLinkOrNull(linkedinLinkCont.text),
+        'business_tiktok_link': _getLinkOrNull(tiktokLinkCont.text),
+        'business_youtube_link': _getLinkOrNull(youtubeLinkCont.text)
       },
     );
     if (response.statusCode == 200) {
       onUpdateUserData(response.body);
       Get.back();
-      // Media links Added successfully
     } else {
       // Something went wrong
     }
@@ -980,11 +986,11 @@ class AuthController extends GetxController {
     changeAccountType();
     fetchAccountType();
     await getuserDetail();
-    
+
     // Set default location to "All provinces" on fresh login
     try {
       SharedPreferences loginPrefs = await SharedPreferences.getInstance();
-      
+
       // Always reset to "All provinces" on new login
       // Store the English key - translation will be applied when displayed
       await loginPrefs.setString('saveAddress', 'All provinces');
@@ -995,14 +1001,14 @@ class AuthController extends GetxController {
       await loginPrefs.setBool('isAllCities', false);
       await loginPrefs.setStringList('selectedProvinceNames', []);
       await loginPrefs.setStringList('selectedCityNames', []);
-      
+
       // Also clear the lastLat/lastLng to force a fresh load
       await loginPrefs.remove('lastLat');
       await loginPrefs.remove('lastLng');
       await loginPrefs.remove('lastRadius');
-      
+
       Get.log("🔐 Login: Set default location to All provinces");
-      
+
       // Update HomeController with default location
       try {
         final homeCont = Get.find<HomeController>();
@@ -1019,16 +1025,18 @@ class AuthController extends GetxController {
         homeCont.hasMore.value = true;
         Get.log("🔐 Login: Reset HomeController to All provinces");
       } catch (e) {
-        Get.log("🔐 Login: HomeController not found yet - will be initialized with defaults from SharedPreferences");
+        Get.log(
+            "🔐 Login: HomeController not found yet - will be initialized with defaults from SharedPreferences");
       }
-      
+
       // Update HomepageController with default location
       try {
         final homepageCont = Get.find<HomepageController>();
         await homepageCont.resetToAllProvinces();
         Get.log("🔐 Login: Reset HomepageController to All provinces");
       } catch (e) {
-        Get.log("🔐 Login: HomepageController not found yet - will be initialized with defaults from SharedPreferences");
+        Get.log(
+            "🔐 Login: HomepageController not found yet - will be initialized with defaults from SharedPreferences");
       }
     } catch (e) {
       Get.log("🔐 Login: Error setting defaults: $e", isError: true);
@@ -1050,10 +1058,10 @@ class AuthController extends GetxController {
     }
 
     update();
-    
+
     // Reset to homepage tab before navigating
     currentIndexBottomAppBar = 0;
-    
+
     Get.offAll(Navigation_Bar());
   }
 
@@ -1110,13 +1118,13 @@ class AuthController extends GetxController {
       await prefs.remove('saveLat');
       await prefs.remove('saveLng');
       await prefs.remove('saveRadius');
-      
+
       // Clear location selection preferences and set defaults for next login
       await prefs.remove('selectedProvinceNames');
       await prefs.remove('selectedCityNames');
-      await prefs.setBool('isAllProvinces', true);  // Default to all provinces
+      await prefs.setBool('isAllProvinces', true); // Default to all provinces
       await prefs.setBool('isAllCities', false);
-      
+
       // Set default address for next login
       await prefs.setString('saveAddress', 'All provinces');
       await prefs.setString('saveLat', '23.1136');
@@ -1145,7 +1153,7 @@ class AuthController extends GetxController {
       } catch (e) {
         // HomeController might not exist yet
       }
-      
+
       // Reset HomepageController to default state
       try {
         final homepageCont = Get.find<HomepageController>();
@@ -1161,7 +1169,7 @@ class AuthController extends GetxController {
       } catch (e) {
         // HomepageController might not exist yet
       }
-      
+
       // Delete controllers to force fresh initialization on next login
       try {
         Get.delete<HomepageController>(force: true);
@@ -1193,7 +1201,7 @@ class AuthController extends GetxController {
         await prefs.remove('saveLat');
         await prefs.remove('saveLng');
         await prefs.remove('saveRadius');
-        
+
         // Set default location for next login
         await prefs.setBool('isAllProvinces', true);
         await prefs.setBool('isAllCities', false);
@@ -1214,7 +1222,7 @@ class AuthController extends GetxController {
           homeCont.hasInitialLoadCompleted.value = false;
           homeCont.isPostLoading.value = false;
         } catch (e) {}
-        
+
         // Reset HomepageController
         try {
           final homepageCont = Get.find<HomepageController>();
@@ -1226,7 +1234,7 @@ class AuthController extends GetxController {
           homepageCont.hasInitialLoadCompleted.value = false;
           homepageCont.isLoading.value = false;
         } catch (e) {}
-        
+
         // Delete controllers to force fresh initialization on next login
         try {
           Get.delete<HomepageController>(force: true);

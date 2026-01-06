@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
 import 'package:venta_cuba/Controllers/home_controller.dart';
+import 'package:venta_cuba/Controllers/homepage_controller.dart';
 import 'package:venta_cuba/view/Chat/custom_text.dart';
 import 'package:venta_cuba/view/Navigation%20bar/post.dart';
 import 'package:venta_cuba/view/constants/Colors.dart';
@@ -21,6 +22,7 @@ class FavouriteListings extends StatefulWidget {
 
 class _FavouriteListingsState extends State<FavouriteListings> {
   final authCont = Get.put(AuthController());
+  final homePageCont = Get.find<HomepageController>();
   final homeCont =
       Get.find<HomeController>(); // Use existing controller instance
 
@@ -77,6 +79,7 @@ class _FavouriteListingsState extends State<FavouriteListings> {
                   if (isRemoved) {
                     // Reload home screen data to refresh favorite status
                     cont.getListing();
+                    homePageCont.forceRefresh();
 
                     errorAlertToast(
                         'All favourite listings removed successfully'.tr);
@@ -426,6 +429,7 @@ class _FavouriteListingsState extends State<FavouriteListings> {
 
                                                 // Reload home screen data to refresh favorite status
                                                 cont.getListing();
+                                                homePageCont.forceRefresh();
 
                                                 errorAlertToast(
                                                     "Successfully".tr);

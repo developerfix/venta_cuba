@@ -452,11 +452,8 @@ class _FrameScreenState extends State<FrameScreen> {
                                       ?.color),
                             ),
                             SizedBox(height: 10..h),
-                            if (_isValidOptionalDetail(cont
-                                .listingModel
-                                ?.additionalFeatures
-                                ?.optionalDetails
-                                ?.website))
+                            if (_isValidOptionalDetail(cont.listingModel
+                                ?.additionalFeatures?.optionalDetails?.website))
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -584,11 +581,8 @@ class _FrameScreenState extends State<FrameScreen> {
                                   SizedBox(height: 12.h),
                                 ],
                               ),
-                            if (_isValidOptionalDetail(cont
-                                .listingModel
-                                ?.additionalFeatures
-                                ?.optionalDetails
-                                ?.payment))
+                            if (_isValidOptionalDetail(cont.listingModel
+                                ?.additionalFeatures?.optionalDetails?.payment))
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -669,7 +663,8 @@ class _FrameScreenState extends State<FrameScreen> {
                             Container(
                               padding: EdgeInsets.all(15.w),
                               decoration: BoxDecoration(
-                                color: Theme.of(context).brightness == Brightness.dark
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
                                     ? Colors.grey[900]
                                     : Colors.grey[100],
                                 borderRadius: BorderRadius.circular(12.r),
@@ -781,13 +776,15 @@ class _FrameScreenState extends State<FrameScreen> {
                                         borderRadius:
                                             BorderRadius.circular(600.r),
                                         child: CachedNetworkImage(
-                                          key: ValueKey("seller_${cont.listingModel?.userId}_${cont.sellerDetailsModel?.data?.sellerAbout?.profileImage ?? cont.listingModel?.user?.profileImage}"),
+                                          key: ValueKey(
+                                              "seller_${cont.listingModel?.userId}_${cont.sellerDetailsModel?.data?.sellerAbout?.profileImage ?? cont.listingModel?.user?.profileImage}"),
                                           imageUrl: cont.listingModel
                                                       ?.businessStatus ==
                                                   "0"
                                               ? "${cont.sellerDetailsModel?.data?.sellerAbout?.profileImage ?? cont.listingModel?.user?.profileImage}"
                                               : "${cont.sellerDetailsModel?.data?.sellerAbout?.businessLogo ?? cont.listingModel?.user?.businessLogo}",
-                                          cacheKey: "seller_profile_${cont.listingModel?.userId}_${cont.listingModel?.businessStatus == "0" ? cont.sellerDetailsModel?.data?.sellerAbout?.profileImage ?? cont.listingModel?.user?.profileImage : cont.sellerDetailsModel?.data?.sellerAbout?.businessLogo ?? cont.listingModel?.user?.businessLogo}",
+                                          cacheKey:
+                                              "seller_profile_${cont.listingModel?.userId}_${cont.listingModel?.businessStatus == "0" ? cont.sellerDetailsModel?.data?.sellerAbout?.profileImage ?? cont.listingModel?.user?.profileImage : cont.sellerDetailsModel?.data?.sellerAbout?.businessLogo ?? cont.listingModel?.user?.businessLogo}",
                                           imageBuilder:
                                               (context, imageProvider) =>
                                                   Container(
@@ -1604,14 +1601,18 @@ class FullScreenGallery extends StatefulWidget {
 class _FullScreenGalleryState extends State<FullScreenGallery> {
   double offset = 0;
   late int currentIndex;
+
   @override
   void initState() {
     super.initState();
-    currentIndex = widget.initialIndex; // Initialize with the passed index
+    currentIndex = widget.initialIndex;
   }
 
   @override
   Widget build(BuildContext context) {
+    // Check if there's only one image
+    bool isSingleImage = widget.images.length == 1;
+
     return Column(
       children: [
         SizedBox(
@@ -1642,49 +1643,60 @@ class _FullScreenGalleryState extends State<FullScreenGallery> {
             },
             child: Transform.translate(
               offset: Offset(0, offset),
-              child: PhotoViewGestureDetectorScope(
-                axis: Axis.horizontal,
-                child: CarouselSlider(
-                  options: CarouselOptions(
-                    viewportFraction: 1,
-                    initialPage: widget.initialIndex,
-                    height: MediaQuery.of(context).size.height,
-                    onPageChanged: (index, reason) {
-                      setState(() {
-                        currentIndex = index;
-                      });
-                    },
-                  ),
-                  items: widget.images.map((url) {
-                    return PhotoView(
+              child: isSingleImage
+                  ? PhotoView(
                       minScale: PhotoViewComputedScale.contained,
                       maxScale: PhotoViewComputedScale.covered * 3,
-                      imageProvider: CachedNetworkImageProvider(url),
-                    );
-                  }).toList(),
+                      imageProvider:
+                          CachedNetworkImageProvider(widget.images[0]),
+                    )
+                  : PhotoViewGestureDetectorScope(
+                      axis: Axis.horizontal,
+                      child: CarouselSlider(
+                        options: CarouselOptions(
+                          viewportFraction: 1,
+                          initialPage: widget.initialIndex,
+                          height: MediaQuery.of(context).size.height,
+                          onPageChanged: (index, reason) {
+                            setState(() {
+                              currentIndex = index;
+                            });
+                          },
+                        ),
+                        items: widget.images.map((url) {
+                          return PhotoView(
+                            minScale: PhotoViewComputedScale.contained,
+                            maxScale: PhotoViewComputedScale.covered * 3,
+                            imageProvider: CachedNetworkImageProvider(url),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+            ),
+          ),
+        ),
+        if (!isSingleImage) // Only show indicators for multiple images
+          SizedBox(
+            height: 40,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                widget.images.length,
+                (index) => Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  width: currentIndex == index ? 10 : 7,
+                  height: currentIndex == index ? 10 : 7,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color:
+                        currentIndex == index ? Colors.white : Colors.white54,
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-        SizedBox(
-          height: 40,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              widget.images.length,
-              (index) => Container(
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                width: currentIndex == index ? 10 : 7,
-                height: currentIndex == index ? 10 : 7,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: currentIndex == index ? Colors.white : Colors.white54,
-                ),
-              ),
-            ),
-          ),
-        ),
+        if (isSingleImage) // Add spacing when there's only one image
+          SizedBox(height: 40),
       ],
     );
   }
