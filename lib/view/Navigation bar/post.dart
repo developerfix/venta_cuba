@@ -300,7 +300,8 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
       // If we have a category but no subcategory data, load subcategories
       if (homeCont.subCategoriesModel == null) {
         homeCont.isNavigate = false; // Prevent navigation during initialization
-        homeCont.isSearchScreen = true; // Temporarily set to prevent auto-navigation during initialization
+        homeCont.isSearchScreen =
+            true; // Temporarily set to prevent auto-navigation during initialization
         // Defer the call to after the widget is built to prevent setState during build
         WidgetsBinding.instance.addPostFrameCallback((_) {
           homeCont.getSubCategories().then((_) {
@@ -485,7 +486,8 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
 
         // Load subcategories for the selected category when updating listing
         homeCont.isNavigate = false; // Prevent navigation during initialization
-        homeCont.isSearchScreen = true; // Temporarily set to prevent auto-navigation in edit mode
+        homeCont.isSearchScreen =
+            true; // Temporarily set to prevent auto-navigation in edit mode
         // Defer the call to after the widget is built to prevent setState during build
         WidgetsBinding.instance.addPostFrameCallback((_) {
           homeCont.getSubCategories().then((_) {
@@ -548,7 +550,8 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
       // Set price field - show empty if price is 0 or null
       String rawPrice = homeCont.listingModel?.price?.toString() ?? "0";
       if (rawPrice != "0" && rawPrice != "null") {
-        homeCont.priceCont?.text = PriceFormatter().formatNumber(int.parse(rawPrice));
+        homeCont.priceCont?.text =
+            PriceFormatter().formatNumber(int.parse(rawPrice));
       } else {
         homeCont.priceCont?.text = "";
       }
@@ -1749,7 +1752,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                 ],
                               ),
                             ),
-                            SizedBox(height: 40..h),
+                            // SizedBox(height: 40..h),
                             Visibility(
                               visible: cont.selectedCategory?.name ==
                                           "Cars & Bikes" ||
@@ -1988,7 +1991,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                 ],
                                               )
                                             : SizedBox()),
-                            SizedBox(height: 5.h),
+                            SizedBox(height: 10.h),
                             InkWell(
                               onTap: () {
                                 cont.showBelowFields[0] == 1
@@ -2293,13 +2296,14 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                               ),
                                               dropdownStyleData:
                                                   DropdownStyleData(
-                                                      maxHeight: 600,
-                                                      useRootNavigator: true,
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.white,
-                                                        borderRadius: BorderRadius.circular(8),
-                                                      ),
-                                                  ),
+                                                maxHeight: 600,
+                                                useRootNavigator: true,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                              ),
                                               menuItemStyleData:
                                                   const MenuItemStyleData(
                                                 height: 40,
@@ -2335,7 +2339,8 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                         vertical: 8,
                                                       ),
                                                       hintText:
-                                                          'Search your province'.tr,
+                                                          'Search your province'
+                                                              .tr,
                                                       hintStyle:
                                                           const TextStyle(
                                                               fontSize: 16),
@@ -2461,13 +2466,14 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                               ),
                                               dropdownStyleData:
                                                   DropdownStyleData(
-                                                      maxHeight: 600,
-                                                      useRootNavigator: true,
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.white,
-                                                        borderRadius: BorderRadius.circular(8),
-                                                      ),
-                                                  ),
+                                                maxHeight: 600,
+                                                useRootNavigator: true,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                              ),
                                               menuItemStyleData:
                                                   const MenuItemStyleData(
                                                 height: 40,
@@ -2501,7 +2507,8 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                         vertical: 8,
                                                       ),
                                                       hintText:
-                                                          'Search your municipality'.tr,
+                                                          'Search your municipality'
+                                                              .tr,
                                                       hintStyle:
                                                           const TextStyle(
                                                               fontSize: 16),
@@ -3015,19 +3022,27 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                             onTap: cont.isEditingListing.value
                                                 ? null
                                                 : () {
-                                                    homeCont.lat = city?.latitude;
-                                                    homeCont.lng = city?.longitude;
+                                                    homeCont.lat =
+                                                        city?.latitude;
+                                                    homeCont.lng =
+                                                        city?.longitude;
                                                     homeCont.addressCont.text =
                                                         "${city?.provinceName}, ${city?.cityName}";
-                                                    cont.furnished = valueChoose ?? "";
-                                                    cont.jobType = valueChooseJob ?? "";
+                                                    cont.furnished =
+                                                        valueChoose ?? "";
+                                                    cont.jobType =
+                                                        valueChooseJob ?? "";
                                                     // cont.addressCont.text =
                                                     //     locationCont.locationEditingController.value.text;
-                                                    if (cont.titleCont.text.isEmpty) {
+                                                    if (cont.titleCont.text
+                                                        .isEmpty) {
                                                       errorAlertToast(
-                                                          "Please Enter Title".tr);
+                                                          "Please Enter Title"
+                                                              .tr);
                                                     } else if (cont
-                                                        .descriptionCont.text.isEmpty) {
+                                                        .descriptionCont
+                                                        .text
+                                                        .isEmpty) {
                                                       errorAlertToast(
                                                           "Please Enter Description"
                                                               .tr);
@@ -3041,23 +3056,36 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                   },
                                             child: Container(
                                               height: 50.h,
-                                              width: MediaQuery.of(context).size.width,
+                                              width: MediaQuery.of(context)
+                                                  .size
+                                                  .width,
                                               decoration: BoxDecoration(
-                                                  color: cont.isEditingListing.value
+                                                  color: cont.isEditingListing
+                                                          .value
                                                       ? Colors.grey
                                                       : Color(0xFF0254B8),
-                                                  borderRadius: BorderRadius.circular(10)),
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          10)),
                                               child: Center(
-                                                child: cont.isEditingListing.value
+                                                child: cont
+                                                        .isEditingListing.value
                                                     ? Row(
-                                                        mainAxisAlignment: MainAxisAlignment.center,
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .center,
                                                         children: [
                                                           SizedBox(
                                                             width: 20,
                                                             height: 20,
-                                                            child: CircularProgressIndicator(
+                                                            child:
+                                                                CircularProgressIndicator(
                                                               strokeWidth: 2,
-                                                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                                              valueColor:
+                                                                  AlwaysStoppedAnimation<
+                                                                          Color>(
+                                                                      Colors
+                                                                          .white),
                                                             ),
                                                           ),
                                                           SizedBox(width: 10),
@@ -3065,8 +3093,11 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                             'Updating...'.tr,
                                                             style: TextStyle(
                                                                 fontSize: 18,
-                                                                fontWeight: FontWeight.w400,
-                                                                color: Colors.white),
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w400,
+                                                                color: Colors
+                                                                    .white),
                                                           ),
                                                         ],
                                                       )
@@ -3074,8 +3105,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                         'Update'.tr,
                                                         style: TextStyle(
                                                             fontSize: 18,
-                                                            fontWeight: FontWeight.w400,
-                                                            color: Colors.white),
+                                                            fontWeight:
+                                                                FontWeight.w400,
+                                                            color:
+                                                                Colors.white),
                                                       ),
                                               ),
                                             ),
