@@ -270,18 +270,41 @@ class HomeController extends GetxController {
   }
 
   void ensureScrollListenerAttached() {
+    // 1. Sab se pehle check karein ke kya GetX controller khud band to nahi ho gaya
+    if (isClosed) return;
+
     try {
       // Remove existing listeners if present to avoid duplicates
-      scrollsController.removeListener(onScroll);
-      searchScrollController.removeListener(onScrollSearch);
+      // Try-catch zaroori hai kyunke agar controller dispose ho chuka ho to removeListener bhi crash kar sakta hai
+      try {
+        scrollsController.removeListener(onScroll);
+      } catch (e) {
+        // Ignore specific error if already disposed
+      }
+
+      try {
+        searchScrollController.removeListener(onScrollSearch);
+      } catch (e) {
+        // Ignore specific error if already disposed
+      }
     } catch (e) {
       // Listeners weren't attached, that's fine
     }
 
-    // Add the listeners
-    scrollsController.addListener(onScroll);
-    searchScrollController.addListener(onScrollSearch);
-    Get.log("📜 Scroll listeners ensured to be attached");
+    // 2. Ab listener add karein, lekin safety ke sath
+    try {
+      // Check karein ke kahin scrollController pehle hi dispose to nahi
+      // Note: ScrollController ka direct 'isDisposed' property nahi hoti,
+      // is liye hum isay try-catch mein wrap karte hain.
+      scrollsController.addListener(onScroll);
+      searchScrollController.addListener(onScrollSearch);
+
+      Get.log("📜 Scroll listeners ensured to be attached");
+    } catch (e) {
+      // Agar controller dispose ho chuka tha, to yahan crash nahi hoga, bas log print hoga
+      Get.log(
+          "⚠️ Could not attach listener: ScrollController is likely disposed. Ignoring.");
+    }
   }
 
   // Test method to manually trigger scroll
@@ -3332,7 +3355,7 @@ class HomeController extends GetxController {
           'sub_category_id': selectedSubCategory?.id.toString(),
         },
         showdialog: false);
-
+    Get.to(SubSubCategories());
     loadingSubSubCategory = false.obs;
     loadingCategory = false.obs;
     update();
@@ -3359,8 +3382,8 @@ class HomeController extends GetxController {
         // Original navigation logic for other screens
         if (isNavigate) {
           // Wait for search results before navigating
+
           await getListingSearch();
-          Get.to(SubSubCategories());
         } else {
           if (subSubCategoriesModel?.data?.isEmpty ?? false) {
             selectedSubSubCategory = null;
