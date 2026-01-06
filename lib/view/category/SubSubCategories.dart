@@ -92,8 +92,12 @@ class _SubSubCategoriesState extends State<SubSubCategories> {
                           height: 45..h,
                         ),
                         Expanded(
-                          child:
-                              cont.subSubCategoriesModel?.data?.isEmpty ?? true
+                          child: (cont.loadingSubSubCategory.value ||
+                                  cont.loadingCategory
+                                      .value) // ✅ Step A: Check loading first
+                              ? Center(child: CircularProgressIndicator())
+                              : cont.subSubCategoriesModel?.data?.isEmpty ??
+                                      true
                                   ? cont.listingModelSearchList.isEmpty &&
                                           cont.isSearchLoading.value
                                       ? Center(

@@ -3343,10 +3343,12 @@ class HomeController extends GetxController {
     }
   }
 
+  // HomeController.dart ke andar
+
   Future getSubSubCategories() async {
-    loadingSubSubCategory = true.obs;
-    loadingCategory = true.obs;
-    update();
+    loadingSubSubCategory.value = true; // .value use karein agar RxBool hai
+    loadingCategory.value = true;
+    update(); // UI ko batayein ke loading shuru ho gayi hai
 
     Response response = await api.postWithForm(
         "api/getSubSubCategories",
@@ -3355,62 +3357,25 @@ class HomeController extends GetxController {
           'sub_category_id': selectedSubCategory?.id.toString(),
         },
         showdialog: false);
-    Get.to(SubSubCategories());
-    loadingSubSubCategory = false.obs;
-    loadingCategory = false.obs;
-    update();
+
+    loadingSubSubCategory.value = false;
+    loadingCategory.value = false;
 
     if (response.statusCode == 200) {
       subSubCategoriesModel = SubSubCategoriesModel.fromJson(response.body);
       isType = 2;
 
-      // Only clear listings and reset pagination when navigating (not during edit initialization)
-      if (isNavigate) {
-        currentPage.value = 1;
-        hasMore.value = true;
-        listingModelList.clear();
-        currentSearchPage.value = 1;
-        listingModelSearchList.clear();
-      }
+      // Data load hone ke baad update karein
       update();
 
-      // Check if this is being called from search screen
-      if (isSearchScreen) {
-        // For search screen, just update the data without navigation
-        update();
-      } else {
-        // Original navigation logic for other screens
-        if (isNavigate) {
-          // Wait for search results before navigating
-
-          await getListingSearch();
-        } else {
-          if (subSubCategoriesModel?.data?.isEmpty ?? false) {
-            selectedSubSubCategory = null;
-            if (isSearchScreen) {
-              // Reset price filter when category changes in search screen
-              minPriceController.clear();
-              maxPriceController.clear();
-              // Don't call Get.back() when in edit mode (isNavigate = false)
-              if (isNavigate) Get.back();
-              await getListingSearch();
-            } else {
-              // Don't call Get.back() when in edit mode (isNavigate = false)
-              if (isNavigate) Get.back();
-            }
-          } else {
-            // Reset price filter when category changes in search screen
-            if (isSearchScreen) {
-              minPriceController.clear();
-              maxPriceController.clear();
-            }
-            await getListingSearch();
-            update();
-          }
-        }
+      // Agar sub-sub categories empty hain, toh listing fetch karein
+      if (subSubCategoriesModel?.data?.isEmpty ?? false) {
+        await getListingSearch();
       }
     } else {
-      print('Something went wrong\nPlease try again!'.tr);
+      // Error handling
+      update();
+      print('Something went wrong');
     }
   }
 

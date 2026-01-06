@@ -6,6 +6,7 @@ import 'package:venta_cuba/Controllers/auth_controller.dart';
 import 'package:venta_cuba/Controllers/home_controller.dart';
 import 'package:venta_cuba/util/profile_list.dart';
 import 'package:venta_cuba/view/Navigation%20bar/post.dart';
+import 'package:venta_cuba/view/category/SubSubCategories.dart';
 
 import '../../Utils/funcations.dart';
 import '../Chat/custom_text.dart';
@@ -35,26 +36,26 @@ class _CategoryFromState extends State<CategoryFrom> {
         body: GetBuilder<HomeController>(
           builder: (cont) {
             return Padding(
-            padding: const EdgeInsets.all(20),
-            child: SafeArea(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          // Just go back - don't touch homepage list
-                          Navigator.of(context).pop();
-                        },
-                        child: Icon(
-                          Icons.arrow_back_ios,
-                          size: 20,
+              padding: const EdgeInsets.all(20),
+              child: SafeArea(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            // Just go back - don't touch homepage list
+                            Navigator.of(context).pop();
+                          },
+                          child: Icon(
+                            Icons.arrow_back_ios,
+                            size: 20,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
                     SizedBox(
                       height: 20..h,
                     ),
@@ -108,7 +109,7 @@ class _CategoryFromState extends State<CategoryFrom> {
                                       Navigator.push(
                                           context,
                                           PremiumPageTransitions.slideFromRight(
-                                                const FrameScreen(),
+                                            const FrameScreen(),
                                           ));
                                     },
                                     child: Stack(
@@ -408,11 +409,27 @@ class _CategoryFromState extends State<CategoryFrom> {
                               itemCount:
                                   cont.subCategoriesModel?.data?.length ?? 0,
                               itemBuilder: (context, index) {
-                                return GestureDetector(
+                                return InkWell(
                                     onTap: () {
+                                      // 1. Selection set karein
                                       cont.selectedSubCategory =
                                           cont.subCategoriesModel?.data?[index];
                                       cont.isNavigate = true;
+
+                                      // 2. Pichla data clear karein taake naye screen pe purana data flash na ho
+                                      cont.subSubCategoriesModel = null;
+                                      cont.listingModelSearchList.clear();
+                                      cont.loadingSubSubCategory.value =
+                                          true; // Loader trigger karne ke liye
+
+                                      // 3. INSTANT Navigation (Bina wait kiye)
+                                      Navigator.push(
+                                        context,
+                                        PremiumPageTransitions.slideFromRight(
+                                            SubSubCategories()), // Ya jo bhi aapki route class hai
+                                      );
+
+                                      // 4. API Call background mein start karein (await nahi lagana yahan navigation block karne ke liye)
                                       cont.getSubSubCategories();
                                     },
                                     child: ProfileList(
