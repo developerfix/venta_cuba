@@ -90,7 +90,7 @@ class _CategoryFromState extends State<CategoryFrom> {
                     Expanded(
                       child: cont.subCategoriesModel!.data!.isEmpty
                           ? directItemsList(cont)
-                          : nestedCategories(cont),
+                          : nestedCategoriesList(cont),
                     ),
                   ],
                 ),
@@ -102,7 +102,7 @@ class _CategoryFromState extends State<CategoryFrom> {
     );
   }
 
-  ListView nestedCategories(HomeController cont) {
+  ListView nestedCategoriesList(HomeController cont) {
     return ListView.separated(
       itemCount: cont.subCategoriesModel?.data?.length ?? 0,
       itemBuilder: (context, index) {
@@ -139,223 +139,181 @@ class _CategoryFromState extends State<CategoryFrom> {
     );
   }
 
-  GridView directItemsList(HomeController cont) {
+  Widget directItemsList(HomeController cont) {
     return GridView.builder(
-      itemCount: cont.listingModelList.length,
-      // physics: NeverScrollableScrollPhysics(),
+      itemCount: cont.listingModelSearchList.length,
       shrinkWrap: true,
+      physics:
+          const NeverScrollableScrollPhysics(), // Scroll parent handle karega
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 0.50.r,
+        childAspectRatio:
+            0.62.r, // Isay adjust kiya gaya hai taake content pura nazar aaye
         mainAxisSpacing: 15,
-        crossAxisSpacing: 20,
+        crossAxisSpacing: 15,
       ),
       itemBuilder: (BuildContext context, int index) {
+        // Direct SearchList se item uthayen
+        var item = cont.listingModelSearchList[index];
+
         return GestureDetector(
-            onTap: () {
-              cont.isListing = 0;
-              cont.listingModel = cont.listingModelList[index];
-              Navigator.push(
-                  context,
-                  PremiumPageTransitions.slideFromRight(
-                    const FrameScreen(),
-                  ));
-            },
-            child: Stack(
-              children: [
-                Container(
-                  //  height: 280..h,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10..r),
-                    color: Theme.of(context).cardColor,
-                    border: Theme.of(context).brightness == Brightness.dark
-                        ? Border.all(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            width: 1,
-                          )
-                        : null,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white.withValues(alpha: 0.1)
-                            : Theme.of(context)
-                                .shadowColor
-                                .withValues(alpha: 0.1),
-                        // Shadow color
-                        offset: Offset(0, 3),
-                        // Shadow offset
-                        blurRadius: 6,
-                        // Shadow blur radius
-                        spreadRadius: 0, // Shadow spread radius
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.only(
-                              topLeft: Radius.circular(10.r),
-                              topRight: Radius.circular(10.r)),
-                          child: CachedNetworkImage(
-                            height: 180..h,
-                            width: MediaQuery.of(context).size.width,
-                            imageUrl: cont.listingModelList[index].gallery !=
-                                        null &&
-                                    cont.listingModelList[index].gallery!
-                                        .isNotEmpty
-                                ? "${cont.listingModelList[index].gallery?.first}"
-                                : "",
-                            imageBuilder: (context, imageProvider) => Container(
-                              height: 180..h,
-                              width: MediaQuery.of(context).size.width,
-                              decoration: BoxDecoration(
-                                image: DecorationImage(
-                                  image: imageProvider,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            ),
-                            placeholder: (context, url) => SizedBox(
-                                height: 180..h,
-                                width: MediaQuery.of(context).size.width,
-                                child: Center(
-                                    child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ))),
-                            errorWidget: (context, url, error) =>
-                                Icon(Icons.error),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        //height: 65..h,
-                        color: Theme.of(context).cardColor,
-                        child: Column(
-                          children: [
-                            SizedBox(
-                              height: 20.h,
-                              child: Text(
-                                cont.listingModelList[index].title ?? "",
-                                maxLines: 2,
-                                textAlign: TextAlign.center,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                    fontSize: 17..sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: Theme.of(context)
-                                        .textTheme
-                                        .bodyLarge
-                                        ?.color),
-                              ),
-                            ),
-                            SizedBox(
-                              height: 16.h,
-                              child: Text(
-                                '${cont.listingModelList[index].address ?? ""}',
-                                style: TextStyle(
-                                    fontSize: 13..sp,
-                                    fontWeight: FontWeight.w400,
-                                    color: AppColors.k0xFF403C3C),
-                              ),
-                            ),
-                            SizedBox(
-                              height: 2..h,
-                            ),
-                            SizedBox(
-                              height: 16.h,
-                              child: SelectionArea(
-                                child: Text(
-                                  cont.listingModelList[index].price == "0"
-                                      ? " "
-                                      : "${PriceFormatter().formatNumber(int.parse(cont.listingModelList[index].price ?? '0'))}\$ ${PriceFormatter().getCurrency(cont.listingModelList[index].currency)}}",
-                                  textAlign: TextAlign.center,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                      fontSize: 14..sp,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.k0xFF0254B8),
-                                ),
-                              ),
-                            ),
-                            SizedBox(
-                              height: 5.h,
-                            )
-                          ],
-                        ),
-                      )
-                    ],
-                  ),
+          onTap: () {
+            cont.isListing = 0;
+            cont.listingModel = item; // Poora item object assign karein
+            Navigator.push(
+              context,
+              PremiumPageTransitions.slideFromRight(
+                const FrameScreen(),
+              ),
+            );
+          },
+          child: Stack(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10.r),
+                  color: Theme.of(context).cardColor,
+                  border: Theme.of(context).brightness == Brightness.dark
+                      ? Border.all(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          width: 1,
+                        )
+                      : null,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white.withValues(alpha: 0.1)
+                          : Theme.of(context)
+                              .shadowColor
+                              .withValues(alpha: 0.1),
+                      offset: const Offset(0, 3),
+                      blurRadius: 6,
+                      spreadRadius: 0,
+                    ),
+                  ],
                 ),
-                Positioned(
-                  top: 10..h,
-                  right: 10..w,
-                  child: InkWell(
-                    onTap: () async {
-                      if (authCont.user?.email == "") {
-                        Get.to(Login());
-                      } else {
-                        cont.listingModel = cont.listingModelList[index];
-                        cont.listingModelList[index].isFavorite == "0"
-                            ? cont.listingModelList[index].isFavorite = "1"
-                            : cont.listingModelList[index].isFavorite = "0";
-                        cont.update();
-                        bool isAddedF = await cont.favouriteItem();
-                        if (isAddedF) {
-                          // Sync with other lists
-                          String itemId =
-                              cont.listingModelList[index].itemId ?? "";
-                          String newFavoriteStatus =
-                              cont.listingModelList[index].isFavorite ?? "0";
-
-                          // Update search results
-                          for (int i = 0;
-                              i < cont.listingModelSearchList.length;
-                              i++) {
-                            if (cont.listingModelSearchList[i].itemId ==
-                                itemId) {
-                              cont.listingModelSearchList[i].isFavorite =
-                                  newFavoriteStatus;
-                              break;
-                            }
-                          }
-
-                          // Update favorites list
-                          if (newFavoriteStatus == "0") {
-                            cont.userFavouriteListingModelList.removeWhere(
-                                (favItem) => favItem.itemId == itemId);
-                          }
-
-                          cont.update();
-                          errorAlertToast("Successfully".tr);
-                        } else {
-                          cont.listingModelList[index].isFavorite == "0"
-                              ? cont.listingModelList[index].isFavorite = "1"
-                              : cont.listingModelList[index].isFavorite = "0";
-                        }
-                      }
-                    },
-                    child: Container(
-                      padding: EdgeInsets.all(10),
-                      height: 43..h,
-                      width: 43..w,
-                      decoration: BoxDecoration(
-                          color: Theme.of(context).cardColor,
-                          borderRadius: BorderRadius.circular(21.5..r)),
-                      child: SvgPicture.asset(
-                        'assets/icons/heart1.svg',
-                        colorFilter: ColorFilter.mode(
-                            cont.listingModelList[index].isFavorite == '0'
-                                ? AppColors.k0xFF9F9F9F
-                                : AppColors.k0xFFFB0808,
-                            BlendMode.srcIn),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Image Section
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(10.r),
+                            topRight: Radius.circular(10.r)),
+                        child: CachedNetworkImage(
+                          width: double.infinity,
+                          imageUrl:
+                              (item.gallery != null && item.gallery!.isNotEmpty)
+                                  ? "${item.gallery?.first}"
+                                  : "",
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => const Center(
+                              child: CircularProgressIndicator(strokeWidth: 2)),
+                          errorWidget: (context, url, error) =>
+                              const Icon(Icons.error),
+                        ),
                       ),
                     ),
+
+                    // Text Details Section
+                    Container(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 5.w, vertical: 8.h),
+                      child: Column(
+                        children: [
+                          Text(
+                            item.title ?? "",
+                            maxLines: 1,
+                            textAlign: TextAlign.center,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .bodyLarge
+                                    ?.color),
+                          ),
+                          SizedBox(height: 4.h),
+                          Text(
+                            item.address ?? "",
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w400,
+                                color: Colors.grey),
+                          ),
+                          SizedBox(height: 4.h),
+                          Text(
+                            item.price == "0"
+                                ? "Negotiable".tr
+                                : "${PriceFormatter().formatNumber(int.parse(item.price ?? '0'))}\$ ${PriceFormatter().getCurrency(item.currency)}",
+                            style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.k0xFF0254B8),
+                          ),
+                        ],
+                      ),
+                    )
+                  ],
+                ),
+              ),
+
+              // Favorite Button
+              Positioned(
+                top: 8.h,
+                right: 8.w,
+                child: InkWell(
+                  onTap: () async {
+                    if (authCont.user?.email == "") {
+                      Get.to(const Login());
+                    } else {
+                      cont.listingModel = item;
+                      // Toggle favorite locally
+                      item.isFavorite = (item.isFavorite == "0") ? "1" : "0";
+                      cont.update();
+
+                      bool success = await cont.favouriteItem();
+                      if (success) {
+                        if (item.isFavorite == "0") {
+                          cont.userFavouriteListingModelList
+                              .removeWhere((fav) => fav.itemId == item.itemId);
+                        }
+                        errorAlertToast("Successfully".tr);
+                      } else {
+                        // Revert if API fails
+                        item.isFavorite = (item.isFavorite == "0") ? "1" : "0";
+                      }
+                      cont.update();
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                        color: Theme.of(context).cardColor,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(color: Colors.black12, blurRadius: 4)
+                        ]),
+                    child: SvgPicture.asset(
+                      'assets/icons/heart1.svg',
+                      height: 20.h,
+                      width: 20.w,
+                      colorFilter: ColorFilter.mode(
+                          item.isFavorite == '0'
+                              ? AppColors.k0xFF9F9F9F
+                              : AppColors.k0xFFFB0808,
+                          BlendMode.srcIn),
+                    ),
                   ),
-                )
-              ],
-            ));
+                ),
+              )
+            ],
+          ),
+        );
       },
     );
   }

@@ -3225,6 +3225,11 @@ class HomeController extends GetxController {
 
       if (response.statusCode == 200) {
         subCategoriesModel = SubCategoriesModel.fromJson(response.body);
+        if (subCategoriesModel?.data?.isEmpty ?? true) {
+          listingModelSearchList.clear();
+          await getListingSearch(isLoadMore: false);
+        }
+
         isType = 1;
 
         // Check if this is being called from search screen
