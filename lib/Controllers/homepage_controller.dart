@@ -47,6 +47,23 @@ class HomepageController extends GetxController {
     super.onClose();
   }
 
+// Add this method to HomepageController
+  void ensureScrollListenerAttached() {
+    try {
+      scrollController.removeListener(_onScroll);
+    } catch (e) {
+      // Ignore if not attached
+    }
+    try {
+      if (scrollController.hasClients) {
+        scrollController.addListener(_onScroll);
+        Get.log("📍 HomepageController: Scroll listener re-attached");
+      }
+    } catch (e) {
+      Get.log("Error attaching scroll listener: $e", isError: true);
+    }
+  }
+
   /// Load saved location from SharedPreferences
   Future<void> _loadSavedLocation() async {
     try {

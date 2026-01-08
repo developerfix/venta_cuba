@@ -247,7 +247,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                         cont.selectedSubSubCategory = null;
 
                                         // Ensure scroll listener is still attached after returning from search
-                                        cont.ensureScrollListenerAttached();
+                                        homepageCont
+                                            .ensureScrollListenerAttached();
+
                                         cont.update();
 
                                         // Only reload location, don't trigger full data refresh
@@ -620,7 +622,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     cont.selectedSubSubCategory = null;
 
                                     // Ensure scroll listener is still attached after returning
-                                    cont.ensureScrollListenerAttached();
+                                    homepageCont.ensureScrollListenerAttached();
                                     cont.update();
                                   });
                                 },
