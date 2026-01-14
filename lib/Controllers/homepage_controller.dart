@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
 import 'package:venta_cuba/Models/ListingModel.dart';
+import 'package:venta_cuba/Utils/funcations.dart';
 import 'package:venta_cuba/main.dart';
 import '../api/api_client.dart';
 
@@ -32,7 +33,9 @@ class HomepageController extends GetxController {
   String? _lastLat;
   String? _lastLng;
   double? _lastRadius;
-
+  Timer? _favoriteToastTimer;
+  int _pendingFavoriteCount = 0;
+  bool _hasShownFavoriteToast = false;
   @override
   void onInit() {
     super.onInit();
@@ -42,9 +45,31 @@ class HomepageController extends GetxController {
 
   @override
   void onClose() {
+    _favoriteToastTimer?.cancel();
     scrollController.removeListener(_onScroll);
     scrollController.dispose();
     super.onClose();
+  }
+
+  void showFavoriteToast() {
+    _pendingFavoriteCount++;
+
+    // Cancel existing timer if any
+    _favoriteToastTimer?.cancel();
+
+    // Set timer to show toast after user stops clicking (500ms delay)
+    _favoriteToastTimer = Timer(Duration(milliseconds: 500), () {
+      if (!_hasShownFavoriteToast) {
+        _hasShownFavoriteToast = true;
+        errorAlertToast("Successfully".tr);
+
+        // Reset after showing toast
+        Future.delayed(Duration(seconds: 2), () {
+          _hasShownFavoriteToast = false;
+          _pendingFavoriteCount = 0;
+        });
+      }
+    });
   }
 
 // Add this method to HomepageController

@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
 import 'package:venta_cuba/Controllers/home_controller.dart';
 import 'package:venta_cuba/Controllers/homepage_controller.dart';
+import 'package:venta_cuba/Utils/funcations.dart';
 import 'package:venta_cuba/view/Navigation%20bar/post.dart';
 import 'package:venta_cuba/view/auth/login.dart';
 import 'package:venta_cuba/view/constants/Colors.dart';
@@ -273,6 +274,8 @@ class ListingView extends StatelessWidget {
                                     originalFavoriteStatus;
                                 cont.update();
                               }
+                            } else {
+                              cont.showFavoriteToast();
                             }
                           }
                         },

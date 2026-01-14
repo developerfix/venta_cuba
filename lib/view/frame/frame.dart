@@ -891,11 +891,7 @@ class _FrameScreenState extends State<FrameScreen> {
                                           cont.isLoading = false;
                                           cont.update();
                                           if (isAddedF) {
-                                            print("Successfully".tr);
-                                            print(
-                                                "isSellerFavorite.............${cont.listingModel?.isSellerFavorite}");
-                                            print(
-                                                "object.............${jsonEncode(homeCont.listingModel)}");
+                                            errorAlertToast("Successfully".tr);
 
                                             // Sync seller favorite status with home screen
                                             String sellerId = cont
