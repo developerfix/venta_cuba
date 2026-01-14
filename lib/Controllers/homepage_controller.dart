@@ -311,13 +311,15 @@ class HomepageController extends GetxController {
   }
 
   void updateFavoriteStatus(String itemId, String newStatus) {
+    // Find and update only the specific item
     for (int i = 0; i < homepageListings.length; i++) {
       if (homepageListings[i].itemId == itemId) {
         homepageListings[i].isFavorite = newStatus;
-        break;
+        Get.log("✅ Updated favorite status for item $itemId to $newStatus");
+        break; // Stop after finding the item
       }
     }
-    update();
+    update(); // This will rebuild the UI with the correct state
   }
 
   Future<void> forceRefresh() async {

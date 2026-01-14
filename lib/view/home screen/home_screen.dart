@@ -127,10 +127,40 @@ class _HomeScreenState extends State<HomeScreen> {
       } else {
         Get.log(
             '🏠 HomeScreen: Data already loaded, count: ${homepageCont.homepageListings.length}');
+      } // Load categories with retry
+      await _loadCategoriesWithRetry();
+
+      // Load listings using HomepageController
+      if (homepageCont.homepageListings.isEmpty ||
+          !homepageCont.hasInitialLoadCompleted.value) {
+        await homepageCont.loadHomepageData(forceRefresh: true);
       }
     } catch (e) {
       Get.log("Error loading background data: $e", isError: true);
     }
+  }
+
+// Add retry logic for categories
+  Future<void> _loadCategoriesWithRetry() async {
+    int retries = 3;
+    while (retries > 0) {
+      await homeCont.getCategories();
+
+      // Check if categories loaded successfully
+      if (homeCont.categoriesModel?.data != null &&
+          homeCont.categoriesModel!.data!.isNotEmpty) {
+        Get.log("✅ Categories loaded successfully");
+        return;
+      }
+
+      retries--;
+      if (retries > 0) {
+        Get.log("⚠️ Categories empty, retrying... ($retries attempts left)");
+        await Future.delayed(Duration(seconds: 1));
+      }
+    }
+
+    Get.log("❌ Failed to load categories after 3 attempts");
   }
 
   bool isListView = false;
@@ -642,34 +672,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           SizedBox(
                             height: 20.h,
                           ),
-                          Container(
-                            height: 62.h,
-                            width: MediaQuery.of(context).size.width,
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              itemCount:
-                                  cont.categoriesModel?.data?.length ?? 0,
-                              itemBuilder: (BuildContext context, int index) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(right: 15),
-                                  child: InkWell(
-                                    onTap: () {
-                                      cont.selectedCategory =
-                                          cont.categoriesModel?.data?[index];
-                                      cont.isNavigate = true;
-                                      cont.getSubCategories();
-                                    },
-                                    child: Categories(
-                                        imagePath: cont.categoriesModel
-                                                ?.data?[index].icon ??
-                                            "",
-                                        text:
-                                            "${cont.categoriesModel?.data?[index].name}"),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
+                          categoriesList(cont, context),
                           SizedBox(
                             height: 35.h,
                           ),
@@ -689,5 +692,64 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
     );
+  }
+
+  Obx categoriesList(HomeController cont, BuildContext context) {
+    return Obx(() {
+      if (homeCont.loadingCategories.value) {
+        return Container(
+          height: 62.h,
+          child: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+      }
+
+      if (homeCont.categoriesLoadFailed.value) {
+        return Container(
+          height: 62.h,
+          child: Center(
+            child: TextButton.icon(
+              onPressed: () => homeCont.getCategories(),
+              icon: Icon(Icons.refresh),
+              label: Text('Retry'.tr),
+            ),
+          ),
+        );
+      }
+
+      if (cont.categoriesModel?.data?.isEmpty ?? true) {
+        return Container(
+          height: 62.h,
+          child: Center(
+            child: Text('No categories available'.tr),
+          ),
+        );
+      }
+
+      return Container(
+        height: 62.h,
+        width: MediaQuery.of(context).size.width,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: cont.categoriesModel?.data?.length ?? 0,
+          itemBuilder: (BuildContext context, int index) {
+            return Padding(
+              padding: const EdgeInsets.only(right: 15),
+              child: InkWell(
+                onTap: () {
+                  cont.selectedCategory = cont.categoriesModel?.data?[index];
+                  cont.isNavigate = true;
+                  cont.getSubCategories();
+                },
+                child: Categories(
+                    imagePath: cont.categoriesModel?.data?[index].icon ?? "",
+                    text: "${cont.categoriesModel?.data?[index].name}"),
+              ),
+            );
+          },
+        ),
+      );
+    });
   }
 }

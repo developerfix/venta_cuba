@@ -54,7 +54,8 @@ class HomeController extends GetxController {
   HomeController() {
     Get.log("🎯 HOME CONTROLLER CONSTRUCTOR CALLED - NEW VERSION!");
   }
-
+  RxBool loadingCategories = false.obs;
+  RxBool categoriesLoadFailed = false.obs;
   TextEditingController? priceCont = TextEditingController();
   TextEditingController addressCont = TextEditingController();
   TextEditingController addressController = TextEditingController();
@@ -3204,13 +3205,31 @@ class HomeController extends GetxController {
   }
 
   Future getCategories() async {
-    Response response =
-        await api.postWithForm("api/getCategories", {}, showdialog: false);
-    if (response.statusCode == 200) {
-      categoriesModel = CategoriesModel.fromJson(response.body);
-      isType = 0;
-    } else {
-      print('Something went wrong\nPlease try again!'.tr);
+    loadingCategories.value = true;
+    categoriesLoadFailed.value = false;
+    update();
+
+    try {
+      Response response = await api
+          .postWithForm("api/getCategories", {}, showdialog: false)
+          .timeout(Duration(seconds: 15)); // Add timeout
+
+      if (response.statusCode == 200) {
+        categoriesModel = CategoriesModel.fromJson(response.body);
+        isType = 0;
+        Get.log("✅ Categories loaded: ${categoriesModel?.data?.length ?? 0}");
+      } else {
+        categoriesLoadFailed.value = true;
+        Get.log("❌ Categories API failed: ${response.statusCode}");
+        print('Failed to load categories. Please try again.'.tr);
+      }
+    } catch (e) {
+      categoriesLoadFailed.value = true;
+      Get.log("❌ Categories error: $e", isError: true);
+      print('Failed to load categories. Please check your connection.'.tr);
+    } finally {
+      loadingCategories.value = false;
+      update();
     }
   }
 

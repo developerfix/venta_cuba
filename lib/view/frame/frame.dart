@@ -1655,6 +1655,7 @@ class _FullScreenGalleryState extends State<FullScreenGallery> {
                       child: CarouselSlider(
                         options: CarouselOptions(
                           viewportFraction: 1,
+                          enableInfiniteScroll: false,
                           initialPage: widget.initialIndex,
                           height: MediaQuery.of(context).size.height,
                           onPageChanged: (index, reason) {

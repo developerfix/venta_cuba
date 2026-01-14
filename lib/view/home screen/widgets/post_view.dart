@@ -25,7 +25,7 @@ class ListingView extends StatelessWidget {
     final homepageCont = Get.put(HomepageController());
     // HomeController is only used for navigation to detail screen
     final homeCont = Get.put(HomeController());
-    
+
     return GetBuilder<HomepageController>(
       init: homepageCont,
       builder: (cont) {
@@ -41,7 +41,7 @@ class ListingView extends StatelessWidget {
             ),
           );
         }
-        
+
         // Show empty state ONLY when:
         // 1. List is empty AND
         // 2. NOT loading AND
@@ -86,7 +86,8 @@ class ListingView extends StatelessWidget {
         final listings = cont.homepageListings;
 
         return GridView.builder(
-          itemCount: listings.length + (cont.hasMore.value && cont.isLoading.value ? 1 : 0),
+          itemCount: listings.length +
+              (cont.hasMore.value && cont.isLoading.value ? 1 : 0),
           physics: NeverScrollableScrollPhysics(),
           shrinkWrap: true,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -244,21 +245,34 @@ class ListingView extends StatelessWidget {
                           if (authCont.user?.email == "") {
                             Get.to(Login());
                           } else {
-                            homeCont.listingModel = item;
+                            // Store original status for rollback
                             String originalFavoriteStatus =
                                 item.isFavorite ?? "0";
-                            item.isFavorite =
-                                item.isFavorite == "0" ? "1" : "0";
-                            cont.update();
-                            bool isAddedF = await homeCont.favouriteItem();
-                            if (isAddedF) {
-                              // Update in HomepageController list
-                              cont.updateFavoriteStatus(
-                                  item.itemId ?? "", item.isFavorite ?? "0");
-                            } else {
-                              // Revert the change if API call failed
-                              item.isFavorite = originalFavoriteStatus;
+
+                            // Toggle the favorite status LOCALLY first (optimistic update)
+                            String newFavoriteStatus =
+                                originalFavoriteStatus == "0" ? "1" : "0";
+
+                            // Find the item in the list by index and update it
+                            if (index < cont.homepageListings.length) {
+                              cont.homepageListings[index].isFavorite =
+                                  newFavoriteStatus;
                               cont.update();
+                            }
+
+                            // Set listingModel for API call
+                            homeCont.listingModel = item;
+
+                            // Make API call
+                            bool isAddedF = await homeCont.favouriteItem();
+
+                            if (!isAddedF) {
+                              // Revert if API call failed
+                              if (index < cont.homepageListings.length) {
+                                cont.homepageListings[index].isFavorite =
+                                    originalFavoriteStatus;
+                                cont.update();
+                              }
                             }
                           }
                         },
