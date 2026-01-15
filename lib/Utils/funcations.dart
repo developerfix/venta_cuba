@@ -17,16 +17,55 @@ showSnackBar({Color? color, String? title}) {
   );
 }
 
-errorAlertToast(String error) {
-  Fluttertoast.showToast(
-      msg: error,
-      toastLength: Toast.LENGTH_LONG,
-      gravity: ToastGravity.TOP,
-      timeInSecForIosWeb: 2,
-      textColor: Colors.white,
-      fontSize: 16.0.sp);
-}
+errorAlertToast(String error, {bool? isOnTop}) {
+  final context = navigatorKey.currentContext;
 
+  if (context != null) {
+    FToast fToast = FToast();
+    fToast.init(context);
+
+    // Pehle se mojud toasts khatam karein taake queue na bane
+    fToast.removeCustomToast();
+
+    fToast.showToast(
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
+        margin: EdgeInsets.symmetric(horizontal: 20.w),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10.r),
+          color: Colors.black87,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 10,
+              offset: Offset(0, 5),
+            )
+          ],
+        ),
+        child: Text(
+          error,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+      // Gravity TOP par set hai
+      gravity: isOnTop != null ? ToastGravity.TOP : ToastGravity.BOTTOM,
+      toastDuration: Duration(seconds: 2),
+    );
+  } else {
+    // Fallback agar context na mile
+    Fluttertoast.showToast(
+      msg: error,
+      gravity: isOnTop != null ? ToastGravity.TOP : ToastGravity.BOTTOM,
+      backgroundColor: Colors.black,
+      textColor: Colors.white,
+    );
+  }
+}
 
 showLoading() {
   showDialog(

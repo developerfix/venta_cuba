@@ -890,8 +890,15 @@ class _FrameScreenState extends State<FrameScreen> {
                                               await cont.favouriteSeller();
                                           cont.isLoading = false;
                                           cont.update();
+
                                           if (isAddedF) {
-                                            errorAlertToast("Successfully".tr);
+                                            String message = cont.listingModel
+                                                        ?.isSellerFavorite ==
+                                                    "1"
+                                                ? "Added successfully".tr
+                                                : "Removed successfully".tr;
+                                            errorAlertToast(message,
+                                                isOnTop: true);
 
                                             // Sync seller favorite status with home screen
                                             String sellerId = cont
@@ -1412,7 +1419,8 @@ class _FrameScreenState extends State<FrameScreen> {
                                                       .favouriteItem();
                                                   if (isAddedF) {
                                                     errorAlertToast(
-                                                        "Successfully".tr);
+                                                        "Successfully".tr,
+                                                        isOnTop: true);
 
                                                     // Sync listing favorite status with home screen
                                                     String itemId = cont

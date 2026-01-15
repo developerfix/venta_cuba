@@ -49,6 +49,8 @@ class Languages extends Translations {
           "Email address already exists!. Please enter another one.":
               "Email address already exists!. Please enter another one.",
           "Successfully": "Successfully",
+          "Added successfully": "Added successfully",
+          "Removed successfully": "Removed successfully",
           "Server Error!\nPlease try again...":
               "This listing no longer exists. It has been deleted.",
           "Please enter CVC.": "Please enter CVC.",
@@ -914,7 +916,6 @@ It is not allowed to use our member-to-member communication resources to send sp
           "Too Many Attempts.": "Too Many Attempts.",
           "Subscription Pending": "Subscription Pending",
           "Go to Home": "Go to Home",
-          "Added Successfully": "Agregada exitosamente",
           "Your subscription will be approved within 72 hours.":
               "Your subscription approval is pending. It will be approved by an admin within 72h.",
           "Listing ID": "Listing ID: ",
@@ -1024,9 +1025,11 @@ It is not allowed to use our member-to-member communication resources to send sp
           'Video': 'Video',
           // Empty state translations
           'No listings found': 'No listings found',
-          'Try selecting a different location': 'Try selecting a different location',
+          'Try selecting a different location':
+              'Try selecting a different location',
           'No results found': 'No results found',
-          'Try different keywords or filters': 'Try different keywords or filters',
+          'Try different keywords or filters':
+              'Try different keywords or filters',
         },
         "es_ES": {
           'upload_video':
@@ -1086,7 +1089,8 @@ It is not allowed to use our member-to-member communication resources to send sp
           "please enter new password": "Por favor ingrese su nueva contraseña",
           "Dark Mode": "Modo Oscuro",
           "general": "General",
-          "Added Successfully": "Added Successfully",
+          "Added successfully": "Añadido exitosamente",
+          "Removed successfully": "Eliminado exitosamente",
           "Changed Successfully": "Cambiado exitosamente",
           "Too Many Attempts.": "Demasiados intentos.",
           "Subscription Pending": "Suscripción pendiente",
@@ -2111,9 +2115,11 @@ Nos reservamos el derecho de eliminar reseñas que infrinjan nuestras políticas
           'Video': 'Video',
           // Empty state translations
           'No listings found': 'No se encontraron anuncios',
-          'Try selecting a different location': 'Intenta seleccionar una ubicación diferente',
+          'Try selecting a different location':
+              'Intenta seleccionar una ubicación diferente',
           'No results found': 'No se encontraron resultados',
-          'Try different keywords or filters': 'Prueba con diferentes palabras clave o filtros',
+          'Try different keywords or filters':
+              'Prueba con diferentes palabras clave o filtros',
         }
       };
 }

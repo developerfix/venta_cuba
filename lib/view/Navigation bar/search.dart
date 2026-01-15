@@ -1022,7 +1022,9 @@ class _SearchState extends State<Search> {
                       homeCont.syncFavoriteStatusInFavoritesList(
                           itemId, newFavoriteStatus);
 
-                      errorAlertToast("Successfully".tr);
+                      if (newFavoriteStatus == "1") {
+                        errorAlertToast("Added successfully".tr);
+                      }
                     } else {
                       homeCont.listingModel?.isFavorite == "0"
                           ? homeCont.listingModel?.isFavorite = "1"

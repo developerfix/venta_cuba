@@ -2976,9 +2976,28 @@ class HomeController extends GetxController {
           'Authorization': 'Bearer ${authCont.user?.accessToken}'
         },
         showdialog: false);
+
     if (response.statusCode == 200) {
-      // Update local favorite sellers list to keep it in sync
-      _updateLocalFavoriteSellersList();
+      if (sellerId == null) return false;
+
+      bool isCurrentlyInFavorites = _isSellerInFavoritesList(sellerId);
+
+      if (isCurrentlyInFavorites) {
+        // Remove from favorites list
+        favouriteSellerModel.data
+            ?.removeWhere((seller) => seller.sellerId == sellerId);
+
+        // Sync with home screen
+        syncSellerFavoriteStatusInHomeScreen(sellerId ?? "", "0");
+      } else {
+        // Add to favorites list
+        _refreshFavoriteSellersList();
+
+        // Sync with home screen
+        syncSellerFavoriteStatusInHomeScreen(sellerId ?? "", "1");
+      }
+
+      // Always return true if the API call was successful
       return true;
     } else {
       print('Something went wrong\nPlease try again!'.tr);
@@ -3118,29 +3137,6 @@ class HomeController extends GetxController {
 
       print(
           "Updated isSellerFavorite for seller $currentSellerId: ${listingModel!.isSellerFavorite}");
-    }
-  }
-
-  /// Helper method to update local favorite sellers list after adding/removing a seller
-  void _updateLocalFavoriteSellersList() {
-    if (sellerId == null) return;
-
-    bool isCurrentlyInFavorites = _isSellerInFavoritesList(sellerId);
-
-    if (isCurrentlyInFavorites) {
-      // Remove from favorites list
-      favouriteSellerModel.data
-          ?.removeWhere((seller) => seller.sellerId == sellerId);
-
-      // Sync with home screen
-      syncSellerFavoriteStatusInHomeScreen(sellerId ?? "", "0");
-    } else {
-      // Add to favorites list - we need to get seller details to add to the list
-      // For now, we'll just refresh the favorites list from the server
-      _refreshFavoriteSellersList();
-
-      // Sync with home screen
-      syncSellerFavoriteStatusInHomeScreen(sellerId ?? "", "1");
     }
   }
 

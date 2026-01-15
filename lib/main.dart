@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:venta_cuba/Controllers/auth_controller.dart';
@@ -10,7 +11,6 @@ import 'package:venta_cuba/Services/Supabase/supabase_service.dart';
 import 'package:venta_cuba/Services/notification_manager.dart';
 import 'package:venta_cuba/Services/push_service.dart';
 import 'package:venta_cuba/Utils/optimized_image.dart';
-import 'package:venta_cuba/view/constants/premium_error_handler.dart';
 import 'package:venta_cuba/view/constants/premium_performance.dart';
 import 'package:venta_cuba/config/app_config.dart';
 import 'package:venta_cuba/languages/languages.dart';
@@ -22,7 +22,6 @@ String? deviceToken;
 
 // Global SharedPreferences instance
 SharedPreferences? globalPrefs;
-
 // Initialize SharedPreferences with iOS-specific handling
 Future<void> initializeSharedPreferences() async {
   if (globalPrefs != null) return;
@@ -61,8 +60,6 @@ Future<void> initializeSharedPreferences() async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize premium systems
-  PremiumErrorHandler.initialize();
   PremiumPerformance.instance.initialize();
 
   // Initialize critical services only, others will load in background
@@ -305,8 +302,10 @@ class _MyAppState extends State<MyApp> {
         return Obx(() {
           return GetMaterialApp(
             title: 'Venta Cuba Premium',
+
             theme: ThemeConfig.lightTheme,
             darkTheme: ThemeConfig.darkTheme,
+            builder: FToastBuilder(),
             themeMode: themeController.isDarkMode.value
                 ? ThemeMode.dark
                 : ThemeMode.light,

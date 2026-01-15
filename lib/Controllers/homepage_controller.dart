@@ -61,10 +61,10 @@ class HomepageController extends GetxController {
     _favoriteToastTimer = Timer(Duration(milliseconds: 500), () {
       if (!_hasShownFavoriteToast) {
         _hasShownFavoriteToast = true;
-        errorAlertToast("Successfully".tr);
+        errorAlertToast("Added successfully".tr, isOnTop: true);
 
         // Reset after showing toast
-        Future.delayed(Duration(seconds: 2), () {
+        Future.delayed(Duration(seconds: 3), () {
           _hasShownFavoriteToast = false;
           _pendingFavoriteCount = 0;
         });
