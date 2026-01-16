@@ -897,6 +897,7 @@ class _FrameScreenState extends State<FrameScreen> {
                                                     "1"
                                                 ? "Added successfully".tr
                                                 : "Removed successfully".tr;
+
                                             errorAlertToast(message,
                                                 isOnTop: true);
 
@@ -1418,8 +1419,16 @@ class _FrameScreenState extends State<FrameScreen> {
                                                   bool isAddedF = await cont
                                                       .favouriteItem();
                                                   if (isAddedF) {
-                                                    errorAlertToast(
-                                                        "Successfully".tr,
+                                                    String message = cont
+                                                                .listingModel
+                                                                ?.isFavorite ==
+                                                            "1"
+                                                        ? "Added successfully"
+                                                            .tr
+                                                        : "Removed successfully"
+                                                            .tr;
+
+                                                    errorAlertToast(message,
                                                         isOnTop: true);
 
                                                     // Sync listing favorite status with home screen

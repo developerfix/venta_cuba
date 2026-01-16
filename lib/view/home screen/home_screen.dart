@@ -271,19 +271,23 @@ class _HomeScreenState extends State<HomeScreen> {
                                         PremiumPageTransitions.slideFromRight(
                                             const Search()),
                                       ).then((value) {
-                                        // Clear category selections when returning from search
+                                        // Clear category selections...
                                         cont.selectedCategory = null;
                                         cont.selectedSubCategory = null;
                                         cont.selectedSubSubCategory = null;
 
-                                        // Ensure scroll listener is still attached after returning from search
+                                        // Re-attach listener immediately
                                         homepageCont
                                             .ensureScrollListenerAttached();
 
-                                        cont.update();
+                                        // OPTIONAL: Add a small delay to double-ensure attachment if UI is heavy
+                                        Future.delayed(
+                                            Duration(milliseconds: 200), () {
+                                          homepageCont
+                                              .ensureScrollListenerAttached();
+                                        });
 
-                                        // Only reload location, don't trigger full data refresh
-                                        // Homepage data should remain unchanged
+                                        cont.update();
                                       });
                                     },
                                     child: Container(

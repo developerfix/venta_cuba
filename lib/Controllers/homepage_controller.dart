@@ -51,18 +51,17 @@ class HomepageController extends GetxController {
     super.onClose();
   }
 
-// Add this method to HomepageController
   void ensureScrollListenerAttached() {
     try {
       scrollController.removeListener(_onScroll);
     } catch (e) {
-      // Ignore if not attached
+      //
     }
+
     try {
-      if (scrollController.hasClients) {
-        scrollController.addListener(_onScroll);
-        Get.log("📍 HomepageController: Scroll listener re-attached");
-      }
+      scrollController.addListener(_onScroll);
+      Get.log(
+          "📍 HomepageController: Scroll listener re-attached successfully");
     } catch (e) {
       Get.log("Error attaching scroll listener: $e", isError: true);
     }
@@ -121,7 +120,6 @@ class HomepageController extends GetxController {
     _lastRadius = radius;
   }
 
-  /// Scroll listener for infinite scroll
   void _onScroll() {
     if (!scrollController.hasClients) return;
 
