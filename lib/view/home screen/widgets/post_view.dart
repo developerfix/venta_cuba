@@ -277,7 +277,7 @@ class ListingView extends StatelessWidget {
                             } else {
                               // Only show toast when adding to favorites (not when removing)
                               if (newFavoriteStatus == "1") {
-                                cont.showFavoriteToast();
+                                homeCont.showToast("Added successfully".tr);
                               }
                             }
                           }

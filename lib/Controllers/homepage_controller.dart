@@ -51,27 +51,6 @@ class HomepageController extends GetxController {
     super.onClose();
   }
 
-  void showFavoriteToast() {
-    _pendingFavoriteCount++;
-
-    // Cancel existing timer if any
-    _favoriteToastTimer?.cancel();
-
-    // Set timer to show toast after user stops clicking (500ms delay)
-    _favoriteToastTimer = Timer(Duration(milliseconds: 500), () {
-      if (!_hasShownFavoriteToast) {
-        _hasShownFavoriteToast = true;
-        errorAlertToast("Added successfully".tr, isOnTop: true);
-
-        // Reset after showing toast
-        Future.delayed(Duration(seconds: 3), () {
-          _hasShownFavoriteToast = false;
-          _pendingFavoriteCount = 0;
-        });
-      }
-    });
-  }
-
 // Add this method to HomepageController
   void ensureScrollListenerAttached() {
     try {

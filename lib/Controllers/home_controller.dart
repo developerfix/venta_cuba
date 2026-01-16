@@ -51,10 +51,8 @@ List<String> beforeData = [];
 
 //Your package is in pending, waiting for admin approval.
 class HomeController extends GetxController {
-  HomeController() {
-    Get.log("🎯 HOME CONTROLLER CONSTRUCTOR CALLED - NEW VERSION!");
-  }
   RxBool loadingCategories = false.obs;
+  bool isToastShowing = false;
   RxBool categoriesLoadFailed = false.obs;
   TextEditingController? priceCont = TextEditingController();
   TextEditingController addressCont = TextEditingController();
@@ -203,6 +201,18 @@ class HomeController extends GetxController {
       }
     } catch (e) {
       Get.log("📝 Error in shuffleListingsOnLogin: $e");
+    }
+  }
+
+  void showToast(String text) {
+    if (!isToastShowing) {
+      isToastShowing = true;
+
+      errorAlertToast(text, isOnTop: true);
+
+      Future.delayed(const Duration(seconds: 2), () {
+        isToastShowing = false;
+      });
     }
   }
 
@@ -2823,21 +2833,18 @@ class HomeController extends GetxController {
 
       // Update in main listing list
       for (int i = 0; i < listingModelList.length; i++) {
-        if (listingModelList[i].itemId == itemId) {
+        if (listingModelList[i].id?.toString() == itemId) {
           listingModelList[i].isFavorite = newFavoriteStatus;
           itemFound = true;
-          print(
-              "Updated item $itemId favorite status to $newFavoriteStatus in main listing list");
           break;
         }
       }
 
       // Update in search list
       for (int i = 0; i < listingModelSearchList.length; i++) {
-        if (listingModelSearchList[i].itemId == itemId) {
-          listingModelSearchList[i].isFavorite = newFavoriteStatus;
-          print(
-              "Updated item $itemId favorite status to $newFavoriteStatus in search list");
+        if (listingModelList[i].id?.toString() == itemId) {
+          listingModelList[i].isFavorite = newFavoriteStatus;
+          itemFound = true;
           break;
         }
       }

@@ -24,40 +24,50 @@ errorAlertToast(String error, {bool? isOnTop}) {
     FToast fToast = FToast();
     fToast.init(context);
 
-    // Pehle se mojud toasts khatam karein taake queue na bane
     fToast.removeCustomToast();
 
     fToast.showToast(
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
-        margin: EdgeInsets.symmetric(horizontal: 20.w),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10.r),
-          color: Colors.black87,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 10,
-              offset: Offset(0, 5),
-            )
-          ],
-        ),
-        child: Text(
-          error,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w500,
+      child: SafeArea(
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
+          margin: EdgeInsets.symmetric(horizontal: 20.w),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10.r),
+            color: Colors.black87,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 10,
+                offset: Offset(0, 5),
+              )
+            ],
+          ),
+          child: Text(
+            error,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
       ),
-      // Gravity TOP par set hai
-      gravity: isOnTop != null ? ToastGravity.TOP : ToastGravity.BOTTOM,
+      // Gravity ki jagah positionedToastBuilder use karein exact control ke liye
+      positionedToastBuilder: (context, child, gravity) {
+        return Positioned(
+          child: child,
+          // Top position set kar rahe hain
+          top: isOnTop != null ? 20.0 : null,
+          bottom: isOnTop != null ? null : 20.0,
+          left: 0,
+          right: 0,
+        );
+      },
       toastDuration: Duration(seconds: 2),
     );
   } else {
-    // Fallback agar context na mile
+    // Fallback
     Fluttertoast.showToast(
       msg: error,
       gravity: isOnTop != null ? ToastGravity.TOP : ToastGravity.BOTTOM,

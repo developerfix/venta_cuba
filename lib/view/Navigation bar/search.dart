@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:venta_cuba/Controllers/home_controller.dart';
+import 'package:venta_cuba/Controllers/homepage_controller.dart';
 import 'package:venta_cuba/Utils/funcations.dart';
 import 'package:venta_cuba/view/Navigation%20bar/post.dart';
 import 'package:venta_cuba/view/constants/Colors.dart';
@@ -27,6 +28,7 @@ class Search extends StatefulWidget {
 
 class _SearchState extends State<Search> {
   final homeCont = Get.put(HomeController());
+  final homePageCont = Get.put(HomepageController());
   final authCont = Get.put(AuthController());
 
   void _showBottomSheet(BuildContext context) {
@@ -1000,35 +1002,44 @@ class _SearchState extends State<Search> {
                   if (authCont.user?.email == "") {
                     Get.to(Login());
                   } else {
-                    homeCont.listingModel =
-                        homeCont.listingModelSearchList[index];
-                    homeCont.listingModel?.isFavorite == "0"
-                        ? homeCont.listingModel?.isFavorite = "1"
-                        : homeCont.listingModel?.isFavorite = "0";
-                    homeCont.update();
-                    bool isAddedF = await homeCont.favouriteItem();
-                    if (isAddedF) {
-                      String itemId =
-                          homeCont.listingModelSearchList[index].itemId ?? "";
-                      String newFavoriteStatus =
-                          homeCont.listingModelSearchList[index].isFavorite ??
-                              "0";
+                    // CHANGE 1: Direct listing object use karein
+                    homeCont.listingModel = listing;
 
-                      // Sync with home screen
+                    // Logic wahi rahegi lekin object specific hoga
+                    listing.isFavorite == "0"
+                        ? listing.isFavorite = "1"
+                        : listing.isFavorite = "0";
+
+                    homeCont.update();
+
+                    bool isAddedF = await homeCont.favouriteItem();
+
+                    if (isAddedF) {
+                      // CHANGE 2: ID bhi listing object se lein
+                      String itemId = listing.itemId?.toString() ?? "";
+                      String newFavoriteStatus = listing.isFavorite ?? "0";
+
+                      // Sync methods same rahenge
                       homeCont.syncFavoriteStatusInHomeScreen(
                           itemId, newFavoriteStatus);
-
-                      // Sync with favorites list
                       homeCont.syncFavoriteStatusInFavoritesList(
                           itemId, newFavoriteStatus);
 
                       if (newFavoriteStatus == "1") {
-                        errorAlertToast("Added successfully".tr);
+                        // Force UI update
+                        homeCont.update();
+
+                        // Reload home screen data to refresh favorite status
+                        homeCont.getListing();
+                        homePageCont.forceRefresh();
+                        homeCont.showToast("Added successfully".tr);
                       }
                     } else {
-                      homeCont.listingModel?.isFavorite == "0"
-                          ? homeCont.listingModel?.isFavorite = "1"
-                          : homeCont.listingModel?.isFavorite = "0";
+                      // Revert agar fail ho jaye
+                      listing.isFavorite == "0"
+                          ? listing.isFavorite = "1"
+                          : listing.isFavorite = "0";
+                      homeCont.update();
                     }
                   }
                 },
@@ -1042,10 +1053,8 @@ class _SearchState extends State<Search> {
                   child: SvgPicture.asset(
                     'assets/icons/heart1.svg',
                     colorFilter: ColorFilter.mode(
-                      homeCont.listingModelSearchList.isNotEmpty &&
-                              homeCont.listingModelSearchList[index]
-                                      .isFavorite ==
-                                  '0'
+                      // CHANGE 3: Color logic mein bhi direct listing use karein
+                      listing.isFavorite == '0'
                           ? Theme.of(context).unselectedWidgetColor
                           : Colors.red,
                       BlendMode.srcIn,
@@ -1053,7 +1062,7 @@ class _SearchState extends State<Search> {
                   ),
                 ),
               ),
-            )
+            ),
           ],
         ));
   }
@@ -1241,7 +1250,9 @@ class _SearchState extends State<Search> {
                             homeCont.syncFavoriteStatusInFavoritesList(
                                 itemId, newFavoriteStatus);
 
-                            errorAlertToast("Successfully".tr);
+                            if (newFavoriteStatus == "1") {
+                              homeCont.showToast("Added successfully".tr);
+                            }
                           } else {
                             homeCont.listingModel?.isFavorite == "0"
                                 ? homeCont.listingModel?.isFavorite = "1"
@@ -1415,33 +1426,36 @@ class _SearchState extends State<Search> {
                 if (authCont.user?.email == "") {
                   Get.to(Login());
                 } else {
-                  homeCont.listingModel =
-                      homeCont.listingModelSearchList[index];
-                  homeCont.listingModel?.isFavorite == "0"
-                      ? homeCont.listingModel?.isFavorite = "1"
-                      : homeCont.listingModel?.isFavorite = "0";
-                  homeCont.update();
-                  bool isAddedF = await homeCont.favouriteItem();
-                  if (isAddedF) {
-                    String itemId =
-                        homeCont.listingModelSearchList[index].itemId ?? "";
-                    String newFavoriteStatus =
-                        homeCont.listingModelSearchList[index].isFavorite ??
-                            "0";
+                  // CHANGE 1: Listing object directly
+                  homeCont.listingModel = listing;
 
-                    // Sync with home screen
+                  listing.isFavorite == "0"
+                      ? listing.isFavorite = "1"
+                      : listing.isFavorite = "0";
+
+                  homeCont.update();
+
+                  bool isAddedF = await homeCont.favouriteItem();
+
+                  if (isAddedF) {
+                    // CHANGE 2: ID from listing object
+                    String itemId = listing.itemId?.toString() ?? "";
+                    String newFavoriteStatus = listing.isFavorite ?? "0";
+
                     homeCont.syncFavoriteStatusInHomeScreen(
                         itemId, newFavoriteStatus);
-
-                    // Sync with favorites list
                     homeCont.syncFavoriteStatusInFavoritesList(
                         itemId, newFavoriteStatus);
 
-                    errorAlertToast("Successfully".tr);
+                    if (newFavoriteStatus == "1") {
+                      homeCont.showToast("Added successfully".tr);
+                    }
                   } else {
-                    homeCont.listingModel?.isFavorite == "0"
-                        ? homeCont.listingModel?.isFavorite = "1"
-                        : homeCont.listingModel?.isFavorite = "0";
+                    // Revert logic
+                    listing.isFavorite == "0"
+                        ? listing.isFavorite = "1"
+                        : listing.isFavorite = "0";
+                    homeCont.update();
                   }
                 }
               },
@@ -1455,9 +1469,8 @@ class _SearchState extends State<Search> {
                 child: SvgPicture.asset(
                   'assets/icons/heart1.svg',
                   colorFilter: ColorFilter.mode(
-                    homeCont.listingModelSearchList.isNotEmpty &&
-                            homeCont.listingModelSearchList[index].isFavorite ==
-                                '0'
+                    // CHANGE 3: Check listing directly
+                    listing.isFavorite == '0'
                         ? Theme.of(context).unselectedWidgetColor
                         : Colors.red,
                     BlendMode.srcIn,
@@ -1610,7 +1623,9 @@ class _SearchState extends State<Search> {
                           homeCont.syncFavoriteStatusInFavoritesList(
                               itemId, newFavoriteStatus);
 
-                          errorAlertToast("Successfully".tr);
+                          if (newFavoriteStatus == "1") {
+                            homeCont.showToast("Added successfully".tr);
+                          }
                         } else {
                           homeCont.listingModel?.isFavorite == "0"
                               ? homeCont.listingModel?.isFavorite = "1"

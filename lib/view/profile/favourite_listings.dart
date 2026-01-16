@@ -431,8 +431,8 @@ class _FavouriteListingsState extends State<FavouriteListings> {
                                                 cont.getListing();
                                                 homePageCont.forceRefresh();
 
-                                                errorAlertToast(
-                                                    "Successfully".tr);
+                                                homeCont.showToast(
+                                                    "Removed successfully".tr);
                                               } else {
                                                 // Revert the change if API call failed
                                                 data.isFavorite =
