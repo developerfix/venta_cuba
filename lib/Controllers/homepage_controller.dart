@@ -52,18 +52,31 @@ class HomepageController extends GetxController {
   }
 
   void ensureScrollListenerAttached() {
-    try {
-      scrollController.removeListener(_onScroll);
-    } catch (e) {
-      //
+    if (!scrollController.hasClients) {
+      Get.log("📍 HomepageController: ScrollController not ready yet, will retry");
+      // Schedule a retry when the controller is ready
+      Future.delayed(Duration(milliseconds: 100), () {
+        if (scrollController.hasClients) {
+          ensureScrollListenerAttached();
+        }
+      });
+      return;
     }
 
+    // Remove existing listener to avoid duplicates
+    try {
+      scrollController.removeListener(_onScroll);
+      Get.log("📍 HomepageController: Removed existing scroll listener");
+    } catch (e) {
+      Get.log("📍 HomepageController: No existing listener to remove");
+    }
+
+    // Add the listener
     try {
       scrollController.addListener(_onScroll);
-      Get.log(
-          "📍 HomepageController: Scroll listener re-attached successfully");
+      Get.log("✅ HomepageController: Scroll listener attached successfully");
     } catch (e) {
-      Get.log("Error attaching scroll listener: $e", isError: true);
+      Get.log("❌ Error attaching scroll listener: $e", isError: true);
     }
   }
 
@@ -121,13 +134,28 @@ class HomepageController extends GetxController {
   }
 
   void _onScroll() {
-    if (!scrollController.hasClients) return;
+    if (!scrollController.hasClients) {
+      Get.log("Homepage: ScrollController has no clients");
+      return;
+    }
 
-    if (scrollController.position.pixels >=
-        scrollController.position.maxScrollExtent - 100) {
+    // Calculate how close we are to the bottom
+    final position = scrollController.position;
+    final threshold = position.maxScrollExtent - 100;
+    
+    Get.log("Homepage: Scroll position: ${position.pixels.toStringAsFixed(0)}/${position.maxScrollExtent.toStringAsFixed(0)}, threshold: ${threshold.toStringAsFixed(0)}");
+
+    if (position.pixels >= threshold) {
       if (!isLoading.value && hasMore.value) {
-        Get.log("Homepage: Scroll triggered, loading more...");
+        Get.log("Homepage: 🔄 Scroll triggered pagination - Loading more items...");
         loadHomepageData(isLoadMore: true);
+      } else {
+        if (!hasMore.value) {
+          Get.log("Homepage: ⚠️ At scroll threshold but hasMore=false");
+        }
+        if (isLoading.value) {
+          Get.log("Homepage: ⚠️ At scroll threshold but already loading");
+        }
       }
     }
   }
@@ -135,7 +163,10 @@ class HomepageController extends GetxController {
   /// Main method to load homepage data
   Future<void> loadHomepageData(
       {bool isLoadMore = false, bool forceRefresh = false}) async {
-    if (isLoading.value) return;
+    if (isLoading.value) {
+      Get.log("Homepage: Already loading, skipping duplicate call");
+      return;
+    }
 
     isLoading.value = true;
     update();
@@ -149,6 +180,7 @@ class HomepageController extends GetxController {
       }
 
       if (!hasMore.value) {
+        Get.log("Homepage: No more data available");
         isLoading.value = false;
         update();
         return;
@@ -168,7 +200,7 @@ class HomepageController extends GetxController {
         'search_by_title': ''
       };
 
-      Get.log("Homepage: Fetching page ${currentPage.value}...");
+      Get.log("Homepage: Fetching starting from page ${currentPage.value}...");
 
       final int minResultsToShow = isLoadMore ? 5 : 10;
       const int maxPagesToFetch = 10;
@@ -187,6 +219,8 @@ class HomepageController extends GetxController {
           !reachedEnd) {
         int pageNum = currentPage.value + pagesFetched;
 
+        Get.log("Homepage: Fetching page $pageNum (attempt ${pagesFetched + 1}/$maxPagesToFetch)");
+
         Response response = await api.postData(
           "api/getListing?page=$pageNum",
           requestData,
@@ -203,7 +237,11 @@ class HomepageController extends GetxController {
           List<dynamic> pageData = response.body['data']['data'] ?? [];
           Get.log("Homepage: Page $pageNum returned ${pageData.length} items");
 
+          // CRITICAL FIX: Always increment pagesFetched to avoid stuck pagination
+          pagesFetched++;
+
           if (pageData.isEmpty) {
+            Get.log("Homepage: Page $pageNum is empty, reached end");
             reachedEnd = true;
             hasMore.value = false;
             break;
@@ -214,27 +252,33 @@ class HomepageController extends GetxController {
 
           pageListings = await _applyLocationFilter(pageListings);
 
+          int addedCount = 0;
           for (var listing in pageListings) {
             String id = listing.id?.toString() ?? '';
             if (id.isNotEmpty && !existingIds.contains(id)) {
               existingIds.add(id);
               filteredResults.add(listing);
+              addedCount++;
             }
           }
+          
+          Get.log("Homepage: Page $pageNum added $addedCount new items after filtering (total filtered: ${filteredResults.length})");
 
+          // IMPROVED: Check if we got less than expected items from API
           if (pageData.length < 15) {
+            Get.log("Homepage: Page $pageNum returned less than 15 items, likely last page");
             reachedEnd = true;
             hasMore.value = false;
           }
-
-          pagesFetched++;
         } else {
           Get.log("Homepage: API error ${response.statusCode}", isError: true);
+          // CRITICAL FIX: Still increment pagesFetched on error to avoid stuck state
+          pagesFetched++;
           break;
         }
       }
 
-      Get.log("Homepage: Got ${filteredResults.length} filtered results");
+      Get.log("Homepage: Fetched ${pagesFetched} pages, got ${filteredResults.length} filtered results");
 
       if (filteredResults.isNotEmpty) {
         homepageListings.addAll(filteredResults);
@@ -246,10 +290,27 @@ class HomepageController extends GetxController {
         _saveLastLocation();
       }
 
-      // FIX: Current page ko hamesha update karein agar pages fetch huye hain
-      // Chahay filteredResults empty hi kyun na ho
+      // CRITICAL FIX: ALWAYS update currentPage based on pagesFetched
+      // This prevents pagination from getting stuck even when all results are filtered out
       if (pagesFetched > 0) {
-        currentPage.value += pagesFetched;
+        int newPage = currentPage.value + pagesFetched;
+        Get.log("Homepage: Updating currentPage from ${currentPage.value} to $newPage");
+        currentPage.value = newPage;
+      } else {
+        Get.log("Homepage: WARNING - No pages fetched, pagination might be stuck");
+      }
+
+      // IMPROVED: If we fetched max pages but still don't have enough results,
+      // it means we're filtering out too many items - still allow more scrolling
+      if (pagesFetched >= maxPagesToFetch && filteredResults.length < minResultsToShow) {
+        Get.log("Homepage: Hit max pages limit with insufficient results, will try more on next scroll");
+        hasMore.value = true; // Allow another attempt on next scroll
+      }
+
+      // IMPROVED: If we reached the end but got zero results this time, no point trying more
+      if (reachedEnd && filteredResults.isEmpty && isLoadMore) {
+        Get.log("Homepage: Reached end with no new results");
+        hasMore.value = false;
       }
     } catch (e, stackTrace) {
       Get.log("Homepage: Error loading data: $e\n$stackTrace", isError: true);
@@ -257,6 +318,7 @@ class HomepageController extends GetxController {
       isLoading.value = false;
       hasInitialLoadCompleted.value = true;
       update();
+      Get.log("Homepage: Loading completed. Total items: ${homepageListings.length}, hasMore: ${hasMore.value}, currentPage: ${currentPage.value}");
     }
   }
 
