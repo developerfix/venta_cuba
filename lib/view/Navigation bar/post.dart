@@ -669,7 +669,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
   ///===================================================================================================Pick image
   final ImagePicker _picker = ImagePicker();
 
-  // ULTRA-OPTIMIZED image picker - 10x faster!
+  // UPDATED: Ab images selection ke order mein hi rahengi
   Future<void> pickImage(ImageSource source, String imageFirst) async {
     try {
       // Show immediate feedback
@@ -704,9 +704,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
 
       final tempDir = await getTemporaryDirectory();
 
-      // ULTRA-FAST parallel processing
-      final List<Future<void>> processingFutures = [];
-
+      // Sequential processing to maintain order
       for (int i = 0; i < images.length; i++) {
         final element = images[i];
         final fileName =
@@ -724,16 +722,17 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
           homeCont.uploadingImages.add(uploadingImage);
         });
 
-        // Process with ULTRA-FAST compression
-        processingFutures.add(_processImageUltraFast(
+        // UPDATE: 'await' ko loop ke andar rakha gaya hai
+        // Taake jab tak pehli image process na ho jaye, doosri shuru na ho.
+        // Is se images ka selection order barkaraar rahega.
+        await _processImageUltraFast(
           element.path,
           normalizedPath,
           uploadingImage,
-        ));
+        );
       }
 
-      // Wait for all to complete
-      await Future.wait(processingFutures);
+      // 'Future.wait' wala part delete kar diya gaya hai kyunki ab hum sequential process kar rahe hain
 
       homeCont.update();
 
