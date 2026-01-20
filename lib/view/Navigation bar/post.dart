@@ -3265,15 +3265,15 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
     );
   }
 
-  showBottomSheetDropDown(BuildContext context) {
+  showBottomSheetDropDown(BuildContext parentContext) {
     showModalBottomSheet(
         backgroundColor: Colors.transparent,
         // isScrollControlled: true,
         isDismissible: false,
         enableDrag: false,
         useSafeArea: true,
-        context: context,
-        builder: (context) {
+        context: parentContext,
+        builder: (bottomSheetContext) {
           return Container(
               // expand: false,
               height: Get.height * 0.8,
@@ -3291,13 +3291,13 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                           height: 8,
                           width: 50,
                           decoration: BoxDecoration(
-                              color: Theme.of(context).cardColor,
+                              color: Theme.of(bottomSheetContext).cardColor,
                               borderRadius: BorderRadius.circular(100)),
                         ),
                       ),
                       Container(
                         decoration: BoxDecoration(
-                          color: Theme.of(context)
+                          color: Theme.of(bottomSheetContext)
                               .bottomSheetTheme
                               .backgroundColor,
                           borderRadius: BorderRadius.only(
@@ -3306,7 +3306,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Theme.of(context)
+                              color: Theme.of(bottomSheetContext)
                                   .shadowColor
                                   .withValues(alpha: 0.1),
                               blurRadius: 10,
@@ -3328,7 +3328,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                   Get.log("type ${cont.isType}");
                                   if (cont.isType == 0) {
                                     // Only clear selections if user explicitly closes at category level
-                                    Navigator.pop(context);
+                                    Navigator.pop(bottomSheetContext);
                                   } else if (cont.isType == 1) {
                                     // Going back from subcategory to category - clear subcategories
                                     _resetSubCategories();
@@ -3343,7 +3343,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                 },
                                 icon: Icon(
                                   Icons.close,
-                                  color: Theme.of(context).iconTheme.color,
+                                  color: Theme.of(bottomSheetContext).iconTheme.color,
                                 ),
                                 padding: EdgeInsets.all(12),
                                 constraints: BoxConstraints(
@@ -3365,7 +3365,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                             strokeWidth: 2,
                                             valueColor:
                                                 AlwaysStoppedAnimation<Color>(
-                                              Theme.of(context).primaryColor,
+                                              Theme.of(bottomSheetContext).primaryColor,
                                             ),
                                           ),
                                         ),
@@ -3411,7 +3411,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                             child: InkWell(
                                               borderRadius:
                                                   BorderRadius.circular(8),
-                                              onTap: () {
+                                              onTap: () async {
                                                 if (cont.isType == 0) {
                                                   // Reset subcategories when selecting a new category
                                                   _resetSubCategories();
@@ -3437,7 +3437,16 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                   cont.isNavigate = false;
                                                   cont.isSearchScreen = false;
                                                   cont.update();
-                                                  cont.getSubCategories();
+                                                  
+                                                  // Load subcategories
+                                                  await cont.getSubCategories();
+                                                  
+                                                  // If no subcategories exist, close the bottom sheet
+                                                  if (cont.subCategoriesModel?.data?.isEmpty ?? true) {
+                                                    if (Navigator.canPop(bottomSheetContext)) {
+                                                      Navigator.pop(bottomSheetContext);
+                                                    }
+                                                  }
                                                 } else if (cont.isType == 1) {
                                                   // Reset sub-subcategories when selecting a new subcategory
                                                   _resetSubSubCategories();
@@ -3459,7 +3468,16 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                           type: 1);
                                                   cont.isNavigate = false;
                                                   cont.isSearchScreen = false;
-                                                  cont.getSubSubCategories();
+                                                  
+                                                  // Load sub-subcategories
+                                                  await cont.getSubSubCategories();
+                                                  
+                                                  // If no sub-subcategories exist, close the bottom sheet
+                                                  if (cont.subSubCategoriesModel?.data?.isEmpty ?? true) {
+                                                    if (Navigator.canPop(bottomSheetContext)) {
+                                                      Navigator.pop(bottomSheetContext);
+                                                    }
+                                                  }
                                                   // cont.isSelect1 = index;
                                                 } else {
                                                   cont.selectedSubSubCategory =
@@ -3479,7 +3497,9 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                           type: 2);
                                                   //   cont.isSelect2 = index;
                                                   cont.update();
-                                                  Navigator.pop(context);
+                                                  if (Navigator.canPop(bottomSheetContext)) {
+                                                    Navigator.pop(bottomSheetContext);
+                                                  }
                                                 }
                                               },
                                               child: Container(
@@ -3502,7 +3522,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                             fontWeight:
                                                                 FontWeight.w400,
                                                             color: Theme.of(
-                                                                    context)
+                                                                    bottomSheetContext)
                                                                 .textTheme
                                                                 .bodyLarge
                                                                 ?.color),
@@ -3515,7 +3535,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                                     .arrow_forward_ios,
                                                                 size: 14..r,
                                                                 color: Theme.of(
-                                                                        context)
+                                                                        bottomSheetContext)
                                                                     .iconTheme
                                                                     .color)
                                                             : Container(
@@ -3528,7 +3548,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                                   border: Border
                                                                       .all(
                                                                     color: Theme.of(
-                                                                            context)
+                                                                            bottomSheetContext)
                                                                         .dividerColor,
                                                                     width: 1,
                                                                   ),
@@ -3548,7 +3568,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                                             EdgeInsets.all(2),
                                                                         decoration: BoxDecoration(
                                                                             color:
-                                                                                Theme.of(context).primaryColor,
+                                                                                Theme.of(bottomSheetContext).primaryColor,
                                                                             shape: BoxShape.circle),
                                                                       )
                                                                     : SizedBox(),
@@ -3560,7 +3580,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                                         .arrow_forward_ios,
                                                                     size: 14..r,
                                                                     color: Theme.of(
-                                                                            context)
+                                                                            bottomSheetContext)
                                                                         .iconTheme
                                                                         .color)
                                                                 : Container(
@@ -3573,7 +3593,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                                       border:
                                                                           Border
                                                                               .all(
-                                                                        color: Theme.of(context)
+                                                                        color: Theme.of(bottomSheetContext)
                                                                             .dividerColor,
                                                                         width:
                                                                             1,
@@ -3590,7 +3610,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                                             margin:
                                                                                 EdgeInsets.all(2),
                                                                             decoration:
-                                                                                BoxDecoration(color: Theme.of(context).primaryColor, shape: BoxShape.circle),
+                                                                                BoxDecoration(color: Theme.of(bottomSheetContext).primaryColor, shape: BoxShape.circle),
                                                                           )
                                                                         : SizedBox(),
                                                                   )
@@ -3604,7 +3624,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                                   border: Border
                                                                       .all(
                                                                     color: Theme.of(
-                                                                            context)
+                                                                            bottomSheetContext)
                                                                         .dividerColor,
                                                                     width: 1,
                                                                   ),
@@ -3625,7 +3645,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                                             EdgeInsets.all(2),
                                                                         decoration: BoxDecoration(
                                                                             color:
-                                                                                Theme.of(context).primaryColor,
+                                                                                Theme.of(bottomSheetContext).primaryColor,
                                                                             shape: BoxShape.circle),
                                                                       )
                                                                     : SizedBox(),
