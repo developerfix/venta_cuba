@@ -114,6 +114,9 @@ class _HomeScreenState extends State<HomeScreen> {
       Get.log(
           "🏠 HomeScreen: Updated homeCont.address to: ${homeCont.address}");
 
+      // Ensure scroll listener is attached after UI is ready
+      homepageCont.ensureScrollListenerAttached();
+
       // Load categories using HomeController
       await homeCont.getCategories();
 
@@ -655,8 +658,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                     cont.selectedSubCategory = null;
                                     cont.selectedSubSubCategory = null;
 
-                                    // Ensure scroll listener is still attached after returning
+                                    // Re-attach listener immediately
                                     homepageCont.ensureScrollListenerAttached();
+                                    
+                                    // Add delayed retry to ensure attachment
+                                    Future.delayed(
+                                        Duration(milliseconds: 200), () {
+                                      homepageCont.ensureScrollListenerAttached();
+                                    });
+                                    
                                     cont.update();
                                   });
                                 },

@@ -1154,20 +1154,18 @@ class AuthController extends GetxController {
         // HomeController might not exist yet
       }
 
-      // Reset HomepageController to default state
+      // Reset HomepageController to default state using the new reset method
       try {
         final homepageCont = Get.find<HomepageController>();
-        homepageCont.homepageListings.clear();
+        // Use the comprehensive reset method instead of manual reset
+        homepageCont.resetPaginationState();
         homepageCont.address = "All provinces";
         homepageCont.lat = "23.1136";
         homepageCont.lng = "-82.3666";
         homepageCont.radius = 1000.0;
-        homepageCont.currentPage.value = 1;
-        homepageCont.hasMore.value = true;
-        homepageCont.hasInitialLoadCompleted.value = false;
-        homepageCont.isLoading.value = false; // Reset loading state
       } catch (e) {
         // HomepageController might not exist yet
+        Get.log("Logout: HomepageController not found: $e");
       }
 
       // Delete controllers to force fresh initialization on next login
