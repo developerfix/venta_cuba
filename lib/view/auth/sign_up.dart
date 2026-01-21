@@ -139,11 +139,9 @@ class _SignUpState extends State<SignUp> {
                           controller: cont.firstNameCont,
                           textCapitalization: TextCapitalization.sentences,
                           textAlignVertical: TextAlignVertical.center,
-                          cursorColor: Theme.of(context)
-                                  .textTheme
-                                  .bodyLarge
-                                  ?.color ??
-                              Colors.black,
+                          cursorColor:
+                              Theme.of(context).textTheme.bodyLarge?.color ??
+                                  Colors.black,
                           decoration: InputDecoration(
                             contentPadding: EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 20),
@@ -156,13 +154,15 @@ class _SignUpState extends State<SignUp> {
                                 color: Color(0xFFA9ABAC),
                                 fontWeight: FontWeight.w400),
                             filled: true,
-                            fillColor: Theme.of(context).brightness == Brightness.dark
-                                ? Colors.black
-                                : Colors.white,
+                            fillColor:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.black
+                                    : Colors.white,
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide(
-                                color: Theme.of(context).brightness == Brightness.dark
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
                                     ? Colors.white
                                     : Colors.black,
                                 width: 1,
@@ -171,7 +171,8 @@ class _SignUpState extends State<SignUp> {
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide(
-                                color: Theme.of(context).brightness == Brightness.dark
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
                                     ? Colors.white
                                     : Colors.black,
                                 width: 1,
@@ -198,11 +199,9 @@ class _SignUpState extends State<SignUp> {
                           controller: cont.lastNameCont,
                           textCapitalization: TextCapitalization.words,
                           textAlignVertical: TextAlignVertical.center,
-                          cursorColor: Theme.of(context)
-                                  .textTheme
-                                  .bodyLarge
-                                  ?.color ??
-                              Colors.black,
+                          cursorColor:
+                              Theme.of(context).textTheme.bodyLarge?.color ??
+                                  Colors.black,
                           decoration: InputDecoration(
                             contentPadding: EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 20),
@@ -215,13 +214,15 @@ class _SignUpState extends State<SignUp> {
                                 color: Color(0xFFA9ABAC),
                                 fontWeight: FontWeight.w400),
                             filled: true,
-                            fillColor: Theme.of(context).brightness == Brightness.dark
-                                ? Colors.black
-                                : Colors.white,
+                            fillColor:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.black
+                                    : Colors.white,
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide(
-                                color: Theme.of(context).brightness == Brightness.dark
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
                                     ? Colors.white
                                     : Colors.black,
                                 width: 1,
@@ -230,7 +231,8 @@ class _SignUpState extends State<SignUp> {
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide(
-                                color: Theme.of(context).brightness == Brightness.dark
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
                                     ? Colors.white
                                     : Colors.black,
                                 width: 1,
@@ -256,11 +258,9 @@ class _SignUpState extends State<SignUp> {
                         TextField(
                           controller: cont.emailCreateCont,
                           textAlignVertical: TextAlignVertical.center,
-                          cursorColor: Theme.of(context)
-                                  .textTheme
-                                  .bodyLarge
-                                  ?.color ??
-                              Colors.black,
+                          cursorColor:
+                              Theme.of(context).textTheme.bodyLarge?.color ??
+                                  Colors.black,
                           decoration: InputDecoration(
                             contentPadding: EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 20),
@@ -273,13 +273,15 @@ class _SignUpState extends State<SignUp> {
                                 color: Color(0xFFA9ABAC),
                                 fontWeight: FontWeight.w400),
                             filled: true,
-                            fillColor: Theme.of(context).brightness == Brightness.dark
-                                ? Colors.black
-                                : Colors.white,
+                            fillColor:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.black
+                                    : Colors.white,
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide(
-                                color: Theme.of(context).brightness == Brightness.dark
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
                                     ? Colors.white
                                     : Colors.black,
                                 width: 1,
@@ -288,7 +290,8 @@ class _SignUpState extends State<SignUp> {
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide(
-                                color: Theme.of(context).brightness == Brightness.dark
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
                                     ? Colors.white
                                     : Colors.black,
                                 width: 1,
@@ -440,7 +443,7 @@ class _SignUpState extends State<SignUp> {
                                   child: DropdownButton2<CustomCitiesList>(
                                     isExpanded: true,
                                     hint: Text(
-                                      'Select city'.tr,
+                                      'Select municipality'.tr,
                                       style: TextStyle(
                                         fontSize: 14,
                                         color: Theme.of(context).hintColor,
@@ -717,11 +720,9 @@ class _SignUpState extends State<SignUp> {
                             obscureText: !cont.isPasswordVisible1.value,
                             controller: cont.passCreateCont,
                             textAlignVertical: TextAlignVertical.center,
-                            cursorColor: Theme.of(context)
-                                    .textTheme
-                                    .bodyLarge
-                                    ?.color ??
-                                Colors.black,
+                            cursorColor:
+                                Theme.of(context).textTheme.bodyLarge?.color ??
+                                    Colors.black,
                             onChanged: (value) {
                               checkPasswordStrength(value);
                             },
@@ -747,13 +748,15 @@ class _SignUpState extends State<SignUp> {
                                   color: Color(0xFFA9ABAC),
                                   fontWeight: FontWeight.w400),
                               filled: true,
-                              fillColor: Theme.of(context).brightness == Brightness.dark
+                              fillColor: Theme.of(context).brightness ==
+                                      Brightness.dark
                                   ? Colors.black
                                   : Colors.white,
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
                                 borderSide: BorderSide(
-                                  color: Theme.of(context).brightness == Brightness.dark
+                                  color: Theme.of(context).brightness ==
+                                          Brightness.dark
                                       ? Colors.white
                                       : Colors.black,
                                   width: 1,
@@ -762,7 +765,8 @@ class _SignUpState extends State<SignUp> {
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
                                 borderSide: BorderSide(
-                                  color: Theme.of(context).brightness == Brightness.dark
+                                  color: Theme.of(context).brightness ==
+                                          Brightness.dark
                                       ? Colors.white
                                       : Colors.black,
                                   width: 1,
@@ -843,11 +847,9 @@ class _SignUpState extends State<SignUp> {
                             obscureText: cont.isPasswordVisible2.value,
                             controller: cont.confirmPassCont,
                             textAlignVertical: TextAlignVertical.center,
-                            cursorColor: Theme.of(context)
-                                    .textTheme
-                                    .bodyLarge
-                                    ?.color ??
-                                Colors.black,
+                            cursorColor:
+                                Theme.of(context).textTheme.bodyLarge?.color ??
+                                    Colors.black,
                             decoration: InputDecoration(
                               contentPadding: EdgeInsets.symmetric(
                                   horizontal: 16, vertical: 20),
@@ -870,13 +872,15 @@ class _SignUpState extends State<SignUp> {
                                   color: Color(0xFFA9ABAC),
                                   fontWeight: FontWeight.w400),
                               filled: true,
-                              fillColor: Theme.of(context).brightness == Brightness.dark
+                              fillColor: Theme.of(context).brightness ==
+                                      Brightness.dark
                                   ? Colors.black
                                   : Colors.white,
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
                                 borderSide: BorderSide(
-                                  color: Theme.of(context).brightness == Brightness.dark
+                                  color: Theme.of(context).brightness ==
+                                          Brightness.dark
                                       ? Colors.white
                                       : Colors.black,
                                   width: 1,
@@ -885,7 +889,8 @@ class _SignUpState extends State<SignUp> {
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
                                 borderSide: BorderSide(
-                                  color: Theme.of(context).brightness == Brightness.dark
+                                  color: Theme.of(context).brightness ==
+                                          Brightness.dark
                                       ? Colors.white
                                       : Colors.black,
                                   width: 1,

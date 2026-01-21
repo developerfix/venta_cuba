@@ -2398,7 +2398,7 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                 CustomCitiesList>(
                                               isExpanded: true,
                                               hint: Text(
-                                                'Select city'.tr,
+                                                'Select municipality'.tr,
                                                 style: TextStyle(
                                                   fontSize: 14,
                                                   color: Theme.of(context)
@@ -3343,7 +3343,9 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                 },
                                 icon: Icon(
                                   Icons.close,
-                                  color: Theme.of(bottomSheetContext).iconTheme.color,
+                                  color: Theme.of(bottomSheetContext)
+                                      .iconTheme
+                                      .color,
                                 ),
                                 padding: EdgeInsets.all(12),
                                 constraints: BoxConstraints(
@@ -3365,7 +3367,8 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                             strokeWidth: 2,
                                             valueColor:
                                                 AlwaysStoppedAnimation<Color>(
-                                              Theme.of(bottomSheetContext).primaryColor,
+                                              Theme.of(bottomSheetContext)
+                                                  .primaryColor,
                                             ),
                                           ),
                                         ),
@@ -3437,14 +3440,18 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                   cont.isNavigate = false;
                                                   cont.isSearchScreen = false;
                                                   cont.update();
-                                                  
+
                                                   // Load subcategories
                                                   await cont.getSubCategories();
-                                                  
+
                                                   // If no subcategories exist, close the bottom sheet
-                                                  if (cont.subCategoriesModel?.data?.isEmpty ?? true) {
-                                                    if (Navigator.canPop(bottomSheetContext)) {
-                                                      Navigator.pop(bottomSheetContext);
+                                                  if (cont.subCategoriesModel
+                                                          ?.data?.isEmpty ??
+                                                      true) {
+                                                    if (Navigator.canPop(
+                                                        bottomSheetContext)) {
+                                                      Navigator.pop(
+                                                          bottomSheetContext);
                                                     }
                                                   }
                                                 } else if (cont.isType == 1) {
@@ -3468,14 +3475,19 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                           type: 1);
                                                   cont.isNavigate = false;
                                                   cont.isSearchScreen = false;
-                                                  
+
                                                   // Load sub-subcategories
-                                                  await cont.getSubSubCategories();
-                                                  
+                                                  await cont
+                                                      .getSubSubCategories();
+
                                                   // If no sub-subcategories exist, close the bottom sheet
-                                                  if (cont.subSubCategoriesModel?.data?.isEmpty ?? true) {
-                                                    if (Navigator.canPop(bottomSheetContext)) {
-                                                      Navigator.pop(bottomSheetContext);
+                                                  if (cont.subSubCategoriesModel
+                                                          ?.data?.isEmpty ??
+                                                      true) {
+                                                    if (Navigator.canPop(
+                                                        bottomSheetContext)) {
+                                                      Navigator.pop(
+                                                          bottomSheetContext);
                                                     }
                                                   }
                                                   // cont.isSelect1 = index;
@@ -3497,8 +3509,10 @@ class _PostState extends State<Post> with SingleTickerProviderStateMixin {
                                                           type: 2);
                                                   //   cont.isSelect2 = index;
                                                   cont.update();
-                                                  if (Navigator.canPop(bottomSheetContext)) {
-                                                    Navigator.pop(bottomSheetContext);
+                                                  if (Navigator.canPop(
+                                                      bottomSheetContext)) {
+                                                    Navigator.pop(
+                                                        bottomSheetContext);
                                                   }
                                                 }
                                               },
