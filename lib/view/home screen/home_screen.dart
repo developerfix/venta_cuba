@@ -39,7 +39,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   // Use separate HomepageController for homepage-specific state
-  final homepageCont = Get.put(HomepageController());
+  // CRITICAL: permanent=true prevents disposal during Get.offAll() navigation
+  final homepageCont = Get.put(HomepageController(), permanent: true);
   // Keep HomeController for categories and other shared functionality
   final homeCont = Get.put(HomeController());
   final authCont = Get.put(AuthController());

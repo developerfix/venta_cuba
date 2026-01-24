@@ -36,6 +36,7 @@ class HomepageController extends GetxController {
   Timer? _favoriteToastTimer;
   int _pendingFavoriteCount = 0;
   bool _hasShownFavoriteToast = false;
+  
   @override
   void onInit() {
     super.onInit();
@@ -169,7 +170,7 @@ class HomepageController extends GetxController {
     final threshold = position.maxScrollExtent - 100;
     
     Get.log("Homepage: Scroll - pos: ${position.pixels.toStringAsFixed(0)}/${position.maxScrollExtent.toStringAsFixed(0)}, "
-            "isLoading: ${isLoading.value}, hasMore: ${hasMore.value}");
+            "isLoading: ${isLoading.value}, hasMore: ${hasMore.value}, currentPage: ${currentPage.value}, totalItems: ${homepageListings.length}");
 
     if (position.pixels >= threshold) {
       if (!isLoading.value && hasMore.value) {
@@ -177,10 +178,10 @@ class HomepageController extends GetxController {
         loadHomepageData(isLoadMore: true);
       } else {
         if (!hasMore.value) {
-          Get.log("Homepage: ⚠️ At scroll threshold but hasMore=false");
+          Get.log("Homepage: ⚠️ At scroll threshold but hasMore=false - PAGINATION BLOCKED");
         }
         if (isLoading.value) {
-          Get.log("Homepage: ⚠️ At scroll threshold but already loading");
+          Get.log("Homepage: ⚠️ At scroll threshold but isLoading=true - PAGINATION BLOCKED");
         }
       }
     }
