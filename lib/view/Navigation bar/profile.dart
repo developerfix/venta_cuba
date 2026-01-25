@@ -10,6 +10,7 @@ import 'package:venta_cuba/Controllers/home_controller.dart';
 import 'package:venta_cuba/Controllers/homepage_controller.dart';
 import 'package:venta_cuba/Controllers/theme_controller.dart';
 import 'package:venta_cuba/util/profile_list.dart';
+import 'package:venta_cuba/view/Chat/Controller/SupabaseChatController.dart';
 import 'package:venta_cuba/view/auth/vendor_screen.dart';
 import 'package:venta_cuba/view/constants/Colors.dart';
 import 'package:flutter_svg/svg.dart';
@@ -213,6 +214,16 @@ class _ProfileState extends State<Profile> {
                     // Update on server
                     await authCont.changeAccountType();
                     await homeCont.fetchAccountType();
+
+                    final chatController = Get.find<SupabaseChatController>();
+
+                    // Agar user ID null nahi hai to nayi stream init karein
+                    if (authCont.user?.userId != null) {
+                      chatController.getAllChats(
+                          authCont.user!.userId.toString(),
+                          authCont.isBusinessAccount // Naya status
+                          );
+                    }
 
                     // Switch to homepage tab
                     authCont.currentIndexBottomAppBar = 0;

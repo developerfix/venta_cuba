@@ -114,7 +114,9 @@ class SupabaseChatController extends GetxController {
   }
 
   // OPTIMIZED: Get all chats with unread calculation
-  Stream<List<Map<String, dynamic>>> getAllChats(String userId) {
+  Stream<List<Map<String, dynamic>>> getAllChats(
+      String userId, bool is_business) {
+    print('is_business: $is_business');
     // Create a fresh stream controller each time to avoid caching issues
     final StreamController<List<Map<String, dynamic>>> controller =
         StreamController<List<Map<String, dynamic>>>.broadcast();
@@ -130,6 +132,7 @@ class SupabaseChatController extends GetxController {
               .from('chats')
               .select()
               .or('sender_id.eq.$userId,send_to_id.eq.$userId')
+              .eq('is_business', is_business)
               .order('time', ascending: false)
               .limit(50); // Limit to recent chats for better performance
 
@@ -615,9 +618,11 @@ class SupabaseChatController extends GetxController {
       late final Map<String, dynamic> insertedMessage;
 
       if (!chatExists) {
+        final authCont = Get.find<AuthController>();
         // Create new chat and insert message with better error handling
         final newChatData = {
           'id': chatId,
+          'is_business': authCont.isBusinessAccount,
           'sender_id': chatMessageData['senderId'],
           'send_to_id': chatMessageData['sendToId'],
           'sender_name': chatMessageData['senderName'],

@@ -23,11 +23,11 @@ class _ChatsState extends State<Chats> with WidgetsBindingObserver {
   Stream<List<Map<String, dynamic>>>? chats;
   TextEditingController textEditingController = TextEditingController();
   Timer? _refreshTimer;
-
+  bool? _lastAccountType;
   @override
   void initState() {
     super.initState();
-
+    _lastAccountType = authCont.isBusinessAccount;
     // Add lifecycle observer to detect app state changes
     WidgetsBinding.instance.addObserver(this);
 
@@ -86,58 +86,87 @@ class _ChatsState extends State<Chats> with WidgetsBindingObserver {
   gettingUserData() async {
     try {
       if (authCont.user?.userId != null) {
+        bool isBiz = authCont.isBusinessAccount;
+
+        // Pehle loader show karne ke liye chats ko null karein
         setState(() {
-          chats = chatCont.getAllChats(authCont.user!.userId.toString());
+          chats = null;
         });
+
+        // Thoda sa delay dein taake loader flicker na kare (optional)
+        await Future.delayed(Duration(milliseconds: 100));
+
+        // Ab naya data layein
+        var newStream =
+            chatCont.getAllChats(authCont.user!.userId.toString(), isBiz);
+
+        if (mounted) {
+          setState(() {
+            chats = newStream;
+          });
+        }
       }
     } catch (e) {}
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          elevation: 0,
-          automaticallyImplyLeading: false,
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          surfaceTintColor: Colors.transparent,
-          scrolledUnderElevation: 0,
-          title: CustomText(
-            text: "Message".tr,
-            fontSize: 20..sp,
-            fontWeight: FontWeight.w700,
-            fontColor: Theme.of(context).textTheme.titleLarge?.color,
-          ),
-        ),
-        body: Column(
-          children: [
-            SizedBox(height: 2.h, child: Divider()),
-            // Notification warning text - show platform-specific messages
-            Container(
-              padding: EdgeInsets.all(8.0),
-              margin: EdgeInsets.all(8.0),
-              decoration: BoxDecoration(
-                color: Colors.orange.withValues(alpha: 0.1),
-                border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-              child: Text(
-                Platform.isIOS
-                    ? 'Notifications won\'t work outside the app because of network restrictions'
-                        .tr
-                    : 'Chat notifications won\'t work outside of the app for some phone models because of network restrictions. Just log in periodically to check your messages. We will find another solution in the next update. You may also receive duplicate notifications.'
-                        .tr,
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: Colors.orange[700],
-                  fontStyle: FontStyle.italic,
-                ),
-                textAlign: TextAlign.center,
-              ),
+    return GetBuilder<AuthController>(builder: (controller) {
+      // 2. Yahan check karein ke agar account switch hua hai to stream refresh ho
+      if (_lastAccountType != controller.isBusinessAccount) {
+        // Status update karein
+        _lastAccountType = controller.isBusinessAccount;
+
+        // Build complete hone ke foran baad data fetch karein
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          gettingUserData();
+        });
+      }
+      return Scaffold(
+          appBar: AppBar(
+            elevation: 0,
+            automaticallyImplyLeading: false,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            surfaceTintColor: Colors.transparent,
+            scrolledUnderElevation: 0,
+            title: CustomText(
+              text: "Message".tr,
+              fontSize: 20..sp,
+              fontWeight: FontWeight.w700,
+              fontColor: Theme.of(context).textTheme.titleLarge?.color,
             ),
-            Expanded(child: groupList()),
-          ],
-        ));
+          ),
+          body: Column(
+            children: [
+              SizedBox(height: 2.h, child: Divider()),
+              // Notification warning text - show platform-specific messages
+              Container(
+                padding: EdgeInsets.all(8.0),
+                margin: EdgeInsets.all(8.0),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.1),
+                  border:
+                      Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                child: Text(
+                  Platform.isIOS
+                      ? 'Notifications won\'t work outside the app because of network restrictions'
+                          .tr
+                      : 'Chat notifications won\'t work outside of the app for some phone models because of network restrictions. Just log in periodically to check your messages. We will find another solution in the next update. You may also receive duplicate notifications.'
+                          .tr,
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: Colors.orange[700],
+                    fontStyle: FontStyle.italic,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              Expanded(child: groupList()),
+            ],
+          ));
+    });
   }
 
   groupList() {
