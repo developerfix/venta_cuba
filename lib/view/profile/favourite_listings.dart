@@ -376,22 +376,28 @@ class _FavouriteListingsState extends State<FavouriteListings> {
                                               cont.listingModel = data;
                                               String originalFavoriteStatus =
                                                   data.isFavorite ?? "0";
+
+                                              // Optimistic update
                                               data.isFavorite == "0"
                                                   ? data.isFavorite = "1"
                                                   : data.isFavorite = "0";
+
                                               cont.favouriteId =
                                                   data.itemId ?? "";
                                               cont.isFavouriteScreen = true;
                                               cont.update();
+
                                               bool isAddedF =
                                                   await cont.favouriteItem();
+
                                               if (isAddedF) {
                                                 String itemIdToSync =
                                                     data.itemId ?? "";
 
-                                                // Remove from favorites list
+                                                // FIX: Use remove(data) instead of removeAt(index)
+                                                // This prevents removing the wrong item if the list order changes
                                                 cont.userFavouriteListingModelList
-                                                    .removeAt(index);
+                                                    .remove(data);
 
                                                 // Update ALL lists that might contain this item
                                                 // Main listing list
@@ -428,6 +434,7 @@ class _FavouriteListingsState extends State<FavouriteListings> {
                                                 cont.update();
 
                                                 // Reload home screen data to refresh favorite status
+                                                // You might consider removing this if it causes too much loading
                                                 cont.getListing();
                                                 homePageCont.forceRefresh();
 
