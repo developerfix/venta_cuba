@@ -2123,16 +2123,16 @@ class HomeController extends GetxController {
     if (response.statusCode == 200) {
       sellerDetailsModel = SellerDetailsModel.fromJson(response.body);
 
-      if (!isBusinessAccount) {
-        sellerDetailsModel?.data?.sellerListings?.data
-            ?.removeWhere((element) => element.businessStatus == '1');
-      } else {
-        sellerDetailsModel?.data?.sellerListings?.data
-            ?.removeWhere((element) => element.businessStatus == '0');
-      }
+      // if (!isBusinessAccount) {
+      //   sellerDetailsModel?.data?.sellerListings?.data
+      //       ?.removeWhere((element) => element.businessStatus == '1');
+      // } else {
+      //   sellerDetailsModel?.data?.sellerListings?.data
+      //       ?.removeWhere((element) => element.businessStatus == '0');
+      // }
       if (isNavigate) {
         Get.to(MyPublicPage(
-          businessType: businessType,
+          // businessType: businessType,
           onScreen: onScreen,
         ));
       }

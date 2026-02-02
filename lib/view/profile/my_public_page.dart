@@ -12,10 +12,10 @@ import '../frame/frame.dart';
 import 'package:venta_cuba/view/constants/premium_animations.dart';
 
 class MyPublicPage extends StatefulWidget {
-  final String businessType;
+  // final String businessType;
   final int onScreen;
 
-  MyPublicPage({super.key, this.businessType = "0", required this.onScreen});
+  MyPublicPage({super.key, required this.onScreen});
 
   @override
   State<MyPublicPage> createState() => _MyPublicPageState();
@@ -122,9 +122,8 @@ class _MyPublicPageState extends State<MyPublicPage> {
                               CachedNetworkImage(
                                 height: 85..h,
                                 width: 85..w,
-                                imageUrl: cont.isBusinessAccount
-                                    ? "${cont.sellerDetailsModel?.data?.sellerAbout?.businessLogo}"
-                                    : "${cont.sellerDetailsModel?.data?.sellerAbout?.profileImage}",
+                                imageUrl:
+                                    "${cont.sellerDetailsModel?.data?.sellerAbout?.profileImage}",
                                 imageBuilder: (context, imageProvider) =>
                                     ClipRRect(
                                   child: Container(
@@ -161,9 +160,7 @@ class _MyPublicPageState extends State<MyPublicPage> {
                                   SizedBox(height: 3..h),
                                   SelectionArea(
                                     child: Text(
-                                      widget.businessType == "0"
-                                          ? '${cont.sellerDetailsModel?.data?.sellerAbout?.firstName} ${cont.sellerDetailsModel?.data?.sellerAbout?.lastName}'
-                                          : "${cont.sellerDetailsModel?.data?.sellerAbout?.businessName}",
+                                      '${cont.sellerDetailsModel?.data?.sellerAbout?.firstName} ${cont.sellerDetailsModel?.data?.sellerAbout?.lastName}',
                                       style: TextStyle(
                                           fontSize: 16..sp,
                                           fontWeight: FontWeight.w500,
