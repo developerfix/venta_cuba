@@ -630,7 +630,8 @@ class HomeController extends GetxController {
         'radius': "", // Empty - get all posts
         'min_price': '',
         'max_price': '',
-        'search_by_title': ''
+        'search_by_title': '',
+        'type': authCont.isBusinessAccount ? "Business" : "Personal",
       };
 
       Get.log(
@@ -2167,10 +2168,16 @@ class HomeController extends GetxController {
     bool hasMore = true;
     userFavouriteListingModelList.clear();
 
+    // 1. Determine Type
+    String requestType = authCont.isBusinessAccount ? "Business" : "Personal";
+
     while (hasMore) {
       Response response = await api.postWithForm(
         "api/getFavouriteItems",
-        {'page': currentPage.toString()},
+        {
+          'page': currentPage.toString(),
+          'type': requestType // <--- Sending Type here
+        },
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
           'Accept': 'application/json',
@@ -2202,7 +2209,15 @@ class HomeController extends GetxController {
   }
 
   Future getFavouriteSeller() async {
-    Response response = await api.postWithForm("api/getFavouriteSeller", {},
+    // 1. Current Account Type check karein
+    String requestType = authCont.isBusinessAccount ? "Business" : "Personal";
+
+    // 2. Server ko 'type' bhejein taake wo sirf relevant data return kare
+    Response response = await api.postWithForm(
+        "api/getFavouriteSeller",
+        {
+          'type': requestType // <--- Yahan change kiya hai (Empty {} ki jagah)
+        },
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
           'Accept': 'application/json',
@@ -2210,15 +2225,12 @@ class HomeController extends GetxController {
           'Authorization': 'Bearer ${authCont.user?.accessToken}'
         },
         showdialog: true);
+
     if (response.statusCode == 200) {
       favouriteSellerModel = FavouriteSellerModel.fromJson(response.body);
-      if (!isBusinessAccount) {
-        favouriteSellerModel.data
-            ?.removeWhere((element) => element.type == "Business");
-      } else {
-        favouriteSellerModel.data
-            ?.removeWhere((element) => element.type == "Personal");
-      }
+
+      // 3. Yahan se 'removeWhere' wala logic hata diya hai kyunke
+      // server ab khud hi filter karke bhej raha hai.
 
       Get.to(FavouriteSeller());
     } else {
@@ -2764,12 +2776,16 @@ class HomeController extends GetxController {
   String favouriteId = "";
 
   Future<bool> favouriteItem() async {
+    // 1. Determine Type
+    String requestType = authCont.isBusinessAccount ? "Business" : "Personal";
+
     Response response = await api.postWithForm(
         "api/favouriteItem",
         {
           'item_id': isFavouriteScreen
               ? favouriteId
               : listingModel?.id.toString() ?? "",
+          'type': requestType // <--- Sending Type here
         },
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
@@ -2970,12 +2986,11 @@ class HomeController extends GetxController {
   }
 
   Future<bool> favouriteSeller() async {
+    String requestType = authCont.isBusinessAccount ? "Business" : "Personal";
+    print(
+        "responsee Toggle Favorite - Sending Type: $requestType for Seller: $sellerId");
     Response response = await api.postWithForm(
-        "api/favouriteSeller",
-        {
-          'seller_id': sellerId,
-          'type': authCont.isBusinessAccount ? "Business" : "Personal"
-        },
+        "api/favouriteSeller", {'seller_id': sellerId, 'type': requestType},
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
           'Accept': 'application/json',
@@ -2983,7 +2998,7 @@ class HomeController extends GetxController {
           'Authorization': 'Bearer ${authCont.user?.accessToken}'
         },
         showdialog: false);
-
+    print('responsee: ${response.body}');
     if (response.statusCode == 200) {
       if (sellerId == null) return false;
 
@@ -3028,15 +3043,19 @@ class HomeController extends GetxController {
       // Make ALL API calls concurrently for super fast deletion
       List<Future<bool>> futures = itemIds.map((itemId) async {
         try {
-          Response response =
-              await api.postWithForm("api/favouriteItem", {'item_id': itemId},
-                  headers: {
-                    'Content-Type': 'application/json; charset=UTF-8',
-                    'Accept': 'application/json',
-                    'Access-Control-Allow-Origin': "*",
-                    'Authorization': 'Bearer ${authCont.user?.accessToken}'
-                  },
-                  showdialog: false);
+          Response response = await api.postWithForm(
+              "api/favouriteItem",
+              {
+                'item_id': itemId,
+                'type': authCont.isBusinessAccount ? "Business" : "Personal"
+              },
+              headers: {
+                'Content-Type': 'application/json; charset=UTF-8',
+                'Accept': 'application/json',
+                'Access-Control-Allow-Origin': "*",
+                'Authorization': 'Bearer ${authCont.user?.accessToken}'
+              },
+              showdialog: false);
 
           if (response.statusCode == 200) {
             return true;

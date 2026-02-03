@@ -22,10 +22,13 @@ class ListingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Use HomepageController for homepage listings - SEPARATE from search/category
-    final homepageCont = Get.put(HomepageController());
-    // HomeController is only used for navigation to detail screen
-    final homeCont = Get.put(HomeController());
+    final homepageCont = Get.isRegistered<HomepageController>()
+        ? Get.find<HomepageController>()
+        : Get.put(HomepageController());
+
+    final homeCont = Get.isRegistered<HomeController>()
+        ? Get.find<HomeController>()
+        : Get.put(HomeController());
 
     return GetBuilder<HomepageController>(
       init: homepageCont,
