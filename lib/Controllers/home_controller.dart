@@ -348,6 +348,7 @@ class HomeController extends GetxController {
           "api/getListing?page=$page",
           {
             'user_id': authCont.user?.userId ?? "",
+            'type': authCont.isBusinessAccount ? "Business" : "Personal", // Add type parameter
             'category_id': selectedCategory?.id ?? "",
             'sub_category_id': selectedSubCategory?.id ?? "",
             'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
@@ -453,6 +454,7 @@ class HomeController extends GetxController {
       // When no location selected, call API specifically for user's own posts
       Map<String, dynamic> requestData = {
         'user_id': authCont.user?.userId ?? "",
+        'type': authCont.isBusinessAccount ? "Business" : "Personal", // Add type parameter
         'category_id': selectedCategory?.id ?? "",
         'sub_category_id': selectedSubCategory?.id ?? "",
         'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
@@ -481,6 +483,7 @@ class HomeController extends GetxController {
       // Normal location-based API call
       Map<String, dynamic> requestData = {
         'user_id': authCont.user?.userId ?? "",
+        'type': authCont.isBusinessAccount ? "Business" : "Personal", // Add type parameter
         'category_id': selectedCategory?.id ?? "",
         'sub_category_id': selectedSubCategory?.id ?? "",
         'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
@@ -600,7 +603,6 @@ class HomeController extends GetxController {
   }
 
   Future<void> getListing({bool isLoadMore = false}) async {
-    Get.log("🚀 getListing called! isLoadMore: $isLoadMore");
     if (isPostLoading.value) return;
     isPostLoading.value = true;
     update();
@@ -634,10 +636,6 @@ class HomeController extends GetxController {
         'type': authCont.isBusinessAccount ? "Business" : "Personal",
       };
 
-      Get.log(
-          "🌍 Fetching posts - Will filter client-side by province/municipality");
-      Get.log("📍 Selected Address: '$address'");
-
       // SMART PAGINATION: Fetch pages until we have minimum results after filtering
       // This ensures we always have content even when location filter is active
       final int minResultsToShow =
@@ -667,8 +665,6 @@ class HomeController extends GetxController {
           pagesFetched < maxPagesToFetch &&
           !reachedEnd) {
         int pageNum = currentPage.value + pagesFetched;
-        Get.log(
-            "📄 Fetching page $pageNum (have ${filteredResults.length} filtered results so far)...");
 
         Response response = await api.postData(
           "api/getListing?page=$pageNum",
@@ -684,10 +680,8 @@ class HomeController extends GetxController {
 
         if (response.statusCode == 200) {
           List<dynamic> pageData = response.body['data']['data'] ?? [];
-          Get.log("📦 Page $pageNum returned ${pageData.length} posts");
 
           if (pageData.isEmpty) {
-            Get.log("⚠️ Page $pageNum is empty, reached end of data");
             reachedEnd = true;
             hasMore.value = false;
             break;
@@ -2375,6 +2369,7 @@ class HomeController extends GetxController {
       // Build request data - fetch all posts, filter client-side
       Map<String, dynamic> requestData = {
         'user_id': authCont.user?.userId ?? "",
+        'type': authCont.isBusinessAccount ? "Business" : "Personal", // Add type parameter
         'category_id': selectedCategory?.id ?? "",
         'sub_category_id': selectedSubCategory?.id ?? "",
         'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
@@ -2699,6 +2694,7 @@ class HomeController extends GetxController {
           {
             'listing_id': listingId,
             'user_id': authCont.user?.userId ?? "",
+            'type': authCont.isBusinessAccount ? "Business" : "Personal", // Add type parameter
           },
           headers: {
             'Accept': 'application/json',
@@ -2713,6 +2709,7 @@ class HomeController extends GetxController {
           {
             'listing_id': listingId,
             'user_id': authCont.user?.userId ?? "",
+            'type': authCont.isBusinessAccount ? "Business" : "Personal", // Add type parameter
           },
           headers: {
             'Accept': 'application/json',

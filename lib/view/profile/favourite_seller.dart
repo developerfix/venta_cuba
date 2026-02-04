@@ -20,7 +20,7 @@ class FavouriteSeller extends StatefulWidget {
 }
 
 class _FavouriteSellerState extends State<FavouriteSeller> {
-  final authCont = Get.put(AuthController());
+  final authCont = Get.find<AuthController>();
 
   void _showRemoveAllSellersDialog(BuildContext context, HomeController cont) {
     showDialog(
@@ -174,7 +174,7 @@ class _FavouriteSellerState extends State<FavouriteSeller> {
                                   child: Stack(
                                     children: [
                                       Container(
-                                        height: 280..h,
+                                        height: 240..h,
                                         decoration: BoxDecoration(
                                           borderRadius:
                                               BorderRadius.circular(10..r),
@@ -227,13 +227,8 @@ class _FavouriteSellerState extends State<FavouriteSeller> {
                                                   width: MediaQuery.of(context)
                                                       .size
                                                       .width,
-                                                  imageUrl: cont
-                                                              .favouriteSellerModel
-                                                              .data![index]
-                                                              .type ==
-                                                          "Personal"
-                                                      ? "${cont.favouriteSellerModel.data![index].profileImage}"
-                                                      : "${cont.favouriteSellerModel.data![index].businessLogo}",
+                                                  imageUrl:
+                                                      "${cont.favouriteSellerModel.data![index].profileImage}",
                                                   imageBuilder: (context,
                                                           imageProvider) =>
                                                       Container(
@@ -268,36 +263,36 @@ class _FavouriteSellerState extends State<FavouriteSeller> {
                                               ),
                                             ),
                                             Container(
-                                              height: 55..h,
+                                              height: 40..h,
                                               color:
                                                   Theme.of(context).cardColor,
                                               child: Column(
                                                 children: [
-                                                  Visibility(
-                                                    visible: cont
-                                                            .favouriteSellerModel
-                                                            .data![index]
-                                                            .type !=
-                                                        "Personal",
-                                                    child: SelectionArea(
-                                                      child: Text(
-                                                        cont
-                                                                .favouriteSellerModel
-                                                                .data![index]
-                                                                .businessName ??
-                                                            "",
-                                                        style: TextStyle(
-                                                            fontSize: 17..sp,
-                                                            fontWeight:
-                                                                FontWeight.w600,
-                                                            color: Theme.of(
-                                                                    context)
-                                                                .textTheme
-                                                                .bodyLarge
-                                                                ?.color),
-                                                      ),
-                                                    ),
-                                                  ),
+                                                  // Visibility(
+                                                  //   visible: cont
+                                                  //           .favouriteSellerModel
+                                                  //           .data![index]
+                                                  //           .type !=
+                                                  //       "Personal",
+                                                  //   child: SelectionArea(
+                                                  //     child: Text(
+                                                  //       cont
+                                                  //               .favouriteSellerModel
+                                                  //               .data![index]
+                                                  //               .businessName ??
+                                                  //           "",
+                                                  //       style: TextStyle(
+                                                  //           fontSize: 17..sp,
+                                                  //           fontWeight:
+                                                  //               FontWeight.w600,
+                                                  //           color: Theme.of(
+                                                  //                   context)
+                                                  //               .textTheme
+                                                  //               .bodyLarge
+                                                  //               ?.color),
+                                                  //     ),
+                                                  //   ),
+                                                  // ),
                                                   SelectionArea(
                                                     child: Text(
                                                       '${cont.favouriteSellerModel.data![index].firstName} ${cont.favouriteSellerModel.data![index].lastName}',

@@ -228,7 +228,6 @@ class _ProfileState extends State<Profile> {
                     // Switch to homepage tab
                     authCont.currentIndexBottomAppBar = 0;
                     authCont.update();
-
                     // FORCE complete reset of all data
                     homeCont.listingModelList.clear();
                     homeCont.listingModelSearchList.clear();

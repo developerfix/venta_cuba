@@ -215,6 +215,7 @@ class HomepageController extends GetxController {
       // Fetch all posts, filter client-side
       Map<String, dynamic> requestData = {
         'user_id': authCont.user?.userId ?? "",
+        'type': authCont.isBusinessAccount ? "Business" : "Personal", // Add type parameter
         'category_id': "",
         'sub_category_id': "",
         'sub_sub_category_id': "",
