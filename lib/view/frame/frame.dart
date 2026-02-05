@@ -69,7 +69,8 @@ class _FrameScreenState extends State<FrameScreen> {
     // Update seller favorite status when frame screen is opened
     // This ensures the heart icon shows the correct state even when coming from favorite listings
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _updateSellerFavoriteStatus();
+      // First refresh the favorite sellers list to ensure we have current data
+      _refreshAndUpdateStatus();
       // Fetch fresh seller details to get updated profile image
       _fetchLatestSellerDetails();
     });
@@ -79,10 +80,29 @@ class _FrameScreenState extends State<FrameScreen> {
     super.initState();
   }
 
+  /// Refresh favorite sellers list and update status
+  Future<void> _refreshAndUpdateStatus() async {
+    try {
+      // Refresh the favorite sellers list from server
+      await homeCont.refreshFavouriteSellerList();
+      // Then update the UI based on the fresh data
+      _updateSellerFavoriteStatus();
+    } catch (e) {
+      print("Error refreshing favorite sellers in frame: $e");
+      // Still try to update with existing data
+      _updateSellerFavoriteStatus();
+    }
+  }
+
   /// Update seller favorite status based on the current favorite sellers list
   void _updateSellerFavoriteStatus() {
     if (homeCont.listingModel?.user?.id != null) {
       String currentSellerId = homeCont.listingModel!.user!.id.toString();
+      
+      // Extra safety: Ensure we're checking against the correct account type's favorites
+      String currentAccountType = authCont.isBusinessAccount ? "Business" : "Personal";
+      print("Frame: Checking seller favorite status for account type: $currentAccountType");
+      
       bool isInFavorites = homeCont.favouriteSellerModel.data
               ?.any((seller) => seller.sellerId == currentSellerId) ??
           false;
@@ -91,7 +111,7 @@ class _FrameScreenState extends State<FrameScreen> {
       homeCont.listingModel!.isSellerFavorite = isInFavorites ? "1" : "0";
 
       print(
-          "Frame: Updated isSellerFavorite for seller $currentSellerId: ${homeCont.listingModel!.isSellerFavorite}");
+          "Frame: Updated isSellerFavorite for seller $currentSellerId: ${homeCont.listingModel!.isSellerFavorite} (isInFavorites: $isInFavorites)");
       homeCont.update();
     }
   }

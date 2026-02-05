@@ -256,6 +256,9 @@ class _ProfileState extends State<Profile> {
                       // Then load listings directly
                       await homeCont.getListing(isLoadMore: false);
 
+                      // Refresh favorite sellers list for the new account type
+                      await homeCont.refreshFavouriteSellerList();
+
                       // Save location
                       homeCont.saveLocationAndRadius();
 

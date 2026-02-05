@@ -6,6 +6,7 @@ import 'package:venta_cuba/view/constants/Colors.dart';
 import 'package:venta_cuba/view/profile/request_account_deletion.dart';
 
 import '../../Controllers/auth_controller.dart';
+import '../../Controllers/home_controller.dart';
 import '../auth/vendor_screen.dart';
 
 class ManageAccount extends StatefulWidget {
@@ -102,6 +103,10 @@ class _ManageAccountState extends State<ManageAccount> {
                     authCont.isBusinessAccount = !authCont.isBusinessAccount;
                     authCont.update();
                     authCont.changeAccountType();
+
+                    // Refresh favorite sellers list for the new account type
+                    final homeCont = Get.find<HomeController>();
+                    await homeCont.refreshFavouriteSellerList();
 
                     // Close dialogs
                     Get.close(2);

@@ -2232,6 +2232,37 @@ class HomeController extends GetxController {
     }
   }
 
+  /// Refresh favorite sellers list without navigation (for account switching)
+  Future<void> refreshFavouriteSellerList() async {
+    try {
+      String requestType = authCont.isBusinessAccount ? "Business" : "Personal";
+      print("🔄 Refreshing favourite sellers for account type: $requestType");
+
+      Response response = await api.postWithForm(
+          "api/getFavouriteSeller",
+          {
+            'type': requestType
+          },
+          headers: {
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Accept': 'application/json',
+            'Access-Control-Allow-Origin': "*",
+            'Authorization': 'Bearer ${authCont.user?.accessToken}'
+          },
+          showdialog: false); // Don't show dialog during background refresh
+
+      if (response.statusCode == 200) {
+        favouriteSellerModel = FavouriteSellerModel.fromJson(response.body);
+        update();
+        print("✅ Favourite sellers list refreshed successfully. Count: ${favouriteSellerModel.data?.length ?? 0}");
+      } else {
+        print("❌ Failed to refresh favourite sellers: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("❌ Error refreshing favourite sellers: $e");
+    }
+  }
+
   int personalAcountPost = 0;
   int bussinessPostCount = 0;
 
