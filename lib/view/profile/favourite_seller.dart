@@ -153,6 +153,7 @@ class _FavouriteSellerState extends State<FavouriteSeller> {
                             itemCount: cont.favouriteSellerModel.data?.length,
                             // physics: NeverScrollableScrollPhysics(),
                             shrinkWrap: true,
+                            padding: EdgeInsets.all(3),
                             gridDelegate:
                                 SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 2,
@@ -174,7 +175,7 @@ class _FavouriteSellerState extends State<FavouriteSeller> {
                                   child: Stack(
                                     children: [
                                       Container(
-                                        height: 240..h,
+                                        // height: 240..h,
                                         decoration: BoxDecoration(
                                           borderRadius:
                                               BorderRadius.circular(10..r),
@@ -211,54 +212,59 @@ class _FavouriteSellerState extends State<FavouriteSeller> {
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceBetween,
                                           children: [
-                                            ClipRRect(
-                                              borderRadius: BorderRadius.only(
-                                                  topLeft:
-                                                      Radius.circular(10.r),
-                                                  topRight:
-                                                      Radius.circular(10.r)),
-                                              child: Container(
-                                                height: 180..h,
-                                                width: MediaQuery.of(context)
-                                                    .size
-                                                    .width,
-                                                child: CachedNetworkImage(
+                                            Expanded(
+                                              child: ClipRRect(
+                                                borderRadius: BorderRadius.only(
+                                                    topLeft:
+                                                        Radius.circular(10.r),
+                                                    topRight:
+                                                        Radius.circular(10.r)),
+                                                child: Container(
                                                   height: 180..h,
                                                   width: MediaQuery.of(context)
                                                       .size
                                                       .width,
-                                                  imageUrl:
-                                                      "${cont.favouriteSellerModel.data![index].profileImage}",
-                                                  imageBuilder: (context,
-                                                          imageProvider) =>
-                                                      Container(
+                                                  child: CachedNetworkImage(
                                                     height: 180..h,
                                                     width:
                                                         MediaQuery.of(context)
                                                             .size
                                                             .width,
-                                                    decoration: BoxDecoration(
-                                                      image: DecorationImage(
-                                                        image: imageProvider,
-                                                        fit: BoxFit.cover,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  placeholder: (context, url) =>
-                                                      SizedBox(
-                                                          height: 180..h,
-                                                          width: MediaQuery.of(
-                                                                  context)
+                                                    imageUrl:
+                                                        "${cont.favouriteSellerModel.data![index].profileImage}",
+                                                    imageBuilder: (context,
+                                                            imageProvider) =>
+                                                        Container(
+                                                      height: 180..h,
+                                                      width:
+                                                          MediaQuery.of(context)
                                                               .size
                                                               .width,
-                                                          child: Center(
-                                                              child:
-                                                                  CircularProgressIndicator(
-                                                            strokeWidth: 2,
-                                                          ))),
-                                                  errorWidget:
-                                                      (context, url, error) =>
-                                                          Icon(Icons.error),
+                                                      decoration: BoxDecoration(
+                                                        image: DecorationImage(
+                                                          image: imageProvider,
+                                                          fit: BoxFit.cover,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    placeholder: (context,
+                                                            url) =>
+                                                        SizedBox(
+                                                            height: 180..h,
+                                                            width:
+                                                                MediaQuery.of(
+                                                                        context)
+                                                                    .size
+                                                                    .width,
+                                                            child: Center(
+                                                                child:
+                                                                    CircularProgressIndicator(
+                                                              strokeWidth: 2,
+                                                            ))),
+                                                    errorWidget:
+                                                        (context, url, error) =>
+                                                            Icon(Icons.error),
+                                                  ),
                                                 ),
                                               ),
                                             ),
@@ -267,46 +273,29 @@ class _FavouriteSellerState extends State<FavouriteSeller> {
                                               color:
                                                   Theme.of(context).cardColor,
                                               child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
                                                 children: [
-                                                  // Visibility(
-                                                  //   visible: cont
-                                                  //           .favouriteSellerModel
-                                                  //           .data![index]
-                                                  //           .type !=
-                                                  //       "Personal",
-                                                  //   child: SelectionArea(
-                                                  //     child: Text(
-                                                  //       cont
-                                                  //               .favouriteSellerModel
-                                                  //               .data![index]
-                                                  //               .businessName ??
-                                                  //           "",
-                                                  //       style: TextStyle(
-                                                  //           fontSize: 17..sp,
-                                                  //           fontWeight:
-                                                  //               FontWeight.w600,
-                                                  //           color: Theme.of(
-                                                  //                   context)
-                                                  //               .textTheme
-                                                  //               .bodyLarge
-                                                  //               ?.color),
-                                                  //     ),
-                                                  //   ),
-                                                  // ),
-                                                  SelectionArea(
-                                                    child: Text(
-                                                      '${cont.favouriteSellerModel.data![index].firstName} ${cont.favouriteSellerModel.data![index].lastName}',
-                                                      style: TextStyle(
-                                                          fontSize: 13..sp,
-                                                          fontWeight:
-                                                              FontWeight.w400,
-                                                          color: AppColors
-                                                              .k0xFF403C3C),
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            8.0),
+                                                    child: SizedBox(
+                                                      height: 20.h,
+                                                      child: SelectionArea(
+                                                        child: Text(
+                                                          '${cont.favouriteSellerModel.data![index].firstName} ${cont.favouriteSellerModel.data![index].lastName}',
+                                                          style: TextStyle(
+                                                              fontSize: 13..sp,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w400,
+                                                              color: AppColors
+                                                                  .k0xFF403C3C),
+                                                        ),
+                                                      ),
                                                     ),
                                                   ),
-                                                  SizedBox(
-                                                    height: 5.h,
-                                                  )
                                                 ],
                                               ),
                                             )

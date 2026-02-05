@@ -161,6 +161,7 @@ class _FavouriteListingsState extends State<FavouriteListings> {
                       child: cont.userFavouriteListingModelList.isEmpty
                           ? Center(child: CustomText(text: "No Data Found".tr))
                           : GridView.builder(
+                              padding: EdgeInsets.all(3),
                               itemCount:
                                   cont.userFavouriteListingModelList.length,
                               shrinkWrap: true,
