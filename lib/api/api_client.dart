@@ -6,7 +6,7 @@ import '../Utils/funcations.dart';
 import 'api_checker.dart';
 
 String? tokenMain;
-String baseUrl = "https://ventacuba.co/";
+String baseUrl = "https://ventacuba.ca/";
 
 class ApiClient extends GetxService {
   final String appBaseUrl;
@@ -66,7 +66,8 @@ class ApiClient extends GetxService {
       {Map<String, String>? headers, bool showdialog = true}) async {
     print("🔥 postData tokenMain: $tokenMain");
     if (uri.contains("getListing")) {
-      print("🚨 CALLING getListing API from: ${StackTrace.current.toString().split('\n')[1]}");
+      print(
+          "🚨 CALLING getListing API from: ${StackTrace.current.toString().split('\n')[1]}");
     }
     if (showdialog) {
       showLoading();

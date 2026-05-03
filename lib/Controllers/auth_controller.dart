@@ -348,7 +348,7 @@ class AuthController extends GetxController {
 
       var headers = {'Accept': 'application/json'};
       var request = http.MultipartRequest(
-          'POST', Uri.parse('https://ventacuba.co/api/verify'));
+          'POST', Uri.parse('https://ventacuba.ca/api/verify'));
       request.fields.addAll({
         'email': emailCreateCont.text.trim(),
       });
@@ -666,7 +666,7 @@ class AuthController extends GetxController {
     var request = Http.MultipartRequest(
         'POST',
         Uri.parse(
-            'https://ventacuba.co/api/forget-password?lang=$languageCode'));
+            'https://ventacuba.ca/api/forget-password?lang=$languageCode'));
     request.fields.addAll({'email': forgetPasswordCont.text.trim()});
     request.headers.addAll(headers);
     Http.StreamedResponse response = await request.send();

@@ -19,24 +19,25 @@ class AppConfig {
   // Ntfy Push Notification Configuration (Works in Cuba!)
   // Option 1: Use public server (free, works immediately)
   static const String ntfyServerUrl = 'https://ntfy.sh';
-  
+
   // Option 2: Use your own server (recommended for production)
   // Deploy on DigitalOcean, Vultr, or any VPS outside Cuba
   // static const String ntfyServerUrl = 'https://your-ntfy-server.com';
-  
+
   // OneSignal Configuration (REMOVED - doesn't work in Cuba)
   // static const String oneSignalAppId = '6efefee8-7382-460d-b6d1-db9d9c0f4e84';
   // static const String oneSignalApiKey = 'os_v2_app_n37p52dtqjda3nwr3oozyd2oqshnsalzoyauivfbavgty6kz4ozrcsdnjw4vza4g2o6nqzl5u4kt7hjiqi4ha27buwptmwu5cg3fgyy';
 
   // Firebase Cloud Messaging Configuration (for iOS notifications)
-  static const String fcmServerKey = 'AAAA7uKKmBo:APA91bFJ8XUQ9vFzGhXSdqTm7RBOdqR8QJLEyPUNxFkDnPKMZxfgW8HhA6vJ9JQGLxYxMnj_FXYX6PQd7RuP5NyDwVsxKpJ4rGhTqUeR3bKcLmN9zFvX2wQsP1YtA8E_2LvBnMxD';
+  static const String fcmServerKey =
+      'AAAA7uKKmBo:APA91bFJ8XUQ9vFzGhXSdqTm7RBOdqR8QJLEyPUNxFkDnPKMZxfgW8HhA6vJ9JQGLxYxMnj_FXYX6PQd7RuP5NyDwVsxKpJ4rGhTqUeR3bKcLmN9zFvX2wQsP1YtA8E_2LvBnMxD';
 
   // Laravel Backend Configuration (keeping existing)
-  static const String laravelBaseUrl = 'https://ventacuba.co';
+  static const String laravelBaseUrl = 'https://ventacuba.ca';
 
   // Helper methods to check if services are properly configured
   static bool get isSupabaseConfigured => true;
-  
+
   // Ntfy is always configured (uses public server by default)
   static bool get isNtfyConfigured => true;
 }

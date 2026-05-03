@@ -348,7 +348,9 @@ class HomeController extends GetxController {
           "api/getListing?page=$page",
           {
             'user_id': authCont.user?.userId ?? "",
-            'type': authCont.isBusinessAccount ? "Business" : "Personal", // Add type parameter
+            'type': authCont.isBusinessAccount
+                ? "Business"
+                : "Personal", // Add type parameter
             'category_id': selectedCategory?.id ?? "",
             'sub_category_id': selectedSubCategory?.id ?? "",
             'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
@@ -454,7 +456,9 @@ class HomeController extends GetxController {
       // When no location selected, call API specifically for user's own posts
       Map<String, dynamic> requestData = {
         'user_id': authCont.user?.userId ?? "",
-        'type': authCont.isBusinessAccount ? "Business" : "Personal", // Add type parameter
+        'type': authCont.isBusinessAccount
+            ? "Business"
+            : "Personal", // Add type parameter
         'category_id': selectedCategory?.id ?? "",
         'sub_category_id': selectedSubCategory?.id ?? "",
         'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
@@ -483,7 +487,9 @@ class HomeController extends GetxController {
       // Normal location-based API call
       Map<String, dynamic> requestData = {
         'user_id': authCont.user?.userId ?? "",
-        'type': authCont.isBusinessAccount ? "Business" : "Personal", // Add type parameter
+        'type': authCont.isBusinessAccount
+            ? "Business"
+            : "Personal", // Add type parameter
         'category_id': selectedCategory?.id ?? "",
         'sub_category_id': selectedSubCategory?.id ?? "",
         'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
@@ -2139,7 +2145,7 @@ class HomeController extends GetxController {
   Future getSellerDetails1(String reviewsType) async {
     var headers = {'Accept': 'application/json'};
     var request = http.MultipartRequest(
-        'POST', Uri.parse('https://ventacuba.co/api/getSellerDetails'));
+        'POST', Uri.parse('https://ventacuba.ca/api/getSellerDetails'));
     request.fields
         .addAll({'seller_id': sellerId!, 'reviews_type': reviewsType});
 
@@ -2239,10 +2245,7 @@ class HomeController extends GetxController {
       print("🔄 Refreshing favourite sellers for account type: $requestType");
 
       Response response = await api.postWithForm(
-          "api/getFavouriteSeller",
-          {
-            'type': requestType
-          },
+          "api/getFavouriteSeller", {'type': requestType},
           headers: {
             'Content-Type': 'application/json; charset=UTF-8',
             'Accept': 'application/json',
@@ -2254,7 +2257,8 @@ class HomeController extends GetxController {
       if (response.statusCode == 200) {
         favouriteSellerModel = FavouriteSellerModel.fromJson(response.body);
         update();
-        print("✅ Favourite sellers list refreshed successfully. Count: ${favouriteSellerModel.data?.length ?? 0}");
+        print(
+            "✅ Favourite sellers list refreshed successfully. Count: ${favouriteSellerModel.data?.length ?? 0}");
       } else {
         print("❌ Failed to refresh favourite sellers: ${response.statusCode}");
       }
@@ -2400,7 +2404,9 @@ class HomeController extends GetxController {
       // Build request data - fetch all posts, filter client-side
       Map<String, dynamic> requestData = {
         'user_id': authCont.user?.userId ?? "",
-        'type': authCont.isBusinessAccount ? "Business" : "Personal", // Add type parameter
+        'type': authCont.isBusinessAccount
+            ? "Business"
+            : "Personal", // Add type parameter
         'category_id': selectedCategory?.id ?? "",
         'sub_category_id': selectedSubCategory?.id ?? "",
         'sub_sub_category_id': selectedSubSubCategory?.id ?? "",
@@ -2725,7 +2731,9 @@ class HomeController extends GetxController {
           {
             'listing_id': listingId,
             'user_id': authCont.user?.userId ?? "",
-            'type': authCont.isBusinessAccount ? "Business" : "Personal", // Add type parameter
+            'type': authCont.isBusinessAccount
+                ? "Business"
+                : "Personal", // Add type parameter
           },
           headers: {
             'Accept': 'application/json',
@@ -2740,7 +2748,9 @@ class HomeController extends GetxController {
           {
             'listing_id': listingId,
             'user_id': authCont.user?.userId ?? "",
-            'type': authCont.isBusinessAccount ? "Business" : "Personal", // Add type parameter
+            'type': authCont.isBusinessAccount
+                ? "Business"
+                : "Personal", // Add type parameter
           },
           headers: {
             'Accept': 'application/json',

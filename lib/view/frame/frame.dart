@@ -98,11 +98,13 @@ class _FrameScreenState extends State<FrameScreen> {
   void _updateSellerFavoriteStatus() {
     if (homeCont.listingModel?.user?.id != null) {
       String currentSellerId = homeCont.listingModel!.user!.id.toString();
-      
+
       // Extra safety: Ensure we're checking against the correct account type's favorites
-      String currentAccountType = authCont.isBusinessAccount ? "Business" : "Personal";
-      print("Frame: Checking seller favorite status for account type: $currentAccountType");
-      
+      String currentAccountType =
+          authCont.isBusinessAccount ? "Business" : "Personal";
+      print(
+          "Frame: Checking seller favorite status for account type: $currentAccountType");
+
       bool isInFavorites = homeCont.favouriteSellerModel.data
               ?.any((seller) => seller.sellerId == currentSellerId) ??
           false;
